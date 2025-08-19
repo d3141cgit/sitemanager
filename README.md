@@ -2,6 +2,23 @@
 
 Laravel용 완전한 사이트 관리 패키지입니다. 관리자 대시보드, 게시판 시스템, 회원 관리, 메뉴 관리 등의 기능을 제공합니다.
 
+## 📋 목차
+
+- [기능](#기능)
+- [요구사항](#요구사항)
+- [설치방법](#설치방법)
+- [설정](#설정)
+- [사용법](#사용법)
+- [커스터마이징](#커스터마이징)
+- [업데이트](#업데이트)
+
+## 요구사항
+
+- PHP ^8.1
+- Laravel ^10.0|^11.0|^12.0
+- MySQL 또는 PostgreSQL 또는 SQLite
+- Composer
+
 ## 기능
 
 ### 관리자 기능
@@ -33,57 +50,90 @@ Laravel용 완전한 사이트 관리 패키지입니다. 관리자 대시보드
 - ✅ **Console Commands** - 설치 및 관리 명령어
 - ✅ **View Components** - 재사용 가능한 뷰 컴포넌트
 
-## 설치
+## 설치방법
 
-### 1. Composer로 패키지 설치
+### 📦 방법 1: Private Git Server (권장)
 
 ```bash
-# composer.json에 repository 추가
+# 1. 새 Laravel 프로젝트 생성
+composer create-project laravel/laravel your-project-name
+
+# 2. 프로젝트 디렉토리로 이동
+cd your-project-name
+
+# 3. Git 저장소 등록
+composer config repositories.sitemanager vcs ssh://miles@server/home/miles/git/sitemanager.git
+
+# 4. 패키지 설치
+composer require d3141cgit/sitemanager:dev-main
+
+# 5. 설정 파일 및 자원 발행
+php artisan vendor:publish --provider="SiteManager\SiteManagerServiceProvider"
+
+# 6. 데이터베이스 마이그레이션
+php artisan migrate
+
+# 7. 관리자 계정 생성
+php artisan sitemanager:admin
+```
+
+### 📦 방법 2: 로컬 패키지 (개발용)
+
+```bash
+# 1. composer.json에 로컬 패키지 등록
 {
     "repositories": [
         {
-            "type": "vcs",
-            "url": "https://github.com/d3141cgit/sitemanager.git"
+            "type": "path",
+            "url": "/path/to/packages/sitemanager"
         }
     ],
     "require": {
-        "d3141cgit/sitemanager": "^1.0"
+        "d3141cgit/sitemanager": "*"
     }
 }
 
-# 패키지 설치
-composer require d3141cgit/sitemanager
+# 2. 패키지 설치
+composer require d3141cgit/sitemanager --prefer-source
+
+# 3. 나머지 설치 과정은 동일
 ```
 
-### 2. 설정 파일 발행
+### 🚀 빠른 설치 (일괄 설치)
 
 ```bash
-# 빠른 설치 (권장)
+# 설정, 마이그레이션, 자원 발행을 한 번에
 php artisan sitemanager:install
 
-# 또는 수동 설치
-php artisan vendor:publish --tag=sitemanager-config      # 설정 파일들
-php artisan vendor:publish --tag=sitemanager-resources   # CSS/JS 파일들
-php artisan migrate
-php artisan vendor:publish --tag=sitemanager-assets      # 이미지 등 에셋
-```
-
-### 3. 뷰 커스터마이징 (선택적)
-
-```bash
-# 뷰 파일을 커스터마이징하려면
-php artisan vendor:publish --tag=sitemanager-views
-```
-
-### 3. 관리자 계정 생성
-
-```bash
-# 대화형으로 관리자 생성
+# 관리자 계정 생성 (대화형)
 php artisan sitemanager:admin
 
 # 또는 옵션으로 직접 생성
-php artisan sitemanager:admin --name="Admin" --email="admin@example.com" --password="password"
+php artisan sitemanager:admin --name="Admin" --email="admin@example.com" --password="password123"
 ```
+
+### 📁 발행되는 파일들
+
+설치 시 다음 파일들이 프로젝트에 복사됩니다:
+
+**설정 파일:**
+- `config/sitemanager.php` - 메인 설정
+- `config/member.php` - 회원 관련 설정  
+- `config/menu.php` - 메뉴 관련 설정
+- `config/permissions.php` - 권한 관련 설정
+
+**뷰 파일:**
+- `resources/views/vendor/sitemanager/` - 모든 뷰 템플릿
+
+**CSS/JS 파일:**
+- `resources/css/vendor/sitemanager/` - CSS 파일들
+- `resources/js/vendor/sitemanager/` - JavaScript 파일들
+
+**DB 마이그레이션:**
+- `database/migrations/` - 데이터베이스 스키마
+
+**Public 자원:**
+- `public/vendor/sitemanager/` - 이미지, 아이콘 등
 
 ## 설정
 
@@ -125,11 +175,14 @@ return [
 ### Console Commands
 
 ```bash
-# 패키지 설치
+# 패키지 설치 (설정 발행, 마이그레이션, 자원 복사 일괄 처리)
 php artisan sitemanager:install
 
-# 관리자 계정 생성
+# 관리자 계정 생성 (대화형)
 php artisan sitemanager:admin
+
+# 관리자 계정 생성 (옵션 사용)
+php artisan sitemanager:admin --name="Admin" --email="admin@test.com" --password="password123"
 
 # S3 연결 테스트
 php artisan sitemanager:test-s3
@@ -141,12 +194,20 @@ php artisan sitemanager:check-s3
 php artisan sitemanager:migrate-images-s3
 ```
 
-### 기본 라우트
+### 접속 및 사용
 
-- **관리자**: `/admin/dashboard`
-- **게시판**: `/board/{slug}`
-- **회원**: `/user/dashboard`
-- **로그인**: `/login`
+설치가 완료되면 다음 주소로 접속할 수 있습니다:
+
+- **관리자 대시보드**: `http://yoursite.com/admin/dashboard`
+- **로그인**: `http://yoursite.com/login`
+- **회원 대시보드**: `http://yoursite.com/user/dashboard`  
+- **게시판**: `http://yoursite.com/board/{slug}`
+
+### 첫 로그인
+
+1. `php artisan sitemanager:admin`으로 생성한 계정으로 `/login`에서 로그인
+2. 관리자 권한으로 `/admin/dashboard` 접속
+3. 메뉴, 게시판, 회원 등을 설정
 
 ### 권한 확인
 
@@ -192,23 +253,67 @@ if (can('writeComments', $board)) {
 
 ## 업데이트
 
+### 패키지 업데이트
+
 ```bash
-# 패키지 업데이트
+# Private Git Server에서 업데이트
 composer update d3141cgit/sitemanager
 
-# 마이그레이션 실행
+# 새로운 마이그레이션이 있다면 실행
 php artisan migrate
 
+# 새로운 설정이나 자원이 추가되었다면 재발행
+php artisan vendor:publish --provider="SiteManager\SiteManagerServiceProvider" --force
+
 # 캐시 클리어
-php artisan config:cache
-php artisan view:cache
+php artisan config:clear
+php artisan view:clear
+php artisan cache:clear
 ```
 
-## 요구사항
+### 버전 관리
 
-- PHP ^8.1
-- Laravel ^10.0
-- MySQL 또는 PostgreSQL
+```bash
+# 특정 커밋으로 설치
+composer require d3141cgit/sitemanager:dev-main#abc1234
+
+# 최신 버전으로 업데이트
+composer require d3141cgit/sitemanager:dev-main
+```
+
+## 문제 해결
+
+### 일반적인 문제들
+
+1. **마이그레이션 오류**: `php artisan migrate:fresh`로 DB 초기화 후 재설치
+2. **권한 문제**: `storage` 및 `bootstrap/cache` 디렉토리 권한 확인
+3. **CSS/JS 로드 안됨**: `php artisan vendor:publish --provider="SiteManager\SiteManagerServiceProvider" --force`
+4. **로그인 안됨**: 관리자 계정 재생성 `php artisan sitemanager:admin`
+
+### 로그 확인
+
+```bash
+# Laravel 로그 확인
+tail -f storage/logs/laravel.log
+
+# 디버그 모드 활성화 (.env)
+APP_DEBUG=true
+```
+
+## 개발 환경 설정
+
+### SSH 키 설정 (Private Git Server 접속용)
+
+```bash
+# SSH 키가 없다면 생성
+ssh-keygen -t rsa -b 4096 -C "your-email@example.com"
+
+# 공개키를 서버에 등록
+ssh-copy-id miles@server
+
+# 연결 테스트
+ssh miles@server
+```
 
 ## 의존성
 
@@ -220,6 +325,12 @@ php artisan view:cache
 
 MIT License
 
+## 연락처
+
+- **개발자**: Songhyun Dong
+- **이메일**: d3141c@gmail.com
+- **저장소**: Private Git Server (ssh://miles@server/home/miles/git/sitemanager.git)
+
 ## 지원
 
-문제가 있거나 기능 요청이 있으시면 GitHub Issues를 통해 알려주세요.
+문제가 있거나 기능 요청이 있으시면 이메일로 연락해 주세요.
