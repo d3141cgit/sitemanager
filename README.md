@@ -52,6 +52,8 @@ Laravel용 완전한 사이트 관리 패키지입니다. 관리자 대시보드
 
 ## 설치방법
 
+> **⚠️ 중요:** 이 패키지는 현재 개발 버전만 제공됩니다. 안정된 릴리스가 없어 명시적으로 `dev-main` 버전을 지정해야 합니다.
+
 ### 📦 방법 1: Private Git Server (권장)
 
 ```bash
@@ -92,12 +94,12 @@ php artisan sitemanager:admin
         }
     ],
     "require": {
-        "d3141c/sitemanager": "*"
+        "d3141c/sitemanager": "dev-main"
     }
 }
 
-# 2. 패키지 설치
-composer require d3141c/sitemanager --prefer-source
+# 2. 패키지 설치 (명시적 버전 지정)
+composer require d3141c/sitemanager:dev-main --prefer-source
 
 # 3. 나머지 설치 과정은 동일
 ```
@@ -115,7 +117,23 @@ php artisan sitemanager:admin
 php artisan sitemanager:admin --name="Admin" --email="admin@example.com" --password="password123"
 ```
 
-### 📁 발행되는 파일들
+### � 설치 트러블슈팅
+
+**패키지 버전 오류가 발생하는 경우:**
+```bash
+# 오류: Could not find a version of package d3141c/sitemanager matching your minimum-stability (stable)
+# 해결: 명시적으로 dev 버전 지정
+composer require d3141c/sitemanager:dev-main --prefer-source
+```
+
+**composer.json 중복 require 섹션 오류:**
+```bash
+# 오류: composer.json에 require 섹션이 중복되어 있는 경우
+# 해결: composer.json을 수정하여 require 섹션을 하나로 통합
+composer update
+```
+
+### �📁 발행되는 파일들
 
 설치 시 다음 파일들이 프로젝트에 복사됩니다:
 
