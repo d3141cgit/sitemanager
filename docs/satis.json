@@ -1,0 +1,20 @@
+{
+    "name": "SiteManager Private Repository",
+    "homepage": "https://packages.your-domain.com",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://git.your-domain.com/d3141cgit/sitemanager.git"
+        }
+    ],
+    "require-all": true,
+    "config": {
+        "secure-http": false
+    },
+    "archive": {
+        "directory": "dist",
+        "format": "tar",
+        "prefix-url": "https://packages.your-domain.com",
+        "skip-dev": true
+    }
+}
