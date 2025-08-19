@@ -58,6 +58,16 @@ class SiteManagerServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../resources/assets' => public_path('vendor/sitemanager'),
             ], 'sitemanager-assets');
+            
+            // 콘솔 명령어 등록
+            $this->commands([
+                \SiteManager\Console\Commands\InstallCommand::class,
+                \SiteManager\Console\Commands\CreateAdminCommand::class,
+                \SiteManager\Console\Commands\TestS3Connection::class,
+                \SiteManager\Console\Commands\CheckS3Configuration::class,
+                \SiteManager\Console\Commands\MigrateImagesToS3::class,
+                \SiteManager\Console\Commands\ResourceCommand::class,
+            ]);
         }
         
         // 권한 정의
@@ -69,6 +79,16 @@ class SiteManagerServiceProvider extends ServiceProvider
         // 서비스 바인딩
         $this->app->singleton(BoardService::class);
         $this->app->singleton(ConfigService::class);
+        
+        // Repository 바인딩
+        $this->app->bind(
+            \SiteManager\Repositories\MemberRepositoryInterface::class,
+            \SiteManager\Repositories\MemberRepository::class
+        );
+        $this->app->bind(
+            \SiteManager\Repositories\MenuRepositoryInterface::class,
+            \SiteManager\Repositories\MenuRepository::class
+        );
         
         // 별칭 등록
         $this->app->alias(BoardService::class, 'sitemanager.board');

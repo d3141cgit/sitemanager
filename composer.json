@@ -25,7 +25,9 @@
             "SiteManager\\": "src/"
         },
         "files": [
-            "src/Helpers/functions.php"
+            "src/Helpers/functions.php",
+            "src/Helpers/helpers.php",
+            "src/Helpers/navigation_helpers.php"
         ]
     },
     "autoload-dev": {

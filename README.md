@@ -27,6 +27,12 @@ Laravel용 완전한 사이트 관리 패키지입니다. 관리자 대시보드
 - ✅ **비밀번호 변경** - 보안 관리
 - ✅ **그룹 참여** - 회원 그룹 관리
 
+### 아키텍처 패턴
+- ✅ **Repository Pattern** - 데이터 접근 계층 분리
+- ✅ **Service Layer** - 비즈니스 로직 캡슐화
+- ✅ **Console Commands** - 설치 및 관리 명령어
+- ✅ **View Components** - 재사용 가능한 뷰 컴포넌트
+
 ## 설치
 
 ### 1. Composer로 패키지 설치
@@ -52,21 +58,23 @@ composer require d3141cgit/sitemanager
 ### 2. 설정 파일 발행
 
 ```bash
-# 설정 파일 발행
+# 빠른 설치 (권장)
+php artisan sitemanager:install
+
+# 또는 수동 설치
 php artisan vendor:publish --tag=sitemanager-config
-
-# 마이그레이션 실행
 php artisan migrate
-
-# 에셋 발행 (선택적)
 php artisan vendor:publish --tag=sitemanager-assets
 ```
 
-### 3. 뷰 커스터마이징 (선택적)
+### 3. 관리자 계정 생성
 
 ```bash
-# 뷰 파일을 커스터마이징하려면
-php artisan vendor:publish --tag=sitemanager-views
+# 대화형으로 관리자 생성
+php artisan sitemanager:admin
+
+# 또는 옵션으로 직접 생성
+php artisan sitemanager:admin --name="Admin" --email="admin@example.com" --password="password"
 ```
 
 ## 설정
@@ -105,6 +113,25 @@ return [
 ```
 
 ## 사용법
+
+### Console Commands
+
+```bash
+# 패키지 설치
+php artisan sitemanager:install
+
+# 관리자 계정 생성
+php artisan sitemanager:admin
+
+# S3 연결 테스트
+php artisan sitemanager:test-s3
+
+# S3 설정 확인
+php artisan sitemanager:check-s3
+
+# 이미지를 S3로 마이그레이션
+php artisan sitemanager:migrate-images-s3
+```
 
 ### 기본 라우트
 
