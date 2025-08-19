@@ -61,11 +61,14 @@ composer create-project laravel/laravel your-project-name
 # 2. 프로젝트 디렉토리로 이동
 cd your-project-name
 
-# 3. Git 저장소 등록
+# 3. Git 저장소 등록 (로컬 접속)
 composer config repositories.sitemanager vcs ssh://miles@server/home/miles/git/sitemanager.git
 
+# 또는 외부 접속
+composer config repositories.sitemanager vcs ssh://miles@d3141c.ddns.net/home/miles/git/sitemanager.git
+
 # 4. 패키지 설치
-composer require d3141cgit/sitemanager:dev-main
+composer require d3141c/sitemanager:dev-main
 
 # 5. 설정 파일 및 자원 발행
 php artisan vendor:publish --provider="SiteManager\SiteManagerServiceProvider"
@@ -89,12 +92,12 @@ php artisan sitemanager:admin
         }
     ],
     "require": {
-        "d3141cgit/sitemanager": "*"
+        "d3141c/sitemanager": "*"
     }
 }
 
 # 2. 패키지 설치
-composer require d3141cgit/sitemanager --prefer-source
+composer require d3141c/sitemanager --prefer-source
 
 # 3. 나머지 설치 과정은 동일
 ```
@@ -256,8 +259,12 @@ if (can('writeComments', $board)) {
 ### 패키지 업데이트
 
 ```bash
-# Private Git Server에서 업데이트
-composer update d3141cgit/sitemanager
+# Private Git Server에서 업데이트 (로컬)
+composer update d3141c/sitemanager
+
+# 또는 외부에서 접속 시
+composer config repositories.sitemanager vcs ssh://miles@d3141c.ddns.net/home/miles/git/sitemanager.git
+composer update d3141c/sitemanager
 
 # 새로운 마이그레이션이 있다면 실행
 php artisan migrate
@@ -275,10 +282,10 @@ php artisan cache:clear
 
 ```bash
 # 특정 커밋으로 설치
-composer require d3141cgit/sitemanager:dev-main#abc1234
+composer require d3141c/sitemanager:dev-main#abc1234
 
 # 최신 버전으로 업데이트
-composer require d3141cgit/sitemanager:dev-main
+composer require d3141c/sitemanager:dev-main
 ```
 
 ## 문제 해결
@@ -355,7 +362,7 @@ git push origin main
 
 # 4. 프로젝트에서 패키지 업데이트
 cd /path/to/your/project
-composer update d3141cgit/sitemanager
+composer update d3141c/sitemanager
 ```
 
 ### 🔄 변경사항 서버 적용 과정
@@ -386,10 +393,10 @@ git push origin main
 ```bash
 # 각 프로젝트에서 패키지 업데이트
 cd /path/to/project1
-composer update d3141cgit/sitemanager
+composer update d3141c/sitemanager
 
 cd /path/to/project2  
-composer update d3141cgit/sitemanager
+composer update d3141c/sitemanager
 
 # 필요시 새로운 마이그레이션이나 설정 발행
 php artisan migrate
@@ -400,17 +407,17 @@ php artisan vendor:publish --provider="SiteManager\SiteManagerServiceProvider" -
 
 ```bash
 # 패키지를 심볼릭 링크로 설치 (개발용)
-composer require d3141cgit/sitemanager --prefer-source
+composer require d3141c/sitemanager --prefer-source
 
 # 패키지를 실제 파일로 설치 (운영용)
-composer require d3141cgit/sitemanager --prefer-dist
+composer require d3141c/sitemanager --prefer-dist
 
 # 특정 커밋으로 설치
-composer require d3141cgit/sitemanager:dev-main#abc1234
+composer require d3141c/sitemanager:dev-main#abc1234
 
 # 캐시 강제 새로고침
 composer clear-cache
-composer update d3141cgit/sitemanager --no-cache
+composer update d3141c/sitemanager --no-cache
 ```
 
 ### 🔧 로컬 개발 환경 예시
@@ -446,11 +453,17 @@ composer update d3141cgit/sitemanager --no-cache
 # SSH 키가 없다면 생성
 ssh-keygen -t rsa -b 4096 -C "your-email@example.com"
 
-# 공개키를 서버에 등록
+# 공개키를 서버에 등록 (로컬)
 ssh-copy-id miles@server
 
-# 연결 테스트
+# 공개키를 서버에 등록 (외부)
+ssh-copy-id miles@d3141c.ddns.net
+
+# 연결 테스트 (로컬)
 ssh miles@server
+
+# 연결 테스트 (외부)
+ssh miles@d3141c.ddns.net
 ```
 
 ## 의존성
@@ -465,9 +478,11 @@ MIT License
 
 ## 연락처
 
-- **개발자**: Songhyun Dong
+- **개발자**: Songhyun Dong (d3141c)
 - **이메일**: d3141c@gmail.com
-- **저장소**: Private Git Server (ssh://miles@server/home/miles/git/sitemanager.git)
+- **저장소**: 
+  - 로컬: ssh://miles@server/home/miles/git/sitemanager.git
+  - 외부: ssh://miles@d3141c.ddns.net/home/miles/git/sitemanager.git
 
 ## 지원
 
