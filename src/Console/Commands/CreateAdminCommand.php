@@ -37,6 +37,7 @@ class CreateAdminCommand extends Command
         // 관리자 생성
         $admin = Member::create([
             'name' => $name,
+            'username' => strtolower(str_replace(' ', '', $name)), // 이름에서 공백 제거한 소문자
             'email' => $email,
             'password' => Hash::make($password),
             'level' => config('sitemanager.permissions.admin_level', 200),
