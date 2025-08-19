@@ -22,6 +22,13 @@ class InstallCommand extends Command
             '--force' => $this->option('force')
         ]);
         
+        // CSS/JS 리소스 발행
+        $this->info('Publishing CSS/JS resources...');
+        Artisan::call('vendor:publish', [
+            '--tag' => 'sitemanager-resources',
+            '--force' => $this->option('force')
+        ]);
+        
         // 마이그레이션 실행
         $this->info('Running migrations...');
         Artisan::call('migrate', [

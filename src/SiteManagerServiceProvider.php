@@ -17,6 +17,9 @@ class SiteManagerServiceProvider extends ServiceProvider
     {
         // 설정 파일 로드
         $this->mergeConfigFrom(__DIR__.'/../config/sitemanager.php', 'sitemanager');
+        $this->mergeConfigFrom(__DIR__.'/../config/member.php', 'member');
+        $this->mergeConfigFrom(__DIR__.'/../config/menu.php', 'menu');
+        $this->mergeConfigFrom(__DIR__.'/../config/permissions.php', 'permissions');
         
         // 뷰 로드
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'sitemanager');
@@ -42,12 +45,21 @@ class SiteManagerServiceProvider extends ServiceProvider
             // 설정 파일 발행
             $this->publishes([
                 __DIR__.'/../config/sitemanager.php' => config_path('sitemanager.php'),
+                __DIR__.'/../config/member.php' => config_path('member.php'),
+                __DIR__.'/../config/menu.php' => config_path('menu.php'),
+                __DIR__.'/../config/permissions.php' => config_path('permissions.php'),
             ], 'sitemanager-config');
             
             // 뷰 파일 발행 (커스터마이징용)
             $this->publishes([
                 __DIR__.'/../resources/views' => resource_path('views/vendor/sitemanager'),
             ], 'sitemanager-views');
+            
+            // CSS/JS 리소스 발행
+            $this->publishes([
+                __DIR__.'/../resources/css' => resource_path('css/vendor/sitemanager'),
+                __DIR__.'/../resources/js' => resource_path('js/vendor/sitemanager'),
+            ], 'sitemanager-resources');
             
             // 마이그레이션 발행
             $this->publishes([

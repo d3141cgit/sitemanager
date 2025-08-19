@@ -62,9 +62,17 @@ composer require d3141cgit/sitemanager
 php artisan sitemanager:install
 
 # 또는 수동 설치
-php artisan vendor:publish --tag=sitemanager-config
+php artisan vendor:publish --tag=sitemanager-config      # 설정 파일들
+php artisan vendor:publish --tag=sitemanager-resources   # CSS/JS 파일들
 php artisan migrate
-php artisan vendor:publish --tag=sitemanager-assets
+php artisan vendor:publish --tag=sitemanager-assets      # 이미지 등 에셋
+```
+
+### 3. 뷰 커스터마이징 (선택적)
+
+```bash
+# 뷰 파일을 커스터마이징하려면
+php artisan vendor:publish --tag=sitemanager-views
 ```
 
 ### 3. 관리자 계정 생성
