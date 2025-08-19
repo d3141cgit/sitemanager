@@ -1,0 +1,48 @@
+{
+    "name": "d3141cgit/sitemanager",
+    "description": "Site Manager Package - Complete Admin & Board Management System",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Songhyun Dong",
+            "email": "d3141c@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "laravel/framework": "^10.0",
+        "kalnoy/nestedset": "^6.0",
+        "intervention/image": "^3.0",
+        "aws/aws-sdk-php": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0",
+        "orchestra/testbench": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SiteManager\\": "src/"
+        },
+        "files": [
+            "src/Helpers/functions.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SiteManager\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "SiteManager\\SiteManagerServiceProvider"
+            ],
+            "aliases": {
+                "SiteManager": "SiteManager\\Facades\\SiteManager"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

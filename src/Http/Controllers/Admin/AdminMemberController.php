@@ -1,0 +1,302 @@
+<?php
+
+namespace SiteManager\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use SiteManager\Models\Member;
+use SiteManager\Models\Group;
+use SiteManager\Services\FileUploadService;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+
+class AdminMemberController extends Controller
+{
+    public function __construct(
+        private FileUploadService $fileUploadService
+    ) {}
+    /**
+     * 멤버 목록 (관리자용)
+     */
+    public function index(Request $request)
+    {
+        $query = Member::with('groups');
+
+        // 삭제된 멤버 포함 여부
+        if ($request->get('status') === 'deleted') {
+            $query->onlyTrashed();
+        }
+        // } elseif ($request->get('status') !== 'all') {
+        //     $query->withTrashed();
+        // }
+
+        // 검색 필터
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        // 상태 필터 (active/inactive, 삭제된 것 제외)
+        if ($request->filled('status') && in_array($request->get('status'), ['active', 'inactive'])) {
+            $query->where('active', $request->get('status') === 'active');
+        }
+
+        // 그룹 필터
+        if ($request->filled('group_id')) {
+            $query->whereHas('groups', function($q) use ($request) {
+                $q->where('group_id', $request->get('group_id'));
+            });
+        }
+
+        // 레벨 필터
+        if ($request->filled('level')) {
+            $query->where('level', $request->get('level'));
+        }
+
+        $members = $query->paginate(20)->appends($request->query());
+        $groups = Group::orderBy('name')->get();
+        $levels = config('member.levels');
+
+        return view('admin.members.index', compact('members', 'groups', 'levels'));
+    }
+
+    /**
+     * 멤버 상세 보기 (edit으로 리다이렉트)
+     */
+    public function show(Member $member)
+    {
+        return redirect()->route('admin.members.edit', $member);
+    }
+
+    /**
+     * 멤버 생성 폼
+     */
+    public function create()
+    {
+        $groups = Group::orderBy('name')->get();
+        $levels = config('member.levels');
+        return view('admin.members.form', compact('groups', 'levels'));
+    }
+
+    /**
+     * 멤버 생성
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'username' => 'required|string|max:50|unique:members,username',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:members,email',
+            'phone' => 'nullable|string|max:20',
+            'password' => 'required|string|min:8|confirmed',
+            'level' => 'required|integer|between:1,9',
+            'active' => 'boolean',
+            'groups' => 'array',
+            'groups.*' => 'exists:groups,id',
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $validated['password'] = bcrypt($validated['password']);
+        
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            $file = $request->file('profile_photo');
+            $fileInfo = $this->fileUploadService->uploadProfilePhoto($file);
+            $validated['profile_photo'] = $fileInfo['path'];
+        }
+        
+        $member = Member::create($validated);
+        
+        if (isset($validated['groups'])) {
+            $member->groups()->sync($validated['groups']);
+        }
+
+        return redirect()->route('admin.members.index')
+            ->with('success', '멤버가 성공적으로 생성되었습니다.');
+    }
+
+    /**
+     * 멤버 수정 폼
+     */
+    public function edit(Member $member)
+    {
+        $groups = Group::orderBy('name')->get();
+        $levels = config('member.levels');
+        $member->load('groups');
+
+        if ($member->id === 1 && Auth::user()->level !== 255) {
+            abort(403, '루트 권한이 필요합니다.');
+        }
+
+        return view('admin.members.form', compact('member', 'groups', 'levels'));
+    }
+
+    /**
+     * 멤버 수정
+     */
+    public function update(Request $request, Member $member)
+    {
+        // 루트 멤버(id=1)는 level 255만 수정 가능
+        if ($member->id === 1 && Auth::user()->level !== 255) {
+            abort(403, '루트 권한이 필요합니다.');
+        }
+
+        // 루트 멤버(id=1)의 username 변경 방지
+        if ($member->id === 1 && $request->has('username') && $request->username !== $member->username) {
+            return redirect()->back()
+                ->withErrors(['username' => 'Root user\'s username cannot be changed.'])
+                ->withInput();
+        }
+        
+        $validated = $request->validate([
+            'username' => ['required', 'string', 'max:50', Rule::unique('members')->ignore($member->id)],
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'email', Rule::unique('members')->ignore($member->id)],
+            'phone' => 'nullable|string|max:20',
+            'password' => 'nullable|string|min:8|confirmed',
+            'level' => 'required|integer|between:0,255',
+            'active' => 'boolean',
+            'groups' => 'array',
+            'groups.*' => 'exists:groups,id',
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'remove_profile_photo' => 'boolean',
+        ]);
+
+        // Handle profile photo removal
+        if ($request->get('remove_profile_photo') == '1' && $member->profile_photo) {
+            $this->fileUploadService->deleteFile($member->profile_photo);
+            $validated['profile_photo'] = null;
+        }
+
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            // Delete old photo if exists
+            if ($member->profile_photo) {
+                $this->fileUploadService->deleteFile($member->profile_photo);
+            }
+            
+            $file = $request->file('profile_photo');
+            $fileInfo = $this->fileUploadService->uploadProfilePhoto($file);
+            $validated['profile_photo'] = $fileInfo['path'];
+        }
+
+        if (empty($validated['password'])) {
+            unset($validated['password']);
+        } else {
+            $validated['password'] = bcrypt($validated['password']);
+        }
+
+        $member->update($validated);
+        
+        if (isset($validated['groups'])) {
+            $member->groups()->sync($validated['groups']);
+        }
+
+        return redirect()->route('admin.members.show', $member)
+            ->with('success', '멤버 정보가 성공적으로 수정되었습니다.');
+    }
+
+    /**
+     * 멤버 삭제 (소프트 삭제)
+     */
+    public function destroy(Member $member)
+    {
+        // 루트 멤버(id=1) 삭제 방지
+        if ($member->id === 1) {
+            return redirect()->route('admin.members.index')
+                ->with('error', 'Root user cannot be deleted.');
+        }
+        
+        $member->delete();
+        
+        return redirect()->route('admin.members.index')
+            ->with('success', '멤버가 성공적으로 삭제되었습니다.');
+    }
+
+    /**
+     * 멤버 복원
+     */
+    public function restore($id)
+    {
+        $member = Member::withTrashed()->findOrFail($id);
+        $member->restore();
+        
+        return redirect()->route('admin.members.index')
+            ->with('success', '멤버가 성공적으로 복원되었습니다.');
+    }
+
+    /**
+     * 멤버 완전 삭제
+     */
+    public function forceDelete($id)
+    {
+        $member = Member::withTrashed()->findOrFail($id);
+        
+        // 루트 멤버(id=1) 완전 삭제 방지
+        if ($member->id === 1) {
+            return redirect()->route('admin.members.index')
+                ->with('error', 'Root user cannot be permanently deleted.');
+        }
+        
+        $member->forceDelete();
+        
+        return redirect()->route('admin.members.index')
+            ->with('success', '멤버가 완전히 삭제되었습니다.');
+    }
+
+    /**
+     * 멤버 상태 토글 (AJAX)
+     */
+    public function toggleStatus(Request $request, Member $member)
+    {
+        $member->update(['active' => $request->boolean('active')]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => '멤버 상태가 변경되었습니다.',
+            'active' => $member->active
+        ]);
+    }
+
+    /**
+     * 멤버 검색 (AJAX)
+     */
+    public function search(Request $request)
+    {
+        try {
+            $query = $request->get('q');
+            
+            if (strlen($query) < 2) {
+                return response()->json([]);
+            }
+            
+            $members = Member::where('active', true)
+                ->where('id', '!=', 1) // root 사용자 제외
+                ->where(function($q) use ($query) {
+                    $q->where('name', 'like', "%{$query}%")
+                      ->orWhere('username', 'like', "%{$query}%")
+                      ->orWhere('email', 'like', "%{$query}%");
+                })
+                ->select('id', 'name', 'username', 'email')
+                ->limit(20)
+                ->get();
+            
+            return response()->json($members);
+            
+        } catch (\Exception $e) {
+            Log::error('Member search error: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Search failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+}
