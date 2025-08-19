@@ -300,6 +300,144 @@ tail -f storage/logs/laravel.log
 APP_DEBUG=true
 ```
 
+## 개발 워크플로우
+
+### ⚠️ 중요: vendor/ 디렉토리에서 직접 수정하지 마세요!
+
+`vendor/d3141cgit/sitemanager`에서 직접 수정하면 `composer update` 시 모든 변경사항이 사라집니다.
+
+### 📝 올바른 패키지 수정 방법
+
+#### 방법 1: 패키지 개발 환경 구성 (권장)
+
+```bash
+# 1. 패키지 소스를 로컬에 클론
+cd /path/to/your/packages
+git clone ssh://miles@server/home/miles/git/sitemanager.git
+
+# 2. 프로젝트의 composer.json에 로컬 패키지 경로 설정
+{
+    "repositories": [
+        {
+            "type": "path",
+            "url": "/path/to/your/packages/sitemanager",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "require": {
+        "d3141cgit/sitemanager": "*"
+    }
+}
+
+# 3. 패키지 재설치 (심볼릭 링크로)
+composer remove d3141cgit/sitemanager
+composer require d3141cgit/sitemanager --prefer-source
+```
+
+이제 `/path/to/your/packages/sitemanager`에서 수정하면 프로젝트에 바로 반영됩니다.
+
+#### 방법 2: Fork & 개발
+
+```bash
+# 1. 패키지를 별도 디렉토리에 클론
+git clone ssh://miles@server/home/miles/git/sitemanager.git sitemanager-dev
+cd sitemanager-dev
+
+# 2. 수정 작업 수행
+# 파일 수정...
+
+# 3. 변경사항 커밋
+git add .
+git commit -m "Fix: something"
+git push origin main
+
+# 4. 프로젝트에서 패키지 업데이트
+cd /path/to/your/project
+composer update d3141cgit/sitemanager
+```
+
+### 🔄 변경사항 서버 적용 과정
+
+#### 1. 패키지 개발 및 테스트
+
+```bash
+# 패키지 개발 디렉토리에서
+cd /path/to/packages/sitemanager
+
+# 수정 작업 수행
+vim src/Http/Controllers/SomeController.php
+
+# 테스트 (연결된 프로젝트에서 바로 확인 가능)
+```
+
+#### 2. 변경사항 커밋 및 푸시
+
+```bash
+# 패키지 디렉토리에서
+git add .
+git commit -m "Feature: Add new functionality"
+git push origin main
+```
+
+#### 3. 다른 프로젝트들에 배포
+
+```bash
+# 각 프로젝트에서 패키지 업데이트
+cd /path/to/project1
+composer update d3141cgit/sitemanager
+
+cd /path/to/project2  
+composer update d3141cgit/sitemanager
+
+# 필요시 새로운 마이그레이션이나 설정 발행
+php artisan migrate
+php artisan vendor:publish --provider="SiteManager\SiteManagerServiceProvider" --force
+```
+
+### 🛠️ 개발 시 유용한 명령어
+
+```bash
+# 패키지를 심볼릭 링크로 설치 (개발용)
+composer require d3141cgit/sitemanager --prefer-source
+
+# 패키지를 실제 파일로 설치 (운영용)
+composer require d3141cgit/sitemanager --prefer-dist
+
+# 특정 커밋으로 설치
+composer require d3141cgit/sitemanager:dev-main#abc1234
+
+# 캐시 강제 새로고침
+composer clear-cache
+composer update d3141cgit/sitemanager --no-cache
+```
+
+### 🔧 로컬 개발 환경 예시
+
+```bash
+# 디렉토리 구조
+/Users/yourname/
+├── packages/
+│   └── sitemanager/          # 패키지 개발
+├── projects/
+│   ├── church-site1/         # 프로젝트 1
+│   ├── church-site2/         # 프로젝트 2
+│   └── church-site3/         # 프로젝트 3
+
+# 각 프로젝트의 composer.json
+{
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../packages/sitemanager"
+        }
+    ]
+}
+```
+
+이렇게 하면 `packages/sitemanager`에서 수정한 내용이 모든 프로젝트에 바로 반영됩니다!
+
 ## 개발 환경 설정
 
 ### SSH 키 설정 (Private Git Server 접속용)
