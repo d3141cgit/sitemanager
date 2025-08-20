@@ -109,23 +109,36 @@
                                     프로덕션 환경이나 일반적인 Laravel 프로젝트에서 사용하는 방법
                                 </p>
                                 <div class="code-block">
-                                    <code># 1. 패키지 설치
+                                    <code># 1. Laravel 프로젝트 생성
+composer create-project laravel/laravel my-website
+cd my-website
+
+# 2. 패키지 설치
 composer require d3141c/sitemanager:dev-main
 
-# 2. 설정 파일 발행
-php artisan vendor:publish --provider="SiteManager\SiteManagerServiceProvider"
+# 3. 환경 설정 (.env 파일에서 데이터베이스 설정)
+DB_CONNECTION=sqlite
+DB_DATABASE=/absolute/path/to/database.sqlite
 
-# 3. 데이터베이스 마이그레이션
-php artisan migrate
+# 4. 🎯 SiteManager 설치 (통합 설치 명령어)
+php artisan sitemanager:install
 
-# 4. 관리자 계정 생성
+# 5. 관리자 계정 생성
 php artisan sitemanager:admin
 
-# 5. Storage 심볼릭 링크 생성
-php artisan storage:link
-
-# 6. 서버 실행
+# 6. 개발 서버 시작
 php artisan serve</code>
+                                </div>
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-lightbulb"></i>
+                                    <strong>자동화된 설치:</strong> <code>sitemanager:install</code> 명령어가 다음을 자동으로 처리합니다:
+                                    <ul class="mb-0 mt-2">
+                                        <li>기존 Laravel 마이그레이션 백업</li>
+                                        <li>SiteManager 설정 파일 발행</li>
+                                        <li>데이터베이스 마이그레이션 실행</li>
+                                        <li>관리자 이미지 발행</li>
+                                        <li>홈 라우트 자동 설정</li>
+                                    </ul>
                                 </div>
                             </div>
                             
@@ -140,47 +153,38 @@ php artisan serve</code>
 git clone https://github.com/d3141c/sitemanager.git
 cd sitemanager
 
-# 2. 패키지 의존성 설치
-composer install
-
-# 3. 새 Laravel 프로젝트 생성 (또는 기존 프로젝트 사용)
+# 2. 새 Laravel 프로젝트 생성
 cd projects
 composer create-project laravel/laravel example.com
 cd example.com
 
-# 4. composer.json에 로컬 패키지 경로 추가
-# composer.json의 repositories 섹션에 추가:
-# "repositories": [
-#     {
-#         "type": "path",
-#         "url": "../../packages/sitemanager"
-#     }
-# ]
+# 3. 로컬 패키지 경로 추가
+composer config repositories.sitemanager path ../../../packages/sitemanager
 
-# 5. 로컬 패키지 설치
-composer require d3141c/sitemanager:dev-main
+# 4. 로컬 패키지 설치
+composer require sitemanager/sitemanager
 
-# 6. 환경 설정 파일 복사 및 수정
+# 5. 환경 설정 (.env 파일에서 데이터베이스 설정)
 cp .env.example .env
-# .env 파일에서 데이터베이스 설정
-
-# 7. 애플리케이션 키 생성
 php artisan key:generate
 
-# 8. 설정 파일 발행
-php artisan vendor:publish --provider="SiteManager\SiteManagerServiceProvider"
+# 6. 🎯 SiteManager 설치 (통합 설치 명령어)
+php artisan sitemanager:install
 
-# 9. 데이터베이스 마이그레이션
-php artisan migrate
-
-# 10. 관리자 계정 생성
+# 7. 관리자 계정 생성
 php artisan sitemanager:admin
 
-# 11. Storage 심볼릭 링크 생성
-php artisan storage:link
-
-# 12. 서버 실행
+# 8. 개발 서버 시작
 php artisan serve</code>
+                                </div>
+                                <div class="alert alert-success mt-3">
+                                    <i class="bi bi-check-circle"></i>
+                                    <strong>개발자 모드:</strong> 로컬 패키지 개발 시 다음 명령어들이 유용합니다:
+                                    <ul class="mb-0 mt-2">
+                                        <li><code>php artisan resource clear</code> - 리소스 캐시 정리</li>
+                                        <li><code>php artisan resource build</code> - 프로덕션 빌드</li>
+                                        <li><code>php artisan view:clear</code> - 뷰 캐시 정리</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>

@@ -76,13 +76,13 @@ class SiteManagerServiceProvider extends ServiceProvider
             ], 'sitemanager-views');
             
             // 스타터 템플릿 발행 (일반 사이트용 - 프로젝트 루트로)
-            $this->publishes([
-                __DIR__.'/../resources/views/layouts/app.blade.php' => resource_path('views/layouts/app.blade.php'),
-                __DIR__.'/../resources/views/main.blade.php' => resource_path('views/welcome.blade.php'),
-                __DIR__.'/../resources/views/board' => resource_path('views/board'),
-                __DIR__.'/../resources/views/auth' => resource_path('views/auth'),
-                __DIR__.'/../resources/views/components' => resource_path('views/components'),
-            ], 'sitemanager-starter');
+            // $this->publishes([
+            //     __DIR__.'/../resources/views/layouts/app.blade.php' => resource_path('views/layouts/app.blade.php'),
+            //     __DIR__.'/../resources/views/main.blade.php' => resource_path('views/welcome.blade.php'),
+            //     __DIR__.'/../resources/views/board' => resource_path('views/board'),
+            //     __DIR__.'/../resources/views/auth' => resource_path('views/auth'),
+            //     __DIR__.'/../resources/views/components' => resource_path('views/components'),
+            // ], 'sitemanager-starter');
             
             // 마이그레이션 발행
             $this->publishes([
@@ -90,11 +90,11 @@ class SiteManagerServiceProvider extends ServiceProvider
             ], 'sitemanager-migrations');
             
             // 에셋 발행
-            $this->publishes([
-                __DIR__.'/../resources/assets' => public_path('vendor/sitemanager'),
-                __DIR__.'/../resources/css' => public_path('vendor/sitemanager/css'),
-                __DIR__.'/../resources/js' => public_path('vendor/sitemanager/js'),
-            ], 'sitemanager-assets');
+            // $this->publishes([
+            //     __DIR__.'/../resources/assets' => public_path('vendor/sitemanager'),
+            //     __DIR__.'/../resources/css' => public_path('vendor/sitemanager/css'),
+            //     __DIR__.'/../resources/js' => public_path('vendor/sitemanager/js'),
+            // ], 'sitemanager-assets');
             
             // 기본 이미지 발행 (Admin용)
             $this->publishes([
