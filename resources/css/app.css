@@ -20,7 +20,7 @@ And Additional big display sizes - (min-width: 1200px) and (max-width: 1199px)
     --font-condensed:   'Roboto Condensed', sans-serif;
 
     /* Custom Shadows */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-sm: 0 2px 3px 0 rgb(0 0 0 / 0.05);
     --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -147,7 +147,7 @@ body > aside { background-color: #fff; padding: 1.5rem 0; overflow-y: auto; posi
 body > aside.show { left: 0; } /* Show aside when menu is open */
 
 @media (min-width: 768px) {
-    body > aside { position: static; left: auto; top: auto; width: auto; height: 100%; z-index: auto; transition: none; display: block; }
+    body > aside { position: static; left: auto; top: auto; width: auto; height: 100%; z-index: auto; transition: none; display: block; box-shadow: var(--shadow); }
     body > aside .user-nav { display: none; }
     .sidebar-overlay { display: none; }
 }
