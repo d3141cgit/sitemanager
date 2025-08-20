@@ -24,13 +24,6 @@ class InstallCommand extends Command
             '--force' => $this->option('force')
         ]);
         
-        // CSS/JS 리소스 발행
-        $this->info('Publishing CSS/JS resources...');
-        Artisan::call('vendor:publish', [
-            '--tag' => 'sitemanager-resources',
-            '--force' => $this->option('force')
-        ]);
-        
         // 마이그레이션 실행
         $this->info('Running migrations...');
         Artisan::call('migrate', [
@@ -73,7 +66,12 @@ class InstallCommand extends Command
             $this->line('3. Build your frontend with your preferred tools');
         }
         $this->line('');
-        $this->line('📚 Documentation: Check README.md for more details');
+        $this->line('� Using package resources:');
+        $this->line('• CSS: {!! resource(\'sitemanager::css/admin/admin.css\') !!}');
+        $this->line('• JS:  {!! resource(\'sitemanager::js/admin/admin.js\') !!}');
+        $this->line('• Build for production: php artisan resource build');
+        $this->line('');
+        $this->line('�📚 Documentation: Check README.md for more details');
         $this->line('🐛 Issues: Report at your repository issue tracker');
         
         return 0;

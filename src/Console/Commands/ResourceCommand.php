@@ -115,6 +115,13 @@ class ResourceCommand extends Command
             }
 
             $pathInfo = pathinfo($asset->original);
+            
+            // sitemanager:: 패키지 리소스인 경우 깨끗한 경로 사용
+            if (str_starts_with($asset->original, 'sitemanager::')) {
+                $cleanPath = str_replace('sitemanager::', '', $asset->original);
+                $pathInfo = pathinfo($cleanPath);
+            }
+            
             $dirname = $pathInfo['dirname'] !== '.' ? $pathInfo['dirname'] . '/' : '';
             $filename = $pathInfo['filename'];
             $ext = $pathInfo['extension'];

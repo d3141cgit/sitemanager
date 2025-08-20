@@ -8,8 +8,8 @@
     <title>@yield('title', 'Admin Panel') - Site Manager</title>
     
     {!! setResources(['jquery', 'bootstrap', 'sweetalert']) !!}
-    {!! resource('css/admin/admin.css') !!}
-    {!! resource('js/admin/admin.js') !!}
+    {!! resource('sitemanager::css/admin/admin.css') !!}
+    {!! resource('sitemanager::js/admin/admin.js') !!}
     
     @stack('styles')
     @yield('head')

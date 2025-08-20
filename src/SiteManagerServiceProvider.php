@@ -77,12 +77,6 @@ class SiteManagerServiceProvider extends ServiceProvider
                 __DIR__.'/../resources/views/components' => resource_path('views/components'),
             ], 'sitemanager-starter');
             
-            // CSS/JS 리소스 발행
-            $this->publishes([
-                __DIR__.'/../resources/css' => resource_path('css'),
-                __DIR__.'/../resources/js' => resource_path('js'),
-            ], 'sitemanager-resources');
-            
             // 마이그레이션 발행
             $this->publishes([
                 __DIR__.'/../database/migrations' => database_path('migrations'),

@@ -34,18 +34,26 @@ if (!function_exists('processResource')) {
      */
     function processResource(string $assetPath, array $options = []): string
     {
-        $resourcePath = resource_path($assetPath);
+        // sitemanager:: 패키지 리소스 처리
+        if (str_starts_with($assetPath, 'sitemanager::')) {
+            $packagePath = str_replace('sitemanager::', '', $assetPath);
+            $resourcePath = __DIR__ . "/../../resources/{$packagePath}";
+            $cleanAssetPath = $packagePath; // Hash 생성에는 깨끗한 경로 사용
+        } else {
+            $resourcePath = resource_path($assetPath);
+            $cleanAssetPath = $assetPath;
+        }
         
         if (!file_exists($resourcePath)) {
             Log::warning("Resource file not found: {$assetPath}");
             return '';
         }
 
-        $fileInfo = pathinfo($assetPath);
+        $fileInfo = pathinfo($cleanAssetPath);
         $ext = strtolower($fileInfo['extension'] ?? '');
         $mtime = filemtime($resourcePath);
         $size = filesize($resourcePath);
-        $hash = Asset::generateHash($assetPath, $mtime);
+        $hash = Asset::generateHash($cleanAssetPath, $mtime);
 
         // 데이터베이스에서 기존 에셋 조회
         $asset = Asset::where('original', $assetPath)->first();
@@ -59,7 +67,7 @@ if (!function_exists('processResource')) {
         }
 
         // 새로운 파일 또는 변경된 파일 처리
-        $copiedFileName = generateCopiedFileName($assetPath, $hash, $ext);
+        $copiedFileName = generateCopiedFileName($cleanAssetPath, $hash, $ext);
         
         // 이전 파일 정리
         if ($asset && $asset->copied !== $copiedFileName) {
@@ -105,6 +113,14 @@ if (!function_exists('getCachedResource')) {
         $filename = $fileInfo['filename'];
         $dirname = $fileInfo['dirname'] !== '.' ? $fileInfo['dirname'] . '/' : '';
         
+        // sitemanager:: 패키지 리소스인 경우 패키지 경로로 처리
+        if (str_starts_with($assetPath, 'sitemanager::')) {
+            $cleanPath = str_replace('sitemanager::', '', $assetPath);
+            $fileInfo = pathinfo($cleanPath);
+            $dirname = $fileInfo['dirname'] !== '.' ? $fileInfo['dirname'] . '/' : '';
+            $filename = $fileInfo['filename'];
+        }
+        
         $versionedPath = "{$dirname}{$filename}-{$version}.{$ext}";
         $publicPath = public_path("assets/{$versionedPath}");
         
@@ -123,7 +139,12 @@ if (!function_exists('generateCopiedFileName')) {
      */
     function generateCopiedFileName(string $originalPath, string $hash, string $ext): string
     {
-        $pathInfo = pathinfo($originalPath);
+        // sitemanager:: 패키지 접두사 제거
+        $cleanPath = str_starts_with($originalPath, 'sitemanager::') 
+            ? str_replace('sitemanager::', '', $originalPath)
+            : $originalPath;
+            
+        $pathInfo = pathinfo($cleanPath);
         $baseDir = $pathInfo['dirname'] !== '.' ? str_replace('/', '-', $pathInfo['dirname']) . '-' : '';
         $baseName = $pathInfo['filename'];
         
