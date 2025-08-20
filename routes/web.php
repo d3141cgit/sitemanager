@@ -5,7 +5,6 @@ use SiteManager\Http\Controllers\BoardController;
 use SiteManager\Http\Controllers\CommentController;
 use SiteManager\Http\Controllers\EditorController;
 use SiteManager\Http\Controllers\Auth\LoginController;
-use SiteManager\Http\Controllers\User\UserController;
 
 // 로그인 관련 라우트
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -17,22 +16,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/editor/upload-image', [EditorController::class, 'uploadImage'])->name('editor.upload-image');
     Route::get('/editor/images', [EditorController::class, 'getImages'])->name('editor.get-images');
     Route::delete('/editor/images/{filename}', [EditorController::class, 'deleteImage'])->name('editor.delete-image');
-});
-
-// 일반 사용자 라우트
-Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
-    Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
-    Route::get('/profile', [UserController::class, 'profile'])->name('profile');
-    Route::get('/profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');
-    Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
-    
-    Route::get('/password/change', [UserController::class, 'changePasswordForm'])->name('password.change');
-    Route::put('/password', [UserController::class, 'changePassword'])->name('password.update');
-    
-    Route::get('/groups', [UserController::class, 'myGroups'])->name('groups');
-    
-    Route::get('/delete-account', [UserController::class, 'deleteAccountForm'])->name('delete-account');
-    Route::delete('/delete-account', [UserController::class, 'deleteAccount'])->name('delete-account.confirm');
 });
 
 // 게시판 라우트

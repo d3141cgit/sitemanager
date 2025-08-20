@@ -44,11 +44,6 @@ class SiteManagerServiceProvider extends ServiceProvider
             $this->loadRoutesFrom(__DIR__.'/../routes/admin.php');
         });
         
-        // API 라우트를 web 그룹으로 로드 (세션 필요)
-        Route::middleware('web')->group(function () {
-            $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
-        });
-        
         // 미들웨어 등록
         $router = $this->app['router'];
         $router->aliasMiddleware('admin', AdminMiddleware::class);
