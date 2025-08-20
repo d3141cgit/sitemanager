@@ -72,6 +72,6 @@ class FileUpload extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.file-upload');
+        return view('sitemanager::components.file-upload');
     }
 }

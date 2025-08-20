@@ -145,7 +145,7 @@
     @if($comment->children && $comment->children->count() > 0 && $level < 3)
         <div class="child-comments mt-3">
             @foreach($comment->children->sortByDesc('created_at') as $child)
-                @include('board.partials.comment', ['comment' => $child, 'level' => $level + 1])
+                @include('sitemanager::board.partials.comment', ['comment' => $child, 'level' => $level + 1])
             @endforeach
         </div>
     @endif

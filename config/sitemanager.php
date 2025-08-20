@@ -35,6 +35,7 @@ return [
         'default_skin' => 'default',
         'allow_file_upload' => true,
         'max_file_size' => 10 * 1024 * 1024, // 10MB
+        'max_files_per_post' =>5,
         'allowed_extensions' => ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip'],
         'editor' => [
             'type' => 'ckeditor5', // ckeditor5, tinymce, simple

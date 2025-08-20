@@ -32,6 +32,12 @@ class SiteManagerServiceProvider extends ServiceProvider
         // 뷰 로드
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'sitemanager');
         
+        // 뷰 컴포넌트 등록
+        $this->loadViewComponentsAs('sitemanager', [
+            'file-upload' => \SiteManager\View\Components\FileUpload::class,
+            'editor' => \SiteManager\View\Components\Editor::class,
+        ]);
+        
         // 마이그레이션 로드
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         

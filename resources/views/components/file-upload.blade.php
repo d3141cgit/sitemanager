@@ -1,13 +1,33 @@
+@props([
+    'name' => 'files[]',
+    'id' => 'files',
+    'multiple' => true,
+    'maxFileSize' => 10240,
+    'maxFiles' => 10,
+    'allowedTypes' => null,
+    'enablePreview' => true,
+    'enableEdit' => true,
+    'showFileInfo' => true,
+    'showGuidelines' => true,
+    'existingAttachments' => null,
+    'label' => 'Attachments',
+    'icon' => 'bi-paperclip',
+    'required' => false,
+    'errors' => null,
+    'class' => '',
+    'wrapperClass' => 'mb-3'
+])
+
 @once
     @push('head')
-        {!! resource('css/file-upload.css') !!}
-        {!! resource('js/file-upload.js') !!}
+        {!! resource('sitemanager::css/file-upload.css') !!}
+        {!! resource('sitemanager::js/file-upload.js') !!}
         <script>
             // Global file upload configuration
             window.FileUploadConfig = window.FileUploadConfig || {};
             window.FileUploadConfig.allowedTypes = {!! json_encode(config('sitemanager.board.allowed_extensions', ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'])) !!};
-            window.FileUploadConfig.maxFileSize = {{ config('app.max_file_size', 2048) }};
-            window.FileUploadConfig.maxFilesPerPost = {{ config('app.max_files_per_post', 5) }};
+            window.FileUploadConfig.maxFileSize = {{ config('sitemanager.board.max_file_size', 2048) }};
+            window.FileUploadConfig.maxFilesPerPost = {{ config('sitemanager.board.max_files_per_post', 5) }};
         </script>
     @endpush
 @endonce

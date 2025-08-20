@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('sitemanager::layouts.app')
 
 @section('title', $post->title . ' - ' . $board->name)
 
@@ -264,7 +264,7 @@
                         <div id="comments-container">
                             @if($comments && $comments->count() > 0)
                                 @foreach($comments as $comment)
-                                    @include('board.partials.comment', ['comment' => $comment, 'level' => 0])
+                                    @include('sitemanager::board.partials.comment', ['comment' => $comment, 'level' => 0])
                                 @endforeach
                             @else
                                 <div class="text-center text-muted py-4" id="no-comments">

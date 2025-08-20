@@ -138,7 +138,7 @@ class FileUploadService
         }
         
         // Check file size
-        $maxSize = $options['max_size'] ?? config('app.max_file_size', 2048); // KB
+        $maxSize = $options['max_size'] ?? config('sitemanager.board.max_file_size', 2048); // KB
         if ($file->getSize() > ($maxSize * 1024)) {
             throw new Exception("File size exceeds maximum allowed size of {$maxSize}KB");
         }

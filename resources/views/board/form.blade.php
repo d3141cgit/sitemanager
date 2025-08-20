@@ -1,11 +1,6 @@
-@extends('layouts.app')
+@extends('sitemanager::layouts.app')
 
 @section('title', isset($post) ? 'Edit Post - ' . $post->title : 'Write New Post - ' . $board->name)
-
-@push('head')
-{!! resource('css/file-upload.css') !!}
-{!! resource('js/file-upload.js') !!}
-@endpush
 
 @section('content')
 <div class="container py-4">
@@ -73,7 +68,7 @@
                         <!-- Content -->
                         <div class="mb-3">
                             <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
-                            <x-editor 
+                            <x-sitemanager::editor 
                                 name="content" 
                                 :value="old('content', isset($post) ? $post->content : '')"
                                 height="500"
@@ -86,7 +81,7 @@
 
                         <!-- File Upload -->
                         @if($board->allowsFileUpload())
-                            <x-file-upload 
+                            <x-sitemanager::file-upload 
                                 name="files[]"
                                 id="files"
                                 :multiple="true"
@@ -248,27 +243,14 @@
 
 @endsection
 
-@push('styles')
-<style>
-.form-control:focus {
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-}
-
-textarea {
-    resize: vertical;
-    min-height: 200px;
-}
-
-.card {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
-
-@media (max-width: 576px) {
-</style>
-@endpush
 
 @push('scripts')
+<style>
+.form-control:focus { border-color: #86b7fe; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
+textarea { resize: vertical; min-height: 200px; }
+.card { box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); }
+</style>
+
 <script>
 // Character counter for title
 document.getElementById('title').addEventListener('input', function() {
