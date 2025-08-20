@@ -12,7 +12,7 @@
     <title>@yield('title', config_get('SITE_NAME'))</title>
 
     {!! setResources(['bootstrap', 'jquery']) !!}
-    {!! resource('css/app.css') !!}
+    {!! resource('sitemanager::css/app.css') !!}
 
     @stack('head')
 </head>
@@ -49,13 +49,8 @@
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('user.profile') }}">
+                                        <a class="dropdown-item" href="#">
                                             <i class="bi bi-person me-2"></i>프로필
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('user.dashboard') }}">
-                                            <i class="bi bi-speedometer2 me-2"></i>대시보드
                                         </a>
                                     </li>
                                     
