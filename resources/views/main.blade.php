@@ -7,7 +7,7 @@
 @section('content')
 <!-- Default Welcome Content -->
 <div class="welcome-section">
-    <div class="container-fluid">
+    <div class="container">
         <div class="welcome-header">
             <h1 class="welcome-title">
                 <i class="bi bi-grid-3x3-gap-fill"></i>

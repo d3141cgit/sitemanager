@@ -8,7 +8,7 @@
     <title>@yield('title', 'Site Manager')</title>
 
     {!! setResources(['bootstrap', 'jquery']) !!}
-    {!! resource('css/login.css') !!}
+    {!! resource('sitemanager::css/login.css') !!}
 </head>
 
 <body>   
