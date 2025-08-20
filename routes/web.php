@@ -7,11 +7,6 @@ use SiteManager\Http\Controllers\EditorController;
 use SiteManager\Http\Controllers\Auth\LoginController;
 use SiteManager\Http\Controllers\User\UserController;
 
-// 홈페이지
-Route::get('/', function () {
-    return view('main');
-})->name('home');
-
 // 로그인 관련 라우트
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);

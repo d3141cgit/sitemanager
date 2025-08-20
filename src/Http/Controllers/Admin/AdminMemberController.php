@@ -175,6 +175,8 @@ class AdminMemberController extends Controller
             $validated['profile_photo'] = null;
         }
 
+        $validated['active'] = $request->boolean('active');
+
         // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
             // Delete old photo if exists

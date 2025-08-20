@@ -608,13 +608,13 @@ class BoardController extends Controller
             session([$sessionKey => $now]);
             
             // 로그 기록 (필요시)
-            Log::info("View count incremented", [
-                'post_id' => $post->id,
-                'table' => $post->getTable(),
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'user_id' => auth()->id(),
-            ]);
+            // Log::info("View count incremented", [
+            //     'post_id' => $post->id,
+            //     'table' => $post->getTable(),
+            //     'ip' => $request->ip(),
+            //     'user_agent' => $request->userAgent(),
+            //     'user_id' => auth()->id(),
+            // ]);
         }
     }
 
