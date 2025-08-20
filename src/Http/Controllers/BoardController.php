@@ -24,19 +24,75 @@ class BoardController extends Controller
     ) {}
 
     /**
-     * 뷰 파일을 선택합니다. 프로젝트에 있으면 프로젝트 뷰를, 없으면 패키지 뷰를 반환합니다.
+     * 뷰 파일을 선택합니다. 현재 게시판의 스킨을 자동으로 감지하여 적용합니다.
      */
     private function selectView(string $viewName): string
     {
-        // 프로젝트의 뷰 경로 확인
-        $projectViewPath = resource_path("views/{$viewName}.blade.php");
+        // 현재 요청에서 게시판 정보 가져오기
+        $board = $this->getCurrentBoard();
+        $skin = $board?->skin ?? 'default';
         
-        if (file_exists($projectViewPath)) {
-            return $viewName;
+        // 스킨이 있고 'default'가 아닌 경우
+        if ($skin && $skin !== 'default') {
+            // 1. 프로젝트의 스킨 뷰 확인 (예: views/board/gallery/index.blade.php)
+            $skinViewPath = resource_path("views/board/{$skin}/{$viewName}.blade.php");
+            
+            if (file_exists($skinViewPath)) {
+                return "board.{$skin}.{$viewName}";
+            }
+            
+            // 2. 패키지의 스킨 뷰 확인 (예: sitemanager::board.gallery.index)
+            $packageSkinViewPath = $this->getPackageViewPath("board.{$skin}.{$viewName}");
+            if (file_exists($packageSkinViewPath)) {
+                return "sitemanager::board.{$skin}.{$viewName}";
+            }
         }
         
-        // 패키지 뷰 사용
-        return "sitemanager::{$viewName}";
+        // 3. 프로젝트의 기본 뷰 확인 (예: views/board/index.blade.php)
+        $projectViewPath = resource_path("views/board/{$viewName}.blade.php");
+        
+        if (file_exists($projectViewPath)) {
+            return "board.{$viewName}";
+        }
+        
+        // 4. 패키지의 기본 뷰 사용 (예: sitemanager::board.index)
+        return "sitemanager::board.{$viewName}";
+    }
+    
+    /**
+     * 현재 요청에서 게시판 정보를 가져옵니다.
+     */
+    private function getCurrentBoard(): ?Board
+    {
+        // URL에서 board_slug 파라미터 확인
+        $boardSlug = request()->route('board') ?? request()->route('board_slug');
+        
+        if ($boardSlug) {
+            return Board::where('slug', $boardSlug)->first();
+        }
+        
+        // POST 요청에서 board_id 확인
+        if (request()->has('board_id')) {
+            return Board::find(request('board_id'));
+        }
+        
+        // 게시글 ID에서 게시판 정보 추출
+        if (request()->route('post') || request()->route('post_id')) {
+            $postId = request()->route('post') ?? request()->route('post_id');
+            $post = BoardPost::find($postId);
+            return $post?->board;
+        }
+        
+        return null;
+    }
+
+    /**
+     * 패키지 뷰 파일의 실제 경로를 반환합니다.
+     */
+    private function getPackageViewPath(string $viewName): string
+    {
+        $viewPath = str_replace('.', '/', $viewName);
+        return __DIR__ . "/../../../resources/views/{$viewPath}.blade.php";
     }
 
     /**
@@ -69,7 +125,7 @@ class BoardController extends Controller
             ->limit(5)
             ->get();
 
-        return view($this->selectView('board.index'), compact('board', 'posts', 'notices'));
+        return view($this->selectView('index'), compact('board', 'posts', 'notices'));
     }
 
     /**
@@ -133,7 +189,7 @@ class BoardController extends Controller
             ->orderBy('id', 'asc')
             ->first();
 
-        return view($this->selectView('board.show'), compact('board', 'post', 'comments', 'attachments', 'prevPost', 'nextPost'));
+        return view($this->selectView('show'), compact('board', 'post', 'comments', 'attachments', 'prevPost', 'nextPost'));
     }
 
     /**
@@ -153,7 +209,7 @@ class BoardController extends Controller
             return redirect()->route('login')->with('error', '로그인이 필요합니다.');
         }
 
-        return view($this->selectView('board.form'), compact('board'));
+        return view($this->selectView('form'), compact('board'));
     }
 
     /**
@@ -277,7 +333,7 @@ class BoardController extends Controller
             abort(403, '게시글을 수정할 권한이 없습니다.');
         }
 
-        return view($this->selectView('board.form'), compact('board', 'post'));
+        return view($this->selectView('form'), compact('board', 'post'));
     }
 
     /**

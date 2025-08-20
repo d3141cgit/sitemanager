@@ -17,17 +17,76 @@ class CommentController extends Controller
     /**
      * 뷰 파일을 선택합니다. 프로젝트에 있으면 프로젝트 뷰를, 없으면 패키지 뷰를 반환합니다.
      */
+    /**
+     * 뷰 파일을 선택합니다. 현재 게시판의 스킨을 자동으로 감지하여 적용합니다.
+     */
     private function selectView(string $viewName): string
     {
-        // 프로젝트의 뷰 경로 확인
-        $projectViewPath = resource_path("views/{$viewName}.blade.php");
+        // 현재 요청에서 게시판 정보 가져오기
+        $board = $this->getCurrentBoard();
+        $skin = $board?->skin ?? 'default';
         
-        if (file_exists($projectViewPath)) {
-            return $viewName;
+        // 스킨이 있고 'default'가 아닌 경우
+        if ($skin && $skin !== 'default') {
+            // 1. 프로젝트의 스킨 뷰 확인 (예: views/board/gallery/partials/comment.blade.php)
+            $skinViewPath = resource_path("views/board/{$skin}/partials/{$viewName}.blade.php");
+            
+            if (file_exists($skinViewPath)) {
+                return "board.{$skin}.partials.{$viewName}";
+            }
+            
+            // 2. 패키지의 스킨 뷰 확인 (예: sitemanager::board.gallery.partials.comment)
+            $packageSkinViewPath = $this->getPackageViewPath("board.{$skin}.partials.{$viewName}");
+            if (file_exists($packageSkinViewPath)) {
+                return "sitemanager::board.{$skin}.partials.{$viewName}";
+            }
         }
         
-        // 패키지 뷰 사용
-        return "sitemanager::{$viewName}";
+        // 3. 프로젝트의 기본 뷰 확인 (예: views/board/partials/comment.blade.php)
+        $projectViewPath = resource_path("views/board/partials/{$viewName}.blade.php");
+        
+        if (file_exists($projectViewPath)) {
+            return "board.partials.{$viewName}";
+        }
+        
+        // 4. 패키지의 기본 뷰 사용 (예: sitemanager::board.partials.comment)
+        return "sitemanager::board.partials.{$viewName}";
+    }
+    
+    /**
+     * 현재 요청에서 게시판 정보를 가져옵니다.
+     */
+    private function getCurrentBoard(): ?Board
+    {
+        // URL에서 board_slug 파라미터 확인
+        $boardSlug = request()->route('board') ?? request()->route('board_slug');
+        
+        if ($boardSlug) {
+            return Board::where('slug', $boardSlug)->first();
+        }
+        
+        // POST 요청에서 board_id 확인
+        if (request()->has('board_id')) {
+            return Board::find(request('board_id'));
+        }
+        
+        // 게시글 ID에서 게시판 정보 추출
+        if (request()->route('post') || request()->route('post_id')) {
+            $postId = request()->route('post') ?? request()->route('post_id');
+            $post = BoardPost::find($postId);
+            return $post?->board;
+        }
+        
+        return null;
+    }
+
+    /**
+     * 패키지 뷰 파일의 실제 경로를 반환합니다.
+     */
+    private function getPackageViewPath(string $viewName): string
+    {
+        $viewPath = str_replace('.', '/', $viewName);
+        return __DIR__ . "/../../../resources/views/{$viewPath}.blade.php";
     }
 
     /**
@@ -137,7 +196,7 @@ class CommentController extends Controller
             DB::commit();
 
             // 댓글 HTML 렌더링
-            $commentHtml = view($this->selectView('board.partials.comment'), compact('comment', 'board', 'post') + ['level' => 0])->render();
+            $commentHtml = view($this->selectView('comment'), compact('comment', 'board', 'post') + ['level' => 0])->render();
 
             return response()->json([
                 'success' => true,
@@ -194,7 +253,7 @@ class CommentController extends Controller
                 'is_edited' => true,
             ]);
 
-            $commentHtml = view($this->selectView('board.partials.comment'), compact('comment', 'board', 'post') + ['level' => 0])->render();
+            $commentHtml = view($this->selectView('comment'), compact('comment', 'board', 'post') + ['level' => 0])->render();
 
             return response()->json([
                 'success' => true,
@@ -297,7 +356,7 @@ class CommentController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $commentsHtml = view($this->selectView('board.partials.comments'), compact('comments', 'board'))->render();
+        $commentsHtml = view($this->selectView('comments'), compact('comments', 'board'))->render();
 
         return response()->json([
             'success' => true,
