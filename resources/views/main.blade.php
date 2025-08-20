@@ -121,7 +121,10 @@ php artisan migrate
 # 4. 관리자 계정 생성
 php artisan sitemanager:admin
 
-# 5. 서버 실행
+# 5. Storage 심볼릭 링크 생성
+php artisan storage:link
+
+# 6. 서버 실행
 php artisan serve</code>
                                 </div>
                             </div>
@@ -173,7 +176,10 @@ php artisan migrate
 # 10. 관리자 계정 생성
 php artisan sitemanager:admin
 
-# 11. 서버 실행
+# 11. Storage 심볼릭 링크 생성
+php artisan storage:link
+
+# 12. 서버 실행
 php artisan serve</code>
                                 </div>
                             </div>

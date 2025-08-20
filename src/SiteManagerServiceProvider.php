@@ -66,6 +66,7 @@ class SiteManagerServiceProvider extends ServiceProvider
                 __DIR__.'/../config/member.php' => config_path('member.php'),
                 __DIR__.'/../config/menu.php' => config_path('menu.php'),
                 __DIR__.'/../config/permissions.php' => config_path('permissions.php'),
+                __DIR__.'/../config/auth.php' => config_path('auth.php'),
             ], 'sitemanager-config');
             
             // 뷰 파일 발행 (커스터마이징용)
@@ -79,7 +80,6 @@ class SiteManagerServiceProvider extends ServiceProvider
                 __DIR__.'/../resources/views/main.blade.php' => resource_path('views/welcome.blade.php'),
                 __DIR__.'/../resources/views/board' => resource_path('views/board'),
                 __DIR__.'/../resources/views/auth' => resource_path('views/auth'),
-                __DIR__.'/../resources/views/user' => resource_path('views/user'),
                 __DIR__.'/../resources/views/components' => resource_path('views/components'),
             ], 'sitemanager-starter');
             
