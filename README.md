@@ -1,6 +1,6 @@
 # SiteManager Package
 
-Laravel용 사이트 관리 패키지입니다. **sitemanager-old** 프로젝트에서 개발된 관리자 시스템을 패키지화하여 여러 프로젝트에서 재사용할 수 있도록 만들었습니다.
+Laravel용 사이트 관리 패키지입니다. 관리자 시스템을 패키지화하여 여러 프로젝트에서 재사용할 수 있도록 만들었습니다.
 
 ## 📁 패키지 개발 구조
 
@@ -8,7 +8,7 @@ Laravel용 사이트 관리 패키지입니다. **sitemanager-old** 프로젝트
 일반적으로 Composer 패키지는 `vendor/` 폴더에 설치되지만, **개발 중인 패키지**의 경우 다음과 같은 구조로 개발합니다:
 
 ```
-/Users/songhyundong/www/sitemanager/
+sitemanager/
 ├── packages/                    # 📦 개발 중인 패키지들
 │   └── sitemanager/            # 실제 패키지 소스코드
 │       ├── composer.json       # 패키지 정의
@@ -17,7 +17,7 @@ Laravel용 사이트 관리 패키지입니다. **sitemanager-old** 프로젝트
 │       ├── config/             # 설정 파일들
 │       └── database/           # 마이그레이션
 └── projects/                   # 🚀 패키지를 사용하는 프로젝트들
-    └── hanurichurch.org/       # Laravel 프로젝트
+    └── example.com/       # Laravel 프로젝트
         ├── composer.json       # Path Repository 설정
         └── vendor/             # 심링크로 연결된 패키지
             └── d3141c/
@@ -97,15 +97,14 @@ packages/sitemanager/
 │   └── js/                  # JavaScript 파일
 ├── routes/                    # 📁 라우트 정의
 │   ├── admin.php            # 관리자 라우트
-│   ├── web.php              # 웹 라우트
-│   └── api.php              # API 라우트
+│   └── web.php              # 웹 라우트
 └── src/                       # 📁 PHP 소스코드
     ├── SiteManagerServiceProvider.php  # 서비스 프로바이더
     ├── Console/             # Artisan 명령어들
     ├── Http/                # 컨트롤러, 미들웨어
     │   ├── Controllers/     # 컨트롤러
     │   │   ├── Admin/      # 관리자 컨트롤러
-    │   │   └── User/       # 사용자 컨트롤러
+    │   │   └── Auth/       # 인증 컨트롤러
     │   └── Middleware/      # 미들웨어
     ├── Models/              # Eloquent 모델들
     ├── Services/            # 서비스 레이어
@@ -129,7 +128,7 @@ packages/sitemanager/
    - 프로젝트: `App\*`
    - 뷰: `sitemanager::*`
 
-## �📋 패키지 구성
+## 패키지 구성
 
 ### 🎯 **핵심 기능 (모든 프로젝트 공통)**
 - **관리자 시스템**: 완전한 Admin Dashboard
@@ -139,8 +138,7 @@ packages/sitemanager/
 
 ### 🎨 **스타터 템플릿 (선택적)**
 - **기본 레이아웃**: 프런트엔드 시작점
-- **인증 뷰**: 로그인/회원가입 템플릿
-- **사용자 대시보드**: 기본 사용자 페이지
+- **인증 뷰**: 로그인 템플릿
 - **게시판 뷰**: 기본 게시판 템플릿
 
 > **💡 개발 철학**: Admin 기능은 패키지에서 완전히 제공하고, 프런트엔드는 스타터 템플릿에서 시작하여 각 프로젝트별로 커스터마이징
@@ -159,7 +157,7 @@ packages/sitemanager/
 
 - PHP ^8.1
 - Laravel ^10.0|^11.0|^12.0
-- MySQL 또는 PostgreSQL 또는 SQLite
+- MySQL
 - Composer
 
 ## 기능
@@ -257,7 +255,7 @@ cd your-project-name
 # 5. 패키지 설치
 composer require d3141c/sitemanager:dev-main --prefer-source
 
-# 6. 관리자 전용 설치
+# 6. 관리자 전용 설치 (홈 라우트 자동 설정 포함)
 php artisan sitemanager:install
 
 # 또는 스타터 템플릿 포함 설치
@@ -268,7 +266,7 @@ php artisan sitemanager:install --with-starter
 ### 🚀 빠른 설치 (일괄 설치)
 
 ```bash
-# 설정, 마이그레이션, 자원 발행을 한 번에
+# 설정, 마이그레이션, 자원 발행, 홈 라우트 설정을 한 번에
 php artisan sitemanager:install
 
 # 관리자 계정 생성 (대화형)
@@ -415,10 +413,97 @@ php artisan sitemanager:install --with-starter
 
 설치가 완료되면 다음 주소로 접속할 수 있습니다:
 
+- **홈페이지**: `http://yoursite.com/` (sitemanager::main 뷰 자동 설정)
 - **관리자 대시보드**: `http://yoursite.com/admin/dashboard`
 - **로그인**: `http://yoursite.com/login`
-- **회원 대시보드**: `http://yoursite.com/user/dashboard`  
 - **게시판**: `http://yoursite.com/board/{slug}`
+
+## 📦 패키지 리소스 시스템
+
+SiteManager는 패키지 리소스를 효율적으로 관리할 수 있는 시스템을 제공합니다.
+
+### 🎨 리소스 사용법
+
+```blade
+{{-- 패키지 CSS 로드 --}}
+{!! resource('sitemanager::css/admin/admin.css') !!}
+
+{{-- 패키지 JavaScript 로드 --}}
+{!! resource('sitemanager::js/admin/admin.js') !!}
+
+{{-- 프로젝트 리소스와 혼용 가능 --}}
+{!! resource('css/custom.css') !!}
+```
+
+### 🚀 리소스 관리 명령어
+
+```bash
+# 현재 리소스 상태 확인
+php artisan resource status
+
+# 프로덕션용 리소스 빌드
+php artisan resource build --build-version=v1.0.0
+
+# 리소스 캐시 정리
+php artisan resource clear
+
+# 오래된 리소스 파일 정리
+php artisan resource cleanup
+```
+
+### 🔄 개발 vs 프로덕션
+
+**개발 환경**:
+- 리소스가 실시간으로 처리됨
+- 패키지 파일이 `storage/app/public/assets/`에 복사됨
+
+**프로덕션 환경**:
+- `php artisan resource build`로 최적화된 파일 생성
+- 빌드된 파일이 `public/assets/`에 저장됨
+- 버전 관리 및 캐싱 지원
+
+## 🎭 게시판 스킨 시스템
+
+SiteManager는 게시판별로 다른 스킨을 적용할 수 있는 동적 뷰 시스템을 제공합니다.
+
+### 📁 스킨 디렉토리 구조
+
+```
+resources/views/board/
+├── default/              # 기본 스킨 (선택사항)
+├── gallery/             # 갤러리 스킨
+│   ├── index.blade.php  # 게시글 목록
+│   ├── show.blade.php   # 게시글 상세
+│   ├── form.blade.php   # 작성/수정 폼
+│   └── partials/        # 부분 템플릿
+│       ├── comment.blade.php
+│       └── comments.blade.php
+└── blog/                # 블로그 스킨
+    ├── index.blade.php
+    ├── show.blade.php
+    └── form.blade.php
+```
+
+### 🎯 뷰 우선순위
+
+게시판의 `skin` 필드가 `gallery`인 경우:
+
+1. `resources/views/board/gallery/index.blade.php` (프로젝트 스킨 뷰)
+2. `sitemanager::board.gallery.index` (패키지 스킨 뷰)  
+3. `resources/views/board/index.blade.php` (프로젝트 기본 뷰)
+4. `sitemanager::board.index` (패키지 기본 뷰)
+
+### ⚙️ 스킨 설정
+
+```php
+// 게시판 생성 시 스킨 지정
+$board = Board::create([
+    'name' => '포토갤러리',
+    'slug' => 'gallery',
+    'skin' => 'gallery',  // 스킨 지정
+    // ...
+]);
+```
 
 ### 첫 로그인
 
@@ -782,6 +867,48 @@ MIT License
   - 로컬: ssh://miles@server/home/miles/git/sitemanager.git
   - 외부: ssh://miles@d3141c.ddns.net/home/miles/git/sitemanager.git
 
+## 📋 최근 업데이트 (v2025.08.19)
+
+### ✅ 주요 변경사항
+
+#### 🗂️ **구조 정리**
+- **API 라우트 제거**: `routes/api.php` 삭제 (중복 기능 정리)
+- **UserController 제거**: 프로젝트별 구현으로 변경
+- **ExamplePostController 제거**: 불필요한 예제 코드 정리
+
+#### 🎨 **패키지 리소스 시스템 구축**
+- **동적 리소스 로딩**: `resource('sitemanager::css/admin/admin.css')` 지원
+- **개발/프로덕션 분리**: 개발 시 실시간, 프로덕션 시 빌드된 파일 사용
+- **리소스 관리 명령어**: `php artisan resource build/clear/status/cleanup`
+- **자동 최적화**: 파일 해시, 버전 관리, 캐싱 지원
+
+#### 🎭 **게시판 스킨 시스템**
+- **동적 뷰 선택**: 게시판 `skin` 필드에 따른 자동 뷰 선택
+- **우선순위 기반**: 프로젝트 스킨 → 패키지 스킨 → 기본 뷰 순서
+- **계층형 구조**: `board/{skin}/index.blade.php` 형태의 디렉토리 구조
+- **댓글 템플릿**: 스킨별 댓글 템플릿도 지원
+
+#### 🏠 **자동 홈페이지 설정**
+- **welcome 라우트 교체**: Laravel 기본 `welcome` 뷰를 `sitemanager::main`으로 자동 변경
+- **스마트 감지**: 기존 홈 라우트 존재 시 건너뛰기
+- **즉시 사용 가능**: 설치 후 바로 SiteManager 메인 페이지 표시
+
+#### ⚡ **설치 프로세스 개선**
+- **원클릭 설치**: `php artisan sitemanager:install`로 모든 설정 완료
+- **자동 라우트 설정**: 홈페이지 라우트 자동 구성
+- **불필요한 복사 제거**: CSS/JS 파일을 프로젝트로 복사하지 않음
+
+### 🚀 **향후 계획**
+- [ ] 다중 테마 시스템 확장
+- [ ] 컴포넌트 기반 뷰 시스템
+- [ ] API 패키지 분리 (별도 패키지)
+- [ ] 플러그인 시스템 구축
+
+---
+
 ## 지원
+
+**📝 마지막 업데이트**: 2025년 8월 19일  
+**📧 문의**: d3141c@gmail.com
 
 문제가 있거나 기능 요청이 있으시면 이메일로 연락해 주세요.
