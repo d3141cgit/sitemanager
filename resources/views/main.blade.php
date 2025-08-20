@@ -159,10 +159,10 @@ composer create-project laravel/laravel example.com
 cd example.com
 
 # 3. 로컬 패키지 경로 추가
-composer config repositories.sitemanager path ../../../packages/sitemanager
+composer config repositories.sitemanager path ../../packages/sitemanager
 
 # 4. 로컬 패키지 설치
-composer require sitemanager/sitemanager
+composer require d3141c/sitemanager:dev-main
 
 # 5. 환경 설정 (.env 파일에서 데이터베이스 설정)
 cp .env.example .env

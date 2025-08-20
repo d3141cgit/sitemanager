@@ -40,7 +40,7 @@ class CreateAdminCommand extends Command
             'username' => strtolower(str_replace(' ', '', $name)), // 이름에서 공백 제거한 소문자
             'email' => $email,
             'password' => Hash::make($password),
-            'level' => config('sitemanager.permissions.admin_level', 200),
+            'level' => 255, // 최고 관리자 레벨
             'status' => 'active',
             'email_verified_at' => now(),
         ]);
