@@ -117,8 +117,11 @@ cd my-website
 composer require d3141c/sitemanager:dev-main
 
 # 3. 환경 설정 (.env 파일에서 데이터베이스 설정)
-DB_CONNECTION=sqlite
-DB_DATABASE=/absolute/path/to/database.sqlite
+cp .env.example .env
+php artisan key:generate
+php artisan storage:link
+
+AUTH_MODEL=SiteManager\Models\Member
 
 # 4. 🎯 SiteManager 설치 (통합 설치 명령어)
 php artisan sitemanager:install
@@ -167,6 +170,9 @@ composer require d3141c/sitemanager:dev-main
 # 5. 환경 설정 (.env 파일에서 데이터베이스 설정)
 cp .env.example .env
 php artisan key:generate
+php artisan storage:link
+
+AUTH_MODEL=SiteManager\Models\Member
 
 # 6. 🎯 SiteManager 설치 (통합 설치 명령어)
 php artisan sitemanager:install
