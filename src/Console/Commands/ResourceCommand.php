@@ -20,7 +20,7 @@ class ResourceCommand extends Command
     /**
      * The console command description.
      */
-    protected $description = 'Manage application resources (CSS/JS assets)';
+    protected $description = 'Manage application resources and published files (CSS/JS assets, views)';
 
     /**
      * Execute the console command.
@@ -47,7 +47,12 @@ class ResourceCommand extends Command
                 
             default:
                 $this->error("Unknown action: {$action}");
-                $this->info("Available actions: build, clear, reset, status, cleanup");
+                $this->info("Available actions:");
+                $this->info("  build   - Build resources for production");
+                $this->info("  clear   - Clear all caches and published files");
+                $this->info("  reset   - Reset to development mode");
+                $this->info("  status  - Show resource status");
+                $this->info("  cleanup - Clean up old asset files");
                 return 1;
         }
     }
@@ -177,11 +182,23 @@ class ResourceCommand extends Command
             File::deleteDirectory($publicAssetsDir);
         }
 
+        // 퍼블리시된 뷰 파일 정리 (개발 시 유용)
+        $publishedViewsDir = resource_path('views/vendor/sitemanager');
+        $viewsDeleted = false;
+        if (File::exists($publishedViewsDir)) {
+            File::deleteDirectory($publishedViewsDir);
+            $viewsDeleted = true;
+            $this->info('🗑️  Cleared published view files');
+        }
+
         // 설정에서 버전 제거
         $this->updateResourceVersion(null);
 
         $this->info("✅ Resources cleared!");
         $this->info("🗑️  Deleted {$deletedAssets} asset records");
+        if ($viewsDeleted) {
+            $this->info("📁 Removed published view overrides - now using package views");
+        }
 
         return 0;
     }

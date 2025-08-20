@@ -6,8 +6,8 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios@1.7.2/dist/axios.min.js"></script>
 
-{!! resource('css/admin/tree.css') !!}
-{!! resource('js/admin/tree.js') !!}
+{!! resource('sitemanager::css/admin/tree.css') !!}
+{!! resource('sitemanager::js/admin/tree.js') !!}
 @endpush
 
 @section('content')

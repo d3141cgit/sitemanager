@@ -16,7 +16,7 @@ if (!function_exists('resource')) {
     function resource(string $assetPath, array $options = []): string
     {
         // 캐시 키 생성
-        $cacheKey = "resource.{$assetPath}";
+        // $cacheKey = "resource.{$assetPath}";
         
         // 프로덕션 환경에서는 빌드된 리소스 사용
         if (app()->environment('production') && config('app.resource_version')) {
