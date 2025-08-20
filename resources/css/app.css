@@ -197,8 +197,8 @@ body > main { height: 100%; overflow-y: auto; }
 /* Installation Tabs */
 .nav-tabs { border-bottom: 1px solid var(--bs-gray-700); }
 .nav-tabs .nav-item { margin-bottom: -2px; }
-.nav-tabs .nav-link { border: none; border-bottom: 2px solid transparent; background: none; color: var(--text-secondary); padding: 0.75rem 1.5rem; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; }
-.nav-tabs .nav-link:hover { border-color: var(--red-dark); }
+.nav-tabs .nav-link { border: none; border-bottom: 2px solid transparent; background: none; color: var(--bs-gray-500); padding: 0.75rem 1.5rem; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; }
+.nav-tabs .nav-link:hover { color: var(--bs-gray-700); }
 .nav-tabs .nav-link.active { border-bottom-color: var(--bs-gray-700); background: none; }
 
 .tab-content { padding-top: 1rem; }
