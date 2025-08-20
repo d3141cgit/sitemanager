@@ -61,7 +61,7 @@
         </div>
         
         <input type="file" 
-               class="form-control d-none @if($errors && $errors->has($name)) is-invalid @endif" 
+               class="file-upload-input form-control d-none @if($errors && $errors->has($name)) is-invalid @endif" 
                id="{{ $id }}" 
                name="{{ $name }}" 
                @if($multiple) multiple @endif

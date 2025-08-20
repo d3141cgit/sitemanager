@@ -14,7 +14,7 @@
             
             this.options = {
                 dropZoneSelector: '.file-drop-zone',
-                fileInputSelector: 'input[type="file"]',
+                fileInputSelector: '.file-upload-input',
                 fileListSelector: '.file-list',
                 fileItemsSelector: '.file-items',
                 maxFileSize: globalConfig.maxFileSize || 10240, // KB
@@ -36,15 +36,19 @@
             setTimeout(() => {
                 this.initAttachmentSorting();
             }, 100);
-            // console.log('FileUploadComponent initialized');
         }
         
         setupEventListeners() {
             const dropZone = document.querySelector(this.options.dropZoneSelector);
             const fileInput = document.querySelector(this.options.fileInputSelector);
             
+            //     dropZone: !!dropZone,
+            //     fileInput: !!fileInput,
+            //     dropZoneSelector: this.options.dropZoneSelector,
+            //     fileInputSelector: this.options.fileInputSelector
+            // });
+            
             if (!dropZone || !fileInput) {
-                console.warn('Drop zone or file input not found');
                 return;
             }
             
@@ -65,7 +69,6 @@
             
             // File input change handler - 수정된 부분
             fileInput.addEventListener('change', (e) => {
-                // console.log('File input changed:', e.target.files.length);
                 if (e.target.files.length > 0) {
                     this.addFiles(e.target.files);
                 }
@@ -100,7 +103,6 @@
             dropZone.classList.remove('dragover');
             
             const files = e.dataTransfer.files;
-            // console.log('Files dropped:', files.length);
             
             if (files.length > 0) {
                 this.addFiles(files);
@@ -108,15 +110,23 @@
         }
         
         handleClick() {
+            console.log('handleClick called');
             const fileInput = document.querySelector(this.options.fileInputSelector);
+            console.log('File input found in handleClick:', !!fileInput, fileInput);
             if (fileInput) {
+                console.log('Triggering file input click');
                 fileInput.click();
             }
         }
         
         addFiles(files) {
+            console.log('addFiles called with:', files.length, 'files');
+            
             const fileInput = document.querySelector(this.options.fileInputSelector);
-            if (!fileInput) return;
+            if (!fileInput) {
+                console.error('File input not found in addFiles');
+                return;
+            }
             
             // If not multiple, replace all files
             if (!fileInput.multiple) {
@@ -148,7 +158,6 @@
                 // Skip if file already exists
                 if (existingFiles.has(fileKey)) {
                     duplicateCount++;
-                    // console.log(`File "${file.name}" already exists, skipping...`);
                     return;
                 }
                 
@@ -160,7 +169,6 @@
             
             // Show message if duplicates were found
             if (duplicateCount > 0) {
-                // console.log(`${duplicateCount} duplicate file(s) skipped.`);
             }
             
             // Check max files limit
@@ -174,6 +182,14 @@
         }
         
         validateFile(file) {
+            console.log('Validating file:', {
+                name: file.name,
+                size: file.size,
+                maxSize: this.options.maxFileSize * 1024,
+                extension: file.name.split('.').pop().toLowerCase(),
+                allowedTypes: this.options.allowedTypes
+            });
+            
             // Check file size
             if (file.size > this.options.maxFileSize * 1024) {
                 alert(`File "${file.name}" is too large. Maximum size is ${this.options.maxFileSize}KB.`);
@@ -187,12 +203,21 @@
                 return false;
             }
             
+            console.log('File validation passed:', file.name);
             return true;
         }
         
         updateFileList(input) {
             const fileList = document.querySelector(this.options.fileListSelector);
             const fileItems = document.querySelector(this.options.fileItemsSelector);
+            
+            console.log('updateFileList called:', {
+                fileList: !!fileList,
+                fileItems: !!fileItems,
+                fileListSelector: this.options.fileListSelector,
+                fileItemsSelector: this.options.fileItemsSelector,
+                filesCount: input.files.length
+            });
             
             if (!fileList || !fileItems) {
                 console.warn('File list containers not found');
@@ -374,10 +399,12 @@
         // Existing attachment management methods
         removeAttachment(attachmentId) {
             if (confirm('Are you sure you want to remove this attachment?')) {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                
                 fetch(`/board/attachments/${attachmentId}`, {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-CSRF-TOKEN': csrfToken ? csrfToken.getAttribute('content') : '',
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     }
@@ -422,7 +449,6 @@
         handleAttachmentDragStart(e) {
             e.dataTransfer.setData('text/plain', e.currentTarget.id);
             e.currentTarget.classList.add('dragging');
-            // console.log('Drag start:', e.currentTarget.id);
         }
         
         handleAttachmentDragOver(e) {
@@ -445,7 +471,6 @@
         handleAttachmentDrop(e) {
             e.preventDefault();
             const draggedId = e.dataTransfer.getData('text/plain');
-            // console.log('Drop:', draggedId);
             
             // Update sort order
             this.updateAttachmentSortOrder();
@@ -453,7 +478,6 @@
         
         handleAttachmentDragEnd(e) {
             e.currentTarget.classList.remove('dragging');
-            // console.log('Drag end');
         }
         
         updateAttachmentSortOrder() {
@@ -486,7 +510,6 @@
                 this.saveSortOrder(sortData);
             }
             
-            // console.log('Updated sort order:', sortData);
         }
         
         saveSortOrder(sortData) {
@@ -504,7 +527,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // console.log('Sort order saved successfully');
                     this.dispatchEvent('attachmentSortOrderUpdated', { sortData });
                 } else {
                     console.error('Failed to save sort order:', data.message);
@@ -542,7 +564,6 @@
         init: function() {
             if (!this.instance && document.querySelector('.file-drop-zone')) {
                 this.instance = new FileUploadComponent();
-                // console.log('FileUploadManager initialized');
             }
             return this.instance;
         },

@@ -20,22 +20,42 @@ Route::middleware(['auth'])->group(function () {
 
 // 게시판 라우트
 Route::prefix('board')->name('board.')->group(function () {
-    Route::get('/{slug}', [SiteManager\Http\Controllers\BoardController::class, 'index'])->name('index')->where('slug', '[a-z0-9_]+');
-    Route::get('/{slug}/create', [SiteManager\Http\Controllers\BoardController::class, 'create'])->name('create')->where('slug', '[a-z0-9_]+');
-    Route::post('/{slug}', [SiteManager\Http\Controllers\BoardController::class, 'store'])->name('store')->where('slug', '[a-z0-9_]+');
-    Route::get('/{slug}/{id}', [SiteManager\Http\Controllers\BoardController::class, 'show'])->name('show')->where('slug', '[a-z0-9_]+');
-    Route::get('/{slug}/{id}/edit', [SiteManager\Http\Controllers\BoardController::class, 'edit'])->name('edit')->where('slug', '[a-z0-9_]+');
-    Route::put('/{slug}/{id}', [SiteManager\Http\Controllers\BoardController::class, 'update'])->name('update')->where('slug', '[a-z0-9_]+');
-    Route::delete('/{slug}/{id}', [SiteManager\Http\Controllers\BoardController::class, 'destroy'])->name('destroy')->where('slug', '[a-z0-9_]+');
+    // 첨부파일 관련 라우트 (더 구체적인 패턴을 먼저 배치)
+    Route::delete('/attachments/{attachment_id}', [BoardController::class, 'deleteAttachment'])
+        ->name('attachment.delete')
+        ->where('attachment_id', '[0-9]+');
+    Route::post('/attachments/sort-order', [BoardController::class, 'updateAttachmentSortOrder'])
+        ->name('attachment.sort-order');
+    
+    // 게시판 기본 라우트
+    Route::get('/{slug}', [BoardController::class, 'index'])
+        ->name('index')
+        ->where('slug', '[a-z0-9_]+');
+    Route::get('/{slug}/create', [BoardController::class, 'create'])
+        ->name('create')
+        ->where('slug', '[a-z0-9_]+');
+    Route::post('/{slug}', [BoardController::class, 'store'])
+        ->name('store')
+        ->where('slug', '[a-z0-9_]+');
+    
+    // 게시글 관련 라우트
+    Route::get('/{slug}/{id}', [BoardController::class, 'show'])
+        ->name('show')
+        ->where('slug', '[a-z0-9_]+');
+    Route::get('/{slug}/{id}/edit', [BoardController::class, 'edit'])
+        ->name('edit')
+        ->where('slug', '[a-z0-9_]+');
+    Route::put('/{slug}/{id}', [BoardController::class, 'update'])
+        ->name('update')
+        ->where('slug', '[a-z0-9_]+');
+    Route::delete('/{slug}/{id}', [BoardController::class, 'destroy'])
+        ->name('destroy')
+        ->where('slug', '[a-z0-9_]+');
     
     // 파일 다운로드
-    Route::get('/{slug}/attachment/{attachmentId}', [SiteManager\Http\Controllers\BoardController::class, 'downloadFile'])->name('attachment.download')->where('slug', '[a-z0-9_]+');
-    
-    // 첨부파일 삭제
-    Route::delete('/attachments/{attachmentId}', [SiteManager\Http\Controllers\BoardController::class, 'deleteAttachment'])->name('attachment.delete');
-    
-    // 첨부파일 순서 업데이트
-    Route::post('/attachments/sort-order', [SiteManager\Http\Controllers\BoardController::class, 'updateAttachmentSortOrder'])->name('attachment.sort-order');
+    Route::get('/{slug}/attachment/{attachmentId}', [BoardController::class, 'downloadFile'])
+        ->name('attachment.download')
+        ->where('slug', '[a-z0-9_]+');
     
     // 댓글 라우트
     Route::group([
@@ -43,11 +63,11 @@ Route::prefix('board')->name('board.')->group(function () {
         'where' => ['slug' => '[a-z0-9_]+'],
         'as' => 'comments.'
     ], function () {
-        Route::get('/', [SiteManager\Http\Controllers\CommentController::class, 'index'])->name('index');
-        Route::post('/', [SiteManager\Http\Controllers\CommentController::class, 'store'])->name('store');
-        Route::put('/{commentId}', [SiteManager\Http\Controllers\CommentController::class, 'update'])->name('update');
-        Route::delete('/{commentId}', [SiteManager\Http\Controllers\CommentController::class, 'destroy'])->name('destroy');
-        Route::patch('/{commentId}/approve', [SiteManager\Http\Controllers\CommentController::class, 'approve'])->name('approve');
-        Route::patch('/{commentId}/reject', [SiteManager\Http\Controllers\CommentController::class, 'reject'])->name('reject');
+        Route::get('/', [CommentController::class, 'index'])->name('index');
+        Route::post('/', [CommentController::class, 'store'])->name('store');
+        Route::put('/{commentId}', [CommentController::class, 'update'])->name('update');
+        Route::delete('/{commentId}', [CommentController::class, 'destroy'])->name('destroy');
+        Route::patch('/{commentId}/approve', [CommentController::class, 'approve'])->name('approve');
+        Route::patch('/{commentId}/reject', [CommentController::class, 'reject'])->name('reject');
     });
 });

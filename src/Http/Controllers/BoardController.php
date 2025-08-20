@@ -693,9 +693,9 @@ class BoardController extends Controller
     /**
      * 첨부파일 삭제
      */
-    public function deleteAttachment($attachmentId)
+    public function deleteAttachment($attachment_id)
     {
-        $attachment = BoardAttachment::findOrFail($attachmentId);
+        $attachment = BoardAttachment::findOrFail($attachment_id);
         
         // 권한 체크: 게시글 작성자나 관리자만 삭제 가능
         $board = Board::where('slug', $attachment->board_slug)->first();

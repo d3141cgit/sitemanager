@@ -1,7 +1,8 @@
 /* File Upload Component CSS */
 
-/* Prevent default drag behaviors on entire page */
-html, body {
+/* File Upload Wrapper */
+.file-upload-wrapper {
+    position: relative;
     -webkit-user-drag: none;
     -khtml-user-drag: none;
     -moz-user-drag: none;
@@ -10,11 +11,6 @@ html, body {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-}
-
-/* File Upload Wrapper */
-.file-upload-wrapper {
-    position: relative;
 }
 
 /* Drag & Drop Zone Styles */
