@@ -13,113 +13,116 @@
 
     {!! setResources(['bootstrap', 'jquery']) !!}
     {!! resource('sitemanager::css/app.css') !!}
-
+    
     @stack('head')
 </head>
 
-<body>
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container-fluid">
-                <!-- 사이드바 토글 버튼 (모바일) -->
-                @if(isset($navigationMenus) && count($navigationMenus) > 0)
-                    <button class="btn btn-outline-secondary d-lg-none me-2" type="button" id="sidebarToggle">
-                        <i class="bi bi-list"></i>
-                    </button>
-                @endif
+<body class="modern-layout">
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-modern">
+        <div class="container-fluid">
+            <!-- Brand -->
+            <a class="navbar-brand" href="{{ url('/') }}">
+                <div class="brand-logo">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                    <span>{{ config_get('SITE_NAME', 'SiteManager') }}</span>
+                </div>
+            </a>
 
-                <!-- 브랜드/로고 -->
-                <a class="navbar-brand" href="{{ url('/') }}">
-                    {{ config_get('SITE_NAME', 'Site Manager') }}
-                </a>
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-                <!-- 모바일 토글 버튼 -->
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <!-- 사용자 메뉴 -->
-                    <ul class="navbar-nav">
-                        @auth
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-person-circle me-1"></i>
-                                    {{ Auth::user()->name }}
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a class="dropdown-item" href="#">
-                                            <i class="bi bi-person me-2"></i>프로필
-                                        </a>
-                                    </li>
-                                    
-                                    @if(Auth::user()->level >= config('member.admin_level', 200))
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <a class="dropdown-item text-primary" href="{{ route('admin.dashboard') }}">
-                                                <i class="bi bi-gear me-2"></i>관리자
-                                            </a>
-                                        </li>
-                                    @endif
-                                    
+            <!-- Navigation Content -->
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto">
+                    @auth
+                        <li class="nav-item dropdown user-dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <div class="user-avatar">
+                                    <i class="bi bi-person-circle"></i>
+                                </div>
+                                <span class="user-name">{{ Auth::user()->name }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi bi-person"></i>
+                                        <span>프로필</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi bi-gear"></i>
+                                        <span>설정</span>
+                                    </a>
+                                </li>
+                                
+                                @if(Auth::user()->level >= config('member.admin_level', 200))
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <form method="POST" action="{{ route('logout') }}">
-                                            @csrf
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                <i class="bi bi-box-arrow-right me-2"></i>로그아웃
-                                            </button>
-                                        </form>
+                                        <a class="dropdown-item admin-link" href="{{ route('admin.dashboard') }}" target="admin">
+                                            <i class="bi bi-shield-check"></i>
+                                            <span>관리자</span>
+                                        </a>
                                     </li>
-                                </ul>
-                            </li>
-                        @else
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('login') }}">
-                                    <i class="bi bi-box-arrow-in-right me-1"></i>로그인
-                                </a>
-                            </li>
-                        @endauth
-                    </ul>
-                </div>
+                                @endif
+                                
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item logout-btn">
+                                            <i class="bi bi-box-arrow-right"></i>
+                                            <span>로그아웃</span>
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    @else
+                        <li class="nav-item">
+                            <a class="nav-link login-btn" href="{{ route('login') }}">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                <span>로그인</span>
+                            </a>
+                        </li>
+                    @endauth
+                </ul>
             </div>
-        </nav>
-    </header>
-    
-    <main class="d-flex">
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-wrapper{{ isset($navigationMenus) && count($navigationMenus) > 0 ? '' : ' no-sidebar' }}">
         @if(isset($navigationMenus) && count($navigationMenus) > 0)
-            <aside class="sidebar">
+            <!-- Sidebar -->
+            <aside class="sidebar-modern">
+                <div class="sidebar-header">
+                    <h6>메뉴</h6>
+                </div>
                 <nav class="sidebar-nav">
                     @php
-                        // Minimal recursive renderer: ul > li; route/url types render as links, text types as plain text.
                         $renderMenuTree = function($menus) use (&$renderMenuTree) {
-                            echo "<ul class='nav flex-column'>";
+                            echo "<ul class='nav-list'>";
                             foreach ($menus as $menu) {
-                                // Respect hidden flag and Index permission (bit 1)
-                                if (!empty($menu['hidden'])) {
-                                    continue;
-                                }
+                                if (!empty($menu['hidden'])) continue;
+                                
                                 $userPerm = isset($menu['user_permission']) ? (int)$menu['user_permission'] : 0;
-                                if (($userPerm & 1) !== 1) {
-                                    continue;
-                                }
+                                if (($userPerm & 1) !== 1) continue;
 
                                 echo "<li class='nav-item'>";
-
+                                
                                 $type = $menu['type'] ?? 'text';
-
-                                // Only render as a link when it's a linkable type AND a target exists
-                                // and get_menu_url returns a real URL (not '#')
                                 $linkableTypes = \SiteManager\Models\Menu::getLinkableTypes();
+                                
                                 if (in_array($type, $linkableTypes) && !empty($menu['target'])) {
                                     $rawUrl = get_menu_url($menu);
                                     $url = e($rawUrl);
                                     $attrs = get_menu_attributes($menu) ?: '';
 
-                                    // If get_menu_url returned a placeholder like '#', fall back to plain text
                                     if (!empty($rawUrl) && $rawUrl !== '#') {
-                                        // format_menu_title may contain HTML/icons so output raw
                                         echo '<a href="' . $url . '" class="nav-link" ' . $attrs . '>' . format_menu_title($menu) . '</a>';
                                     } else {
                                         echo '<span class="nav-link disabled">' . e($menu['title'] ?? '') . '</span>';
@@ -148,38 +151,36 @@
             </aside>
         @endif
 
-        <div class="content-wrapper flex-grow-1">
+        <!-- Content Area -->
+        <main class="content-area @if(!isset($navigationMenus) || count($navigationMenus) === 0) full-width @endif">
             @yield('content')
-        </div>
-    </main>
+        </main>
+    </div>
 
     @stack('scripts')
     
-    <!-- Sidebar Toggle Script -->
+    <!-- Sidebar Toggle Script for Mobile -->
     @if(isset($navigationMenus) && count($navigationMenus) > 0)
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <div class="sidebar-overlay"></div>
         <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
+            const navbarToggler = document.querySelector('.navbar-toggler');
+            const sidebar = document.querySelector('.sidebar-modern');
+            const overlay = document.querySelector('.sidebar-overlay');
             
-            if (sidebarToggle && sidebar && overlay) {
-                // Toggle sidebar
-                sidebarToggle.addEventListener('click', function() {
+            if (navbarToggler && sidebar && overlay) {
+                navbarToggler.addEventListener('click', function() {
                     sidebar.classList.toggle('show');
                     overlay.classList.toggle('show');
                 });
                 
-                // Close sidebar when clicking overlay
                 overlay.addEventListener('click', function() {
                     sidebar.classList.remove('show');
                     overlay.classList.remove('show');
                 });
                 
-                // Close sidebar on window resize if screen becomes large
                 window.addEventListener('resize', function() {
-                    if (window.innerWidth >= 992) {
+                    if (window.innerWidth >= 768) {
                         sidebar.classList.remove('show');
                         overlay.classList.remove('show');
                     }
