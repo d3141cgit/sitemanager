@@ -12,8 +12,6 @@
     <title>@yield('title', config_get('SITE_NAME'))</title>
 
     {!! setResources(['bootstrap', 'jquery']) !!}
-    {{-- Bootstrap Icons CDN --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     {!! resource('css/app.css') !!}
 
     @stack('head')
