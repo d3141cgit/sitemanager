@@ -2,7 +2,7 @@
 
 namespace SiteManager\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
+use SiteManager\Http\Controllers\Controller;
 use SiteManager\Models\Member;
 use SiteManager\Models\Group;
 use SiteManager\Services\FileUploadService;
@@ -64,7 +64,7 @@ class AdminMemberController extends Controller
         $groups = Group::orderBy('name')->get();
         $levels = config('member.levels');
 
-        return view('admin.members.index', compact('members', 'groups', 'levels'));
+        return view('sitemanager::admin.members.index', compact('members', 'groups', 'levels'));
     }
 
     /**
@@ -82,7 +82,7 @@ class AdminMemberController extends Controller
     {
         $groups = Group::orderBy('name')->get();
         $levels = config('member.levels');
-        return view('admin.members.form', compact('groups', 'levels'));
+        return view('sitemanager::admin.members.form', compact('groups', 'levels'));
     }
 
     /**
@@ -135,7 +135,7 @@ class AdminMemberController extends Controller
             abort(403, '루트 권한이 필요합니다.');
         }
 
-        return view('admin.members.form', compact('member', 'groups', 'levels'));
+        return view('sitemanager::admin.members.form', compact('member', 'groups', 'levels'));
     }
 
     /**

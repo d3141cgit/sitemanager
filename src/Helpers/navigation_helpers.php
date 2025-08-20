@@ -85,7 +85,7 @@ if (!function_exists('get_menu_url')) {
                     if ($routeName === 'board.index') {
                         $menuId = $menu['id'] ?? null;
                         if ($menuId) {
-                            $board = \App\Models\Board::where('menu_id', $menuId)->first();
+                            $board = \SiteManager\Models\Board::where('menu_id', $menuId)->first();
                             if ($board && $board->slug) {
                                 $routeParams['slug'] = $board->slug;
                             } else {
@@ -161,7 +161,7 @@ if (!function_exists('should_show_menu')) {
         
         // 권한 확인 (이미 NavigationComposer에서 필터링되었지만 추가 보안)
         if (isset($menu['permission_required']) && $menu['permission_required'] > 0) {
-            $permissionService = app(\App\Services\PermissionService::class);
+            $permissionService = app(\SiteManager\Services\PermissionService::class);
             
             if (!$permissionService->hasPermission(
                 $menu['id'] ?? 0, 

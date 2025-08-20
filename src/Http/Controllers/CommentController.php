@@ -121,7 +121,7 @@ class CommentController extends Controller
             DB::commit();
 
             // 댓글 HTML 렌더링
-            $commentHtml = view('board.partials.comment', compact('comment', 'board', 'post') + ['level' => 0])->render();
+            $commentHtml = view('sitemanager::board.partials.comment', compact('comment', 'board', 'post') + ['level' => 0])->render();
 
             return response()->json([
                 'success' => true,
@@ -178,7 +178,7 @@ class CommentController extends Controller
                 'is_edited' => true,
             ]);
 
-            $commentHtml = view('board.partials.comment', compact('comment', 'board', 'post') + ['level' => 0])->render();
+            $commentHtml = view('sitemanager::board.partials.comment', compact('comment', 'board', 'post') + ['level' => 0])->render();
 
             return response()->json([
                 'success' => true,
@@ -281,7 +281,7 @@ class CommentController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $commentsHtml = view('board.partials.comments', compact('comments', 'board'))->render();
+        $commentsHtml = view('sitemanager::board.partials.comments', compact('comments', 'board'))->render();
 
         return response()->json([
             'success' => true,

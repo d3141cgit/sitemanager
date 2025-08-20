@@ -39,7 +39,7 @@ class MenuController extends Controller
             ]);
         }
         
-        return view('admin.menus.index', compact('menus', 'invalidRouteMenus'));
+        return view('sitemanager::admin.menus.index', compact('menus', 'invalidRouteMenus'));
     }
     
     /**
@@ -54,7 +54,7 @@ class MenuController extends Controller
         $availableRoutes = $this->menuService->getAvailableRoutes();
         $menuPermissions = ['basic' => [], 'level' => [], 'group' => [], 'admins' => []];
         
-        return view('admin.menus.form', compact('availableRoutes', 'menuPermissions'));
+        return view('sitemanager::admin.menus.form', compact('availableRoutes', 'menuPermissions'));
     }
     
     /**
@@ -123,7 +123,7 @@ class MenuController extends Controller
             abort(403, '권한이 없습니다.');
         }
         
-        return view('admin.menus.show', compact('menu'));
+        return view('sitemanager::admin.menus.show', compact('menu'));
     }
     
     /**
@@ -138,7 +138,7 @@ class MenuController extends Controller
         $availableRoutes = $this->menuService->getAvailableRoutes();
         $menuPermissions = $this->menuService->getMenuPermissions($menu->id);
         
-        return view('admin.menus.form', compact('menu', 'availableRoutes', 'menuPermissions'));
+        return view('sitemanager::admin.menus.form', compact('menu', 'availableRoutes', 'menuPermissions'));
     }
     
     /**
@@ -307,26 +307,6 @@ class MenuController extends Controller
             ], 500);
         }
     }
-
-    /**
-     * jsTree 기반 트리 보기
-     */
-    // public function treeIndex()
-    // {
-    //     if (Auth::user()->level < config('member.admin_level')) {
-    //         abort(403);
-    //     }
-
-    //     $menus = Menu::orderBy('section')->orderBy('_lft')->get();
-        
-    //     // AJAX 요청인 경우 JSON만 반환
-    //     if (request()->wantsJson() || request()->ajax()) {
-    //         return response()->json($menus);
-    //     }
-        
-    //     // 일반 요청인 경우 뷰 반환
-    //     return view('admin.menus.tree', compact('menus'));
-    // }
 
     /**
      * 단일 노드 이동 처리 (jsTree move_node 이벤트)

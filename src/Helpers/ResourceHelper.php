@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use App\Models\Asset;
+use SiteManager\Models\Asset;
 
 if (!function_exists('resource')) {
     /**
@@ -219,16 +219,16 @@ if (!function_exists('setResources')) {
 
         $cdnResources = [
             'sweetalert' => [
-            'css' => 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css',
-            'js' => 'https://cdn.jsdelivr.net/npm/sweetalert2@11'
-        ],
-        'jquery' => [
-                'js' => [
-                    'https://code.jquery.com/jquery-3.7.1.min.js',
-                    'https://code.jquery.com/ui/1.14.0/jquery-ui.min.js'
+                    'css' => ['https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css'],
+                    'js' => ['https://cdn.jsdelivr.net/npm/sweetalert2@11']
                 ],
-                'css' => ['//code.jquery.com/ui/1.14.0/themes/ui-darkness/jquery-ui.css']
-            ],
+            'jquery' => [
+                    'js' => [
+                        'https://code.jquery.com/jquery-3.7.1.min.js',
+                        'https://code.jquery.com/ui/1.14.0/jquery-ui.min.js'
+                    ],
+                    'css' => ['//code.jquery.com/ui/1.14.0/themes/ui-darkness/jquery-ui.css']
+                ],
             'bootstrap' => [
                 'js' => ['https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js'],
                 'css' => [
@@ -239,9 +239,6 @@ if (!function_exists('setResources')) {
             'fontawesome' => [
                 'css' => ['https://use.fontawesome.com/releases/v5.15.4/css/all.css']
             ],
-            'sweetalert' => [
-                'js' => ['https://cdn.jsdelivr.net/npm/sweetalert2@11']
-            ]
         ];
 
         foreach ($assets as $asset) {
@@ -272,7 +269,7 @@ if (!function_exists('config_get')) {
      */
     function config_get(string $key, $default = null): mixed
     {
-        return \App\Services\ConfigService::getValue($key, $default);
+        return \SiteManager\Services\ConfigService::getValue($key, $default);
     }
 }
 
@@ -280,8 +277,8 @@ if (!function_exists('config_set')) {
     /**
      * ConfigService의 set() 메서드 단축 헬퍼
      */
-    function config_set(string $key, $value, string $type = 'hidden'): \App\Models\Setting
+    function config_set(string $key, $value, string $type = 'hidden'): \SiteManager\Models\Setting
     {
-        return \App\Services\ConfigService::set($key, $value, $type);
+        return \SiteManager\Services\ConfigService::set($key, $value, $type);
     }
 }

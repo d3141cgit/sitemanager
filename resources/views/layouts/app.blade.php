@@ -118,7 +118,7 @@
 
                                 // Only render as a link when it's a linkable type AND a target exists
                                 // and get_menu_url returns a real URL (not '#')
-                                $linkableTypes = \App\Models\Menu::getLinkableTypes();
+                                $linkableTypes = \SiteManager\Models\Menu::getLinkableTypes();
                                 if (in_array($type, $linkableTypes) && !empty($menu['target'])) {
                                     $rawUrl = get_menu_url($menu);
                                     $url = e($rawUrl);

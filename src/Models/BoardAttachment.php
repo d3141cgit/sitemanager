@@ -275,7 +275,7 @@ class BoardAttachment extends Model
     {
         static::deleting(function ($attachment) {
             // FileUploadService를 사용하여 파일 삭제
-            $fileUploadService = app(\App\Services\FileUploadService::class);
+            $fileUploadService = app(\SiteManager\Services\FileUploadService::class);
             
             try {
                 $fileUploadService->deleteFile($attachment->file_path);

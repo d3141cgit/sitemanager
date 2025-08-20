@@ -31,7 +31,7 @@ class PostController extends Controller
         
         $posts = Post::paginate(10);
         
-        return view('posts.index', compact('posts'));
+        return view('sitemanager::posts.index', compact('posts'));
     }
 
     /**
@@ -43,7 +43,7 @@ class PostController extends Controller
         
         $post = Post::findOrFail($id);
         
-        return view('posts.show', [
+        return view('sitemanager::posts.show', [
             'post' => $post,
             'canEdit' => $this->canWrite(),
             'canDelete' => $this->canFullControl()
@@ -57,7 +57,7 @@ class PostController extends Controller
     {
         $this->initializeMenuPermission($request);
         
-        return view('posts.create');
+        return view('sitemanager::posts.create');
     }
 
     /**
@@ -92,7 +92,7 @@ class PostController extends Controller
         
         $post = Post::findOrFail($id);
         
-        return view('posts.edit', compact('post'));
+        return view('sitemanager::posts.edit', compact('post'));
     }
 
     /**

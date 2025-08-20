@@ -8,9 +8,10 @@ use SiteManager\Http\Controllers\Admin\AdminBoardController;
 use SiteManager\Http\Controllers\MenuController;
 
 // 관리자 라우트
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('sitemanager.admin.')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     // 관리자 대시보드
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    // Route::get('/statistics', [AdminController::class, 'statistics'])->name('statistics');
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
     Route::post('/settings/process-config', [AdminController::class, 'processConfig'])->name('settings.process-config');
     Route::post('/settings/reset-config', [AdminController::class, 'resetConfig'])->name('settings.reset-config');
@@ -33,6 +34,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('sitemanager.admin.'
     Route::get('/menus/section/{section}/parents', [MenuController::class, 'getSectionParents'])->name('menus.section-parents');
     Route::post('/menus/rebuild-tree', [MenuController::class, 'rebuildTree'])->name('menus.rebuild-tree');
     Route::post('/menus/check-board-connection', [MenuController::class, 'checkBoardConnection'])->name('menus.check-board-connection');
+    // Route::get('/menus/tree', [MenuController::class, 'treeIndex'])->name('menus.tree');
     Route::post('/menus/move', [MenuController::class, 'moveNode'])->name('menus.move');
     Route::resource('menus', MenuController::class);
     

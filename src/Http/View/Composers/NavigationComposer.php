@@ -3,7 +3,7 @@
 namespace SiteManager\Http\View\Composers;
 
 use Illuminate\View\View;
-use App\Services\PermissionService;
+use SiteManager\Services\PermissionService;
 use Illuminate\Support\Facades\Auth;
 
 class NavigationComposer

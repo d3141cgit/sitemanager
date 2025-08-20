@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('sitemanager::layouts.admin')
 
 @section('title', 'System Settings')
 
@@ -58,7 +58,7 @@
                                         <tbody>
                                             @foreach ($configs as $config)
                                             @php
-                                                $isSystemConfig = \App\Services\ConfigService::isSystemConfig($config->key);
+                                                $isSystemConfig = \SiteManager\Services\ConfigService::isSystemConfig($config->key);
                                             @endphp
                                             <tr @if($isSystemConfig) class="table-warning" @endif>
                                                 <td>

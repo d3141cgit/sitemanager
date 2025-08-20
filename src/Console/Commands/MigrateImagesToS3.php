@@ -3,7 +3,7 @@
 namespace SiteManager\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Services\FileUploadService;
+use SiteManager\Services\FileUploadService;
 use SiteManager\Models\Member;
 use SiteManager\Models\Menu;
 use Illuminate\Support\Facades\DB;

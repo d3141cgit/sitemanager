@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('sitemanager::layouts.admin')
 
 @section('title', isset($menu) ? 'Edit Menu - ' . $menu->title : 'Add New Menu')
 
@@ -76,7 +76,7 @@
                                             name="type" 
                                             required>
                                         <option value="">Select menu type</option>
-                                        @foreach(\App\Models\Menu::getAvailableTypes() as $typeValue => $typeLabel)
+                                        @foreach(\SiteManager\Models\Menu::getAvailableTypes() as $typeValue => $typeLabel)
                                             <option value="{{ $typeValue }}" {{ old('type', isset($menu) ? $menu->type : '') == $typeValue ? 'selected' : '' }}>{{ $typeLabel }}</option>
                                         @endforeach
                                     </select>
@@ -182,7 +182,7 @@
                                             name="parent_id">
                                         <option value="">Root Menu (Creates New Section)</option>
                                         @php
-                                            $allMenus = \App\Models\Menu::orderBy('section')->orderBy('_lft')->get();
+                                            $allMenus = \SiteManager\Models\Menu::orderBy('section')->orderBy('_lft')->get();
                                             $currentMenuId = isset($menu) ? $menu->id : null;
                                         @endphp
                                         @foreach($allMenus as $parentMenu)
@@ -226,7 +226,7 @@
                                     <label class="form-label">Menu Images</label>
                                     <div id="images-container">
                                         @php
-                                            $imageCategories = \App\Models\Menu::getImageCategories();
+                                            $imageCategories = \SiteManager\Models\Menu::getImageCategories();
                                             $existingImages = old('images', isset($menu) ? $menu->images : []);
                                         @endphp
                                         @if($existingImages)
@@ -342,7 +342,7 @@
                                 </div>
 
                                 <!-- Group Permission -->
-                                @if(\App\Models\Group::count() > 0)
+                                @if(\SiteManager\Models\Group::count() > 0)
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <label class="form-label mb-0">Group Permission</label>
@@ -848,7 +848,7 @@ function removePermLevel(index) {
 }
 
 function addPermGroup() {
-    const groups = @json(\App\Models\Group::all());
+    const groups = @json(\SiteManager\Models\Group::all());
     
     // 그룹이 하나도 없으면 경고 메시지 표시
     if (groups.length === 0) {
@@ -1064,7 +1064,7 @@ let imageIndex = {{ isset($menu) && $menu->images ? count($menu->images) : 0 }};
 
 document.getElementById('add-image').addEventListener('click', function() {
     const container = document.getElementById('images-container');
-    const imageCategories = @json(\App\Models\Menu::getImageCategories());
+    const imageCategories = @json(\SiteManager\Models\Menu::getImageCategories());
     
     let optionsHtml = '';
     Object.keys(imageCategories).forEach(key => {

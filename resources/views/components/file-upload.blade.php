@@ -5,7 +5,7 @@
         <script>
             // Global file upload configuration
             window.FileUploadConfig = window.FileUploadConfig || {};
-            window.FileUploadConfig.allowedTypes = {!! json_encode(config('app.allowed_file_types', ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'])) !!};
+            window.FileUploadConfig.allowedTypes = {!! json_encode(config('sitemanager.board.allowed_extensions', ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'])) !!};
             window.FileUploadConfig.maxFileSize = {{ config('app.max_file_size', 2048) }};
             window.FileUploadConfig.maxFilesPerPost = {{ config('app.max_files_per_post', 5) }};
         </script>

@@ -53,7 +53,7 @@ class BoardController extends Controller
             ->limit(5)
             ->get();
 
-        return view('board.index', compact('board', 'posts', 'notices'));
+        return view('sitemanager::board.index', compact('board', 'posts', 'notices'));
     }
 
     /**
@@ -117,7 +117,7 @@ class BoardController extends Controller
             ->orderBy('id', 'asc')
             ->first();
 
-        return view('board.show', compact('board', 'post', 'comments', 'attachments', 'prevPost', 'nextPost'));
+        return view('sitemanager::board.show', compact('board', 'post', 'comments', 'attachments', 'prevPost', 'nextPost'));
     }
 
     /**
@@ -137,7 +137,7 @@ class BoardController extends Controller
             return redirect()->route('login')->with('error', '로그인이 필요합니다.');
         }
 
-        return view('board.form', compact('board'));
+        return view('sitemanager::board.form', compact('board'));
     }
 
     /**
@@ -261,7 +261,7 @@ class BoardController extends Controller
             abort(403, '게시글을 수정할 권한이 없습니다.');
         }
 
-        return view('board.form', compact('board', 'post'));
+        return view('sitemanager::board.form', compact('board', 'post'));
     }
 
     /**

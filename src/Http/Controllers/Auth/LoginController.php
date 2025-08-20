@@ -2,7 +2,7 @@
 
 namespace SiteManager\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
+use SiteManager\Http\Controllers\Controller;
 use SiteManager\Services\MemberService;
 use Illuminate\Http\Request;
 
@@ -28,7 +28,7 @@ class LoginController extends Controller
             }
         }
         
-        return view('auth.login');
+        return view('sitemanager::auth.login');
     }
 
     public function login(Request $request)

@@ -2,7 +2,7 @@
 
 namespace SiteManager\Console\Commands;
 
-use App\Services\FileUploadService;
+use SiteManager\Services\FileUploadService;
 use Illuminate\Console\Command;
 
 class TestS3Connection extends Command

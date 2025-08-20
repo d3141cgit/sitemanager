@@ -23,12 +23,7 @@
     "autoload": {
         "psr-4": {
             "SiteManager\\": "src/"
-        },
-        "files": [
-            "src/Helpers/functions.php",
-            "src/Helpers/helpers.php",
-            "src/Helpers/navigation_helpers.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {

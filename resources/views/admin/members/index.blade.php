@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('sitemanager::layouts.admin')
 
 @section('title', 'Members List')
 

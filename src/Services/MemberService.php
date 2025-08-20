@@ -3,7 +3,7 @@
 namespace SiteManager\Services;
 
 use SiteManager\Models\Member;
-use App\Repositories\MemberRepositoryInterface;
+use SiteManager\Repositories\MemberRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;

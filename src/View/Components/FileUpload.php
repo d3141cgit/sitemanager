@@ -53,7 +53,7 @@ class FileUpload extends Component
         $this->multiple = $multiple;
         $this->maxFileSize = $maxFileSize;
         $this->maxFiles = $maxFiles;
-        $this->allowedTypes = $allowedTypes ?? config('app.allowed_file_types');
+        $this->allowedTypes = $allowedTypes ?? config('sitemanager.board.allowed_extensions');
         $this->enablePreview = $enablePreview;
         $this->enableEdit = $enableEdit;
         $this->showFileInfo = $showFileInfo;

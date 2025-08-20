@@ -2,7 +2,7 @@
 
 namespace SiteManager\Http\Controllers\User;
 
-use App\Http\Controllers\Controller;
+use SiteManager\Http\Controllers\Controller;
 use SiteManager\Models\Member;
 use SiteManager\Models\Group;
 use Illuminate\Http\Request;
@@ -20,7 +20,7 @@ class UserController extends Controller
         $user = Auth::user();
         $user->load('groups');
         
-        return view('user.dashboard', compact('user'));
+        return view('sitemanager::user.dashboard', compact('user'));
     }
 
     /**
@@ -31,7 +31,7 @@ class UserController extends Controller
         $user = Auth::user();
         $user->load('groups');
         
-        return view('user.profile', compact('user'));
+        return view('sitemanager::user.profile', compact('user'));
     }
 
     /**
@@ -42,7 +42,7 @@ class UserController extends Controller
         $user = Auth::user();
         $user->load('groups');
         
-        return view('user.profile-edit', compact('user'));
+        return view('sitemanager::user.profile-edit', compact('user'));
     }
 
     /**
@@ -71,7 +71,7 @@ class UserController extends Controller
      */
     public function changePasswordForm()
     {
-        return view('user.change-password');
+        return view('sitemanager::user.change-password');
     }
 
     /**
@@ -110,7 +110,7 @@ class UserController extends Controller
         $user = Auth::user();
         $groups = $user->groups()->with('members')->get();
         
-        return view('user.groups', compact('groups'));
+        return view('sitemanager::user.groups', compact('groups'));
     }
 
     /**
@@ -118,7 +118,7 @@ class UserController extends Controller
      */
     public function deleteAccountForm()
     {
-        return view('user.delete-account');
+        return view('sitemanager::user.delete-account');
     }
 
     /**

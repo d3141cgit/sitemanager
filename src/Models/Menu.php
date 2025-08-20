@@ -4,7 +4,7 @@ namespace SiteManager\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Services\FileUploadService;
+use SiteManager\Services\FileUploadService;
 // use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Kalnoy\Nestedset\NodeTrait;

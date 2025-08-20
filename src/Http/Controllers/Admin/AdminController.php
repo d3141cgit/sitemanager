@@ -2,7 +2,7 @@
 
 namespace SiteManager\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
+use SiteManager\Http\Controllers\Controller;
 use SiteManager\Models\Member;
 use SiteManager\Models\Group;
 use SiteManager\Models\Menu;
@@ -72,7 +72,7 @@ class AdminController extends Controller
         // 존재하지 않는 route를 사용하는 메뉴들 확인
         $invalidRouteMenus = $this->menuService->findMenusWithInvalidRoutes();
 
-        return view('admin.dashboard', compact('stats', 'recent_members', 'memberStats', 'groupStats', 'invalidRouteMenus'));
+        return view('sitemanager::admin.dashboard', compact('stats', 'recent_members', 'memberStats', 'groupStats', 'invalidRouteMenus'));
     }
 
     /**
@@ -93,7 +93,7 @@ class AdminController extends Controller
             ->orderBy('members_count', 'desc')
             ->get();
 
-        return view('admin.statistics', compact('monthly_stats', 'group_stats'));
+        return view('sitemanager::admin.statistics', compact('monthly_stats', 'group_stats'));
     }
 
     /**
@@ -104,7 +104,7 @@ class AdminController extends Controller
         $configs = ConfigService::get();
         $cfg_type = ConfigService::$cfg_type;
         
-        return view('admin.settings', compact('configs', 'cfg_type'));
+        return view('sitemanager::admin.settings', compact('configs', 'cfg_type'));
     }
 
     /**

@@ -7,7 +7,7 @@
 
     <title>@yield('title', 'Admin Panel') - Site Manager</title>
     
-    {!! setResources(['bootstrap', 'jquery', 'sweetalert']) !!}
+    {!! setResources(['jquery', 'bootstrap', 'sweetalert']) !!}
     {!! resource('css/admin/admin.css') !!}
     {!! resource('js/admin/admin.js') !!}
     

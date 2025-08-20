@@ -2,7 +2,7 @@
 
 namespace SiteManager\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
+use SiteManager\Http\Controllers\Controller;
 use SiteManager\Models\Group;
 use SiteManager\Models\Member;
 use Illuminate\Http\Request;
@@ -40,7 +40,7 @@ class AdminGroupController extends Controller
 
         $groups = $query->paginate(20)->appends($request->query());
 
-        return view('admin.groups.index', compact('groups'));
+        return view('sitemanager::admin.groups.index', compact('groups'));
     }
 
     /**
@@ -48,7 +48,7 @@ class AdminGroupController extends Controller
      */
     public function create()
     {
-        return view('admin.groups.form');
+        return view('sitemanager::admin.groups.form');
     }
 
     /**
@@ -86,7 +86,7 @@ class AdminGroupController extends Controller
             $query->where('group_id', $group->id);
         })->orderBy('name')->get();
 
-        return view('admin.groups.form', compact('group', 'availableMembers'));
+        return view('sitemanager::admin.groups.form', compact('group', 'availableMembers'));
     }
 
     /**

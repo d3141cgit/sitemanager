@@ -3,7 +3,7 @@
 namespace SiteManager\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Services\FileUploadService;
+use SiteManager\Services\FileUploadService;
 use Illuminate\Support\Facades\Storage;
 
 class CheckS3Configuration extends Command

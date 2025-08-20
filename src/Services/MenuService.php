@@ -4,7 +4,7 @@ namespace SiteManager\Services;
 
 use SiteManager\Models\Menu;
 use SiteManager\Models\MenuPermission;
-use App\Repositories\MenuRepositoryInterface;
+use SiteManager\Repositories\MenuRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 // use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -108,7 +108,7 @@ class MenuService
         $this->rebuildSection($menu->section);
 
         // 메뉴 변경 시 권한 캐시 리셋
-        app('App\\Services\\PermissionService')->clearPermissionCache();
+        app('SiteManager\\Services\\PermissionService')->clearPermissionCache();
             
         return $menu->fresh(); // 최신 데이터로 반환
     }
@@ -263,7 +263,7 @@ class MenuService
 
         if ($result) {
             // 메뉴 변경 시 권한 캐시 리셋
-            app('App\\Services\\PermissionService')->clearPermissionCache();
+            app('SiteManager\\Services\\PermissionService')->clearPermissionCache();
         }
         return $result;
     }
@@ -288,7 +288,7 @@ class MenuService
         
         if ($result) {
             // 메뉴 삭제 시 권한 캐시 리셋
-            app('App\\Services\\PermissionService')->clearPermissionCache();
+            app('SiteManager\\Services\\PermissionService')->clearPermissionCache();
         }
         return $result;
     }

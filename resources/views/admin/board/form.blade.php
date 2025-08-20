@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('sitemanager::layouts.admin')
 
 @section('title', isset($board) ? 'Edit Board - ' . $board->name : 'Create New Board')
 

@@ -56,11 +56,11 @@ abstract class BoardPost extends Model
         
         if (!class_exists($className)) {
             eval("
-                class {$className} extends App\\Models\\BoardPost {
+                class {$className} extends SiteManager\\Models\\BoardPost {
                     protected \$table = 'board_posts_{$slug}';
                     
                     public function comments() {
-                        return \$this->hasMany(App\\Models\\BoardComment::forBoard('{$slug}'), 'post_id')
+                        return \$this->hasMany(SiteManager\\Models\\BoardComment::forBoard('{$slug}'), 'post_id')
                             ->where('status', 'approved')
                             ->orderBy('created_at', 'desc');
                     }

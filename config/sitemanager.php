@@ -47,30 +47,30 @@ return [
         'web' => [
             'prefix' => '',
             'middleware' => ['web'],
-            'as' => 'sitemanager.',
+            // 'as' => 'sitemanager.',
         ],
         'admin' => [
             'prefix' => 'admin',
             'middleware' => ['web', 'auth', 'admin'],
-            'as' => 'sitemanager.admin.',
+            'as' => 'admin.',
         ],
         'api' => [
-            'prefix' => 'api/sitemanager',
+            'prefix' => 'api',
             'middleware' => ['api', 'auth'],
-            'as' => 'sitemanager.api.',
+            'as' => 'api.',
         ],
     ],
     
     'storage' => [
-        'disk' => env('SITEMANAGER_STORAGE_DISK', 'public'),
-        'upload_path' => 'uploads/sitemanager',
-        'image_path' => 'images/sitemanager',
+        'disk' => env('STORAGE_DISK', 'public'),
+        'upload_path' => 'uploads',
+        'image_path' => 'images',
     ],
     
     // 사이트별 커스터마이징
     'customizations' => [
         'admin_layout' => 'sitemanager::layouts.admin',
-        'board_layout' => 'sitemanager::layouts.app',
+        // 'board_layout' => 'sitemanager::layouts.app',
         'controllers' => [
             'admin_board' => null, // 커스텀 컨트롤러로 오버라이드 가능
             'board' => null,
@@ -78,8 +78,8 @@ return [
         ],
         'views' => [
             'admin_dashboard' => 'sitemanager::admin.dashboard',
-            'board_index' => 'sitemanager::board.index',
-            'board_show' => 'sitemanager::board.show',
+            // 'board_index' => 'sitemanager::board.index',
+            // 'board_show' => 'sitemanager::board.show',
         ],
     ],
 ];

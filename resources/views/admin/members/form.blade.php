@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('sitemanager::layouts.admin')
 
 @section('title', isset($member) ? 'Edit Member - ' . $member->name : 'Add New Member')
 

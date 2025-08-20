@@ -144,7 +144,7 @@ class Board extends Model
      */
     public function getAllowedFileTypes(): array
     {
-        $default = config('app.allowed_file_types');
+        $default = config('sitemanager.board.allowed_extensions');
         $allowed = $this->getSetting('allowed_file_types', implode(',', $default));
         
         if (is_string($allowed)) {

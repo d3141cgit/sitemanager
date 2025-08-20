@@ -4,8 +4,8 @@ namespace SiteManager\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use App\Services\PermissionService;
-use App\Models\Menu;
+use SiteManager\Services\PermissionService;
+use SiteManager\Models\Menu;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 

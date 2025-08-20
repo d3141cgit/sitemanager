@@ -87,7 +87,7 @@ if (!function_exists('can')) {
         $requiredPermission = $permissionMap[$permission];
         
         // 모든 권한은 메뉴를 통해서만 작동
-        if ($model instanceof \App\Models\Board) {
+        if ($model instanceof \SiteManager\Models\Board) {
             // 게시판이 메뉴에 연결되지 않은 경우 관리자만 접근 가능
             if (!$model->menu_id) {
                 $user = auth()->user();
@@ -101,7 +101,7 @@ if (!function_exists('can')) {
             }
             
             return hasMenuPermission($menu, $requiredPermission);
-        } elseif ($model instanceof \App\Models\Menu) {
+        } elseif ($model instanceof \SiteManager\Models\Menu) {
             return hasMenuPermission($model, $requiredPermission);
         }
         
@@ -114,10 +114,10 @@ if (!function_exists('hasMenuPermission')) {
     /**
      * 메뉴 권한이 있는지 확인합니다.
      */
-    function hasMenuPermission(\App\Models\Menu $menu, int $requiredPermission): bool
+    function hasMenuPermission(\SiteManager\Models\Menu $menu, int $requiredPermission): bool
     {
         $user = auth()->user();
-        $permissionService = app(\App\Services\PermissionService::class);
+        $permissionService = app(\SiteManager\Services\PermissionService::class);
         
         // 메뉴에 대한 사용자의 최종 권한 계산
         $userPermission = $permissionService->checkMenuPermission($menu, $user);

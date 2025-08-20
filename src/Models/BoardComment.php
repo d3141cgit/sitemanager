@@ -41,11 +41,11 @@ abstract class BoardComment extends Model
         
         if (!class_exists($className)) {
             eval("
-                class {$className} extends App\\Models\\BoardComment {
+                class {$className} extends SiteManager\\Models\\BoardComment {
                     protected \$table = 'board_comments_{$slug}';
                     
                     public function post(): \\Illuminate\\Database\\Eloquent\\Relations\\BelongsTo {
-                        return \$this->belongsTo(App\\Models\\BoardPost::forBoard('{$slug}'), 'post_id');
+                        return \$this->belongsTo(SiteManager\\Models\\BoardPost::forBoard('{$slug}'), 'post_id');
                     }
                 }
             ");

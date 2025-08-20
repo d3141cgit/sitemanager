@@ -2,7 +2,7 @@
 
 namespace SiteManager\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
+use SiteManager\Http\Controllers\Controller;
 use SiteManager\Models\Board;
 use SiteManager\Models\Menu;
 use SiteManager\Services\BoardService;
@@ -33,7 +33,7 @@ class AdminBoardController extends Controller
             $board->comments_count = $board->getCommentsCount();
         }
 
-        return view('admin.board.index', compact('boards'));
+        return view('sitemanager::admin.board.index', compact('boards'));
     }
 
     /**
@@ -45,7 +45,7 @@ class AdminBoardController extends Controller
             ->orderBy('_lft')
             ->get();
 
-        return view('admin.board.form', compact('menus'));
+        return view('sitemanager::admin.board.form', compact('menus'));
     }
 
     /**
@@ -120,7 +120,7 @@ class AdminBoardController extends Controller
             ->orderBy('_lft')
             ->get();
 
-        return view('admin.board.form', compact('board', 'menus'));
+        return view('sitemanager::admin.board.form', compact('board', 'menus'));
     }
 
     /**
@@ -132,7 +132,7 @@ class AdminBoardController extends Controller
             ->orderBy('_lft')
             ->get();
 
-        return view('admin.board.form', compact('board', 'menus'));
+        return view('sitemanager::admin.board.form', compact('board', 'menus'));
     }
 
     /**

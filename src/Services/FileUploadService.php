@@ -144,7 +144,7 @@ class FileUploadService
         }
         
         // Check file type
-        $allowedTypes = $options['allowed_types'] ?? config('app.allowed_file_types');
+        $allowedTypes = $options['allowed_types'] ?? config('sitemanager.board.allowed_extensions');
         $extension = strtolower($file->getClientOriginalExtension());
         
         if (!in_array($extension, $allowedTypes)) {

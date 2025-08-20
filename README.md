@@ -1,6 +1,149 @@
 # SiteManager Package
 
-Laravel용 완전한 사이트 관리 패키지입니다. 관리자 대시보드, 게시판 시스템, 회원 관리, 메뉴 관리 등의 기능을 제공합니다.
+Laravel용 사이트 관리 패키지입니다. **sitemanager-old** 프로젝트에서 개발된 관리자 시스템을 패키지화하여 여러 프로젝트에서 재사용할 수 있도록 만들었습니다.
+
+## 📁 패키지 개발 구조
+
+### 🎯 **현재 개발 방식 (Path Repository)**
+일반적으로 Composer 패키지는 `vendor/` 폴더에 설치되지만, **개발 중인 패키지**의 경우 다음과 같은 구조로 개발합니다:
+
+```
+/Users/songhyundong/www/sitemanager/
+├── packages/                    # 📦 개발 중인 패키지들
+│   └── sitemanager/            # 실제 패키지 소스코드
+│       ├── composer.json       # 패키지 정의
+│       ├── src/                # 패키지 소스
+│       ├── resources/          # 뷰, CSS, JS 등
+│       ├── config/             # 설정 파일들
+│       └── database/           # 마이그레이션
+└── projects/                   # 🚀 패키지를 사용하는 프로젝트들
+    └── hanurichurch.org/       # Laravel 프로젝트
+        ├── composer.json       # Path Repository 설정
+        └── vendor/             # 심링크로 연결된 패키지
+            └── d3141c/
+                └── sitemanager -> ../../../packages/sitemanager
+```
+
+### 🔗 **Path Repository 방식의 장점**
+
+1. **실시간 개발**: 패키지 코드 수정 즉시 프로젝트에 반영
+2. **디버깅 용이**: 패키지 내부 코드 직접 수정 가능  
+3. **버전 관리**: Git으로 패키지와 프로젝트 별도 관리
+4. **배포 준비**: 완료 후 쉽게 공개 저장소로 이동 가능
+
+### ⚙️ **Composer 설정**
+
+**프로젝트의 composer.json**:
+```json
+{
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../packages/sitemanager"
+        }
+    ],
+    "require": {
+        "d3141c/sitemanager": "dev-main"
+    }
+}
+```
+
+- `"type": "path"`: 로컬 디렉토리를 패키지로 사용
+- `"url": "../../packages/sitemanager"`: 상대 경로로 패키지 위치 지정
+- `"dev-main"`: 개발 브랜치를 직접 사용
+
+### 🎯 **최종 배포 시에는**
+
+개발 완료 후에는 다음과 같이 전환됩니다:
+
+```json
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/d3141c/sitemanager"
+        }
+    ],
+    "require": {
+        "d3141c/sitemanager": "^1.0"
+    }
+}
+```
+
+그러면 일반적인 `vendor/d3141c/sitemanager/` 경로에 설치됩니다.
+
+## � 패키지 내부 구조
+
+### 🏗️ **디렉토리 구조**
+```
+packages/sitemanager/
+├── composer.json              # 패키지 정의 및 의존성
+├── README.md                  # 패키지 문서
+├── config/                    # 📁 설정 파일들
+│   ├── sitemanager.php       # 메인 설정
+│   ├── member.php            # 회원 설정
+│   ├── menu.php              # 메뉴 설정
+│   └── permissions.php       # 권한 설정
+├── database/                  # 📁 데이터베이스
+│   └── migrations/           # 마이그레이션 파일들
+├── resources/                 # 📁 프론트엔드 리소스
+│   ├── views/                # Blade 템플릿
+│   │   ├── admin/           # 관리자 뷰 (완전 제공)
+│   │   ├── auth/            # 인증 뷰 (스타터)
+│   │   ├── board/           # 게시판 뷰 (스타터)
+│   │   └── user/            # 사용자 뷰 (스타터)
+│   ├── assets/              # 이미지, 폰트 등
+│   ├── css/                 # CSS 파일
+│   └── js/                  # JavaScript 파일
+├── routes/                    # 📁 라우트 정의
+│   ├── admin.php            # 관리자 라우트
+│   ├── web.php              # 웹 라우트
+│   └── api.php              # API 라우트
+└── src/                       # 📁 PHP 소스코드
+    ├── SiteManagerServiceProvider.php  # 서비스 프로바이더
+    ├── Console/             # Artisan 명령어들
+    ├── Http/                # 컨트롤러, 미들웨어
+    │   ├── Controllers/     # 컨트롤러
+    │   │   ├── Admin/      # 관리자 컨트롤러
+    │   │   └── User/       # 사용자 컨트롤러
+    │   └── Middleware/      # 미들웨어
+    ├── Models/              # Eloquent 모델들
+    ├── Services/            # 서비스 레이어
+    ├── Repositories/        # 리포지토리 패턴
+    ├── Helpers/             # 헬퍼 함수들
+    └── View/                # 뷰 컴포넌트들
+```
+
+### 🎯 **핵심 설계 원칙**
+
+1. **관리자 기능 = 완전 제공**
+   - `/admin` 모든 기능이 패키지에서 완성된 형태로 제공
+   - 사용자는 설정만으로 바로 사용 가능
+
+2. **프론트엔드 = 스타터 템플릿**
+   - 기본 레이아웃과 템플릿을 제공
+   - 각 프로젝트에서 커스터마이징 전제
+
+3. **네임스페이스 분리**
+   - 패키지: `SiteManager\*`
+   - 프로젝트: `App\*`
+   - 뷰: `sitemanager::*`
+
+## �📋 패키지 구성
+
+### 🎯 **핵심 기능 (모든 프로젝트 공통)**
+- **관리자 시스템**: 완전한 Admin Dashboard
+- **게시판 시스템**: 다중 게시판, 댓글, 파일 업로드
+- **회원 관리**: 그룹 관리, 권한 시스템
+- **메뉴 관리**: 계층형 메뉴 구조
+
+### 🎨 **스타터 템플릿 (선택적)**
+- **기본 레이아웃**: 프런트엔드 시작점
+- **인증 뷰**: 로그인/회원가입 템플릿
+- **사용자 대시보드**: 기본 사용자 페이지
+- **게시판 뷰**: 기본 게시판 템플릿
+
+> **💡 개발 철학**: Admin 기능은 패키지에서 완전히 제공하고, 프런트엔드는 스타터 템플릿에서 시작하여 각 프로젝트별로 커스터마이징
 
 ## 📋 목차
 
@@ -82,15 +225,28 @@ php artisan migrate
 php artisan sitemanager:admin
 ```
 
-### 📦 방법 2: 로컬 패키지 (개발용)
+### 📦 방법 2: 로컬 패키지 (현재 개발 구조)
 
 ```bash
-# 1. composer.json에 로컬 패키지 등록
+# 1. 워크스페이스 구조 생성
+mkdir sitemanager-workspace && cd sitemanager-workspace
+mkdir packages projects
+
+# 2. 패키지 클론 (개발용)
+cd packages
+git clone [sitemanager-repo] sitemanager
+
+# 3. 새 프로젝트 생성
+cd ../projects  
+composer create-project laravel/laravel your-project-name
+cd your-project-name
+
+# 4. composer.json에 로컬 패키지 등록
 {
     "repositories": [
         {
             "type": "path",
-            "url": "/path/to/packages/sitemanager"
+            "url": "../../packages/sitemanager"
         }
     ],
     "require": {
@@ -98,10 +254,15 @@ php artisan sitemanager:admin
     }
 }
 
-# 2. 패키지 설치 (명시적 버전 지정)
+# 5. 패키지 설치
 composer require d3141c/sitemanager:dev-main --prefer-source
 
-# 3. 나머지 설치 과정은 동일
+# 6. 관리자 전용 설치
+php artisan sitemanager:install
+
+# 또는 스타터 템플릿 포함 설치
+php artisan sitemanager:install --with-starter
+```
 ```
 
 ### 🚀 빠른 설치 (일괄 설치)
@@ -146,15 +307,25 @@ composer update
 **뷰 파일:**
 - `resources/views/vendor/sitemanager/` - 모든 뷰 템플릿
 
-**CSS/JS 파일:**
-- `resources/css/vendor/sitemanager/` - CSS 파일들
-- `resources/js/vendor/sitemanager/` - JavaScript 파일들
+**CSS/JS 리소스:** (개발용)
+- `resources/css/` - CSS 파일들 (패키지에서 복사)
+- `resources/js/` - JavaScript 파일들 (패키지에서 복사)
+
+**Admin 기본 이미지:**
+- `public/images/sitemanager.svg` - Admin 패널 로고
+
+**뷰 파일:** (스타터 템플릿 선택시)
+- `resources/views/vendor/sitemanager/` - 패키지 뷰 (참조용)
+- `resources/views/layouts/app.blade.php` - 기본 레이아웃
+- `resources/views/auth/` - 인증 뷰들
+- `resources/views/board/` - 게시판 뷰들
+- `resources/views/user/` - 사용자 뷰들
 
 **DB 마이그레이션:**
 - `database/migrations/` - 데이터베이스 스키마
 
 **Public 자원:**
-- `public/vendor/sitemanager/` - 이미지, 아이콘 등
+- `public/vendor/sitemanager/` - 개발용 에셋 (선택사항)
 
 ## 설정
 
@@ -196,23 +367,48 @@ return [
 ### Console Commands
 
 ```bash
-# 패키지 설치 (설정 발행, 마이그레이션, 자원 복사 일괄 처리)
+# 🚀 패키지 설치 (관리자 기능만)
 php artisan sitemanager:install
 
-# 관리자 계정 생성 (대화형)
+# 🎨 패키지 설치 + 스타터 템플릿 발행
+php artisan sitemanager:install --with-starter
+
+# 📁 스타터 템플릿만 별도 발행 (기존 설치에 추가)
+php artisan sitemanager:publish-starter
+
+# 📁 스타터 템플릿 + 인증 뷰 + 기본 라우트
+php artisan sitemanager:publish-starter --auth --routes
+
+# 👤 관리자 계정 생성 (대화형)
 php artisan sitemanager:admin
 
-# 관리자 계정 생성 (옵션 사용)
+# 👤 관리자 계정 생성 (옵션 사용)
 php artisan sitemanager:admin --name="Admin" --email="admin@test.com" --password="password123"
 
-# S3 연결 테스트
+# ☁️ S3 연결 테스트
 php artisan sitemanager:test-s3
 
-# S3 설정 확인
+# ☁️ S3 설정 확인
 php artisan sitemanager:check-s3
 
-# 이미지를 S3로 마이그레이션
+# 📸 이미지를 S3로 마이그레이션
 php artisan sitemanager:migrate-images-s3
+```
+
+### 🎯 설치 방식 선택
+
+**방식 1: 관리자만 사용 (권장 - 운영 사이트)**
+```bash
+php artisan sitemanager:install
+# ✅ 관리자 대시보드와 API만 설치
+# ✅ 프런트엔드는 완전히 별도 개발
+```
+
+**방식 2: 스타터 템플릿 포함 (개발/프로토타입)**
+```bash
+php artisan sitemanager:install --with-starter
+# ✅ 관리자 + 기본 템플릿 제공
+# ✅ resources/views/에 템플릿 복사되어 커스터마이징 가능
 ```
 
 ### 접속 및 사용
@@ -482,6 +678,90 @@ ssh miles@server
 
 # 연결 테스트 (외부)
 ssh miles@d3141c.ddns.net
+```
+
+## 🔧 개발 워크플로우
+
+### 📋 **현재 개발 환경**
+
+```bash
+# 현재 작업 중인 구조
+/Users/songhyundong/www/sitemanager/
+├── packages/sitemanager/           # 📦 패키지 개발
+└── projects/hanurichurch.org/      # 🧪 테스트 프로젝트
+```
+
+### 🚀 **개발 사이클**
+
+1. **패키지 수정**
+   ```bash
+   cd /Users/songhyundong/www/sitemanager/packages/sitemanager
+   # 코드 수정...
+   ```
+
+2. **즉시 테스트**
+   ```bash
+   cd /Users/songhyundong/www/sitemanager/projects/hanurichurch.org
+   php artisan serve
+   # 변경사항이 즉시 반영됨 (Path Repository 장점)
+   ```
+
+3. **패키지 커밋**
+   ```bash
+   cd /Users/songhyundong/www/sitemanager/packages/sitemanager
+   git add .
+   git commit -m "기능 추가/수정"
+   git push origin main
+   ```
+
+### 🔄 **프로젝트에서 패키지 업데이트**
+
+```bash
+# 프로젝트에서 패키지 최신 버전으로 업데이트
+cd /Users/songhyundong/www/sitemanager/projects/hanurichurch.org
+composer update d3141c/sitemanager
+
+# 새로운 마이그레이션이 있다면
+php artisan migrate
+
+# 새로운 설정/뷰가 있다면
+php artisan vendor:publish --provider="SiteManager\SiteManagerServiceProvider" --force
+```
+
+### 📝 **네임스페이스 컨벤션**
+
+- **패키지 PHP 클래스**: `SiteManager\*`
+- **패키지 뷰**: `sitemanager::*`
+- **패키지 라우트**: `sitemanager.*`
+- **프로젝트 클래스**: `App\*`
+
+### 🎯 **개발 시 주의사항**
+
+1. **뷰 네임스페이스**: 모든 패키지 뷰는 `sitemanager::` 접두사 사용
+2. **라우트 이름**: 패키지 라우트는 `sitemanager.` 접두사 사용
+3. **설정 파일**: 패키지 설정은 `config/sitemanager.php` 등 별도 파일로 분리
+4. **asset 경로**: 패키지 리소스는 `resource()` 헬퍼 함수 사용
+
+### 🏗️ **새 프로젝트에 패키지 적용**
+
+```bash
+# 1. 새 Laravel 프로젝트 생성
+composer create-project laravel/laravel new-project
+
+# 2. 패키지 등록 (Path Repository)
+cd new-project
+composer config repositories.sitemanager path ../../packages/sitemanager
+
+# 3. 패키지 설치
+composer require d3141c/sitemanager:dev-main
+
+# 4. 설치 및 설정
+php artisan sitemanager:install --with-starter
+php artisan migrate
+php artisan sitemanager:admin
+
+# 5. 개발 서버 시작
+php artisan serve
 ```
 
 ## 의존성
