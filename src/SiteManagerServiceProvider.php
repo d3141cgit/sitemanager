@@ -28,6 +28,7 @@ class SiteManagerServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/member.php', 'member');
         $this->mergeConfigFrom(__DIR__.'/../config/menu.php', 'menu');
         $this->mergeConfigFrom(__DIR__.'/../config/permissions.php', 'permissions');
+        $this->mergeConfigFrom(__DIR__.'/../config/auth.php', 'auth');
         
         // 뷰 로드
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'sitemanager');
