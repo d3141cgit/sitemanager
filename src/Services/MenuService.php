@@ -358,7 +358,15 @@ class MenuService
                 str_contains($name, '.import') ||   // 가져오기
                 str_contains($name, '.comments') || // 댓글 관련 (보통 하위 리소스)
                 str_contains($name, '.files') ||    // 파일 관련
-                str_contains($name, '.attachments')) { // 첨부파일 관련
+                str_contains($name, '.attachments') || // 첨부파일 관련
+                str_contains($name, '.get-') ||     // AJAX API 엔드포인트 (get-images, get-data 등)
+                str_contains($name, '.fetch-') ||   // AJAX fetch 엔드포인트
+                str_contains($name, '.load-') ||    // AJAX load 엔드포인트
+                str_contains($name, '.ajax') ||     // 명시적 AJAX 라우트
+                str_contains($name, '.api') ||      // API 엔드포인트
+                str_ends_with($name, '-api') ||     // API 접미사
+                str_ends_with($name, '.json') ||    // JSON 응답
+                str_ends_with($name, '.xml')) {     // XML 응답
                 continue;
             }
             
@@ -763,7 +771,7 @@ class MenuService
     public function getUserMenuPermission(int $menuId, $user = null): int
     {
         if (!$user) {
-            $user = auth()->user();
+            $user = auth('web')->user();
         }
         
         if (!$user) {
