@@ -15,6 +15,20 @@ class LoginController extends Controller
         $this->memberService = $memberService;
     }
     
+    /**
+     * Select view with priority: project views > package views
+     */
+    private function selectView($viewName)
+    {
+        $projectViewPath = resource_path("views/{$viewName}.blade.php");
+        
+        if (file_exists($projectViewPath)) {
+            return $viewName;
+        }
+        
+        return "sitemanager::{$viewName}";
+    }
+    
     public function showLoginForm(Request $request)
     {
         // Store the intended URL if it exists and is not the login page itself
@@ -28,7 +42,7 @@ class LoginController extends Controller
             }
         }
         
-        return view('sitemanager::auth.login');
+        return view($this->selectView('auth.login'));
     }
 
     public function login(Request $request)

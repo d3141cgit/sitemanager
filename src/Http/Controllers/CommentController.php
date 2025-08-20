@@ -15,6 +15,22 @@ use Illuminate\Support\Facades\Log;
 class CommentController extends Controller
 {
     /**
+     * 뷰 파일을 선택합니다. 프로젝트에 있으면 프로젝트 뷰를, 없으면 패키지 뷰를 반환합니다.
+     */
+    private function selectView(string $viewName): string
+    {
+        // 프로젝트의 뷰 경로 확인
+        $projectViewPath = resource_path("views/{$viewName}.blade.php");
+        
+        if (file_exists($projectViewPath)) {
+            return $viewName;
+        }
+        
+        // 패키지 뷰 사용
+        return "sitemanager::{$viewName}";
+    }
+
+    /**
      * HTML 태그 필터링 - 기본적인 서식 태그만 허용
      */
     private function filterHtml($content)
@@ -121,7 +137,7 @@ class CommentController extends Controller
             DB::commit();
 
             // 댓글 HTML 렌더링
-            $commentHtml = view('sitemanager::board.partials.comment', compact('comment', 'board', 'post') + ['level' => 0])->render();
+            $commentHtml = view($this->selectView('board.partials.comment'), compact('comment', 'board', 'post') + ['level' => 0])->render();
 
             return response()->json([
                 'success' => true,
@@ -178,7 +194,7 @@ class CommentController extends Controller
                 'is_edited' => true,
             ]);
 
-            $commentHtml = view('sitemanager::board.partials.comment', compact('comment', 'board', 'post') + ['level' => 0])->render();
+            $commentHtml = view($this->selectView('board.partials.comment'), compact('comment', 'board', 'post') + ['level' => 0])->render();
 
             return response()->json([
                 'success' => true,
@@ -281,7 +297,7 @@ class CommentController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $commentsHtml = view('sitemanager::board.partials.comments', compact('comments', 'board'))->render();
+        $commentsHtml = view($this->selectView('board.partials.comments'), compact('comments', 'board'))->render();
 
         return response()->json([
             'success' => true,

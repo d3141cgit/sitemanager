@@ -24,6 +24,22 @@ class BoardController extends Controller
     ) {}
 
     /**
+     * 뷰 파일을 선택합니다. 프로젝트에 있으면 프로젝트 뷰를, 없으면 패키지 뷰를 반환합니다.
+     */
+    private function selectView(string $viewName): string
+    {
+        // 프로젝트의 뷰 경로 확인
+        $projectViewPath = resource_path("views/{$viewName}.blade.php");
+        
+        if (file_exists($projectViewPath)) {
+            return $viewName;
+        }
+        
+        // 패키지 뷰 사용
+        return "sitemanager::{$viewName}";
+    }
+
+    /**
      * 게시판 메인 (게시글 목록)
      */
     public function index(string $slug): View
@@ -53,7 +69,7 @@ class BoardController extends Controller
             ->limit(5)
             ->get();
 
-        return view('sitemanager::board.index', compact('board', 'posts', 'notices'));
+        return view($this->selectView('board.index'), compact('board', 'posts', 'notices'));
     }
 
     /**
@@ -117,7 +133,7 @@ class BoardController extends Controller
             ->orderBy('id', 'asc')
             ->first();
 
-        return view('sitemanager::board.show', compact('board', 'post', 'comments', 'attachments', 'prevPost', 'nextPost'));
+        return view($this->selectView('board.show'), compact('board', 'post', 'comments', 'attachments', 'prevPost', 'nextPost'));
     }
 
     /**
@@ -137,7 +153,7 @@ class BoardController extends Controller
             return redirect()->route('login')->with('error', '로그인이 필요합니다.');
         }
 
-        return view('sitemanager::board.form', compact('board'));
+        return view($this->selectView('board.form'), compact('board'));
     }
 
     /**
@@ -261,7 +277,7 @@ class BoardController extends Controller
             abort(403, '게시글을 수정할 권한이 없습니다.');
         }
 
-        return view('sitemanager::board.form', compact('board', 'post'));
+        return view($this->selectView('board.form'), compact('board', 'post'));
     }
 
     /**
