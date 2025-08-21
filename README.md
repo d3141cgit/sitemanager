@@ -30,7 +30,7 @@ composer create-project laravel/laravel my-website
 cd my-website
 
 # 2. 패키지 설치
-composer require d3141c/sitemanager:dev-main
+composer require d3141cgit/sitemanager:dev-main
 
 # 3. 환경 설정 (.env 파일에서 데이터베이스 설정)
 cp .env.example .env
@@ -65,7 +65,7 @@ php artisan serve
 
 ```bash
 # 1. SiteManager 저장소 클론
-git clone https://github.com/d3141c/sitemanager.git
+git clone https://github.com/d3141cgit/sitemanager.git
 cd sitemanager
 
 # 2. 새 Laravel 프로젝트 생성
@@ -77,7 +77,7 @@ cd example.com
 composer config repositories.sitemanager path ../../packages/sitemanager
 
 # 4. 로컬 패키지 설치
-composer require d3141c/sitemanager:dev-main
+composer require d3141cgit/sitemanager:dev-main
 
 # 5. 환경 설정
 cp .env.example .env
@@ -136,7 +136,7 @@ sitemanager/
         }
     ],
     "require": {
-        "d3141c/sitemanager": "dev-main"
+        "d3141cgit/sitemanager": "dev-main"
     }
 }
 ```
@@ -295,7 +295,7 @@ if (can('writeComments', $board)) {
 
 ```bash
 # Private Git Server에서 업데이트 (로컬)
-composer update d3141c/sitemanager
+composer update d3141cgit/sitemanager
 
 ## 📋 최근 업데이트
 
