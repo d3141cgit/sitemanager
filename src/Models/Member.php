@@ -133,6 +133,10 @@ class Member extends Authenticatable
      */
     public function getProfilePhotoUrlAttribute()
     {
+        if (!$this->profile_photo) {
+            return null;
+        }
+        
         return FileUploadService::url($this->profile_photo);
     }
 
