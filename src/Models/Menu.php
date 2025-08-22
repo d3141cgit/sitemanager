@@ -468,11 +468,7 @@ class Menu extends Model
     {
         return config('menu.image_categories', [
             'thumbnail' => 'Thumbnail',
-            // 'preview' => 'Preview Image',
             'header' => 'Header Image',
-            // 'banner' => 'Banner Image',
-            // 'icon' => 'Icon Image',
-            // 'background' => 'Background Image',
             'seo' => 'SEO Image',
         ]);
     }

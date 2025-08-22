@@ -58,11 +58,11 @@ return [
     */
     'image_categories' => [
         'thumbnail' => 'Thumbnail',
-        'preview' => 'Preview Image',
+        // 'preview' => 'Preview Image',
         'header' => 'Header Image',
-        'banner' => 'Banner Image',
-        'icon' => 'Icon Image',
-        'background' => 'Background Image',
+        // 'banner' => 'Banner Image',
+        // 'icon' => 'Icon Image',
+        // 'background' => 'Background Image',
         'seo' => 'SEO Image',
     ],
 

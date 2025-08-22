@@ -206,8 +206,8 @@ class FileUploadService
                 // Custom endpoint (like MinIO or DigitalOcean Spaces)
                 return rtrim($endpoint, '/') . '/' . $bucket . '/' . ltrim($path, '/');
             } else {
-                // Standard AWS S3
-                return "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
+                // Standard AWS S3 - using path-style URL format
+                return "https://s3.{$region}.amazonaws.com/{$bucket}/" . ltrim($path, '/');
             }
         }
         

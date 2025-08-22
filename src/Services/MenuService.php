@@ -250,7 +250,7 @@ class MenuService
         ];
         
         // 이미지 관련 데이터 분리
-        $imageData = $data['images'] ?? [];
+        $imageData = $data['images'] ?? null;
         
         // 메뉴 기본 데이터 (권한 및 이미지 관련 필드 제외)
         $menuData = array_diff_key($data, array_merge($permissionData, ['images' => null]));
@@ -258,6 +258,8 @@ class MenuService
         // 이미지 처리
         if (!empty($imageData)) {
             $menuData['images'] = Menu::processImageUploads($imageData, $menu->images);
+        } else {
+            $menuData['images'] = null; // 이미지가 모두 제거된 경우
         }
 
         $originalSection = $menu->section;

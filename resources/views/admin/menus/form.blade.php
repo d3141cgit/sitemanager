@@ -252,11 +252,8 @@
                                                         <input type="hidden" name="images[{{ $loop->index }}][existing_url]" value="{{ $imageData['url'] }}">
                                                         <div class="mt-2">
                                                             @php
-                                                                $imageUrl = $imageData['url'];
-                                                                // 상대 경로인 경우 asset URL 구성
-                                                                if (!str_starts_with($imageUrl, 'http')) {
-                                                                    $imageUrl = asset('storage/' . $imageUrl);
-                                                                }
+                                                                // FileUploadService를 사용하여 S3/로컬을 자동으로 구분
+                                                                $imageUrl = \SiteManager\Services\FileUploadService::url($imageData['url']);
                                                             @endphp
                                                             <img src="{{ $imageUrl }}" alt="{{ $category }}" class="img-thumbnail existing-preview">
 

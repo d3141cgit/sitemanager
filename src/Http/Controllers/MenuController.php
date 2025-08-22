@@ -182,10 +182,12 @@ class MenuController extends Controller
             $menuData['hidden'] = $request->has('hidden') && $request->input('hidden') == '1';
             
             $permissionData = $request->only(['permission', 'level_permissions', 'group_permissions', 'admin_permissions']);
-            $imageData = $request->input('images', []);
+            $imageData = $request->input('images', null);
             
             // 이미지 파일 데이터 추가
-            $imageData = $this->processImageFiles($request, $imageData, 'UPDATE');
+            if (!empty($imageData)) {
+                $imageData = $this->processImageFiles($request, $imageData, 'UPDATE');
+            }
             
             // 메뉴 데이터와 권한 데이터, 이미지 데이터 합치기
             $allData = array_merge($menuData, $permissionData, ['images' => $imageData]);

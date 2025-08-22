@@ -349,7 +349,7 @@ class NavigationComposer
                     foreach ($images as $category => $imageData) {
                         if (isset($imageData['url'])) {
                             $seoData['images'][$category] = [
-                                'url' => asset('storage/' . $imageData['url']),
+                                'url' => \SiteManager\Services\FileUploadService::url($imageData['url']),
                                 'original_url' => $imageData['url'],
                                 'uploaded_at' => $imageData['uploaded_at'] ?? null
                             ];
@@ -358,17 +358,17 @@ class NavigationComposer
                     
                     // SEO 카테고리 이미지 우선 사용
                     if (isset($images['seo']['url'])) {
-                        $seoData['og_image'] = asset('storage/' . $images['seo']['url']);
+                        $seoData['og_image'] = \SiteManager\Services\FileUploadService::url($images['seo']['url']);
                     }
                     // SEO 이미지가 없으면 thumbnail 사용
                     elseif (isset($images['thumbnail']['url'])) {
-                        $seoData['og_image'] = asset('storage/' . $images['thumbnail']['url']);
+                        $seoData['og_image'] = \SiteManager\Services\FileUploadService::url($images['thumbnail']['url']);
                     }
                     // 다른 카테고리 이미지가 있으면 첫 번째 사용
                     else {
                         $firstCategory = array_values($images)[0];
                         if (isset($firstCategory['url'])) {
-                            $seoData['og_image'] = asset('storage/' . $firstCategory['url']);
+                            $seoData['og_image'] = \SiteManager\Services\FileUploadService::url($firstCategory['url']);
                         }
                     }
                 }
