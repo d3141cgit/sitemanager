@@ -30,14 +30,11 @@ class SiteManagerServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/permissions.php', 'permissions');
         $this->mergeConfigFrom(__DIR__.'/../config/auth.php', 'auth');
         
-        // 뷰 로드
+        // 뷰 로드 (패키지 기본)
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'sitemanager');
         
-        // 뷰 컴포넌트 등록
-        $this->loadViewComponentsAs('sitemanager', [
-            'file-upload' => \SiteManager\View\Components\FileUpload::class,
-            'editor' => \SiteManager\View\Components\Editor::class,
-        ]);
+        // 뷰 컴포넌트 등록 (오버라이드 지원)
+        $this->registerViewComponents();
         
         // 마이그레이션 로드
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
@@ -155,5 +152,40 @@ class SiteManagerServiceProvider extends ServiceProvider
         Gate::define('board.read', function ($user, $board) {
             return can('read', $board);
         });
+    }
+
+    /**
+     * 뷰 컴포넌트 등록 (Laravel 표준 경로 오버라이드 지원)
+     */
+    protected function registerViewComponents()
+    {
+        $components = $this->getViewComponents();
+        
+        $this->loadViewComponentsAs('sitemanager', $components);
+    }
+
+    /**
+     * 뷰 컴포넌트 정의 (프로젝트에서 Laravel 표준 방식으로 오버라이드 가능)
+     */
+    protected function getViewComponents()
+    {
+        $defaultComponents = [
+            'file-upload' => \SiteManager\View\Components\FileUpload::class,
+            'editor' => \SiteManager\View\Components\Editor::class,
+            'menu-breadcrumb' => \SiteManager\View\Components\MenuBreadcrumb::class,
+            'menu-tabs' => \SiteManager\View\Components\MenuTabs::class,
+            'menu-navigation' => \SiteManager\View\Components\MenuNavigation::class,
+        ];
+
+        // 프로젝트에서 컴포넌트 오버라이드 파일이 있는지 확인
+        $overrideFile = app_path('SiteManager/ComponentOverrides.php');
+        if (file_exists($overrideFile)) {
+            $overrides = include $overrideFile;
+            if (is_array($overrides)) {
+                $defaultComponents = array_merge($defaultComponents, $overrides);
+            }
+        }
+
+        return $defaultComponents;
     }
 }

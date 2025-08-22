@@ -171,26 +171,40 @@ class MenuTreeManager {
             iconHtml = `<i class="bi bi-arrow-right-short text-muted"></i>`;
         }
 
-        // thumbnail if exists
+        // thumbnail if exists (우선순위: thumbnail > seo > header)
         let thumbnailHtml = '';
-        if (menu.images && menu.images.thumbnail) {
-            let thumbUrl = menu.images.thumbnail;
+        if (menu.images) {
+            let thumbUrl = null;
+            let imageData = null;
             
-            // 객체인 경우 url 속성에서 추출
-            if (typeof thumbUrl === 'object' && thumbUrl.url) {
-                thumbUrl = thumbUrl.url;
+            // 우선순위에 따라 이미지 선택
+            if (menu.images.thumbnail) {
+                imageData = menu.images.thumbnail;
+            } else if (menu.images.seo) {
+                imageData = menu.images.seo;
+            } else if (menu.images.header) {
+                imageData = menu.images.header;
             }
             
-            // 문자열로 변환하고 빈 값 체크
-            thumbUrl = String(thumbUrl || '').trim();
-            
-            // 상대 경로인 경우 asset URL 구성
-            if (thumbUrl && !thumbUrl.startsWith('http')) {
-                thumbUrl = `/storage/${thumbUrl}`;
-            }
-            
-            if (thumbUrl) {
-                thumbnailHtml = `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(menu.title)}" class="menu-thumbnail">`;
+            if (imageData) {
+                // 객체인 경우 url 속성에서 추출
+                if (typeof imageData === 'object' && imageData.url) {
+                    thumbUrl = imageData.url;
+                } else if (typeof imageData === 'string') {
+                    thumbUrl = imageData;
+                }
+                
+                // 문자열로 변환하고 빈 값 체크
+                thumbUrl = String(thumbUrl || '').trim();
+                
+                // 상대 경로인 경우 asset URL 구성
+                if (thumbUrl && !thumbUrl.startsWith('http')) {
+                    thumbUrl = `/storage/${thumbUrl}`;
+                }
+                
+                if (thumbUrl) {
+                    thumbnailHtml = `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(menu.title)}" class="menu-thumbnail">`;
+                }
             }
         }
 
