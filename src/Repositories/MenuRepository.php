@@ -40,6 +40,26 @@ class MenuRepository implements MenuRepositoryInterface
     
     public function create(array $data): Menu
     {
+        // parent_id가 있는 경우 NodeTrait의 appendToNode를 사용
+        if (isset($data['parent_id']) && $data['parent_id']) {
+            $parent = $this->find($data['parent_id']);
+            if (!$parent) {
+                throw new \Exception("Parent menu with ID {$data['parent_id']} not found");
+            }
+            
+            // parent_id를 제거하고 메뉴를 먼저 생성
+            $parentId = $data['parent_id'];
+            unset($data['parent_id']);
+            
+            $menu = $this->model->create($data);
+            
+            // 생성 후 부모에 추가
+            $menu->appendToNode($parent)->save();
+            
+            return $menu;
+        }
+        
+        // parent_id가 없는 경우 일반 생성
         return $this->model->create($data);
     }
     

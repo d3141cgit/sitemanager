@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('type', 30)->default('route')->comment('메뉴 타입: route, url, text');
             $table->string('target', 255)->nullable()->comment('라우트명 또는 URL');
             $table->boolean('hidden')->default(false)->comment('메뉴 숨김 여부');
-            $table->unsignedTinyInteger('permission')->default(0)->comment('기본 권한 (bitmask)');
+            $table->unsignedTinyInteger('permission')->default(1)->comment('기본 권한 (bitmask)');
             $table->json('images')->nullable()->comment('이미지 정보 (thumbnail, seo, header 등)');
             
             // Nested Set Model 필드 (섹션별로 독립적)

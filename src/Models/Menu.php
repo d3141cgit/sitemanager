@@ -105,6 +105,14 @@ class Menu extends Model
         return $this->hasMany(Menu::class, 'parent_id')->orderBy('_lft');
     }
 
+    /**
+     * 메뉴 권한
+     */
+    public function menuPermissions()
+    {
+        return $this->hasMany(MenuPermission::class);
+    }
+
     public function getChildrenAttribute()
     {
         return $this->children()->get();

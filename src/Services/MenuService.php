@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 // use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class MenuService
 {
@@ -72,6 +73,17 @@ class MenuService
      */
     public function createMenu(array $data): Menu
     {
+        // 필드명 호환성 처리
+        if (isset($data['name']) && !isset($data['title'])) {
+            $data['title'] = $data['name'];
+            unset($data['name']);
+        }
+        
+        if (isset($data['url']) && !isset($data['target'])) {
+            $data['target'] = $data['url'];
+            unset($data['url']);
+        }
+        
         // 권한 관련 데이터 분리
         $permissionData = [
             'permission' => $data['permission'] ?? [],
@@ -85,6 +97,11 @@ class MenuService
         
         // 메뉴 기본 데이터 (권한 및 이미지 관련 필드 제외)
         $menuData = array_diff_key($data, array_merge($permissionData, ['images' => null]));
+        
+        // 기본 권한 설정 (permission이 설정되지 않았거나 빈 배열인 경우 기본값 1)
+        if (empty($permissionData['permission'])) {
+            $menuData['permission'] = 1;
+        }
         
         // 이미지 처리
         if (!empty($imageData)) {
@@ -109,8 +126,19 @@ class MenuService
 
         // 메뉴 변경 시 권한 캐시 리셋
         app('SiteManager\\Services\\PermissionService')->clearPermissionCache();
-            
-        return $menu->fresh(); // 최신 데이터로 반환
+        
+        // 안전한 방식으로 최신 데이터 반환
+        try {
+            return $menu->fresh();
+        } catch (\Exception $e) {
+            // fresh() 실패시 ID로 다시 조회
+            $freshMenu = Menu::find($menu->id);
+            if ($freshMenu) {
+                return $freshMenu;
+            }
+            // 그래도 실패하면 원본 메뉴 반환
+            return $menu;
+        }
     }
     
     /**
@@ -647,7 +675,14 @@ class MenuService
             foreach ($data['permission'] as $perm) {
                 $basicPermission |= (int)$perm;
             }
+            // 권한이 0이면 기본값 1로 설정
+            if ($basicPermission === 0 && empty($data['permission'])) {
+                $basicPermission = 1;
+            }
             Menu::where('id', $menuId)->update(['permission' => $basicPermission]);
+        } else {
+            // 권한이 설정되지 않았을 때 기본값 1로 설정
+            Menu::where('id', $menuId)->update(['permission' => 1]);
         }
         
         // 기존 menu_permissions 삭제
