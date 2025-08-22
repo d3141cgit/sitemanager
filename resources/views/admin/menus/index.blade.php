@@ -47,7 +47,7 @@
             </div>
 
             <!-- Bootstrap Grid Layout for Sections -->
-            @if($menus->count() > 0)                
+            @if($menusWithUrls->count() > 0)                
                 <!-- Legend Section - Responsive -->
                 <div class="alert alert-sm alert-light mb-3">
                     <!-- Desktop Legend -->
@@ -113,9 +113,9 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-    @if($menus->count() > 0)
+    @if($menusWithUrls->count() > 0)
     const treeManager = new MenuTreeManager({
-        menuData: @json($menus),
+        menuData: @json($menusWithUrls),
         invalidRouteMenus: @json($invalidRouteMenus ?? []),
         moveUrl: '{{ route('admin.menus.move') }}',
         treeUrl: '{{ route('admin.menus.index') }}',

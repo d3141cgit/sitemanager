@@ -518,6 +518,40 @@ class Menu extends Model
     {
         return array_key_exists($category, self::getImageCategories());
     }
+    
+    /**
+     * Get images with processed URLs for frontend display
+     */
+    public function getImagesWithUrls(): ?array
+    {
+        if (!$this->images || !is_array($this->images)) {
+            return null;
+        }
+        
+        $processedImages = [];
+        
+        foreach ($this->images as $category => $imageData) {
+            if (!empty($imageData)) {
+                $imagePath = null;
+                
+                // Extract path from different data formats
+                if (is_array($imageData) && isset($imageData['url'])) {
+                    $imagePath = $imageData['url'];
+                } elseif (is_string($imageData)) {
+                    $imagePath = $imageData;
+                }
+                
+                if ($imagePath) {
+                    $processedImages[$category] = [
+                        'url' => \SiteManager\Services\FileUploadService::url($imagePath),
+                        'original_path' => $imagePath
+                    ];
+                }
+            }
+        }
+        
+        return empty($processedImages) ? null : $processedImages;
+    }
 
     /**
      * 이미지 파일을 저장하고 상대 경로를 반환합니다.

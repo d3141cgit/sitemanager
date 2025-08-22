@@ -28,18 +28,30 @@ class MenuController extends Controller
         
         $menus = $this->menuService->getAllMenusOrdered();
         
+        // 메뉴 데이터의 이미지 URL을 FileUploadService를 통해 처리
+        $menusWithUrls = $menus->map(function ($menu) {
+            $menuArray = $menu->toArray();
+            
+            // images 필드가 있으면 올바른 URL로 변환
+            if ($menu->images) {
+                $menuArray['images'] = $menu->getImagesWithUrls();
+            }
+            
+            return $menuArray;
+        });
+        
         // 존재하지 않는 route를 사용하는 메뉴들 찾기
         $invalidRouteMenus = $this->menuService->findMenusWithInvalidRoutes();
 
         // AJAX 요청인 경우 JSON만 반환
         if (request()->wantsJson() || request()->ajax()) {
             return response()->json([
-                'menus' => $menus,
+                'menus' => $menusWithUrls,
                 'invalidRouteMenus' => $invalidRouteMenus
             ]);
         }
         
-        return view('sitemanager::admin.menus.index', compact('menus', 'invalidRouteMenus'));
+        return view('sitemanager::admin.menus.index', compact('menusWithUrls', 'invalidRouteMenus'));
     }
     
     /**

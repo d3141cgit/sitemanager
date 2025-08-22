@@ -187,7 +187,7 @@ class MenuTreeManager {
             }
             
             if (imageData) {
-                // 객체인 경우 url 속성에서 추출
+                // 객체인 경우 url 속성에서 추출 (백엔드에서 이미 처리된 URL)
                 if (typeof imageData === 'object' && imageData.url) {
                     thumbUrl = imageData.url;
                 } else if (typeof imageData === 'string') {
@@ -197,11 +197,7 @@ class MenuTreeManager {
                 // 문자열로 변환하고 빈 값 체크
                 thumbUrl = String(thumbUrl || '').trim();
                 
-                // 상대 경로인 경우 asset URL 구성
-                if (thumbUrl && !thumbUrl.startsWith('http')) {
-                    thumbUrl = `/storage/${thumbUrl}`;
-                }
-                
+                // 백엔드에서 이미 완전한 URL이 처리되어 왔으므로 그대로 사용
                 if (thumbUrl) {
                     thumbnailHtml = `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(menu.title)}" class="menu-thumbnail">`;
                 }
