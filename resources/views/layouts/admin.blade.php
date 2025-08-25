@@ -33,11 +33,6 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/">
-                            <i class="bi bi-house-door"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a @class(['nav-link', 'active' => request()->routeIs('admin.dashboard')]) 
                             href="{{ route('admin.dashboard') }}">
                             <i class="bi bi-speedometer2"></i>
@@ -75,13 +70,6 @@
                             Boards
                         </a>
                     </li>
-                    {{-- <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('admin.statistics.*')]) 
-                           href="{{ route('admin.statistics') }}">
-                            <i class="bi bi-bar-chart"></i>
-                            Statistics
-                        </a>
-                    </li> --}}
                     <li class="nav-item">
                         <a @class(['nav-link', 'active' => request()->routeIs('admin.settings.*')]) 
                            href="{{ route('admin.settings') }}">
@@ -91,54 +79,10 @@
                     </li>
                 </ul>
                 
-                <ul class="navbar-nav">
-                    <!-- Search -->
-                    {{-- <li class="nav-item dropdown">
-                        <a class="nav-link" href="#" id="searchDropdown" 
-                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-search"></i>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;" aria-labelledby="searchDropdown">
-                            <form>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" placeholder="검색어를 입력하세요">
-                                    <button class="btn btn-outline-secondary" type="submit">
-                                        <i class="bi bi-search"></i>
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </li> --}}
-                    
-                    <!-- Notifications -->
-                    {{-- <li class="nav-item dropdown">
-                        <a class="nav-link" href="#" id="notificationDropdown" 
-                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-bell"></i>
-                            <span class="badge bg-danger rounded-pill">3</span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
-                            <h6 class="dropdown-header">알림 (3)</h6>
-                            <a href="#" class="dropdown-item">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <i class="bi bi-person-plus text-success"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-1">새로운 회원 가입</h6>
-                                        <p class="mb-1 small">홍길동님이 가입했습니다.</p>
-                                        <small class="text-muted">5분 전</small>
-                                    </div>
-                                </div>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item text-center" href="#">모든 알림 보기</a>
-                        </div>
-                    </li> --}}
-                    
+                <ul class="navbar-user">                    
                     <!-- User Profile -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link d-flex align-items-center" href="#" id="userDropdown" 
+                    <li class="dropdown">
+                        <a class="d-flex align-items-center" href="#" id="userDropdown" 
                            role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             @if(auth()->user()->profile_photo)
                                 <img src="{{ auth()->user()->profile_photo_url }}" 
@@ -165,6 +109,12 @@
                                 </form>
                             </li>
                         </ul>
+                    </li>
+
+                    <li>
+                        <a href="/">
+                            <i class="bi bi-house-door"></i>
+                        </a>
                     </li>
                 </ul>
             </div>

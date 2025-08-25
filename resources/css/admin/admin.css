@@ -123,9 +123,12 @@ b,strong { font-weight: 700 }
 ul.navbar-nav { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-top: 1.5rem; }
 a.nav-link { border: solid 1px #000; padding: 2rem 0; text-align: center; }
 
+.navbar-user { list-style: none; margin: 3rem 0; padding: 0; display: flex; align-items: center; justify-content: center; }
+.navbar-user li { white-space: nowrap; margin-left: 1rem; }
+
 @media (min-width:992px) {
     .navbar { padding: 5rem; }
-    ul.navbar-nav { display: flex; margin-top: 0; gap: 1rem; margin-top: 0; }
+    ul.navbar-nav { display: flex; flex-wrap: wrap; margin-top: 0; gap: 1rem; margin-top: 0; }
     a.nav-link { border: none; padding: 0 1rem !important; }
 }
 
