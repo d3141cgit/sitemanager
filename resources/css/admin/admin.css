@@ -1,10 +1,14 @@
-/*
-// Media Query Size
-//------------------------------------------------
-Small display scales - @media (min-width: 576px) and @media (max-width: 575px)
-Medium screen scale - (min-width: 768px) and (max-width: 767px)
-Large size display dimension - (min-width: 992px) and (max-width: 991px)
-And Additional big display sizes - (min-width: 1200px) and (max-width: 1199px)
+/**
+ * admin.css
+ * Admin Panel Custom Styles
+ * Author: Songhyun Dong
+    
+    Media Query Size
+    ------------------------------------------------
+    Small   - @media (min-width: 576px) and @media (max-width: 575px)
+    Medium  - (min-width: 768px) and (max-width: 767px)
+    Large   - (min-width: 992px) and (max-width: 991px)
+    X-Large - (min-width: 1200px) and (max-width: 1199px)
 */
 
 @charset "utf-8";
@@ -50,71 +54,24 @@ b,strong { font-weight: 700 }
 .navbar .navbar-brand { font-weight: 700; color: #000;  }
 
 /* Profile Photo Management */
-.profile-photo-manager {
-    max-width: 400px;
-}
+.profile-photo-manager { max-width: 400px; }
 
-.profile-photo-preview {
-    width: 120px;
-    height: 120px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 3px solid #e9ecef;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
+.profile-photo-preview { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 
-.current-photo {
-    text-align: center;
-}
+.current-photo { text-align: center; }
 
-.photo-actions {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-}
+.photo-actions { display: flex; gap: 0.5rem; justify-content: center; }
 
-.new-photo-preview {
-    text-align: center;
-    padding: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    border: 2px dashed #dee2e6;
-}
+.new-photo-preview { text-align: center; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6; }
 
 /* Profile Photo in Admin Layout */
-.admin-profile-photo {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #e9ecef;
-}
-
-.navbar .admin-profile-photo {
-    margin-right: 0.5rem;
-}
+.admin-profile-photo { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #e9ecef; }
+.navbar .admin-profile-photo { margin-right: 0.5rem; }
 
 /* Member Index Profile Photos */
-.member-profile-photo {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #e9ecef;
-}
+.member-profile-photo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #e9ecef; }
+.member-profile-placeholder { width: 40px; height: 40px; border-radius: 50%; background-color: #f8f9fa; border: 2px solid #e9ecef; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 1.2rem; }
 
-.member-profile-placeholder {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #f8f9fa;
-    border: 2px solid #e9ecef;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #6c757d;
-    font-size: 1.2rem;
-}
 .navbar .navbar-toggler { padding: 0; height: 30px; border: none; }
 .navbar .nav-link { color: #000; white-space: nowrap; }
 .navbar .nav-link.active { font-weight: 800; border-color: var(--bs-red); }
