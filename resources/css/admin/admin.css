@@ -156,8 +156,8 @@ button:active { outline: none !important; box-shadow: none !important; }
 /* .navbar-nav .dropdown-toggle::after { display: none; } */
 
 body > main { flex: 1; padding: 1rem; }
-body > footer { padding: 1rem 0 5rem 0; line-height: 1; text-align: center; font-family: var(--font-serif); }
-.footer-logo { height: 30px; }
+body > footer { padding: 1rem 0 5rem 0; line-height: 1; text-align: center; font-family: var(--font-serif); font-style: italic; }
+.footer-logo { height: 30px; margin: 0 1rem; }
 
 .admin-page-header { border-bottom: 1px solid var(--bs-gray-300); padding: 1.5rem 0; margin-bottom: 2rem; }
 .content { padding: 0 0 2rem 0; }
