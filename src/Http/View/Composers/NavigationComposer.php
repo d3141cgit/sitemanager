@@ -299,7 +299,7 @@ class NavigationComposer
 
         if ($currentMenu) {
             // 기본 제목 설정
-            $siteName = config_get('SITE_NAME', 'EDM Korean Global Campus');
+            $siteName = config_get('SITE_NAME');
             $pageTitle = $currentMenu->title;
             
             // 브레드크럼에서 상위 카테고리 정보 추출
@@ -325,8 +325,6 @@ class NavigationComposer
             $keywords = [$pageTitle];
             $keywords = array_merge($keywords, $categoryTitles);
             $keywords[] = $siteName;
-            $keywords[] = 'Korean Language';
-            $keywords[] = 'Korean Course';
             $seoData['keywords'] = implode(', ', array_unique($keywords));
             
             // Open Graph 설정
@@ -386,10 +384,10 @@ class NavigationComposer
             $seoData['breadcrumb_json_ld'] = $this->generateBreadcrumbJsonLd($breadcrumb);
         } else {
             // 현재 메뉴가 없는 경우 기본값
-            $siteName = config_get('SITE_NAME', 'EDM Korean Global Campus');
+            $siteName = config_get('SITE_NAME');
             $seoData['title'] = $siteName;
-            $seoData['description'] = config_get('SITE_DESCRIPTION', 'Learn Korean language with EDM Korean Global Campus');
-            $seoData['keywords'] = config_get('SITE_KEYWORDS', 'Korean language, Korean course, Learn Korean');
+            $seoData['description'] = config_get('SITE_DESCRIPTION');
+            $seoData['keywords'] = config_get('SITE_KEYWORDS');
             $seoData['og_title'] = $siteName;
             $seoData['og_description'] = $seoData['description'];
             $seoData['og_url'] = request()->url();
@@ -405,7 +403,7 @@ class NavigationComposer
      */
     private function generateAutoDescription($menu, $breadcrumb)
     {
-        $siteName = config_get('SITE_NAME', 'EDM Korean Global Campus');
+        $siteName = config_get('SITE_NAME');
         $description = "Learn about {$menu->title}";
         
         if ($breadcrumb && count($breadcrumb) > 2) {
@@ -414,7 +412,7 @@ class NavigationComposer
             $description = "Discover {$menu->title} in our {$parentCategory} section";
         }
         
-        $description .= " at {$siteName}. Join us for quality Korean language education and cultural experience.";
+        $description .= " at {$siteName}.";
         
         return $description;
     }
