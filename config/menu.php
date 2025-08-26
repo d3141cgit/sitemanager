@@ -58,11 +58,8 @@ return [
     */
     'image_categories' => [
         'thumbnail' => 'Thumbnail',
-        // 'preview' => 'Preview Image',
         'header' => 'Header Image',
-        // 'banner' => 'Banner Image',
-        // 'icon' => 'Icon Image',
-        // 'background' => 'Background Image',
+        'header-pc' => 'Header Image (PC)',
         'seo' => 'SEO Image',
     ],
 
