@@ -260,6 +260,9 @@ if (!function_exists('setResources')) {
             'fontawesome' => [
                 'css' => ['https://use.fontawesome.com/releases/v5.15.4/css/all.css']
             ],
+            'animate' => [
+                'css' => ['https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css']
+            ]
         ];
 
         foreach ($assets as $asset) {
