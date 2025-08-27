@@ -201,13 +201,20 @@ class FileUploadService
             $region = config('filesystems.disks.s3.region');
             $bucket = config('filesystems.disks.s3.bucket');
             $endpoint = config('filesystems.disks.s3.endpoint');
+            $urlStyle = config('filesystems.disks.s3.url_style', 'virtual-hosted'); // 기본값: virtual-hosted
             
             if ($endpoint) {
                 // Custom endpoint (like MinIO or DigitalOcean Spaces)
                 return rtrim($endpoint, '/') . '/' . $bucket . '/' . ltrim($path, '/');
             } else {
-                // Standard AWS S3 - using path-style URL format
-                return "https://s3.{$region}.amazonaws.com/{$bucket}/" . ltrim($path, '/');
+                // Standard AWS S3 - URL 스타일에 따라 구분
+                if ($urlStyle === 'path-style') {
+                    // Path-style URL: https://s3.region.amazonaws.com/bucket-name/path
+                    return "https://s3.{$region}.amazonaws.com/{$bucket}/" . ltrim($path, '/');
+                } else {
+                    // Virtual-hosted-style URL: https://bucket-name.s3.region.amazonaws.com/path
+                    return "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
+                }
             }
         }
         
