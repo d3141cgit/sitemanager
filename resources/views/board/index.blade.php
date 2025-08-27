@@ -10,9 +10,6 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap">
                 <div>
                     <h1 class="h3 mb-1">{{ $board->name }}</h1>
-                    @if($board->description)
-                        <p class="text-muted mb-0">{{ $board->description }}</p>
-                    @endif
                 </div>
                 <div class="d-flex gap-2">
                     @if(can('write', $board))
@@ -30,11 +27,11 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body py-3">
-                    <form method="GET" class="d-flex gap    -3 align-items-center flex-wrap">
+                    <form method="GET" class="d-flex gap-3 align-items-center flex-wrap">
                         <!-- Category Filter -->
                         @if($board->getSetting('use_categories', false) && count($board->getCategoryOptions()) > 0)
                             @php
-                                $categoryCounts = $board->getCategoryCounts();
+                                $categoriesWithCounts = $board->getCategoryOptionsWithCounts();
                                 $totalPosts = $board->getPostsCount();
                                 $currentCategory = request('category');
                                 $currentSearch = request('search');
@@ -45,12 +42,9 @@
                                     <option value="">
                                         All Categories ({{ number_format($totalPosts) }})
                                     </option>
-                                    @foreach($board->getCategoryOptions() as $category)
-                                        @php
-                                            $count = $categoryCounts[$category] ?? 0;
-                                        @endphp
-                                        <option value="{{ $category }}" {{ $currentCategory === $category ? 'selected' : '' }}>
-                                            {{ $category }} ({{ number_format($count) }})
+                                    @foreach($categoriesWithCounts as $categoryData)
+                                        <option value="{{ $categoryData['name'] }}" {{ $currentCategory === $categoryData['name'] ? 'selected' : '' }}>
+                                            {{ $categoryData['name'] }} ({{ number_format($categoryData['count']) }})
                                         </option>
                                     @endforeach
                                 </select>

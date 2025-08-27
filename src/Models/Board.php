@@ -72,6 +72,41 @@ class Board extends Model
     }
 
     /**
+     * 카테고리 목록을 count와 함께 반환
+     */
+    public function getCategoryOptionsWithCounts(): array
+    {
+        $categories = $this->getCategoryOptions();
+        if (empty($categories)) {
+            return [];
+        }
+
+        $postsTable = "board_posts_{$this->slug}";
+        
+        // 테이블이 존재하지 않으면 빈 배열 반환
+        if (!Schema::hasTable($postsTable)) {
+            return array_map(fn($category) => ['name' => $category, 'count' => 0], $categories);
+        }
+
+        // 카테고리별 게시물 수 집계
+        $counts = DB::table($postsTable)
+            ->select('category', DB::raw('COUNT(*) as count'))
+            ->where('status', 'published')
+            ->whereIn('category', $categories)
+            ->groupBy('category')
+            ->pluck('count', 'category')
+            ->toArray();
+
+        // 카테고리 배열에 count 정보 추가
+        return array_map(function($category) use ($counts) {
+            return [
+                'name' => $category,
+                'count' => $counts[$category] ?? 0
+            ];
+        }, $categories);
+    }
+
+    /**
      * 설정값 가져오기
      */
     public function getSetting(string $key, $default = null)
@@ -201,49 +236,6 @@ class Board extends Model
         
         return DB::table($commentsTable)
             ->where('status', 'approved')
-            ->count();
-    }
-
-    /**
-     * 카테고리별 게시물 수 반환
-     */
-    public function getCategoryCounts(): array
-    {
-        $postsTable = "board_posts_{$this->slug}";
-        
-        // 테이블이 존재하는지 확인
-        if (!Schema::hasTable($postsTable)) {
-            return [];
-        }
-        
-        // 카테고리별 게시물 수 집계
-        $counts = DB::table($postsTable)
-            ->select('category', DB::raw('COUNT(*) as count'))
-            ->where('status', 'published')
-            ->whereNotNull('category')
-            ->where('category', '!=', '')
-            ->groupBy('category')
-            ->pluck('count', 'category')
-            ->toArray();
-            
-        return $counts;
-    }
-
-    /**
-     * 특정 카테고리의 게시물 수 반환
-     */
-    public function getCategoryCount(string $category): int
-    {
-        $postsTable = "board_posts_{$this->slug}";
-        
-        // 테이블이 존재하는지 확인
-        if (!Schema::hasTable($postsTable)) {
-            return 0;
-        }
-        
-        return DB::table($postsTable)
-            ->where('status', 'published')
-            ->where('category', $category)
             ->count();
     }
 }
