@@ -132,11 +132,6 @@ class CommentController extends Controller
             return response()->json(['error' => '댓글이 허용되지 않습니다.'], 403);
         }
 
-        // 로그인 체크
-        if ($board->getSetting('require_login', false) && !Auth::check()) {
-            return response()->json(['error' => '로그인이 필요합니다.'], 401);
-        }
-
         $validated = $request->validate([
             'content' => 'required|string|max:2000',
             'post_id' => 'required|integer',

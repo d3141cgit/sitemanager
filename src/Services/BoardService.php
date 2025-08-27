@@ -3,10 +3,16 @@
 namespace SiteManager\Services;
 
 use SiteManager\Models\Board;
+use SiteManager\Models\BoardPost;
+use SiteManager\Models\BoardComment;
+use SiteManager\Models\BoardAttachment;
 use SiteManager\Models\Menu;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class BoardService
@@ -229,5 +235,247 @@ class BoardService
         
         // 새로 생성
         $this->createBoardTables($slug);
+    }
+
+    /**
+     * 게시물 목록 조회 (필터링 포함)
+     */
+    public function getFilteredPosts(Board $board, Request $request)
+    {
+        $postModelClass = BoardPost::forBoard($board->slug);
+        
+        $query = $postModelClass::with('member')
+            ->published()
+            ->orderBy('is_notice', 'desc')
+            ->orderBy('created_at', 'desc');
+
+        // 카테고리 필터링
+        if ($request->filled('category')) {
+            $query->where('category', $request->input('category'));
+        }
+
+        // 검색어 필터링
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%")
+                  ->orWhere('author_name', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->paginate($board->getSetting('posts_per_page', 20));
+    }
+
+    /**
+     * 공지사항 목록 조회
+     */
+    public function getNotices(Board $board, int $limit = 5)
+    {
+        $postModelClass = BoardPost::forBoard($board->slug);
+        
+        return $postModelClass::with('member')
+            ->notices()
+            ->published()
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * 게시물 상세 조회
+     */
+    public function getPost(Board $board, $id)
+    {
+        $postModelClass = BoardPost::forBoard($board->slug);
+        
+        if (is_numeric($id)) {
+            return $postModelClass::with('member')->findOrFail($id);
+        }
+        
+        return $postModelClass::with('member')->where('slug', $id)->firstOrFail();
+    }
+
+    /**
+     * 게시물 댓글 조회
+     */
+    public function getPostComments(Board $board, $postId)
+    {
+        if (!$board->getSetting('allow_comments', true)) {
+            return null;
+        }
+
+        $commentModelClass = BoardComment::forBoard($board->slug);
+        
+        return $commentModelClass::with('member', 'children.member')
+            ->topLevel()
+            ->approved()
+            ->forPost($postId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * 게시물 첨부파일 조회
+     */
+    public function getPostAttachments(Board $board, $postId)
+    {
+        if (!$board->allowsFileUpload()) {
+            return null;
+        }
+
+        return BoardAttachment::byPost($postId, $board->slug)
+            ->ordered()
+            ->get();
+    }
+
+    /**
+     * 이전/다음 게시물 조회
+     */
+    public function getPrevNextPosts(Board $board, $post)
+    {
+        $postModelClass = BoardPost::forBoard($board->slug);
+        
+        $prevPost = $postModelClass::where('id', '<', $post->id)
+            ->published()
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $nextPost = $postModelClass::where('id', '>', $post->id)
+            ->published()
+            ->orderBy('id', 'asc')
+            ->first();
+
+        return compact('prevPost', 'nextPost');
+    }
+
+    /**
+     * 게시물 생성
+     */
+    public function createPost(Board $board, array $data): BoardPost
+    {
+        $postModelClass = BoardPost::forBoard($board->slug);
+
+        $postData = [
+            'board_id' => $board->id,
+            'member_id' => Auth::id(),
+            'author_name' => Auth::user()?->name,
+            'title' => $data['title'],
+            'content' => $data['content'],
+            'content_type' => 'html',
+            'category' => $data['category'] ?? null,
+            'tags' => isset($data['tags']) && $data['tags'] ? explode(',', $data['tags']) : null,
+            'status' => 'published',
+            'is_notice' => $data['is_notice'] ?? false,
+            'is_featured' => $data['is_featured'] ?? false,
+            'published_at' => now(),
+        ];
+
+        $post = $postModelClass::create($postData);
+
+        // SEO 슬러그 생성
+        $post->slug = $post->generateSlug();
+        $post->excerpt = $post->generateExcerpt();
+        $post->save();
+
+        return $post;
+    }
+
+    /**
+     * 게시물 수정
+     */
+    public function updatePost(Board $board, $post, array $data): BoardPost
+    {
+        $post->update([
+            'title' => $data['title'],
+            'content' => $data['content'],
+            'category' => $data['category'] ?? null,
+            'tags' => isset($data['tags']) && $data['tags'] ? explode(',', $data['tags']) : null,
+            'is_notice' => $data['is_notice'] ?? false,
+            'is_featured' => $data['is_featured'] ?? false,
+        ]);
+
+        // 슬러그 재생성 (제목이 변경된 경우)
+        if ($post->wasChanged('title')) {
+            $post->slug = $post->generateSlug();
+            $post->excerpt = $post->generateExcerpt();
+            $post->save();
+        }
+
+        return $post;
+    }
+
+    /**
+     * 게시물 삭제 권한 체크
+     */
+    public function canManagePost(Board $board, $post, $user = null): bool
+    {
+        $user = $user ?: Auth::user();
+        
+        if (!$user) {
+            return false;
+        }
+
+        // 작성자 본인
+        if ($post->member_id === $user->id) {
+            return true;
+        }
+        
+        // 게시판 관리 권한
+        if ($board->menu_id && can('manage', $board)) {
+            return true;
+        }
+        
+        // 시스템 관리자
+        if ($user->level >= config('member.admin_level', 200)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 조회수 증가 (중복 방지)
+     */
+    public function incrementViewCount($post, Request $request): void
+    {
+        $sessionKey = "viewed_post_{$post->getTable()}_{$post->id}";
+        $now = now();
+        $lastViewed = session($sessionKey);
+        
+        // 조회수 증가 조건: 처음 조회하거나 30분이 지난 경우
+        if (!$lastViewed || $now->diffInMinutes($lastViewed) >= 30) {
+            // 작성자 본인은 조회수 증가 안함
+            if (Auth::check() && Auth::id() === $post->member_id) {
+                session([$sessionKey => $now]);
+                return;
+            }
+            
+            $post->incrementViewCount();
+            session([$sessionKey => $now]);
+        }
+    }
+
+    /**
+     * 게시글 삭제
+     */
+    public function deletePost(Board $board, $post): void
+    {
+        $post->delete();
+    }
+
+    /**
+     * 첨부파일 삭제
+     */
+    public function deleteAttachment($attachment): void
+    {
+        $filePath = $attachment->file_path;
+        
+        // 파일이 존재하면 삭제
+        if (Storage::disk('public')->exists($filePath)) {
+            Storage::disk('public')->delete($filePath);
+        }
+        
+        $attachment->delete();
     }
 }
