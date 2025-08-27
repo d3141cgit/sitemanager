@@ -208,7 +208,7 @@ php artisan resource build     # 프로덕션 빌드
 ### 접속 주소
 
 - **홈페이지**: `http://yoursite.com/`
-- **관리자**: `http://yoursite.com/admin/dashboard`
+- **관리자**: `http://yoursite.com/sitemanager/dashboard`
 - **로그인**: `http://yoursite.com/login`
 
 ### 리소스 로드

@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.admin')
+@extends('sitemanager::layouts.sitemanager')
 
 @section('title', 'Menu Management')
 
@@ -6,8 +6,8 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios@1.7.2/dist/axios.min.js"></script>
 
-{!! resource('sitemanager::css/admin/tree.css') !!}
-{!! resource('sitemanager::js/admin/tree.js') !!}
+{!! resource('sitemanager::css/sitemanager/tree.css') !!}
+{!! resource('sitemanager::js/sitemanager/tree.js') !!}
 @endpush
 
 @section('content')
@@ -24,7 +24,7 @@
                         <button type="button" class="btn btn-outline-secondary btn-sm" id="rebuild-tree-btn">
                             <i class="bi bi-arrow-clockwise me-1"></i>Rebuild Tree
                         </button>
-                        <a href="{{ route('admin.menus.create') }}" class="btn btn-primary btn-sm">
+                        <a href="{{ route('sitemanager.menus.create') }}" class="btn btn-primary btn-sm">
                             <i class="bi bi-plus me-1"></i>Add New Menu
                         </a>
                     </div>
@@ -36,7 +36,7 @@
                         <i class="bi bi-list me-2"></i>Menu Management
                     </h4>
                     <div class="d-grid gap-2">
-                        <a href="{{ route('admin.menus.create') }}" class="btn btn-primary">
+                        <a href="{{ route('sitemanager.menus.create') }}" class="btn btn-primary">
                             <i class="bi bi-plus me-2"></i>Add New Menu
                         </a>
                         <button type="button" class="btn btn-outline-secondary" id="rebuild-tree-btn-mobile">
@@ -99,7 +99,7 @@
                 <div class="text-center py-5">
                     <i class="bi bi-list" style="font-size: 3rem;" class="text-muted mb-3"></i>
                     <p class="text-muted">No menus registered.</p>
-                    <a href="{{ route('admin.menus.create') }}" class="btn btn-primary">
+                    <a href="{{ route('sitemanager.menus.create') }}" class="btn btn-primary">
                         Add Your First Menu
                     </a>
                 </div>
@@ -117,9 +117,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const treeManager = new MenuTreeManager({
         menuData: @json($menusWithUrls),
         invalidRouteMenus: @json($invalidRouteMenus ?? []),
-        moveUrl: '{{ route('admin.menus.move') }}',
-        treeUrl: '{{ route('admin.menus.index') }}',
-        editBaseUrl: '{{ route("admin.menus.index") }}',
+        moveUrl: '{{ route('sitemanager.menus.move') }}',
+        treeUrl: '{{ route('sitemanager.menus.index') }}',
+        editBaseUrl: '{{ route("sitemanager.menus.index") }}',
         csrfToken: document.querySelector('meta[name="csrf-token"]').getAttribute('content')
     });
     @endif
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        fetch('{{ route("admin.menus.rebuild-tree") }}', {
+        fetch('{{ route("sitemanager.menus.rebuild-tree") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

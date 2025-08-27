@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.admin')
+@extends('sitemanager::layouts.sitemanager')
 
 @section('title', isset($menu) ? 'Edit Menu - ' . $menu->title : 'Add New Menu')
 
@@ -23,12 +23,12 @@
                             <i class="bi bi-plus me-2"></i>Add New Menu
                         @endif
                     </h5>
-                    <a href="{{ route('admin.menus.index') }}" class="btn btn-outline-secondary btn-sm">
+                    <a href="{{ route('sitemanager.menus.index') }}" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ isset($menu) ? route('admin.menus.update', $menu) : route('admin.menus.store') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ isset($menu) ? route('sitemanager.menus.update', $menu) : route('sitemanager.menus.store') }}" enctype="multipart/form-data">
                         @csrf
                         @if(isset($menu))
                             @method('PUT')
@@ -416,7 +416,7 @@
                         </div>
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{{ route('admin.menus.index') }}" class="btn btn-secondary">
+                            <a href="{{ route('sitemanager.menus.index') }}" class="btn btn-secondary">
                                 <i class="bi bi-x-circle"></i> Cancel
                             </a>
 
@@ -429,7 +429,7 @@
                                     <button type="button" 
                                             class="btn btn-danger"
                                             id="menu-delete-btn" 
-                                            data-delete-url="{{ route('admin.menus.destroy', $menu->id) }}"
+                                            data-delete-url="{{ route('sitemanager.menus.destroy', $menu->id) }}"
                                             title="Delete Menu">
                                         <i class="bi bi-trash"></i> Delete
                                     </button>
@@ -676,7 +676,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const menuId = @json(isset($menu) ? $menu->id : null);
         
         // AJAX call to check board connection
-        fetch('{{ route("admin.menus.check-board-connection") }}', {
+        fetch('{{ route("sitemanager.menus.check-board-connection") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -705,7 +705,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <small class="text-muted">
                         Please create a board and connect it to this menu, or this menu will not function properly.
                         <br>
-                        <a href="{{ route('admin.boards.create') }}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">
+                        <a href="{{ route('sitemanager.boards.create') }}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">
                             <i class="bi bi-plus"></i> Create New Board
                         </a>
                     </small>
@@ -722,7 +722,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <small class="text-muted">
                         This menu will redirect to the board index page when clicked.
                         <br>
-                        <a href="{{ route('admin.boards.index') }}" target="_blank" class="btn btn-sm btn-outline-info mt-1">
+                        <a href="{{ route('sitemanager.boards.index') }}" target="_blank" class="btn btn-sm btn-outline-info mt-1">
                             <i class="bi bi-list"></i> Manage Boards
                         </a>
                     </small>
@@ -1026,7 +1026,7 @@ function searchMembers() {
     }
     
     // AJAX로 멤버 검색
-    fetch(`{{ route('admin.members.search') }}?q=${encodeURIComponent(query)}`)
+    fetch(`{{ route('sitemanager.members.search') }}?q=${encodeURIComponent(query)}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

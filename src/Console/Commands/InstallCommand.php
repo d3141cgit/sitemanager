@@ -156,7 +156,7 @@ class InstallCommand extends Command
         $this->line('🎯 <comment>Next steps:</comment>');
         $this->line('   1. Create an admin user: <info>php artisan sitemanager:admin</info>');
         $this->line('   2. Visit <info>/</info> to see the main page');
-        $this->line('   3. Visit <info>/admin/dashboard</info> to access admin panel');
+        $this->line('   3. Visit <info>/sitemanager/dashboard</info> to access admin panel');
         $this->newLine();
         
         $this->line('⚙️ <comment>Configuration completed:</comment>');
@@ -166,7 +166,7 @@ class InstallCommand extends Command
         $this->newLine();
         
         $this->line('🔧 <comment>Resource management:</comment>');
-        $this->line('   • Use: <info>{!! resource(\'sitemanager::css/admin/admin.css\') !!}</info>');
+        $this->line('   • Use: <info>{!! resource(\'sitemanager::css/sitemanager/sitemanager.css\') !!}</info>');
         $this->line('   • Build for production: <info>php artisan resource build</info>');
         $this->line('   • Clear resources: <info>php artisan resource clear</info>');
         $this->newLine();

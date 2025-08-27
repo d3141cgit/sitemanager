@@ -1,6 +1,6 @@
 <?php
 
-namespace SiteManager\Http\Controllers\Admin;
+namespace SiteManager\Http\Controllers\SiteManager;
 
 use SiteManager\Http\Controllers\Controller;
 use SiteManager\Models\Group;
@@ -8,7 +8,7 @@ use SiteManager\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class AdminGroupController extends Controller
+class SiteManagerGroupController extends Controller
 {
     /**
      * 그룹 목록
@@ -40,7 +40,7 @@ class AdminGroupController extends Controller
 
         $groups = $query->paginate(20)->appends($request->query());
 
-        return view('sitemanager::admin.groups.index', compact('groups'));
+        return view('sitemanager::sitemanager.groups.index', compact('groups'));
     }
 
     /**
@@ -48,7 +48,7 @@ class AdminGroupController extends Controller
      */
     public function create()
     {
-        return view('sitemanager::admin.groups.form');
+        return view('sitemanager::sitemanager.groups.form');
     }
 
     /**
@@ -64,7 +64,7 @@ class AdminGroupController extends Controller
 
         Group::create($validated);
 
-        return redirect()->route('admin.groups.index')
+        return redirect()->route('sitemanager.groups.index')
             ->with('success', 'Group created successfully.');
     }
 
@@ -73,7 +73,7 @@ class AdminGroupController extends Controller
      */
     public function show(Group $group)
     {
-        return redirect()->route('admin.groups.edit', $group);
+        return redirect()->route('sitemanager.groups.edit', $group);
     }
 
     /**
@@ -86,7 +86,7 @@ class AdminGroupController extends Controller
             $query->where('group_id', $group->id);
         })->orderBy('name')->get();
 
-        return view('sitemanager::admin.groups.form', compact('group', 'availableMembers'));
+        return view('sitemanager::sitemanager.groups.form', compact('group', 'availableMembers'));
     }
 
     /**
@@ -108,7 +108,7 @@ class AdminGroupController extends Controller
             $group->members()->sync($validated['members']);
         }
 
-        return redirect()->route('admin.groups.index')
+        return redirect()->route('sitemanager.groups.index')
             ->with('success', 'Group updated successfully.');
     }
 
@@ -119,7 +119,7 @@ class AdminGroupController extends Controller
     {
         $group->delete();
         
-        return redirect()->route('admin.groups.index')
+        return redirect()->route('sitemanager.groups.index')
             ->with('success', 'Group deleted successfully.');
     }
 
@@ -131,7 +131,7 @@ class AdminGroupController extends Controller
         $group = Group::withTrashed()->findOrFail($id);
         $group->restore();
         
-        return redirect()->route('admin.groups.index')
+        return redirect()->route('sitemanager.groups.index')
             ->with('success', 'Group restored successfully.');
     }
 
@@ -143,7 +143,7 @@ class AdminGroupController extends Controller
         $group = Group::withTrashed()->findOrFail($id);
         $group->forceDelete();
         
-        return redirect()->route('admin.groups.index')
+        return redirect()->route('sitemanager.groups.index')
             ->with('success', 'Group permanently deleted.');
     }
 }

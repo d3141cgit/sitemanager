@@ -1,6 +1,6 @@
 <?php
 
-namespace SiteManager\Http\Controllers\Admin;
+namespace SiteManager\Http\Controllers\SiteManager;
 
 use SiteManager\Http\Controllers\Controller;
 use SiteManager\Models\Member;
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-class AdminMemberController extends Controller
+class SiteManagerMemberController extends Controller
 {
     public function __construct(
         private FileUploadService $fileUploadService
@@ -64,7 +64,7 @@ class AdminMemberController extends Controller
         $groups = Group::orderBy('name')->get();
         $levels = config('member.levels');
 
-        return view('sitemanager::admin.members.index', compact('members', 'groups', 'levels'));
+        return view('sitemanager::sitemanager.members.index', compact('members', 'groups', 'levels'));
     }
 
     /**
@@ -72,7 +72,7 @@ class AdminMemberController extends Controller
      */
     public function show(Member $member)
     {
-        return redirect()->route('admin.members.edit', $member);
+        return redirect()->route('sitemanager.members.edit', $member);
     }
 
     /**
@@ -82,7 +82,7 @@ class AdminMemberController extends Controller
     {
         $groups = Group::orderBy('name')->get();
         $levels = config('member.levels');
-        return view('sitemanager::admin.members.form', compact('groups', 'levels'));
+        return view('sitemanager::sitemanager.members.form', compact('groups', 'levels'));
     }
 
     /**
@@ -118,7 +118,7 @@ class AdminMemberController extends Controller
             $member->groups()->sync($validated['groups']);
         }
 
-        return redirect()->route('admin.members.index')
+        return redirect()->route('sitemanager.members.index')
             ->with('success', '멤버가 성공적으로 생성되었습니다.');
     }
 
@@ -135,7 +135,7 @@ class AdminMemberController extends Controller
             abort(403, '루트 권한이 필요합니다.');
         }
 
-        return view('sitemanager::admin.members.form', compact('member', 'groups', 'levels'));
+        return view('sitemanager::sitemanager.members.form', compact('member', 'groups', 'levels'));
     }
 
     /**
@@ -201,7 +201,7 @@ class AdminMemberController extends Controller
             $member->groups()->sync($validated['groups']);
         }
 
-        return redirect()->route('admin.members.show', $member)
+        return redirect()->route('sitemanager.members.show', $member)
             ->with('success', '멤버 정보가 성공적으로 수정되었습니다.');
     }
 
@@ -212,13 +212,13 @@ class AdminMemberController extends Controller
     {
         // 루트 멤버(id=1) 삭제 방지
         if ($member->id === 1) {
-            return redirect()->route('admin.members.index')
+            return redirect()->route('sitemanager.members.index')
                 ->with('error', 'Root user cannot be deleted.');
         }
         
         $member->delete();
         
-        return redirect()->route('admin.members.index')
+        return redirect()->route('sitemanager.members.index')
             ->with('success', '멤버가 성공적으로 삭제되었습니다.');
     }
 
@@ -230,7 +230,7 @@ class AdminMemberController extends Controller
         $member = Member::withTrashed()->findOrFail($id);
         $member->restore();
         
-        return redirect()->route('admin.members.index')
+        return redirect()->route('sitemanager.members.index')
             ->with('success', '멤버가 성공적으로 복원되었습니다.');
     }
 
@@ -243,13 +243,13 @@ class AdminMemberController extends Controller
         
         // 루트 멤버(id=1) 완전 삭제 방지
         if ($member->id === 1) {
-            return redirect()->route('admin.members.index')
+            return redirect()->route('sitemanager.members.index')
                 ->with('error', 'Root user cannot be permanently deleted.');
         }
         
         $member->forceDelete();
         
-        return redirect()->route('admin.members.index')
+        return redirect()->route('sitemanager.members.index')
             ->with('success', '멤버가 완전히 삭제되었습니다.');
     }
 

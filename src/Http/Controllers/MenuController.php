@@ -51,7 +51,7 @@ class MenuController extends Controller
             ]);
         }
         
-        return view('sitemanager::admin.menus.index', compact('menusWithUrls', 'invalidRouteMenus'));
+        return view('sitemanager::sitemanager.menus.index', compact('menusWithUrls', 'invalidRouteMenus'));
     }
     
     /**
@@ -66,7 +66,7 @@ class MenuController extends Controller
         $availableRoutes = $this->menuService->getAvailableRoutes();
         $menuPermissions = ['basic' => [], 'level' => [], 'group' => [], 'admins' => []];
         
-        return view('sitemanager::admin.menus.form', compact('availableRoutes', 'menuPermissions'));
+        return view('sitemanager::sitemanager.menus.form', compact('availableRoutes', 'menuPermissions'));
     }
     
     /**
@@ -119,7 +119,7 @@ class MenuController extends Controller
                 $successMessage .= ' ' . $routeWarning;
             }
             
-            return redirect()->route('admin.menus.index')
+            return redirect()->route('sitemanager.menus.index')
                            ->with($routeWarning ? 'warning' : 'success', $successMessage);
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage())->withInput();
@@ -135,7 +135,7 @@ class MenuController extends Controller
             abort(403, '권한이 없습니다.');
         }
         
-        return view('sitemanager::admin.menus.show', compact('menu'));
+        return view('sitemanager::sitemanager.menus.show', compact('menu'));
     }
     
     /**
@@ -150,7 +150,7 @@ class MenuController extends Controller
         $availableRoutes = $this->menuService->getAvailableRoutes();
         $menuPermissions = $this->menuService->getMenuPermissions($menu->id);
         
-        return view('sitemanager::admin.menus.form', compact('menu', 'availableRoutes', 'menuPermissions'));
+        return view('sitemanager::sitemanager.menus.form', compact('menu', 'availableRoutes', 'menuPermissions'));
     }
     
     /**
@@ -212,7 +212,7 @@ class MenuController extends Controller
             }
             
             // 수정 시에는 수정 폼에 머무르기
-            return redirect()->route('admin.menus.edit', $menu->id)
+            return redirect()->route('sitemanager.menus.edit', $menu->id)
                            ->with($routeWarning ? 'warning' : 'success', $successMessage);
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage())->withInput();
@@ -236,7 +236,7 @@ class MenuController extends Controller
         try {
             $this->menuService->deleteMenu($menu->id);
             
-            return redirect()->route('admin.menus.index')
+            return redirect()->route('sitemanager.menus.index')
                            ->with('success', '메뉴가 삭제되었습니다.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());

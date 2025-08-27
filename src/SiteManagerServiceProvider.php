@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Gate;
 use SiteManager\Http\Middleware\AdminMiddleware;
+use SiteManager\Http\Middleware\SiteManagerMiddleware;
 use SiteManager\Http\Middleware\CheckMenuPermission;
 use SiteManager\Services\BoardService;
 use SiteManager\Services\ConfigService;
@@ -45,12 +46,12 @@ class SiteManagerServiceProvider extends ServiceProvider
         });
         
         Route::middleware('web')->group(function () {
-            $this->loadRoutesFrom(__DIR__.'/../routes/admin.php');
+            $this->loadRoutesFrom(__DIR__.'/../routes/sitemanager.php');
         });
         
         // 미들웨어 등록
         $router = $this->app['router'];
-        $router->aliasMiddleware('admin', AdminMiddleware::class);
+        $router->aliasMiddleware('sitemanager', SiteManagerMiddleware::class);
         $router->aliasMiddleware('menu.permission', CheckMenuPermission::class);
         
         // 뷰 컴포저 등록

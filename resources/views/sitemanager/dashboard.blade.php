@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.admin')
+@extends('sitemanager::layouts.sitemanager')
 
 @section('title', 'Dashboard')
 @section('page-title', 'Dashboard')
@@ -7,7 +7,7 @@
 <div class="container">
     <div class="row mb-4">
         <div class="col-md-3 col-6">
-            <a href="{{ route('admin.members.index') }}" class="text-decoration-none">
+            <a href="{{ route('sitemanager.members.index') }}" class="text-decoration-none">
                 <div class="card text-center shadow-sm h-100 card-hover">
                     <div class="card-body py-4">
                         <div class="mb-2">
@@ -20,7 +20,7 @@
             </a>
         </div>
         <div class="col-md-3 col-6">
-            <a href="{{ route('admin.members.index', ['status' => 'active']) }}" class="text-decoration-none">
+            <a href="{{ route('sitemanager.members.index', ['status' => 'active']) }}" class="text-decoration-none">
                 <div class="card text-center shadow-sm h-100 card-hover">
                     <div class="card-body py-4">
                         <div class="mb-2">
@@ -33,7 +33,7 @@
             </a>
         </div>
         <div class="col-md-3 col-6">
-            <a href="{{ route('admin.groups.index') }}" class="text-decoration-none">
+            <a href="{{ route('sitemanager.groups.index') }}" class="text-decoration-none">
                 <div class="card text-center shadow-sm h-100 card-hover">
                     <div class="card-body py-4">
                         <div class="mb-2">
@@ -46,7 +46,7 @@
             </a>
         </div>
         <div class="col-md-3 col-6">
-            <a href="{{ route('admin.menus.index') }}" class="text-decoration-none">
+            <a href="{{ route('sitemanager.menus.index') }}" class="text-decoration-none">
                 <div class="card text-center shadow-sm h-100 card-hover">
                     <div class="card-body py-4">
                         <div class="mb-2">
@@ -81,7 +81,7 @@
                         @endforeach
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('admin.menus.index') }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ route('sitemanager.menus.index') }}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-list me-1"></i>Manage Menus
                         </a>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -101,7 +101,7 @@
                             <i class="bi bi-person-plus me-1"></i>
                             Recent Members
                         </h5>
-                        <a href="{{ route('admin.members.index') }}">
+                        <a href="{{ route('sitemanager.members.index') }}">
                             View All
                         </a>
                     </div>
@@ -122,7 +122,7 @@
                                 @foreach($recent_members as $member)
                                 <tr>
                                     <td nowrap>
-                                        <a href="{{ route('admin.members.edit', $member) }}" title="Edit">{{ $member->name }}</a>
+                                        <a href="{{ route('sitemanager.members.edit', $member) }}" title="Edit">{{ $member->name }}</a>
                                     </td>
                                     <td>
                                         {{ $member->email }}
@@ -161,19 +161,19 @@
                     <div class="card-body p-0">
                         <ul class="card-list">
                             <li>
-                                <a href="{{ route('admin.members.create') }}">
+                                <a href="{{ route('sitemanager.members.create') }}">
                                     <i class="bi bi-person-plus me-1"></i>
                                     Add New Member
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ route('admin.menus.create') }}">
+                                <a href="{{ route('sitemanager.menus.create') }}">
                                     <i class="bi bi-plus me-1"></i>
                                     Add New Menu
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ route('admin.settings') }}">
+                                <a href="{{ route('sitemanager.settings') }}">
                                     <i class="bi bi-gear me-1"></i>
                                     System Settings
                                 </a>

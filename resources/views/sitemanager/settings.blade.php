@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.admin')
+@extends('sitemanager::layouts.sitemanager')
 
 @section('title', 'System Settings')
 
@@ -42,7 +42,7 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <form name="config-form" method="post" action="{{ route('admin.settings.process-config') }}">
+                            <form name="config-form" method="post" action="{{ route('sitemanager.settings.process-config') }}">
                                 @csrf
 
                                 <div class="table-responsive">
@@ -174,14 +174,14 @@
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
-                                <form method="POST" action="{{ route('admin.settings.reset-config') }}" class="d-inline">
+                                <form method="POST" action="{{ route('sitemanager.settings.reset-config') }}" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-outline-danger btn-sm w-100 reset-config-btn">
                                         <i class="bi bi-arrow-clockwise me-1"></i>Reset Configuration
                                     </button>
                                 </form>
                                 
-                                <form method="POST" action="{{ route('admin.settings.reset-resources') }}" class="d-inline">
+                                <form method="POST" action="{{ route('sitemanager.settings.reset-resources') }}" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-outline-warning btn-sm w-100 reset-resources-btn">
                                         <i class="bi bi-files me-1"></i>Reset Resources

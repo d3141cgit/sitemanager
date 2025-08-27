@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Admin Panel') - Site Manager</title>
+    <title>@yield('title', 'SiteManager Panel') - Site Manager</title>
     
     {!! setResources(['jquery', 'bootstrap', 'sweetalert']) !!}
-    {!! resource('sitemanager::css/admin/admin.css') !!}
-    {!! resource('sitemanager::js/admin/admin.js') !!}
+    {!! resource('sitemanager::css/sitemanager/sitemanager.css') !!}
+    {!! resource('sitemanager::js/sitemanager/sitemanager.js') !!}
     
     @stack('styles')
     @yield('head')
@@ -22,7 +22,7 @@
     
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
-            <a href="{{ route('admin.dashboard') }}">
+            <a href="{{ route('sitemanager.dashboard') }}">
                 <img src="/images/sitemanager.svg" alt="Site Manager Logo" class="navbar-logo">
             </a>
             
@@ -33,46 +33,46 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('admin.dashboard')]) 
-                            href="{{ route('admin.dashboard') }}">
+                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.dashboard')]) 
+                            href="{{ route('sitemanager.dashboard') }}">
                             <i class="bi bi-speedometer2"></i>
                             Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('admin.members.*')]) 
-                           href="{{ route('admin.members.index') }}">
+                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.members.*')]) 
+                           href="{{ route('sitemanager.members.index') }}">
                             <i class="bi bi-people"></i>
                             Members
                         </a>
                     </li>
                     
                     <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('admin.groups.*')]) 
-                           href="{{ route('admin.groups.index') }}">
+                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.groups.*')]) 
+                           href="{{ route('sitemanager.groups.index') }}">
                             <i class="bi bi-collection"></i>
                             Groups
                         </a>
                     </li>
                     
                     <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('admin.menus.*')]) 
-                           href="{{ route('admin.menus.index') }}">
+                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.menus.*')]) 
+                           href="{{ route('sitemanager.menus.index') }}">
                             <i class="bi bi-list"></i>
                             Menus
                         </a>
                     </li>
                     
                     <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('admin.boards.*')]) 
-                           href="{{ route('admin.boards.index') }}">
+                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.boards.*')]) 
+                           href="{{ route('sitemanager.boards.index') }}">
                             <i class="bi bi-journal-text"></i>
                             Boards
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('admin.settings.*')]) 
-                           href="{{ route('admin.settings') }}">
+                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.settings.*')]) 
+                           href="{{ route('sitemanager.settings') }}">
                             <i class="bi bi-gear"></i>
                             Settings
                         </a>
@@ -95,7 +95,7 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li>
-                                <a class="dropdown-item" href="{{ route('admin.members.edit', auth()->user()->id) }}">
+                                <a class="dropdown-item" href="{{ route('sitemanager.members.edit', auth()->user()->id) }}">
                                     <i class="bi bi-person me-2"></i>Profile
                                 </a>
                             </li>

@@ -53,7 +53,7 @@ class MenuTreeManager {
         
         // 전역 editMenu 함수 설정
         window.editMenu = (menuId) => {
-            const editUrl = this.editBaseUrl.replace('/admin/menus', `/admin/menus/${menuId}/edit`);
+            const editUrl = this.editBaseUrl.replace('/sitemanager/menus', `/sitemanager/menus/${menuId}/edit`);
             // window.open(editUrl, '_blank');
             window.location.href = editUrl;
         };

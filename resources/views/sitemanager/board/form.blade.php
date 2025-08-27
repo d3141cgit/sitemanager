@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.admin')
+@extends('sitemanager::layouts.sitemanager')
 
 @section('title', isset($board) ? 'Edit Board - ' . $board->name : 'Create New Board')
 
@@ -13,7 +13,7 @@
             @endif
         </h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-            <a href="{{ route('admin.boards.index') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('sitemanager.boards.index') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Back to List
             </a>
         </div>
@@ -30,7 +30,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ isset($board) ? route('admin.boards.update', $board) : route('admin.boards.store') }}">
+    <form method="POST" action="{{ isset($board) ? route('sitemanager.boards.update', $board) : route('sitemanager.boards.store') }}">
         @csrf
         @if(isset($board))
             @method('PUT')
@@ -191,7 +191,7 @@
                         <div class="mb-3">
                             <label for="allowed_file_types" class="form-label">Allowed File Types</label>
                             <input type="text" class="form-control" id="allowed_file_types" name="settings[allowed_file_types]" 
-                                   value="{{ old('settings.allowed_file_types', isset($board) ? implode(',', $board->getAllowedFileTypes()) : 'jpg,jpeg,png,gif,pdf,doc,docx,txt') }}" 
+                                   value="{{ old('settings.allowed_file_types', isset($board) ? implode(',', $board->getAllowedFileTypes()) : implode(',', config('sitemanager.board.allowed_extensions'))) }}" 
                                    placeholder="jpg,jpeg,png,gif,pdf">
                             <div class="form-text">Separate with commas.</div>
                         </div>
@@ -203,7 +203,7 @@
         <div class="row mt-4">
             <div class="col-12">
                 <div class="d-flex justify-content-end gap-2">
-                    <a href="{{ route('admin.boards.index') }}" class="btn btn-secondary">Cancel</a>
+                    <a href="{{ route('sitemanager.boards.index') }}" class="btn btn-secondary">Cancel</a>
                     <button type="submit" class="btn btn-primary">
                         @if(isset($board))
                             <i class="bi bi-check-lg"></i> Update

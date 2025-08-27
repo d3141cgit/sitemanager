@@ -1,6 +1,6 @@
 <?php
 
-namespace SiteManager\Http\Controllers\Admin;
+namespace SiteManager\Http\Controllers\SiteManager;
 
 use SiteManager\Http\Controllers\Controller;
 use SiteManager\Models\Board;
@@ -12,7 +12,7 @@ use Illuminate\View\View;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
-class AdminBoardController extends Controller
+class SiteManagerBoardController extends Controller
 {
     public function __construct(
         private BoardService $boardService
@@ -33,7 +33,7 @@ class AdminBoardController extends Controller
             $board->comments_count = $board->getCommentsCount();
         }
 
-        return view('sitemanager::admin.board.index', compact('boards'));
+        return view('sitemanager::sitemanager.board.index', compact('boards'));
     }
 
     /**
@@ -45,7 +45,7 @@ class AdminBoardController extends Controller
             ->orderBy('_lft')
             ->get();
 
-        return view('sitemanager::admin.board.form', compact('menus'));
+        return view('sitemanager::sitemanager.board.form', compact('menus'));
     }
 
     /**
@@ -102,7 +102,7 @@ class AdminBoardController extends Controller
             }
             
             return redirect()
-                ->route('admin.boards.index')
+                ->route('sitemanager.boards.index')
                 ->with('success', "Board \"{$board->name}\" has been created successfully.");
         } catch (\Exception $e) {
             return back()
@@ -120,7 +120,7 @@ class AdminBoardController extends Controller
             ->orderBy('_lft')
             ->get();
 
-        return view('sitemanager::admin.board.form', compact('board', 'menus'));
+        return view('sitemanager::sitemanager.board.form', compact('board', 'menus'));
     }
 
     /**
@@ -132,7 +132,7 @@ class AdminBoardController extends Controller
             ->orderBy('_lft')
             ->get();
 
-        return view('sitemanager::admin.board.form', compact('board', 'menus'));
+        return view('sitemanager::sitemanager.board.form', compact('board', 'menus'));
     }
 
     /**
@@ -224,7 +224,7 @@ class AdminBoardController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('admin.boards.edit', $board)
+                ->route('sitemanager.boards.edit', $board)
                 ->with('success', 'Board has been updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -259,7 +259,7 @@ class AdminBoardController extends Controller
             DB::commit();
             
             return redirect()
-                ->route('admin.boards.index')
+                ->route('sitemanager.boards.index')
                 ->with('success', "Board \"{$boardName}\" has been deleted successfully.");
         } catch (\Exception $e) {
             DB::rollBack();

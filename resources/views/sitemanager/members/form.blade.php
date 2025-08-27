@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.admin')
+@extends('sitemanager::layouts.sitemanager')
 
 @section('title', isset($member) ? 'Edit Member - ' . $member->name : 'Add New Member')
 
@@ -16,7 +16,7 @@
 
             <div class="card">
                 <div class="card-body">
-                    <form method="POST" action="{{ isset($member) ? route('admin.members.update', $member) : route('admin.members.store') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ isset($member) ? route('sitemanager.members.update', $member) : route('sitemanager.members.store') }}" enctype="multipart/form-data">
                         @csrf
                         @if(isset($member))
                             @method('PUT')
@@ -248,7 +248,7 @@
                                         Create Member
                                     @endif
                                 </button>
-                                <a href="{{ route('admin.members.index') }}" class="btn btn-secondary ms-2">Cancel</a>
+                                <a href="{{ route('sitemanager.members.index') }}" class="btn btn-secondary ms-2">Cancel</a>
                             </div>
                         </div>
                     </form>

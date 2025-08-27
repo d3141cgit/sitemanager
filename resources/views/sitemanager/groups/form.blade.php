@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.admin')
+@extends('sitemanager::layouts.sitemanager')
 
 @section('title', isset($group) ? 'Edit Group' : 'Create Group')
 
@@ -12,13 +12,13 @@
                         <i class="bi bi-collection"></i>
                         {{ isset($group) ? 'Edit Group' : 'Create Group' }}
                     </h5>
-                    <a href="{{ route('admin.groups.index') }}" class="btn btn-outline-secondary btn-sm">
+                    <a href="{{ route('sitemanager.groups.index') }}" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
 
                 <div class="card-body">
-                    <form method="POST" action="{{ isset($group) ? route('admin.groups.update', $group) : route('admin.groups.store') }}">
+                    <form method="POST" action="{{ isset($group) ? route('sitemanager.groups.update', $group) : route('sitemanager.groups.store') }}">
                         @csrf
                         @if(isset($group))
                             @method('PUT')
@@ -135,7 +135,7 @@
                                     <i class="bi bi-check-circle"></i>
                                     {{ isset($group) ? 'Update Group' : 'Create Group' }}
                                 </button>
-                                <a href="{{ route('admin.groups.index') }}" class="btn btn-secondary ms-2">
+                                <a href="{{ route('sitemanager.groups.index') }}" class="btn btn-secondary ms-2">
                                     <i class="bi bi-x-circle"></i> Cancel
                                 </a>
                             </div>

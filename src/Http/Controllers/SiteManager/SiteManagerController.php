@@ -1,6 +1,6 @@
 <?php
 
-namespace SiteManager\Http\Controllers\Admin;
+namespace SiteManager\Http\Controllers\SiteManager;
 
 use SiteManager\Http\Controllers\Controller;
 use SiteManager\Models\Member;
@@ -12,7 +12,7 @@ use SiteManager\Services\MenuService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 
-class AdminController extends Controller
+class SiteManagerController extends Controller
 {
     protected $menuService;
 
@@ -72,7 +72,7 @@ class AdminController extends Controller
         // 존재하지 않는 route를 사용하는 메뉴들 확인
         $invalidRouteMenus = $this->menuService->findMenusWithInvalidRoutes();
 
-        return view('sitemanager::admin.dashboard', compact('stats', 'recent_members', 'memberStats', 'groupStats', 'invalidRouteMenus'));
+        return view('sitemanager::sitemanager.dashboard', compact('stats', 'recent_members', 'memberStats', 'groupStats', 'invalidRouteMenus'));
     }
 
     /**
@@ -93,7 +93,7 @@ class AdminController extends Controller
             ->orderBy('members_count', 'desc')
             ->get();
 
-        return view('sitemanager::admin.statistics', compact('monthly_stats', 'group_stats'));
+        return view('sitemanager::sitemanager.statistics', compact('monthly_stats', 'group_stats'));
     }
 
     /**
@@ -104,7 +104,7 @@ class AdminController extends Controller
         $configs = ConfigService::get();
         $cfg_type = ConfigService::$cfg_type;
         
-        return view('sitemanager::admin.settings', compact('configs', 'cfg_type'));
+        return view('sitemanager::sitemanager.settings', compact('configs', 'cfg_type'));
     }
 
     /**
@@ -114,9 +114,9 @@ class AdminController extends Controller
     {
         try {
             ConfigService::process($request);
-            return redirect()->route('admin.settings')->with('success', '설정이 성공적으로 저장되었습니다.');
+            return redirect()->route('sitemanager.settings')->with('success', '설정이 성공적으로 저장되었습니다.');
         } catch (\Exception $e) {
-            return redirect()->route('admin.settings')->with('error', '설정 저장 중 오류가 발생했습니다: ' . $e->getMessage());
+            return redirect()->route('sitemanager.settings')->with('error', '설정 저장 중 오류가 발생했습니다: ' . $e->getMessage());
         }
     }
 
@@ -127,9 +127,9 @@ class AdminController extends Controller
     {
         try {
             ConfigService::resetToDefaults();
-            return redirect()->route('admin.settings')->with('success', '설정이 기본값으로 초기화되었습니다.');
+            return redirect()->route('sitemanager.settings')->with('success', '설정이 기본값으로 초기화되었습니다.');
         } catch (\Exception $e) {
-            return redirect()->route('admin.settings')->with('error', '설정 초기화 중 오류가 발생했습니다: ' . $e->getMessage());
+            return redirect()->route('sitemanager.settings')->with('error', '설정 초기화 중 오류가 발생했습니다: ' . $e->getMessage());
         }
     }
 
@@ -142,9 +142,9 @@ class AdminController extends Controller
             // Artisan 명령어 실행
             Artisan::call('resource', ['action' => 'clear', '--force' => true]);
             
-            return redirect()->route('admin.settings')->with('success', '리소스 파일이 성공적으로 초기화되었습니다. CSS/JS 파일들이 다시 생성됩니다.');
+            return redirect()->route('sitemanager.settings')->with('success', '리소스 파일이 성공적으로 초기화되었습니다. CSS/JS 파일들이 다시 생성됩니다.');
         } catch (\Exception $e) {
-            return redirect()->route('admin.settings')->with('error', '리소스 초기화 중 오류가 발생했습니다: ' . $e->getMessage());
+            return redirect()->route('sitemanager.settings')->with('error', '리소스 초기화 중 오류가 발생했습니다: ' . $e->getMessage());
         }
     }
 }

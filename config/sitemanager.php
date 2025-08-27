@@ -8,7 +8,7 @@ return [
     */
     
     'features' => [
-        'admin' => true,
+        'sitemanager' => true,
         'boards' => true,
         'menus' => true,
         'members' => true,
@@ -20,7 +20,7 @@ return [
     
     'ui' => [
         'theme' => 'default',
-        'admin_prefix' => 'admin',
+        'sitemanager_prefix' => 'sitemanager',
         'pagination_per_page' => 20,
         'board_posts_per_page' => 20,
     ],
@@ -50,10 +50,10 @@ return [
             'middleware' => ['web'],
             // 'as' => 'sitemanager.',
         ],
-        'admin' => [
-            'prefix' => 'admin',
-            'middleware' => ['web', 'auth', 'admin'],
-            'as' => 'admin.',
+        'sitemanager' => [
+            'prefix' => 'sitemanager',
+            'middleware' => ['web', 'auth', 'sitemanager'],
+            'as' => 'sitemanager.',
         ],
         'api' => [
             'prefix' => 'api',
@@ -70,15 +70,15 @@ return [
     
     // 사이트별 커스터마이징
     'customizations' => [
-        'admin_layout' => 'sitemanager::layouts.admin',
+        'sitemanager_layout' => 'sitemanager::layouts.sitemanager',
         // 'board_layout' => 'sitemanager::layouts.app',
         'controllers' => [
-            'admin_board' => null, // 커스텀 컨트롤러로 오버라이드 가능
+            'sitemanager_board' => null, // 커스텀 컨트롤러로 오버라이드 가능
             'board' => null,
             'member' => null,
         ],
         'views' => [
-            'admin_dashboard' => 'sitemanager::admin.dashboard',
+            'sitemanager_dashboard' => 'sitemanager::sitemanager.dashboard',
             // 'board_index' => 'sitemanager::board.index',
             // 'board_show' => 'sitemanager::board.show',
         ],

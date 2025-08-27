@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.admin')
+@extends('sitemanager::layouts.sitemanager')
 
 @section('title', 'Groups List')
 
@@ -10,11 +10,11 @@
         <!-- Desktop Header -->
         <div class="d-none d-md-flex justify-content-between align-items-center mb-3">
             <h1 class="mb-0">
-                <a href="{{ route('admin.groups.index') }}" class="text-decoration-none text-dark">
+                <a href="{{ route('sitemanager.groups.index') }}" class="text-decoration-none text-dark">
                     <i class="bi bi-collection opacity-75"></i> Groups List
                 </a>
             </h1>
-            <a href="{{ route('admin.groups.create') }}" class="btn btn-primary text-white">
+            <a href="{{ route('sitemanager.groups.create') }}" class="btn btn-primary text-white">
                 <i class="bi bi-plus-circle"></i> Add New Group
             </a>
         </div>
@@ -22,12 +22,12 @@
         <!-- Mobile Header -->
         <div class="d-md-none">
             <h4 class="mb-3">
-                <a href="{{ route('admin.groups.index') }}" class="text-decoration-none text-dark">
+                <a href="{{ route('sitemanager.groups.index') }}" class="text-decoration-none text-dark">
                     <i class="bi bi-collection opacity-75"></i> Groups List
                 </a>
             </h4>
             <div class="d-grid mb-3">
-                <a href="{{ route('admin.groups.create') }}" class="btn btn-primary text-white">
+                <a href="{{ route('sitemanager.groups.create') }}" class="btn btn-primary text-white">
                     <i class="bi bi-plus-circle me-2"></i>Add New Group
                 </a>
             </div>
@@ -37,7 +37,7 @@
     <!-- Search Form -->
     <div class="row mb-4">
         <div class="col-12">
-            <form method="GET" action="{{ route('admin.groups.index') }}">
+            <form method="GET" action="{{ route('sitemanager.groups.index') }}">
                 <!-- Desktop Search Layout -->
                 <div class="d-none d-md-flex">
                     <div class="input-group">
@@ -55,7 +55,7 @@
                             <i class="bi bi-search"></i> Search
                         </button>
                         @if(request()->hasAny(['search', 'status']))
-                            <a href="{{ route('admin.groups.index') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('sitemanager.groups.index') }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle"></i> Clear
                             </a>
                         @endif
@@ -85,7 +85,7 @@
                             <i class="bi bi-search me-2"></i>Search
                         </button>
                         @if(request()->hasAny(['search', 'status']))
-                            <a href="{{ route('admin.groups.index') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('sitemanager.groups.index') }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle me-2"></i>Clear
                             </a>
                         @endif
@@ -135,14 +135,14 @@
                         <td class="text-end">
                             @if($group->trashed())
                                 @if(Auth::user()->isAdmin())
-                                    <form method="POST" action="{{ route('admin.groups.restore', $group->id) }}" 
+                                    <form method="POST" action="{{ route('sitemanager.groups.restore', $group->id) }}" 
                                             class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-success" title="Restore Group">
                                             <i class="bi bi-arrow-clockwise"></i>
                                         </button>
                                     </form>
-                                    <form method="POST" action="{{ route('admin.groups.force-delete', $group->id) }}" 
+                                    <form method="POST" action="{{ route('sitemanager.groups.force-delete', $group->id) }}" 
                                             class="d-inline delete-group-form"
                                             data-type="force">
                                         @csrf
@@ -153,13 +153,13 @@
                                     </form>
                                 @endif
                             @else
-                                <a href="{{ route('admin.groups.edit', $group) }}" 
+                                <a href="{{ route('sitemanager.groups.edit', $group) }}" 
                                     class="btn btn-sm btn-outline-primary" title="Edit Group">
                                     <i class="bi bi-pencil"></i>
                                 </a>
 
                                 @if(Auth::user()->isAdmin())
-                                    <form method="POST" action="{{ route('admin.groups.destroy', $group) }}" 
+                                    <form method="POST" action="{{ route('sitemanager.groups.destroy', $group) }}" 
                                             class="d-inline delete-group-form"
                                             data-type="soft">
                                         @csrf

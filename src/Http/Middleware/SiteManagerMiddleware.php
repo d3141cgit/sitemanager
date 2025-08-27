@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-class AdminMiddleware
+class SiteManagerMiddleware
 {
     /**
      * Handle an incoming request.
@@ -23,10 +23,10 @@ class AdminMiddleware
 
         $user = Auth::user();
         
-        // 관리자 권한 체크 (config/member.php의 admin_level 설정값 기반)
+        // 사이트매니저 권한 체크 (config/member.php의 admin_level 설정값 기반)
         if ($user->level < config('member.admin_level')) {
             return redirect()->route('user.profile')
-                ->with('error', '관리자 권한이 필요합니다.');
+                ->with('error', '사이트매니저 권한이 필요합니다.');
         }
 
         return $next($request);

@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.admin')
+@extends('sitemanager::layouts.sitemanager')
 
 @section('title', 'Board Management')
 
@@ -10,11 +10,11 @@
         <!-- Desktop Header -->
         <div class="d-none d-md-flex justify-content-between align-items-center mb-3">
             <h1 class="mb-0">
-                <a href="{{ route('admin.boards.index') }}" class="text-decoration-none text-dark">
+                <a href="{{ route('sitemanager.boards.index') }}" class="text-decoration-none text-dark">
                     <i class="bi bi-list-ul opacity-75"></i> Board Management
                 </a>
             </h1>
-            <a href="{{ route('admin.boards.create') }}" class="btn btn-primary text-white">
+            <a href="{{ route('sitemanager.boards.create') }}" class="btn btn-primary text-white">
                 <i class="bi bi-plus-circle"></i> Add New Board
             </a>
         </div>
@@ -22,12 +22,12 @@
         <!-- Mobile Header -->
         <div class="d-md-none">
             <h4 class="mb-3">
-                <a href="{{ route('admin.boards.index') }}" class="text-decoration-none text-dark">
+                <a href="{{ route('sitemanager.boards.index') }}" class="text-decoration-none text-dark">
                     <i class="bi bi-list-ul opacity-75"></i> Board Management
                 </a>
             </h4>
             <div class="d-grid mb-3">
-                <a href="{{ route('admin.boards.create') }}" class="btn btn-primary text-white">
+                <a href="{{ route('sitemanager.boards.create') }}" class="btn btn-primary text-white">
                     <i class="bi bi-plus-circle me-2"></i>Add New Board
                 </a>
             </div>
@@ -68,7 +68,7 @@
                 <tr>
                     <td>{{ $board->id }}</td>
                     <td>
-                        <a href="{{ route('admin.boards.show', $board) }}" class="text-decoration-none">
+                        <a href="{{ route('sitemanager.boards.show', $board) }}" class="text-decoration-none">
                             <strong>{{ $board->name }}</strong>
                         </a>
                     </td>
@@ -97,10 +97,10 @@
                     </td>
                     <td>{{ $board->created_at->format('Y-m-d') }}</td>
                     <td class="text-end">
-                        <a href="{{ route('admin.boards.edit', $board) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                        <a href="{{ route('sitemanager.boards.edit', $board) }}" class="btn btn-sm btn-outline-primary" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <form method="POST" action="{{ route('admin.boards.toggle-status', $board) }}" class="d-inline">
+                        <form method="POST" action="{{ route('sitemanager.boards.toggle-status', $board) }}" class="d-inline">
                             @csrf
                             @method('PATCH')
                             <button type="submit" class="btn btn-sm btn-outline-{{ $board->status === 'active' ? 'warning' : 'success' }}" 
@@ -109,7 +109,7 @@
                                 <i class="bi bi-{{ $board->status === 'active' ? 'pause' : 'play' }}"></i>
                             </button>
                         </form>
-                        <form method="POST" action="{{ route('admin.boards.destroy', $board) }}" class="d-inline">
+                        <form method="POST" action="{{ route('sitemanager.boards.destroy', $board) }}" class="d-inline">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"
@@ -125,7 +125,7 @@
                         <i class="bi bi-list-ul display-1 text-muted mb-3"></i>
                         <h5 class="text-muted">No boards found</h5>
                         <p class="text-muted">Please create a new board.</p>
-                        <a href="{{ route('admin.boards.create') }}" class="btn btn-primary">
+                        <a href="{{ route('sitemanager.boards.create') }}" class="btn btn-primary">
                             <i class="bi bi-plus-circle"></i> Create Board
                         </a>
                     </td>

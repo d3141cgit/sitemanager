@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.admin')
+@extends('sitemanager::layouts.sitemanager')
 
 @section('title', 'Members List')
 
@@ -10,11 +10,11 @@
         <!-- Desktop Header -->
         <div class="d-none d-md-flex justify-content-between align-items-center mb-3">
             <h1 class="mb-0">
-                <a href="{{ route('admin.members.index') }}" class="text-decoration-none text-dark">
+                <a href="{{ route('sitemanager.members.index') }}" class="text-decoration-none text-dark">
                     <i class="bi bi-people opacity-75"></i> Members List
                 </a>
             </h1>
-            <a href="{{ route('admin.members.create') }}" class="btn btn-primary text-white">
+            <a href="{{ route('sitemanager.members.create') }}" class="btn btn-primary text-white">
                 <i class="bi bi-person-plus"></i> Add New Member
             </a>
         </div>
@@ -22,12 +22,12 @@
         <!-- Mobile Header -->
         <div class="d-md-none">
             <h4 class="mb-3">
-                <a href="{{ route('admin.members.index') }}" class="text-decoration-none text-dark">
+                <a href="{{ route('sitemanager.members.index') }}" class="text-decoration-none text-dark">
                     <i class="bi bi-people opacity-75"></i> Members List
                 </a>
             </h4>
             <div class="d-grid mb-3">
-                <a href="{{ route('admin.members.create') }}" class="btn btn-primary text-white">
+                <a href="{{ route('sitemanager.members.create') }}" class="btn btn-primary text-white">
                     <i class="bi bi-person-plus me-2"></i>Add New Member
                 </a>
             </div>
@@ -37,7 +37,7 @@
     <!-- Search Form -->
     <div class="row mb-4">
         <div class="col-12">
-            <form method="GET" action="{{ route('admin.members.index') }}">
+            <form method="GET" action="{{ route('sitemanager.members.index') }}">
                 <!-- Desktop Search Layout -->
                 <div class="d-none d-md-flex">
                     <div class="input-group">
@@ -63,7 +63,7 @@
                             <i class="bi bi-search"></i> Search
                         </button>
                         @if(request()->hasAny(['search', 'level', 'status']))
-                            <a href="{{ route('admin.members.index') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('sitemanager.members.index') }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle"></i> Clear
                             </a>
                         @endif
@@ -105,7 +105,7 @@
                             <i class="bi bi-search me-2"></i>Search
                         </button>
                         @if(request()->hasAny(['search', 'level', 'status']))
-                            <a href="{{ route('admin.members.index') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('sitemanager.members.index') }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle me-2"></i>Clear
                             </a>
                         @endif
@@ -174,14 +174,14 @@
                         <td class="text-end" nowrap>
                             @if($member->trashed())
                                 @if(Auth::user()->isAdmin())
-                                    <form method="POST" action="{{ route('admin.members.restore', $member->id) }}" 
+                                    <form method="POST" action="{{ route('sitemanager.members.restore', $member->id) }}" 
                                             class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-success" title="Restore Member">
                                             <i class="bi bi-arrow-clockwise"></i>
                                         </button>
                                     </form>
-                                    <form method="POST" action="{{ route('admin.members.force-delete', $member->id) }}" 
+                                    <form method="POST" action="{{ route('sitemanager.members.force-delete', $member->id) }}" 
                                             class="d-inline delete-member-form"
                                             data-type="force">
                                         @csrf
@@ -193,14 +193,14 @@
                                 @endif
                             @else
                                 @if(Auth::user()->id === $member->id || Auth::user()->isAdmin())
-                                    <a href="{{ route('admin.members.edit', $member) }}" 
+                                    <a href="{{ route('sitemanager.members.edit', $member) }}" 
                                         class="btn btn-sm btn-outline-primary" title="Edit Member">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                 @endif
 
                                 @if(Auth::user()->isAdmin() && Auth::user()->id !== $member->id)
-                                    <form method="POST" action="{{ route('admin.members.destroy', $member) }}" 
+                                    <form method="POST" action="{{ route('sitemanager.members.destroy', $member) }}" 
                                             class="d-inline delete-member-form"
                                             data-type="soft">
                                         @csrf
