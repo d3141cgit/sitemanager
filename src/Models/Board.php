@@ -94,7 +94,7 @@ class Board extends Model
      */
     public function usesCategories(): bool
     {
-        return $this->getSetting('useCategories', false);
+        return $this->getSetting('use_categories', false);
     }
 
     /**
@@ -102,7 +102,7 @@ class Board extends Model
      */
     public function usesFiles(): bool
     {
-        return $this->getSetting('allowFileUpload', false);
+        return $this->getSetting('allow_file_upload', false);
     }
 
     /**
@@ -118,7 +118,7 @@ class Board extends Model
      */
     public function usesTags(): bool
     {
-        return $this->getSetting('useTags', false);
+        return $this->getSetting('use_tags', false);
     }
 
     /**
@@ -127,7 +127,7 @@ class Board extends Model
     public function allowsFileUpload(): bool
     {
         // 게시판 설정에서 파일 업로드 허용 여부 확인
-        if (!$this->getSetting('allowFileUpload', false)) {
+        if (!$this->getSetting('allow_file_upload', false)) {
             return false;
         }
         

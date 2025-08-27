@@ -73,10 +73,10 @@ class AdminBoardController extends Controller
 
         // use_* 체크박스 값들을 settings에 추가
         $settings = $validated['settings'] ?? [];
-        $settings['useCategories'] = $request->has('use_categories');
-        $settings['allowFileUpload'] = $request->has('use_files');
+        $settings['use_categories'] = $request->has('use_categories');
+        $settings['allow_file_upload'] = $request->has('use_files');
         $settings['allow_comments'] = $request->has('allow_comments');
-        $settings['useTags'] = $request->has('use_tags');
+        $settings['use_tags'] = $request->has('use_tags');
         
         $validated['settings'] = $settings;
 
@@ -167,10 +167,10 @@ class AdminBoardController extends Controller
 
         // use_* 체크박스 값들을 settings에 추가
         $settings = array_merge($board->settings ?? [], $validated['settings'] ?? []);
-        $settings['useCategories'] = $request->has('use_categories');
-        $settings['allowFileUpload'] = $request->has('use_files');
+        $settings['use_categories'] = $request->has('use_categories');
+        $settings['allow_file_upload'] = $request->has('use_files');
         $settings['allow_comments'] = $request->has('allow_comments');
-        $settings['useTags'] = $request->has('use_tags');
+        $settings['use_tags'] = $request->has('use_tags');
         
         $validated['settings'] = $settings;
 

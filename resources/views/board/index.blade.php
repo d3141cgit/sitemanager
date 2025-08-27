@@ -32,7 +32,7 @@
                 <div class="card-body py-3">
                     <form method="GET" class="d-flex gap    -3 align-items-center flex-wrap">
                         <!-- Category Filter -->
-                        @if($board->getSetting('useCategories', false) && count($board->getCategoryOptions()) > 0)
+                        @if($board->getSetting('use_categories', false) && count($board->getCategoryOptions()) > 0)
                             @php
                                 $categoryCounts = $board->getCategoryCounts();
                                 $totalPosts = $board->getPostsCount();

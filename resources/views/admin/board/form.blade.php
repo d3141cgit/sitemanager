@@ -123,12 +123,12 @@
                             <div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="use_categories" name="use_categories" 
-                                           value="1" {{ old('use_categories', isset($board) ? $board->getSetting('useCategories', false) : false) ? 'checked' : '' }}>
+                                           value="1" {{ old('use_categories', isset($board) ? $board->getSetting('use_categories', false) : false) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="use_categories">Use Categories</label>
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="use_files" name="use_files" 
-                                           value="1" {{ old('use_files', isset($board) ? $board->getSetting('allowFileUpload', false) : false) ? 'checked' : '' }}>
+                                           value="1" {{ old('use_files', isset($board) ? $board->getSetting('allow_file_upload', false) : false) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="use_files">Allow File Attachments</label>
                                 </div>
                                 <div class="form-check">
@@ -138,7 +138,7 @@
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="use_tags" name="use_tags" 
-                                           value="1" {{ old('use_tags', isset($board) ? $board->getSetting('useTags', false) : false) ? 'checked' : '' }}>
+                                           value="1" {{ old('use_tags', isset($board) ? $board->getSetting('use_tags', false) : false) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="use_tags">Enable Tags</label>
                                 </div>
                             </div>
