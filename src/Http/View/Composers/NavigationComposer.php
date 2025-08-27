@@ -7,6 +7,7 @@ use SiteManager\Services\PermissionService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Log;
 
 class NavigationComposer
 {
@@ -245,6 +246,8 @@ class NavigationComposer
             $tabs[] = [
                 'title' => $menu->title,
                 'url' => $this->getMenuUrl($menu),
+                // 'type' => $menu->type,
+                // 'target' => $menu->target,
                 'is_current' => $menu->id === $currentMenu->id,
                 'menu_id' => $menu->id,
                 'icon' => $menu->icon ?? null
@@ -269,8 +272,42 @@ class NavigationComposer
         switch ($menu->type) {
             case 'route':
                 try {
-                    return route($menu->target);
+                    $routeName = $menu->target;
+                    $routeParameters = [];
+                    
+                    // 메뉴의 route_parameters 속성이 있으면 사용
+                    if (!empty($menu->route_parameters)) {
+                        $routeParameters = is_array($menu->route_parameters) 
+                            ? $menu->route_parameters 
+                            : json_decode($menu->route_parameters, true) ?? [];
+                    }
+                    
+                    // board.index의 경우 연결된 게시판의 slug 파라미터가 필요
+                    if ($routeName === 'board.index' && empty($routeParameters['slug'])) {
+                        $board = \SiteManager\Models\Board::where('menu_id', $menu->id)->first();
+                        if ($board && $board->slug) {
+                            $routeParameters['slug'] = $board->slug;
+                        } else {
+                            // 연결된 게시판이 없으면 메뉴의 slug 속성 사용
+                            if (!empty($menu->slug)) {
+                                $routeParameters['slug'] = $menu->slug;
+                            } else {
+                                Log::warning("No board or slug found for menu", [
+                                    'menu_id' => $menu->id,
+                                    'menu_title' => $menu->title
+                                ]);
+                                return '#';
+                            }
+                        }
+                    }
+                    
+                    return route($routeName, $routeParameters);
                 } catch (\Exception $e) {
+                    Log::warning("Failed to generate route URL for menu: {$menu->title}", [
+                        'route' => $menu->target,
+                        'menu_id' => $menu->id,
+                        'error' => $e->getMessage()
+                    ]);
                     return '#';
                 }
             case 'url':

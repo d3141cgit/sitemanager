@@ -30,16 +30,27 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body py-3">
-                    <form method="GET" class="d-flex gap-3 align-items-center flex-wrap">
+                    <form method="GET" class="d-flex gap    -3 align-items-center flex-wrap">
                         <!-- Category Filter -->
-                        @if($board->getSetting('use_categories', false) && count($board->getCategoryOptions()) > 0)
+                        @if($board->getSetting('useCategories', false) && count($board->getCategoryOptions()) > 0)
+                            @php
+                                $categoryCounts = $board->getCategoryCounts();
+                                $totalPosts = $board->getPostsCount();
+                                $currentCategory = request('category');
+                                $currentSearch = request('search');
+                            @endphp
                             <div class="d-flex align-items-center">
                                 <label class="form-label me-2 mb-0">Category:</label>
-                                <select name="category" class="form-select form-select-sm" style="width: auto;">
-                                    <option value="">All Categories</option>
+                                <select name="category" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                                    <option value="">
+                                        All Categories ({{ number_format($totalPosts) }})
+                                    </option>
                                     @foreach($board->getCategoryOptions() as $category)
-                                        <option value="{{ $category }}" {{ request('category') === $category ? 'selected' : '' }}>
-                                            {{ $category }}
+                                        @php
+                                            $count = $categoryCounts[$category] ?? 0;
+                                        @endphp
+                                        <option value="{{ $category }}" {{ $currentCategory === $category ? 'selected' : '' }}>
+                                            {{ $category }} ({{ number_format($count) }})
                                         </option>
                                     @endforeach
                                 </select>

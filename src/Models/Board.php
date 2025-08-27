@@ -203,4 +203,47 @@ class Board extends Model
             ->where('status', 'approved')
             ->count();
     }
+
+    /**
+     * 카테고리별 게시물 수 반환
+     */
+    public function getCategoryCounts(): array
+    {
+        $postsTable = "board_posts_{$this->slug}";
+        
+        // 테이블이 존재하는지 확인
+        if (!Schema::hasTable($postsTable)) {
+            return [];
+        }
+        
+        // 카테고리별 게시물 수 집계
+        $counts = DB::table($postsTable)
+            ->select('category', DB::raw('COUNT(*) as count'))
+            ->where('status', 'published')
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->groupBy('category')
+            ->pluck('count', 'category')
+            ->toArray();
+            
+        return $counts;
+    }
+
+    /**
+     * 특정 카테고리의 게시물 수 반환
+     */
+    public function getCategoryCount(string $category): int
+    {
+        $postsTable = "board_posts_{$this->slug}";
+        
+        // 테이블이 존재하는지 확인
+        if (!Schema::hasTable($postsTable)) {
+            return 0;
+        }
+        
+        return DB::table($postsTable)
+            ->where('status', 'published')
+            ->where('category', $category)
+            ->count();
+    }
 }

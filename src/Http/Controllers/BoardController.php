@@ -98,7 +98,7 @@ class BoardController extends Controller
     /**
      * 게시판 메인 (게시글 목록)
      */
-    public function index(string $slug): View
+    public function index(Request $request, string $slug): View
     {
         $board = Board::where('slug', $slug)->firstOrFail();
         
@@ -110,14 +110,31 @@ class BoardController extends Controller
         // 동적 모델 클래스 생성
         $postModelClass = BoardPost::forBoard($slug);
         
-        // 게시글 목록 조회
-        $posts = $postModelClass::with('member')
+        // 게시글 목록 조회 (필터링 적용)
+        $query = $postModelClass::with('member')
             ->published()
             ->orderBy('is_notice', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->paginate($board->getSetting('posts_per_page', 20));
+            ->orderBy('created_at', 'desc');
 
-        // 공지사항 조회
+        // 카테고리 필터링
+        if ($request->filled('category')) {
+            $category = $request->input('category');
+            $query->where('category', $category);
+        }
+
+        // 검색어 필터링
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%")
+                  ->orWhere('author_name', 'like', "%{$search}%");
+            });
+        }
+
+        $posts = $query->paginate($board->getSetting('posts_per_page', 20));
+
+        // 공지사항 조회 (필터와 상관없이 항상 표시)
         $notices = $postModelClass::with('member')
             ->notices()
             ->published()
@@ -667,7 +684,7 @@ class BoardController extends Controller
         // 2. 마지막 조회로부터 30분이 지난 경우
         if (!$lastViewed || $now->diffInMinutes($lastViewed) >= 30) {
             // 게시글 작성자 본인은 조회수 증가에서 제외 (선택사항)
-            if (auth()->check() && auth()->id() === $post->member_id) {
+            if (Auth::check() && Auth::id() === $post->member_id) {
                 // 작성자 본인은 조회수 증가 안함
                 session([$sessionKey => $now]);
                 return;
@@ -685,7 +702,7 @@ class BoardController extends Controller
             //     'table' => $post->getTable(),
             //     'ip' => $request->ip(),
             //     'user_agent' => $request->userAgent(),
-            //     'user_id' => auth()->id(),
+            //     'user_id' => Auth::id(),
             // ]);
         }
     }
