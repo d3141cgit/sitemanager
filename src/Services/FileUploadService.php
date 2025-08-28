@@ -459,19 +459,72 @@ class FileUploadService
     }
 
     /**
-     * 게시판 첨부파일 업로드 (하위 호환성을 위한 래퍼 메서드)
+     * 게시판 첨부파일 업로드 (보드별 폴더 분리)
      */
     public function uploadBoardAttachment(UploadedFile $file, string $boardSlug, int $postId, array $options = []): array
     {
-        return $this->uploadAttachment($file, 'board', $postId, $options);
+        // 기본 설정과 사용자 옵션 병합
+        $config = array_merge(self::getDefaultConfig(), $options);
+        
+        // 보드별 폴더 구조: attachments/board/{boardSlug}
+        $folder = "attachments/board/{$boardSlug}";
+        
+        // 파일 업로드
+        $fileInfo = $this->uploadFile($file, $folder, [
+            'allowed_types' => $config['allowed_types'],
+            'max_size' => $config['max_file_size']
+        ]);
+        
+        // 첨부파일 메타데이터 추가
+        $fileInfo['table_prefix'] = 'board';
+        $fileInfo['entity_id'] = $postId;
+        $fileInfo['board_slug'] = $boardSlug;
+        $fileInfo['original_name'] = $file->getClientOriginalName();
+        $fileInfo['file_extension'] = strtolower($file->getClientOriginalExtension());
+        $fileInfo['file_size'] = $file->getSize();
+        $fileInfo['mime_type'] = $file->getMimeType();
+        $fileInfo['category'] = $this->getCategoryFromMimeType($file->getMimeType());
+        
+        return $fileInfo;
     }
 
     /**
-     * 게시판 다중 첨부파일 업로드 (하위 호환성을 위한 래퍼 메서드)
+     * 게시판 다중 첨부파일 업로드 (보드별 폴더 분리)
      */
     public function uploadBoardAttachments(array $files, string $boardSlug, int $postId, array $options = []): array
     {
-        return $this->uploadMultipleAttachments($files, 'board', $postId, $options);
+        $config = array_merge(self::getDefaultConfig(), $options);
+        $uploadedFiles = [];
+        
+        foreach ($files as $index => $file) {
+            // 최대 파일 수 제한
+            if (count($uploadedFiles) >= $config['max_files']) {
+                break;
+            }
+            
+            if (!$file->isValid()) {
+                continue;
+            }
+            
+            try {
+                // 보드별 파일 업로드
+                $fileInfo = $this->uploadBoardAttachment($file, $boardSlug, $postId, $options);
+                $fileInfo['sort_order'] = $index;
+                
+                $uploadedFiles[] = $fileInfo;
+                
+            } catch (\Exception $e) {
+                Log::error('Board attachment upload failed', [
+                    'board_slug' => $boardSlug,
+                    'post_id' => $postId,
+                    'file' => $file->getClientOriginalName(),
+                    'error' => $e->getMessage()
+                ]);
+                continue;
+            }
+        }
+        
+        return $uploadedFiles;
     }
 
     /**
