@@ -69,6 +69,9 @@ class SiteManagerBoardController extends Controller
             'settings.max_file_size' => 'nullable|integer|min:100|max:51200',
             'settings.max_files_per_post' => 'nullable|integer|min:1|max:20',
             'settings.allowed_file_types' => 'nullable|string',
+            'custom_settings' => 'nullable|array',
+            'custom_settings.*.key' => 'nullable|string|max:50',
+            'custom_settings.*.value' => 'nullable|string|max:500',
         ]);
 
         // use_* 체크박스 값들을 settings에 추가
@@ -77,6 +80,33 @@ class SiteManagerBoardController extends Controller
         $settings['allow_file_upload'] = $request->has('use_files');
         $settings['allow_comments'] = $request->has('allow_comments');
         $settings['use_tags'] = $request->has('use_tags');
+        
+        // custom_settings 처리
+        if (!empty($validated['custom_settings'])) {
+            foreach ($validated['custom_settings'] as $customSetting) {
+                if (!empty($customSetting['key']) && isset($customSetting['value'])) {
+                    $key = trim($customSetting['key']);
+                    $value = trim($customSetting['value']);
+                    
+                    // JSON 형태인지 확인해서 파싱
+                    $decoded = json_decode($value, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $settings[$key] = $decoded;
+                    } else {
+                        // boolean 값 처리
+                        if (strtolower($value) === 'true') {
+                            $settings[$key] = true;
+                        } elseif (strtolower($value) === 'false') {
+                            $settings[$key] = false;
+                        } elseif (is_numeric($value)) {
+                            $settings[$key] = is_float($value) ? (float)$value : (int)$value;
+                        } else {
+                            $settings[$key] = $value;
+                        }
+                    }
+                }
+            }
+        }
         
         $validated['settings'] = $settings;
 
@@ -163,6 +193,9 @@ class SiteManagerBoardController extends Controller
             'settings.max_file_size' => 'nullable|integer|min:100|max:51200',
             'settings.max_files_per_post' => 'nullable|integer|min:1|max:20',
             'settings.allowed_file_types' => 'nullable|string',
+            'custom_settings' => 'nullable|array',
+            'custom_settings.*.key' => 'nullable|string|max:50',
+            'custom_settings.*.value' => 'nullable|string|max:500',
         ]);
 
         // use_* 체크박스 값들을 settings에 추가
@@ -171,6 +204,40 @@ class SiteManagerBoardController extends Controller
         $settings['allow_file_upload'] = $request->has('use_files');
         $settings['allow_comments'] = $request->has('allow_comments');
         $settings['use_tags'] = $request->has('use_tags');
+        
+        // 기존 커스텀 설정 제거 (새로 덮어쓰기)
+        $defaultKeys = [
+            'use_categories', 'allow_file_upload', 'allow_comments', 'use_tags',
+            'max_file_size', 'max_files_per_post', 'allowed_file_types'
+        ];
+        $settings = array_intersect_key($settings, array_flip($defaultKeys));
+        
+        // custom_settings 처리
+        if (!empty($validated['custom_settings'])) {
+            foreach ($validated['custom_settings'] as $customSetting) {
+                if (!empty($customSetting['key']) && isset($customSetting['value'])) {
+                    $key = trim($customSetting['key']);
+                    $value = trim($customSetting['value']);
+                    
+                    // JSON 형태인지 확인해서 파싱
+                    $decoded = json_decode($value, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $settings[$key] = $decoded;
+                    } else {
+                        // boolean 값 처리
+                        if (strtolower($value) === 'true') {
+                            $settings[$key] = true;
+                        } elseif (strtolower($value) === 'false') {
+                            $settings[$key] = false;
+                        } elseif (is_numeric($value)) {
+                            $settings[$key] = is_float($value) ? (float)$value : (int)$value;
+                        } else {
+                            $settings[$key] = $value;
+                        }
+                    }
+                }
+            }
+        }
         
         $validated['settings'] = $settings;
 

@@ -145,6 +145,48 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Custom Settings Card -->
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">Custom Settings</h6>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-custom-setting">
+                            <i class="bi bi-plus"></i> Add Setting
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="custom-settings-container">
+                            @if(isset($board) && $board->getCustomSettings())
+                                @foreach($board->getCustomSettings() as $key => $value)
+                                    <div class="custom-setting-item mb-3">
+                                        <div class="row g-2">
+                                            <div class="col-5">
+                                                <input type="text" class="form-control form-control-sm" 
+                                                       name="custom_settings[{{ $loop->index }}][key]" 
+                                                       value="{{ $key }}" 
+                                                       placeholder="Setting key">
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="text" class="form-control form-control-sm" 
+                                                       name="custom_settings[{{ $loop->index }}][value]" 
+                                                       value="{{ is_array($value) ? json_encode($value) : $value }}" 
+                                                       placeholder="Setting value">
+                                            </div>
+                                            <div class="col-1">
+                                                <button type="button" class="btn btn-outline-danger btn-sm remove-setting">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                        <div class="form-text">
+                            <small>Add custom settings that can be accessed in templates using <code>$board->getSetting('key')</code></small>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -398,6 +440,60 @@ document.addEventListener('DOMContentLoaded', function() {
         useFilesCheckbox.addEventListener('change', toggleFileSettings);
         toggleFileSettings(); // Set initial state
     }
+    
+    // Custom Settings functionality
+    const addCustomSettingBtn = document.getElementById('add-custom-setting');
+    const customSettingsContainer = document.getElementById('custom-settings-container');
+    let customSettingIndex = customSettingsContainer.children.length;
+    
+    if (addCustomSettingBtn) {
+        addCustomSettingBtn.addEventListener('click', function() {
+            addCustomSetting();
+        });
+    }
+    
+    function addCustomSetting(key = '', value = '') {
+        const settingHtml = `
+            <div class="custom-setting-item mb-3">
+                <div class="row g-2">
+                    <div class="col-5">
+                        <input type="text" class="form-control form-control-sm" 
+                               name="custom_settings[${customSettingIndex}][key]" 
+                               value="${key}" 
+                               placeholder="Setting key (e.g., show_name)">
+                    </div>
+                    <div class="col-6">
+                        <input type="text" class="form-control form-control-sm" 
+                               name="custom_settings[${customSettingIndex}][value]" 
+                               value="${value}" 
+                               placeholder="Setting value (e.g., true, hello world)">
+                    </div>
+                    <div class="col-1">
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-setting">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        customSettingsContainer.insertAdjacentHTML('beforeend', settingHtml);
+        customSettingIndex++;
+        
+        // Add event listener to the new remove button
+        const newSettingItem = customSettingsContainer.lastElementChild;
+        const removeBtn = newSettingItem.querySelector('.remove-setting');
+        removeBtn.addEventListener('click', function() {
+            newSettingItem.remove();
+        });
+    }
+    
+    // Add event listeners to existing remove buttons
+    document.querySelectorAll('.remove-setting').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            btn.closest('.custom-setting-item').remove();
+        });
+    });
 });
 </script>
 @endpush

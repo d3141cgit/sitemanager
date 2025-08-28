@@ -125,6 +125,22 @@ class Board extends Model
     }
 
     /**
+     * 커스텀 설정값들 가져오기 (기본 설정 제외)
+     */
+    public function getCustomSettings(): array
+    {
+        $settings = $this->settings ?? [];
+        
+        // 기본 설정 키들 제외
+        $defaultKeys = [
+            'use_categories', 'allow_file_upload', 'allow_comments', 'use_tags',
+            'max_file_size', 'max_files_per_post', 'allowed_file_types'
+        ];
+        
+        return array_diff_key($settings, array_flip($defaultKeys));
+    }
+
+    /**
      * 카테고리 사용 여부
      */
     public function usesCategories(): bool
