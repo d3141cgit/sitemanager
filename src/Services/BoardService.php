@@ -384,9 +384,9 @@ class BoardService
 
         $post = $postModelClass::create($postData);
 
-        // SEO 슬러그 생성
-        $post->slug = $post->generateSlug();
-        $post->excerpt = $post->generateExcerpt();
+        // 슬러그와 excerpt 처리 (폼에서 전달된 값이 있으면 사용, 없으면 자동 생성)
+        $post->slug = !empty($data['slug']) ? $data['slug'] : $post->generateSlug();
+        $post->excerpt = !empty($data['excerpt']) ? $data['excerpt'] : $post->generateExcerpt();
         $post->save();
 
         return $post;
@@ -405,12 +405,21 @@ class BoardService
             'options' => $this->buildOptionsString($data),
         ]);
 
-        // 슬러그 재생성 (제목이 변경된 경우)
-        if ($post->wasChanged('title')) {
+        // 슬러그와 excerpt 처리
+        // 폼에서 전달된 값이 있으면 사용, 없으면 자동 생성 (제목이 변경된 경우)
+        if (!empty($data['slug'])) {
+            $post->slug = $data['slug'];
+        } elseif ($post->wasChanged('title')) {
             $post->slug = $post->generateSlug();
-            $post->excerpt = $post->generateExcerpt();
-            $post->save();
         }
+
+        if (!empty($data['excerpt'])) {
+            $post->excerpt = $data['excerpt'];
+        } elseif ($post->wasChanged('title') || $post->wasChanged('content')) {
+            $post->excerpt = $post->generateExcerpt();
+        }
+
+        $post->save();
 
         return $post;
     }

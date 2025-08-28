@@ -177,6 +177,8 @@ class BoardController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:200',
             'content' => 'required|string',
+            'slug' => 'nullable|string|max:200',
+            'excerpt' => 'nullable|string|max:500',
             'category' => 'nullable|string|max:50',
             'tags' => 'nullable|string',
             'options' => 'nullable|array',
@@ -248,6 +250,8 @@ class BoardController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:200',
             'content' => 'required|string',
+            'slug' => 'nullable|string|max:200',
+            'excerpt' => 'nullable|string|max:500',
             'category' => 'nullable|string|max:50',
             'tags' => 'nullable|string',
             'options' => 'nullable|array',
