@@ -29,6 +29,8 @@ abstract class BoardPost extends Model
         'comment_count',
         'file_count',
         'published_at',
+        'created_at',
+        'updated_at'
     ];
 
     protected $casts = [
