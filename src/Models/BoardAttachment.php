@@ -59,6 +59,15 @@ class BoardAttachment extends Model
     }
 
     /**
+     * 파일 직접 접근 URL (S3 또는 로컬 스토리지)
+     */
+    public function getFileUrlAttribute(): string
+    {
+        $fileUploadService = app(\SiteManager\Services\FileUploadService::class);
+        return $fileUploadService->getFileUrl($this->file_path);
+    }
+
+    /**
      * 이미지 미리보기 URL (이미지 파일인 경우)
      */
     public function getPreviewUrlAttribute(): ?string
@@ -67,7 +76,9 @@ class BoardAttachment extends Model
             return null;
         }
         
-        return asset('storage/' . $this->file_path);
+        // FileUploadService를 사용하여 적절한 URL 반환 (S3 또는 로컬)
+        $fileUploadService = app(\SiteManager\Services\FileUploadService::class);
+        return $fileUploadService->getFileUrl($this->file_path);
     }
 
     /**
@@ -183,17 +194,9 @@ class BoardAttachment extends Model
     public function deleteFile(): bool
     {
         try {
-            // S3 또는 로컬 스토리지에서 파일 삭제
-            if (Storage::disk('public')->exists($this->file_path)) {
-                Storage::disk('public')->delete($this->file_path);
-            }
-            
-            // S3에서도 삭제 시도 (S3가 설정되어 있을 경우)
-            if (config('filesystems.disks.s3.key')) {
-                Storage::disk('s3')->delete($this->file_path);
-            }
-            
-            return true;
+            // FileUploadService를 사용하여 파일 삭제 (S3 또는 로컬 자동 처리)
+            $fileUploadService = app(\SiteManager\Services\FileUploadService::class);
+            return $fileUploadService->deleteFile($this->file_path);
         } catch (\Exception $e) {
             Log::error('File deletion failed', [
                 'attachment_id' => $this->id,
@@ -274,13 +277,11 @@ class BoardAttachment extends Model
     protected static function booted()
     {
         static::deleting(function ($attachment) {
-            // FileUploadService를 사용하여 파일 삭제
-            $fileUploadService = app(\SiteManager\Services\FileUploadService::class);
-            
             try {
-                $fileUploadService->deleteFile($attachment->file_path);
+                // deleteFile 메서드 사용 (FileUploadService 사용)
+                $attachment->deleteFile();
             } catch (\Exception $e) {
-                Log::error('Failed to delete attachment file', [
+                Log::error('Failed to delete attachment file during model deletion', [
                     'attachment_id' => $attachment->id,
                     'file_path' => $attachment->file_path,
                     'error' => $e->getMessage()

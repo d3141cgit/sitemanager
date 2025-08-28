@@ -218,4 +218,32 @@ abstract class BoardPost extends Model
 
         return $slug;
     }
+
+    /**
+     * 첫 번째 이미지 첨부파일 반환
+     */
+    public function getFirstImageAttribute()
+    {
+        return $this->attachments()
+                    ->where(function($query) {
+                        $query->where('category', 'image')
+                              ->orWhere('mime_type', 'like', 'image/%');
+                    })
+                    ->orderBy('sort_order')
+                    ->first();
+    }
+
+    /**
+     * 첫 번째 이미지 URL 반환 (썸네일용)
+     */
+    public function getThumbnailAttribute(): ?string
+    {
+        $firstImage = $this->first_image;
+        
+        if (!$firstImage) {
+            return null;
+        }
+        
+        return $firstImage->preview_url;
+    }
 }
