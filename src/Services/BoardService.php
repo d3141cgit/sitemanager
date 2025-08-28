@@ -244,8 +244,8 @@ class BoardService
         
         $query = $postModelClass::with('member')
             ->published()
-            ->orderByRaw("CASE WHEN options LIKE '%is_notice%' THEN 1 ELSE 0 END DESC")
-            ->orderBy('created_at', 'desc');
+            // ->orderByRaw("CASE WHEN options LIKE '%is_notice%' THEN 1 ELSE 0 END DESC")
+            ->orderBy('published_at', 'desc');
 
         // 카테고리 필터링
         if ($request->filled('category')) {
