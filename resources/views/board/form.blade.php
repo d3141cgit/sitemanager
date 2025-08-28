@@ -65,6 +65,55 @@
                             @enderror
                         </div>
 
+                        <!-- Slug -->
+                        <div class="mb-3">
+                            <label for="slug" class="form-label">
+                                URL Slug 
+                                <small class="text-muted">(SEO friendly URL)</small>
+                            </label>
+                            <div class="input-group">
+                                <input type="text" class="form-control @error('slug') is-invalid @enderror" 
+                                       id="slug" name="slug" value="{{ old('slug', isset($post) ? $post->slug : '') }}" 
+                                       maxlength="200" placeholder="url-friendly-slug">
+                                <button type="button" class="btn btn-outline-secondary" id="generate-slug-btn">
+                                    <i class="bi bi-arrow-clockwise"></i> Generate
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" id="check-slug-btn">
+                                    <i class="bi bi-check-circle"></i> Check
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                <span id="slug-preview">{{ url('/board/' . $board->slug . '/') }}<span id="slug-value">{{ old('slug', isset($post) ? $post->slug : 'your-slug') }}</span></span>
+                            </div>
+                            <div id="slug-feedback" class="mt-1"></div>
+                            @error('slug')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Excerpt -->
+                        <div class="mb-3">
+                            <label for="excerpt" class="form-label">
+                                Excerpt 
+                                <small class="text-muted">(Summary for SEO and previews)</small>
+                            </label>
+                            <div class="position-relative">
+                                <textarea class="form-control @error('excerpt') is-invalid @enderror" 
+                                          id="excerpt" name="excerpt" rows="3" maxlength="1000"
+                                          placeholder="Brief summary of your post...">{{ old('excerpt', isset($post) ? $post->excerpt : '') }}</textarea>
+                                <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-1" 
+                                        id="generate-excerpt-btn" title="Generate from content">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                <span id="excerpt-count">{{ mb_strlen(old('excerpt', isset($post) ? $post->excerpt : '')) }}</span>/1000 characters
+                            </div>
+                            @error('excerpt')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                         <!-- Content -->
                         <div class="mb-3">
                             <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
@@ -163,21 +212,29 @@
                         
                         @if($isAdmin)
                             <div class="mb-3">
+                                <label class="form-label">Options</label>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_notice" 
-                                           name="is_notice" value="1" {{ old('is_notice', isset($post) ? $post->is_notice : false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_notice">
+                                    <input class="form-check-input" type="checkbox" id="option_is_notice" 
+                                           name="options[is_notice]" value="1" 
+                                           {{ old('options.is_notice', isset($post) && $post->hasOption('is_notice') ? '1' : '') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="option_is_notice">
                                         Mark as Notice
                                     </label>
                                 </div>
-                            </div>
-
-                            <div class="mb-3">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_featured" 
-                                           name="is_featured" value="1" {{ old('is_featured', isset($post) ? $post->is_featured : false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_featured">
-                                        Mark as Featured
+                                    <input class="form-check-input" type="checkbox" id="option_show_image" 
+                                           name="options[show_image]" value="1" 
+                                           {{ old('options.show_image', isset($post) && $post->hasOption('show_image') ? '1' : '') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="option_show_image">
+                                        Show Image in List
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="option_no_indent" 
+                                           name="options[no_indent]" value="1" 
+                                           {{ old('options.no_indent', isset($post) && $post->hasOption('no_indent') ? '1' : '') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="option_no_indent">
+                                        No Indent
                                     </label>
                                 </div>
                             </div>
@@ -271,21 +328,216 @@ document.getElementById('title').addEventListener('input', function() {
 });
 
 // Auto-save to localStorage (only for create mode)
-@if(!isset($post))
+@push('scripts')
+<script>
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
+    // Slug and Excerpt management
     const titleInput = document.getElementById('title');
-    const contentInput = document.getElementById('content');
+    const slugInput = document.getElementById('slug');
+    const slugValue = document.getElementById('slug-value');
+    const slugFeedback = document.getElementById('slug-feedback');
+    const generateSlugBtn = document.getElementById('generate-slug-btn');
+    const checkSlugBtn = document.getElementById('check-slug-btn');
     
-    // Load saved data
-    if (localStorage.getItem('post_title')) {
+    const excerptInput = document.getElementById('excerpt');
+    const excerptCount = document.getElementById('excerpt-count');
+    const generateExcerptBtn = document.getElementById('generate-excerpt-btn');
+    
+    const boardSlug = '{{ $board->slug }}';
+    const postId = {{ isset($post) ? $post->id : 'null' }};
+    
+    // Update slug preview
+    function updateSlugPreview() {
+        const slugVal = slugInput.value || 'your-slug';
+        slugValue.textContent = slugVal;
+    }
+    
+    // Update excerpt character count
+    function updateExcerptCount() {
+        const length = excerptInput.value.length;
+        excerptCount.textContent = length;
+        excerptCount.parentElement.className = length > 1000 ? 'form-text text-danger' : 'form-text';
+    }
+    
+    // Generate slug from title
+    function generateSlugFromTitle() {
+        const title = titleInput.value.trim();
+        if (!title) {
+            alert('Please enter a title first');
+            return;
+        }
+        
+        generateSlugBtn.disabled = true;
+        generateSlugBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+        
+        fetch(`/board/${boardSlug}/generate-slug`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ title: title })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.slug) {
+                slugInput.value = data.slug;
+                updateSlugPreview();
+                checkSlugAvailability(); // Auto-check after generation
+            }
+        })
+        .catch(error => {
+            console.error('Error generating slug:', error);
+            alert('Error generating slug. Please try again.');
+        })
+        .finally(() => {
+            generateSlugBtn.disabled = false;
+            generateSlugBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Generate';
+        });
+    }
+    
+    // Check slug availability
+    function checkSlugAvailability() {
+        const slug = slugInput.value.trim();
+        if (!slug) {
+            slugFeedback.innerHTML = '';
+            return;
+        }
+        
+        checkSlugBtn.disabled = true;
+        checkSlugBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Checking...';
+        slugFeedback.innerHTML = '<small class="text-muted">Checking availability...</small>';
+        
+        fetch(`/board/${boardSlug}/check-slug`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ 
+                slug: slug,
+                post_id: postId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.available) {
+                slugFeedback.innerHTML = '<small class="text-success"><i class="bi bi-check-circle"></i> ' + data.message + '</small>';
+                slugInput.classList.remove('is-invalid');
+                slugInput.classList.add('is-valid');
+            } else {
+                slugFeedback.innerHTML = `
+                    <small class="text-danger"><i class="bi bi-x-circle"></i> ${data.message}</small>
+                    ${data.suggested_slug ? `<br><small class="text-muted">Suggestion: <a href="#" onclick="useSlug('${data.suggested_slug}')">${data.suggested_slug}</a></small>` : ''}
+                `;
+                slugInput.classList.remove('is-valid');
+                slugInput.classList.add('is-invalid');
+            }
+        })
+        .catch(error => {
+            console.error('Error checking slug:', error);
+            slugFeedback.innerHTML = '<small class="text-danger">Error checking availability</small>';
+        })
+        .finally(() => {
+            checkSlugBtn.disabled = false;
+            checkSlugBtn.innerHTML = '<i class="bi bi-check-circle"></i> Check';
+        });
+    }
+    
+    // Use suggested slug
+    window.useSlug = function(slug) {
+        slugInput.value = slug;
+        updateSlugPreview();
+        checkSlugAvailability();
+    };
+    
+    // Generate excerpt from content
+    function generateExcerptFromContent() {
+        // Get content from editor (assuming it's a textarea or has a value property)
+        let content = '';
+        const contentInput = document.querySelector('[name="content"]');
+        
+        if (contentInput) {
+            content = contentInput.value;
+        } else {
+            // Try to get from rich editor if available
+            const editorFrame = document.querySelector('.editor-frame iframe');
+            if (editorFrame && editorFrame.contentDocument) {
+                content = editorFrame.contentDocument.body.textContent || editorFrame.contentDocument.body.innerText || '';
+            }
+        }
+        
+        if (!content.trim()) {
+            alert('Please write some content first');
+            return;
+        }
+        
+        generateExcerptBtn.disabled = true;
+        generateExcerptBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+        
+        fetch('/board/generate-excerpt', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ 
+                content: content,
+                length: 200
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.excerpt) {
+                excerptInput.value = data.excerpt;
+                updateExcerptCount();
+            }
+        })
+        .catch(error => {
+            console.error('Error generating excerpt:', error);
+            alert('Error generating excerpt. Please try again.');
+        })
+        .finally(() => {
+            generateExcerptBtn.disabled = false;
+            generateExcerptBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+        });
+    }
+    
+    // Event listeners
+    slugInput.addEventListener('input', updateSlugPreview);
+    excerptInput.addEventListener('input', updateExcerptCount);
+    generateSlugBtn.addEventListener('click', generateSlugFromTitle);
+    checkSlugBtn.addEventListener('click', checkSlugAvailability);
+    generateExcerptBtn.addEventListener('click', generateExcerptFromContent);
+    
+    // Auto-generate slug when title changes (optional)
+    let titleTimeout;
+    titleInput.addEventListener('input', function() {
+        clearTimeout(titleTimeout);
+        titleTimeout = setTimeout(() => {
+            if (titleInput.value.trim() && !slugInput.value.trim()) {
+                generateSlugFromTitle();
+            }
+        }, 1000); // Wait 1 second after user stops typing
+    });
+    
+    // Initialize
+    updateSlugPreview();
+    updateExcerptCount();
+
+@if(!isset($post))
+    const form = document.querySelector('form');
+    const contentInput = document.querySelector('[name="content"]');
+    
+    // Auto-save functionality
+    if (titleInput && localStorage.getItem('post_title')) {
         titleInput.value = localStorage.getItem('post_title');
     }
-    if (localStorage.getItem('post_content')) {
+    
+    if (contentInput && localStorage.getItem('post_content')) {
         contentInput.value = localStorage.getItem('post_content');
     }
     
-    // Save data on input
     titleInput.addEventListener('input', function() {
         localStorage.setItem('post_title', this.value);
     });
@@ -314,7 +566,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     form.addEventListener('submit', () => hasUnsavedChanges = false);
-});
 @endif
+});
+</script>
+@endpush
 </script>
 @endpush

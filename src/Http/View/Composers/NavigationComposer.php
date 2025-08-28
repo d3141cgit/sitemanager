@@ -34,8 +34,9 @@ class NavigationComposer
         $breadcrumb = $this->buildBreadcrumb($currentMenu, $accessibleMenus);
         $menuTabs = $this->buildMenuTabs($currentMenu, $accessibleMenus);
         
-        // SEO 정보 구성
-        $seoData = $this->buildSeoData($currentMenu, $breadcrumb);
+        // SEO 정보 구성 (기존 seoData가 있으면 우선 사용)
+        $existingSeoData = $view->getData()['seoData'] ?? null;
+        $seoData = $existingSeoData ?: $this->buildSeoData($currentMenu, $breadcrumb);
         
         $view->with([
             'navigationMenus' => $navigationTree,

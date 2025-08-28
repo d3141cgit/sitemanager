@@ -111,7 +111,10 @@ class BoardController extends Controller
         $posts = $this->boardService->getFilteredPosts($board, $request);
         $notices = $this->boardService->getNotices($board);
 
-        return view($this->selectView('index'), compact('board', 'posts', 'notices'));
+        // SEO 데이터 구성
+        $seoData = $this->buildBoardSeoData($board, $request);
+
+        return view($this->selectView('index'), compact('board', 'posts', 'notices', 'seoData'));
     }
 
     /**
@@ -135,8 +138,11 @@ class BoardController extends Controller
         // 조회수 증가
         $this->boardService->incrementViewCount($post, $request);
 
+        // SEO 데이터 구성
+        $seoData = $this->buildPostSeoData($board, $post, $attachments);
+
         return view($this->selectView('show'), array_merge(
-            compact('board', 'post', 'comments', 'attachments'),
+            compact('board', 'post', 'comments', 'attachments', 'seoData'),
             $prevNext
         ));
     }
@@ -173,8 +179,7 @@ class BoardController extends Controller
             'content' => 'required|string',
             'category' => 'nullable|string|max:50',
             'tags' => 'nullable|string',
-            'is_notice' => 'nullable|boolean',
-            'is_featured' => 'nullable|boolean',
+            'options' => 'nullable|array',
             'files.*' => 'nullable|file|max:' . ($board->getSetting('max_file_size', 2048)),
             'file_names.*' => 'nullable|string|max:255',
             'file_descriptions.*' => 'nullable|string|max:500',
@@ -245,8 +250,7 @@ class BoardController extends Controller
             'content' => 'required|string',
             'category' => 'nullable|string|max:50',
             'tags' => 'nullable|string',
-            'is_notice' => 'nullable|boolean',
-            'is_featured' => 'nullable|boolean',
+            'options' => 'nullable|array',
             'files.*' => 'nullable|file|max:' . ($board->getSetting('max_file_size', 2048)),
             'file_names.*' => 'nullable|string|max:255',
             'file_descriptions.*' => 'nullable|string|max:500',
@@ -625,5 +629,282 @@ class BoardController extends Controller
                 'message' => '파일 순서 업데이트 중 오류가 발생했습니다.'
             ], 500);
         }
+    }
+
+    /**
+     * Slug 중복 확인
+     */
+    public function checkSlug(Request $request, string $boardSlug)
+    {
+        $board = Board::where('slug', $boardSlug)->firstOrFail();
+        
+        $request->validate([
+            'slug' => 'required|string|max:200',
+            'post_id' => 'nullable|integer'
+        ]);
+
+        $slug = $request->input('slug');
+        $postId = $request->input('post_id');
+
+        $postModelClass = BoardPost::forBoard($board->slug);
+        
+        $query = $postModelClass::where('slug', $slug);
+        
+        // 수정 시에는 현재 게시글 제외
+        if ($postId) {
+            $query->where('id', '!=', $postId);
+        }
+        
+        $exists = $query->exists();
+
+        return response()->json([
+            'available' => !$exists,
+            'message' => $exists ? 'This slug is already taken.' : 'This slug is available.',
+            'suggested_slug' => $exists ? $this->generateAlternativeSlug($board, $slug, $postId) : null
+        ]);
+    }
+
+    /**
+     * 대안 slug 생성
+     */
+    private function generateAlternativeSlug(Board $board, string $baseSlug, ?int $excludePostId = null): string
+    {
+        $postModelClass = BoardPost::forBoard($board->slug);
+        $counter = 1;
+        
+        do {
+            $alternativeSlug = $baseSlug . '-' . $counter;
+            $query = $postModelClass::where('slug', $alternativeSlug);
+            
+            if ($excludePostId) {
+                $query->where('id', '!=', $excludePostId);
+            }
+            
+            $exists = $query->exists();
+            $counter++;
+        } while ($exists);
+        
+        return $alternativeSlug;
+    }
+
+    /**
+     * 제목에서 slug 생성
+     */
+    public function generateSlugFromTitle(Request $request, string $boardSlug)
+    {
+        $board = Board::where('slug', $boardSlug)->firstOrFail();
+        
+        $request->validate([
+            'title' => 'required|string|max:500'
+        ]);
+
+        // 임시 BoardPost 인스턴스 생성하여 slug 생성
+        $postModelClass = BoardPost::forBoard($board->slug);
+        $tempPost = new $postModelClass();
+        $tempPost->title = $request->input('title');
+        
+        $generatedSlug = $tempPost->generateSlug();
+
+        return response()->json([
+            'slug' => $generatedSlug
+        ]);
+    }
+
+    /**
+     * 내용에서 excerpt 생성
+     */
+    public function generateExcerptFromContent(Request $request)
+    {
+        $request->validate([
+            'content' => 'required|string',
+            'length' => 'nullable|integer|min:50|max:1000'
+        ]);
+
+        $content = $request->input('content');
+        $length = $request->input('length', 200);
+        
+        // HTML 태그 제거하고 요약 생성
+        $plainText = strip_tags($content);
+        $excerpt = Str::limit($plainText, $length);
+
+        return response()->json([
+            'excerpt' => $excerpt
+        ]);
+    }
+
+    /**
+     * 게시판의 SEO 데이터 구성
+     */
+    private function buildBoardSeoData($board, $request)
+    {
+        $siteName = config_get('SITE_NAME');
+        
+        // 검색이나 카테고리 필터가 적용된 경우
+        $searchTerm = $request->get('search');
+        $category = $request->get('category');
+        
+        // 제목 구성
+        $title = $board->name;
+        if ($searchTerm) {
+            $title = "'{$searchTerm}' 검색결과 | " . $board->name;
+        } elseif ($category) {
+            $title = $category . ' | ' . $board->name;
+        }
+        $title .= ' | ' . $siteName;
+        
+        // 설명 구성
+        $description = $board->description;
+        if (!$description) {
+            if ($searchTerm) {
+                $description = "'{$searchTerm}'에 대한 검색 결과를 {$board->name}에서 찾아보세요.";
+            } elseif ($category) {
+                $description = "{$board->name}의 {$category} 카테고리 게시물들을 확인하세요.";
+            } else {
+                $description = "{$board->name} 게시판의 최신 게시물들을 확인하세요.";
+            }
+        }
+        
+        // 키워드
+        $keywords = [$board->name];
+        if ($searchTerm) {
+            $keywords[] = $searchTerm;
+        }
+        if ($category) {
+            $keywords[] = $category;
+        }
+        $keywords[] = $siteName;
+        
+        // URL
+        $boardUrl = route('board.index', $board->slug);
+        $currentUrl = $request->fullUrl();
+        
+        // 게시판 대표 이미지 (메뉴에서 가져오기)
+        $seoImage = null;
+        if ($board->menu_id) {
+            $menu = \SiteManager\Models\Menu::find($board->menu_id);
+            if ($menu && !empty($menu->images)) {
+                $images = is_array($menu->images) 
+                    ? $menu->images 
+                    : json_decode($menu->images, true);
+                
+                if (is_array($images)) {
+                    // SEO 이미지 우선 사용
+                    if (isset($images['seo']['url'])) {
+                        $seoImage = \SiteManager\Services\FileUploadService::url($images['seo']['url']);
+                    }
+                    // 썸네일 이미지 사용
+                    elseif (isset($images['thumbnail']['url'])) {
+                        $seoImage = \SiteManager\Services\FileUploadService::url($images['thumbnail']['url']);
+                    }
+                    // 다른 이미지 사용
+                    else {
+                        $firstCategory = array_values($images)[0];
+                        if (isset($firstCategory['url'])) {
+                            $seoImage = \SiteManager\Services\FileUploadService::url($firstCategory['url']);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 기본 이미지
+        if (!$seoImage) {
+            $seoImage = asset('images/logo.svg');
+        }
+        
+        return [
+            'title' => $title,
+            'description' => $description,
+            'keywords' => implode(', ', array_unique($keywords)),
+            'og_title' => $board->name,
+            'og_description' => $description,
+            'og_image' => $seoImage,
+            'og_url' => $currentUrl,
+            'canonical_url' => $boardUrl,
+            'og_type' => 'website',
+        ];
+    }
+
+    /**
+     * 게시글의 SEO 데이터 구성
+     */
+    private function buildPostSeoData($board, $post, $attachments)
+    {
+        $siteName = config_get('SITE_NAME');
+        
+        // 기본 제목 구성: 게시글 제목 | 게시판명 | 사이트명
+        $title = $post->title . ' | ' . $board->name . ' | ' . $siteName;
+        
+        // 설명: excerpt가 있으면 사용, 없으면 본문에서 추출
+        $description = $post->excerpt;
+        if (!$description) {
+            $plainText = strip_tags($post->content);
+            $description = Str::limit($plainText, 160);
+        }
+        
+        // 키워드: 게시글 제목, 게시판명, 카테고리 등
+        $keywords = [$post->title, $board->name];
+        if ($post->category) {
+            $keywords[] = $post->category;
+        }
+        $keywords[] = $siteName;
+        
+        // URL 구성
+        $postUrl = route('board.show', [$board->slug, $post->slug ?: $post->id]);
+        
+        // 첨부 이미지에서 SEO 이미지 찾기
+        $seoImage = $this->findSeoImageFromAttachments($attachments);
+        
+        // 기본 이미지가 없으면 사이트 기본 이미지 사용
+        if (!$seoImage) {
+            $seoImage = asset('images/logo.svg');
+        }
+        
+        return [
+            'title' => $title,
+            'description' => $description,
+            'keywords' => implode(', ', array_unique($keywords)),
+            'og_title' => $post->title,
+            'og_description' => $description,
+            'og_image' => $seoImage,
+            'og_url' => $postUrl,
+            'canonical_url' => $postUrl,
+            'og_type' => 'article',
+            'article_author' => $post->author,
+            'article_published_time' => $post->created_at->toISOString(),
+            'article_modified_time' => $post->updated_at->toISOString(),
+            'article_section' => $board->name,
+            'article_tag' => $post->category,
+        ];
+    }
+
+    /**
+     * 첨부파일에서 SEO용 이미지 찾기
+     */
+    private function findSeoImageFromAttachments($attachments)
+    {
+        if (!$attachments || $attachments->isEmpty()) {
+            return null;
+        }
+        
+        // 이미지 첨부파일만 필터링
+        $imageAttachments = $attachments->filter(function($attachment) {
+            $mimeType = $attachment->mime_type ?? '';
+            return str_starts_with($mimeType, 'image/');
+        });
+        
+        if ($imageAttachments->isEmpty()) {
+            return null;
+        }
+        
+        // 정렬 순서대로 첫 번째 이미지 사용 (보통 대표 이미지)
+        $firstImage = $imageAttachments->sortBy('sort_order')->first();
+        
+        if ($firstImage && $firstImage->file_path) {
+            // FileUploadService를 사용해서 전체 URL 생성
+            return \SiteManager\Services\FileUploadService::url($firstImage->file_path);
+        }
+        
+        return null;
     }
 }

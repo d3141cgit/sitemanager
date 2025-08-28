@@ -87,7 +87,7 @@
                     <div class="card-body p-0">
                         <div class="list-group list-group-flush">
                             @foreach($notices as $notice)
-                                <a href="{{ route('board.show', [$board->slug, $notice->id]) }}" 
+                                <a href="{{ route('board.show', [$board->slug, $notice->slug ?: $notice->id]) }}" 
                                    class="list-group-item list-group-item-action">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="flex-grow-1">
@@ -131,11 +131,8 @@
                                         <tr>
                                             <td class="text-muted">{{ $post->id }}</td>
                                             <td>
-                                                <a href="{{ route('board.show', [$board->slug, $post->id]) }}" 
+                                                <a href="{{ route('board.show', [$board->slug, $post->slug ?: $post->id]) }}" 
                                                    class="text-decoration-none">
-                                                    @if($post->is_featured)
-                                                        <i class="bi bi-star-fill text-warning me-1"></i>
-                                                    @endif
                                                     {{ $post->title }}
                                                     @if($post->comment_count > 0)
                                                         <span class="badge bg-primary rounded-pill ms-1">{{ $post->comment_count }}</span>
@@ -168,12 +165,9 @@
                             @foreach($posts as $post)
                                 <div class="border-bottom p-3">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <a href="{{ route('board.show', [$board->slug, $post->id]) }}" 
+                                        <a href="{{ route('board.show', [$board->slug, $post->slug ?: $post->id]) }}" 
                                            class="text-decoration-none flex-grow-1">
                                             <h6 class="mb-1">
-                                                @if($post->is_featured)
-                                                    <i class="bi bi-star-fill text-warning me-1"></i>
-                                                @endif
                                                 {{ $post->title }}
                                             </h6>
                                         </a>

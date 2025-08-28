@@ -24,20 +24,15 @@ abstract class BoardPost extends Model
         'category',
         'tags',
         'status',
-        'is_notice',
-        'is_featured',
+        'options',
         'view_count',
         'comment_count',
         'file_count',
-        'meta',
         'published_at',
     ];
 
     protected $casts = [
         'tags' => 'array',
-        'meta' => 'array',
-        'is_notice' => 'boolean',
-        'is_featured' => 'boolean',
         'view_count' => 'integer',
         'comment_count' => 'integer',
         'file_count' => 'integer',
@@ -142,15 +137,7 @@ abstract class BoardPost extends Model
      */
     public function scopeNotices($query)
     {
-        return $query->where('is_notice', true);
-    }
-
-    /**
-     * 추천글만
-     */
-    public function scopeFeatured($query)
-    {
-        return $query->where('is_featured', true);
+        return $query->where('options', 'like', '%is_notice%');
     }
 
     /**
@@ -203,11 +190,24 @@ abstract class BoardPost extends Model
     }
 
     /**
-     * SEO용 슬러그 생성
+     * SEO용 슬러그 생성 (한글 지원)
      */
     public function generateSlug(): string
     {
-        $slug = Str::slug($this->title);
+        $title = $this->title;
+        
+        // 1. 한글을 로마자로 변환 (기본적인 음성학적 변환)
+        $transliterated = $this->transliterateKorean($title);
+        
+        // 2. Laravel의 Str::slug() 적용
+        $slug = Str::slug($transliterated);
+        
+        // 3. 빈 문자열이면 ID 기반으로 생성
+        if (empty($slug)) {
+            $slug = 'post-' . ($this->id ?: time());
+        }
+        
+        // 4. 중복 체크 및 번호 추가
         $originalSlug = $slug;
         $counter = 1;
 
@@ -217,6 +217,68 @@ abstract class BoardPost extends Model
         }
 
         return $slug;
+    }
+
+    /**
+     * 한글을 로마자로 변환
+     */
+    private function transliterateKorean(string $text): string
+    {
+        // 한글 자음/모음 매핑 테이블
+        $consonants = [
+            'ㄱ' => 'g', 'ㄲ' => 'kk', 'ㄴ' => 'n', 'ㄷ' => 'd', 'ㄸ' => 'tt',
+            'ㄹ' => 'r', 'ㅁ' => 'm', 'ㅂ' => 'b', 'ㅃ' => 'pp', 'ㅅ' => 's',
+            'ㅆ' => 'ss', 'ㅇ' => '', 'ㅈ' => 'j', 'ㅉ' => 'jj', 'ㅊ' => 'ch',
+            'ㅋ' => 'k', 'ㅌ' => 't', 'ㅍ' => 'p', 'ㅎ' => 'h'
+        ];
+        
+        $vowels = [
+            'ㅏ' => 'a', 'ㅐ' => 'ae', 'ㅑ' => 'ya', 'ㅒ' => 'yae', 'ㅓ' => 'eo',
+            'ㅔ' => 'e', 'ㅕ' => 'yeo', 'ㅖ' => 'ye', 'ㅗ' => 'o', 'ㅘ' => 'wa',
+            'ㅙ' => 'wae', 'ㅚ' => 'oe', 'ㅛ' => 'yo', 'ㅜ' => 'u', 'ㅝ' => 'wo',
+            'ㅞ' => 'we', 'ㅟ' => 'wi', 'ㅠ' => 'yu', 'ㅡ' => 'eu', 'ㅢ' => 'ui',
+            'ㅣ' => 'i'
+        ];
+        
+        $result = '';
+        $length = mb_strlen($text);
+        
+        for ($i = 0; $i < $length; $i++) {
+            $char = mb_substr($text, $i, 1);
+            $unicode = mb_ord($char);
+            
+            // 한글 완성형 범위 확인 (가-힣)
+            if ($unicode >= 0xAC00 && $unicode <= 0xD7A3) {
+                // 한글 분해
+                $base = $unicode - 0xAC00;
+                $cho = intval($base / 588); // 초성
+                $jung = intval(($base % 588) / 28); // 중성
+                $jong = $base % 28; // 종성
+                
+                // 초성 변환
+                $choList = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+                $jungList = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+                $jongList = ['','ㄱ','ㄲ','ㄱㅅ','ㄴ','ㄴㅈ','ㄴㅎ','ㄷ','ㄹ','ㄹㄱ','ㄹㅁ','ㄹㅂ','ㄹㅅ','ㄹㅌ','ㄹㅍ','ㄹㅎ','ㅁ','ㅂ','ㅂㅅ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+                
+                // 로마자 변환
+                $result .= $consonants[$choList[$cho]] ?? '';
+                $result .= $vowels[$jungList[$jung]] ?? '';
+                if ($jong > 0) {
+                    $jongChar = $jongList[$jong];
+                    if (strlen($jongChar) > 3) { // 복합 종성
+                        $result .= $consonants[mb_substr($jongChar, 0, 3)] ?? '';
+                        $result .= $consonants[mb_substr($jongChar, 3, 3)] ?? '';
+                    } else {
+                        $result .= $consonants[$jongChar] ?? '';
+                    }
+                }
+            } else {
+                // 한글이 아닌 문자는 그대로 유지
+                $result .= $char;
+            }
+        }
+        
+        return $result;
     }
 
     /**
@@ -245,5 +307,73 @@ abstract class BoardPost extends Model
         }
         
         return $firstImage->preview_url;
+    }
+
+    /**
+     * 옵션 배열 반환
+     */
+    public function getOptionsArrayAttribute(): array
+    {
+        if (empty($this->options)) {
+            return [];
+        }
+        
+        return explode('|', $this->options);
+    }
+
+    /**
+     * 특정 옵션이 설정되어 있는지 확인
+     */
+    public function hasOption(string $option): bool
+    {
+        return in_array($option, $this->options_array);
+    }
+
+    /**
+     * 공지사항 여부 (하위 호환성)
+     */
+    public function getIsNoticeAttribute(): bool
+    {
+        return $this->hasOption('is_notice');
+    }
+
+    /**
+     * 이미지 표시 여부
+     */
+    public function getShowImageAttribute(): bool
+    {
+        return $this->hasOption('show_image');
+    }
+
+    /**
+     * 들여쓰기 없음 여부
+     */
+    public function getNoIndentAttribute(): bool
+    {
+        return $this->hasOption('no_indent');
+    }
+
+    /**
+     * 옵션 추가
+     */
+    public function addOption(string $option): void
+    {
+        $options = $this->options_array;
+        
+        if (!in_array($option, $options)) {
+            $options[] = $option;
+            $this->options = implode('|', $options);
+        }
+    }
+
+    /**
+     * 옵션 제거
+     */
+    public function removeOption(string $option): void
+    {
+        $options = $this->options_array;
+        $filteredOptions = array_filter($options, fn($opt) => $opt !== $option);
+        
+        $this->options = empty($filteredOptions) ? null : implode('|', $filteredOptions);
     }
 }

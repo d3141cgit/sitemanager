@@ -5,11 +5,43 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="@yield('meta_description', config_get('SITE_DESCRIPTION'))">
-    <meta name="keywords" content="@yield('meta_keywords', config_get('SITE_KEYWORDS'))">
+    
+    {{-- SEO Meta Tags --}}
+    <title>{{ $seoData['title'] ?? '@yield("title", config_get("SITE_NAME"))' }}</title>
+    <meta name="description" content="{{ $seoData['description'] ?? '@yield("meta_description", config_get("SITE_DESCRIPTION"))' }}">
+    <meta name="keywords" content="{{ $seoData['keywords'] ?? '@yield("meta_keywords", config_get("SITE_KEYWORDS"))' }}">
     <meta name="author" content="{{ config_get('SITE_AUTHOR') }}">
-
-    <title>@yield('title', config_get('SITE_NAME'))</title>
+    
+    {{-- Canonical URL --}}
+    @if(isset($seoData['canonical_url']))
+    <link rel="canonical" href="{{ $seoData['canonical_url'] }}">
+    @endif
+    
+    {{-- Open Graph Meta Tags --}}
+    <meta property="og:title" content="{{ $seoData['og_title'] ?? $seoData['title'] ?? config_get('SITE_NAME') }}">
+    <meta property="og:description" content="{{ $seoData['og_description'] ?? $seoData['description'] ?? config_get('SITE_DESCRIPTION') }}">
+    <meta property="og:url" content="{{ $seoData['og_url'] ?? request()->url() }}">
+    <meta property="og:image" content="{{ $seoData['og_image'] ?? asset('images/logo.svg') }}">
+    <meta property="og:type" content="{{ $seoData['og_type'] ?? 'website' }}">
+    <meta property="og:site_name" content="{{ config_get('SITE_NAME') }}">
+    <meta property="og:locale" content="{{ app()->getLocale() }}">
+    
+    {{-- Twitter Card Meta Tags --}}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $seoData['og_title'] ?? $seoData['title'] ?? config_get('SITE_NAME') }}">
+    <meta name="twitter:description" content="{{ $seoData['og_description'] ?? $seoData['description'] ?? config_get('SITE_DESCRIPTION') }}">
+    <meta name="twitter:image" content="{{ $seoData['og_image'] ?? asset('images/logo.svg') }}">
+    
+    {{-- JSON-LD Structured Data --}}
+    @if(isset($seoData['breadcrumb_json_ld']))
+    <script type="application/ld+json">
+        {!! json_encode($seoData['breadcrumb_json_ld'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+    @endif
+    
+    {{-- 페이지별 추가 SEO 및 메타태그 --}}
+    @stack('seo')
+    @stack('meta')
 
     {!! setResources(['bootstrap', 'jquery']) !!}
     {!! resource('sitemanager::css/app.css') !!}

@@ -2,6 +2,53 @@
 
 @section('title', $post->title . ' - ' . $board->name)
 
+@push('seo')
+    {{-- Article-specific meta tags --}}
+    @if(isset($seoData['og_type']) && $seoData['og_type'] === 'article')
+        <meta property="og:type" content="article">
+        <meta property="article:author" content="{{ $seoData['article_author'] ?? '' }}">
+        <meta property="article:published_time" content="{{ $seoData['article_published_time'] ?? '' }}">
+        <meta property="article:modified_time" content="{{ $seoData['article_modified_time'] ?? '' }}">
+        <meta property="article:section" content="{{ $seoData['article_section'] ?? '' }}">
+        @if(!empty($seoData['article_tag']))
+        <meta property="article:tag" content="{{ $seoData['article_tag'] }}">
+        @endif
+    @endif
+
+    {{-- Rich snippets for article --}}
+    @php
+    $jsonLdData = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Article',
+        'headline' => $post->title,
+        'description' => $seoData['description'] ?? '',
+        'image' => $seoData['og_image'] ?? '',
+        'author' => [
+            '@type' => 'Person',
+            'name' => $post->author
+        ],
+        'publisher' => [
+            '@type' => 'Organization',
+            'name' => config_get('SITE_NAME'),
+            'logo' => [
+                '@type' => 'ImageObject',
+                'url' => asset('images/logo.svg')
+            ]
+        ],
+        'datePublished' => $post->created_at->toISOString(),
+        'dateModified' => $post->updated_at->toISOString(),
+        'mainEntityOfPage' => [
+            '@type' => 'WebPage',
+            '@id' => $seoData['canonical_url'] ?? ''
+        ]
+    ];
+    @endphp
+    
+    <script type="application/ld+json">
+    {!! json_encode($jsonLdData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+@endpush
+
 @section('content')
 <div class="container py-4">
     <!-- Navigation Breadcrumb -->
@@ -72,14 +119,14 @@
                             @endphp
 
                             @if($canEdit)
-                                <a href="{{ route('board.edit', [$board->slug, $post->id]) }}" 
+                                <a href="{{ route('board.edit', [$board->slug, $post->slug ?: $post->id]) }}" 
                                    class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-pencil"></i> Edit
                                 </a>
                             @endif
 
                             @if($canDelete)
-                                <form method="POST" action="{{ route('board.destroy', [$board->slug, $post->id]) }}" 
+                                <form method="POST" action="{{ route('board.destroy', [$board->slug, $post->slug ?: $post->id]) }}" 
                                       class="d-inline">
                                     @csrf
                                     @method('DELETE')
@@ -190,7 +237,7 @@
                         <div class="row">
                             @if($prevPost)
                                 <div class="col-md-6 mb-2 mb-md-0">
-                                    <a href="{{ route('board.show', [$board->slug, $prevPost->id]) }}" 
+                                    <a href="{{ route('board.show', [$board->slug, $prevPost->slug ?: $prevPost->id]) }}" 
                                        class="text-decoration-none">
                                         <small class="text-muted d-block">
                                             <i class="bi bi-chevron-left"></i> Previous Post
@@ -202,7 +249,7 @@
                             
                             @if($nextPost)
                                 <div class="col-md-6 text-md-end">
-                                    <a href="{{ route('board.show', [$board->slug, $nextPost->id]) }}" 
+                                    <a href="{{ route('board.show', [$board->slug, $nextPost->slug ?: $nextPost->id]) }}" 
                                        class="text-decoration-none">
                                         <small class="text-muted d-block">
                                             Next Post <i class="bi bi-chevron-right"></i>

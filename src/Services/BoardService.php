@@ -56,25 +56,23 @@ class BoardService
         // 게시글 테이블 생성
         if (!Schema::hasTable($postsTable)) {
             Schema::create($postsTable, function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('board_id');
-                $table->unsignedBigInteger('member_id')->nullable();
-                $table->string('author_name', 100)->nullable();
-                $table->string('title', 500);
-                $table->longText('content')->nullable();
-                $table->enum('content_type', ['html', 'markdown', 'text'])->default('html');
-                $table->string('excerpt', 1000)->nullable();
-                $table->string('slug', 200)->nullable();
-                $table->string('category', 100)->nullable();
-                $table->json('tags')->nullable();
-                $table->enum('status', ['draft', 'published', 'private'])->default('published');
-                $table->boolean('is_notice')->default(false);
-                $table->boolean('is_featured')->default(false);
-                $table->unsignedInteger('view_count')->default(0);
-                $table->unsignedInteger('comment_count')->default(0);
-                $table->unsignedInteger('file_count')->default(0);
-                $table->json('meta')->nullable();
-                $table->timestamp('published_at')->nullable();
+                $table->id()->comment('게시글 ID');
+                $table->unsignedBigInteger('board_id')->comment('게시판 ID');
+                $table->unsignedBigInteger('member_id')->nullable()->comment('작성자 회원 ID');
+                $table->string('author_name', 100)->nullable()->comment('작성자명 (비회원용)');
+                $table->string('title', 500)->comment('게시글 제목');
+                $table->longText('content')->nullable()->comment('게시글 내용');
+                $table->enum('content_type', ['html', 'markdown', 'text'])->default('html')->comment('내용 형식');
+                $table->string('excerpt', 1000)->nullable()->comment('요약 (SEO용)');
+                $table->string('slug', 200)->nullable()->comment('URL 슬러그 (SEO용)');
+                $table->string('category', 100)->nullable()->comment('카테고리');
+                $table->json('tags')->nullable()->comment('태그 목록');
+                $table->enum('status', ['draft', 'published', 'private'])->default('published')->comment('게시 상태');
+                $table->string('options', 500)->nullable()->comment('게시글 옵션 (is_notice|show_image|no_indent 등, | 구분자)');
+                $table->unsignedInteger('view_count')->default(0)->comment('조회수');
+                $table->unsignedInteger('comment_count')->default(0)->comment('댓글 수');
+                $table->unsignedInteger('file_count')->default(0)->comment('첨부파일 수');
+                $table->timestamp('published_at')->nullable()->comment('게시 일시');
                 $table->timestamps();
                 $table->softDeletes();
 
@@ -92,14 +90,14 @@ class BoardService
         // 댓글 테이블 생성
         if (!Schema::hasTable($commentsTable)) {
             Schema::create($commentsTable, function (Blueprint $table) use ($postsTable, $commentsTable) {
-                $table->id();
-                $table->unsignedBigInteger('post_id');
-                $table->unsignedBigInteger('parent_id')->nullable();
-                $table->unsignedBigInteger('member_id')->nullable();
-                $table->string('author_name', 100)->nullable();
-                $table->text('content');
-                $table->enum('status', ['approved', 'pending', 'spam'])->default('approved');
-                $table->unsignedInteger('file_count')->default(0);
+                $table->id()->comment('댓글 ID');
+                $table->unsignedBigInteger('post_id')->comment('게시글 ID');
+                $table->unsignedBigInteger('parent_id')->nullable()->comment('부모 댓글 ID (대댓글용)');
+                $table->unsignedBigInteger('member_id')->nullable()->comment('작성자 회원 ID');
+                $table->string('author_name', 100)->nullable()->comment('작성자명 (비회원용)');
+                $table->text('content')->comment('댓글 내용');
+                $table->enum('status', ['approved', 'pending', 'spam'])->default('approved')->comment('승인 상태');
+                $table->unsignedInteger('file_count')->default(0)->comment('첨부파일 수');
                 $table->timestamps();
                 $table->softDeletes();
 
@@ -246,12 +244,26 @@ class BoardService
         
         $query = $postModelClass::with('member')
             ->published()
-            ->orderBy('is_notice', 'desc')
+            ->orderByRaw("CASE WHEN options LIKE '%is_notice%' THEN 1 ELSE 0 END DESC")
             ->orderBy('created_at', 'desc');
 
         // 카테고리 필터링
         if ($request->filled('category')) {
             $query->where('category', $request->input('category'));
+        }
+
+        // 옵션 필터링
+        if ($request->filled('options')) {
+            $options = $request->input('options');
+            if (is_array($options)) {
+                foreach ($options as $option) {
+                    if (!empty($option)) {
+                        $query->where('options', 'like', "%{$option}%");
+                    }
+                }
+            } elseif (is_string($options)) {
+                $query->where('options', 'like', "%{$options}%");
+            }
         }
 
         // 검색어 필터링
@@ -275,7 +287,7 @@ class BoardService
         $postModelClass = BoardPost::forBoard($board->slug);
         
         return $postModelClass::with('member')
-            ->notices()
+            ->where('options', 'like', '%is_notice%')
             ->published()
             ->orderBy('created_at', 'desc')
             ->limit($limit)
@@ -366,8 +378,7 @@ class BoardService
             'category' => $data['category'] ?? null,
             'tags' => isset($data['tags']) && $data['tags'] ? explode(',', $data['tags']) : null,
             'status' => 'published',
-            'is_notice' => $data['is_notice'] ?? false,
-            'is_featured' => $data['is_featured'] ?? false,
+            'options' => $this->buildOptionsString($data),
             'published_at' => now(),
         ];
 
@@ -391,8 +402,7 @@ class BoardService
             'content' => $data['content'],
             'category' => $data['category'] ?? null,
             'tags' => isset($data['tags']) && $data['tags'] ? explode(',', $data['tags']) : null,
-            'is_notice' => $data['is_notice'] ?? false,
-            'is_featured' => $data['is_featured'] ?? false,
+            'options' => $this->buildOptionsString($data),
         ]);
 
         // 슬러그 재생성 (제목이 변경된 경우)
@@ -403,6 +413,23 @@ class BoardService
         }
 
         return $post;
+    }
+
+    /**
+     * 옵션 문자열 생성
+     */
+    private function buildOptionsString(array $data): ?string
+    {
+        if (empty($data['options']) || !is_array($data['options'])) {
+            return null;
+        }
+        
+        // 배열에서 값이 있는 키들만 필터링
+        $activeOptions = array_keys(array_filter($data['options'], function($value) {
+            return !empty($value) && $value !== '0' && $value !== false;
+        }));
+        
+        return empty($activeOptions) ? null : implode('|', $activeOptions);
     }
 
     /**
