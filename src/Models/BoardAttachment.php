@@ -23,13 +23,15 @@ class BoardAttachment extends Model
         'category',
         'description',
         'sort_order',
-        'download_count',
+        'download_count'
     ];
 
     protected $casts = [
         'file_size' => 'integer',
         'download_count' => 'integer',
         'sort_order' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**

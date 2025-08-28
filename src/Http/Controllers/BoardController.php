@@ -14,6 +14,7 @@ use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class BoardController extends Controller
@@ -204,6 +205,9 @@ class BoardController extends Controller
                 );
             }
 
+            // 에디터에서 업로드된 파일들을 첨부파일로 등록
+            $this->extractAndRegisterEditorFiles($post->content, $post);
+
             DB::commit();
 
             return redirect()
@@ -297,6 +301,9 @@ class BoardController extends Controller
                 }
             }
 
+            // 에디터에서 업로드된 파일들을 첨부파일로 등록
+            $this->extractAndRegisterEditorFiles($post->content, $post);
+
             DB::commit();
 
             return redirect()
@@ -349,8 +356,95 @@ class BoardController extends Controller
     }
 
     /**
-     * 파일 업로드 처리
+     * 에디터에서 업로드된 파일들을 첨부파일로 등록
      */
+    private function extractAndRegisterEditorFiles(string $content, $post)
+    {
+        // 에디터 이미지 경로 패턴 (S3 및 로컬 모두 포함)
+        $pattern = '/\/editor\/images\/[^"\s<>]+\.(jpg|jpeg|png|gif|webp|svg|bmp)/i';
+
+        if (preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $fullPath = $match[0]; // /editor/images/2025/08/filename.jpg
+                $extension = strtolower($match[1]);
+                $filename = basename($fullPath);
+                $relativePath = ltrim($fullPath, '/'); // editor/images/2025/08/filename.jpg
+                
+                // 이미 등록된 파일인지 확인
+                $existingAttachment = BoardAttachment::where('post_id', $post->id)
+                    ->where(function($query) use ($filename, $relativePath) {
+                        $query->where('filename', $filename)
+                              ->orWhere('file_path', $relativePath);
+                    })
+                    ->first();
+                
+                if (!$existingAttachment) {
+                    try {
+                        $attachment = new BoardAttachment();
+                        $attachment->board_slug = $post->board->slug;
+                        $attachment->post_id = $post->id;
+                        $attachment->file_path = $relativePath;
+                        $attachment->filename = $filename;
+                        $attachment->original_name = $filename;
+                        $attachment->file_extension = $extension;
+                        $attachment->file_size = $this->getEditorFileSize($relativePath);
+                        $attachment->mime_type = $this->getMimeTypeFromExtension($extension);
+                        $attachment->category = 'editor_image';
+                        $attachment->description = '에디터에서 업로드된 이미지';
+                        $attachment->sort_order = 998;
+                        $attachment->download_count = 0;
+                        $attachment->save();
+                        
+                    } catch (\Exception $e) {
+                        Log::error("에디터 이미지 등록 실패: {$filename} - " . $e->getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 에디터 파일 크기 확인
+     */
+    private function getEditorFileSize(string $relativePath): int
+    {
+        try {
+            // FileUploadService를 통해 파일 크기 확인
+            $disk = $this->fileUploadService->getDisk();
+            if ($disk && Storage::disk($disk)->exists($relativePath)) {
+                return Storage::disk($disk)->size($relativePath);
+            }
+        } catch (\Exception $e) {
+            Log::warning("에디터 파일 크기 확인 실패: {$relativePath} - " . $e->getMessage());
+        }
+        
+        return 0; // 크기를 확인할 수 없는 경우
+    }
+
+    /**
+     * 파일 확장자를 MIME 타입으로 변환
+     */
+    private function getMimeTypeFromExtension(?string $extension): ?string
+    {
+        if (empty($extension)) {
+            return null;
+        }
+
+        $extension = strtolower(trim($extension, '.'));
+
+        $mimeTypes = [
+            // 이미지
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'svg' => 'image/svg+xml',
+            'bmp' => 'image/bmp',
+        ];
+
+        return $mimeTypes[$extension] ?? 'application/octet-stream';
+    }
     private function handleFileUploads(array $files, Board $board, $post, array $fileNames = [], array $fileDescriptions = []): array
     {
         $uploadedAttachments = [];
