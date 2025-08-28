@@ -12,6 +12,7 @@
             <h1 class="mb-0">
                 <a href="{{ route('sitemanager.members.index') }}" class="text-decoration-none text-dark">
                     <i class="bi bi-people opacity-75"></i> Members List
+                    <span class="ms-2">({{ number_format($members->total()) }})</span>
                 </a>
             </h1>
             <a href="{{ route('sitemanager.members.create') }}" class="btn btn-primary text-white">
@@ -24,6 +25,7 @@
             <h4 class="mb-3">
                 <a href="{{ route('sitemanager.members.index') }}" class="text-decoration-none text-dark">
                     <i class="bi bi-people opacity-75"></i> Members List
+                    <span class="ms-2">({{ number_format($members->total()) }})</span>
                 </a>
             </h4>
             <div class="d-grid mb-3">
@@ -53,16 +55,24 @@
                                 </option>
                             @endforeach
                         </select>
+                        <select name="group_id" class="form-select" style="max-width: 150px;">
+                            <option value="">All Groups</option>
+                            @foreach($groups as $group)
+                                <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>
+                                    {{ $group->name }}
+                                </option>
+                            @endforeach
+                        </select>
                         <select name="status" class="form-select" style="max-width: 120px;">
-                            <option value="">All Status</option>
-                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="active" {{ (request('status', 'active') == 'active') ? 'selected' : '' }}>Active</option>
                             <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                            <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>All Status</option>
                             <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>Deleted</option>
                         </select>
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
-                        @if(request()->hasAny(['search', 'level', 'status']))
+                        @if(request()->hasAny(['search', 'level', 'group_id', 'status']))
                             <a href="{{ route('sitemanager.members.index') }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle"></i> Clear
                             </a>
@@ -92,10 +102,22 @@
                             </select>
                         </div>
                         <div class="col-6">
+                            <select name="group_id" class="form-select">
+                                <option value="">All Groups</option>
+                                @foreach($groups as $group)
+                                    <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>
+                                        {{ $group->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12">
                             <select name="status" class="form-select">
-                                <option value="">All Status</option>
-                                <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="active" {{ (request('status', 'active') == 'active') ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>All Status</option>
                                 <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>Deleted</option>
                             </select>
                         </div>
@@ -104,7 +126,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search me-2"></i>Search
                         </button>
-                        @if(request()->hasAny(['search', 'level', 'status']))
+                        @if(request()->hasAny(['search', 'level', 'group_id', 'status']))
                             <a href="{{ route('sitemanager.members.index') }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle me-2"></i>Clear
                             </a>
@@ -116,7 +138,7 @@
     </div>
 
     <div class="table-responsive">
-        <table class="table table-striped">
+        <table class="table table-striped table-hover">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -124,6 +146,7 @@
                     <th>Name</th>
                     <th>Username</th>
                     <th>Email</th>
+                    <th>Groups</th>
                     <th>Level</th>
                     <th>Status</th>
                     <th>Join Date</th>
@@ -147,6 +170,7 @@
                         </td>
                         <td nowrap>
                             <strong>{{ $member->name }}</strong>
+                            <span class="text-muted">{{ $member->title }}</span>
                             @if($member->isAdmin())
                                 <span class="badge bg-danger ms-1">Admin</span>
                             @endif
@@ -157,6 +181,13 @@
                         <td>{{ $member->username }}</td>
                         <td>{{ $member->email ?? 'N/A' }}</td>
                         <td>
+                            @if($member->groups->count() > 0)
+                                @foreach($member->groups as $group)
+                                    <span class="badge bg-info text-dark me-1 mb-1">{{ $group->name }}</span>
+                                @endforeach
+                            @endif
+                        </td>
+                        <td>
                             <span class="badge bg-{{ $member->isAdmin() ? 'danger' : ($member->isStaff() ? 'warning' : 'secondary') }}">
                                 {{ $member->level_display }}
                             </span>
@@ -164,10 +195,17 @@
                         <td>
                             @if($member->trashed())
                                 <span class="badge bg-secondary">Deleted</span>
-                            @elseif($member->active)
-                                <span class="badge bg-success">Active</span>
+                            @elseif(Auth::user()->isAdmin() && Auth::user()->id !== $member->id)
+                                <button class="badge bg-{{ $member->active ? 'success' : 'danger' }} border-0 member-status-toggle" 
+                                        data-member-id="{{ $member->id }}" 
+                                        data-current-status="{{ $member->active ? 'true' : 'false' }}"
+                                        title="Click to {{ $member->active ? 'deactivate' : 'activate' }}">
+                                    {{ $member->active ? 'Active' : 'Inactive' }}
+                                </button>
                             @else
-                                <span class="badge bg-danger">Inactive</span>
+                                <span class="badge bg-{{ $member->active ? 'success' : 'danger' }}">
+                                    {{ $member->active ? 'Active' : 'Inactive' }}
+                                </span>
                             @endif
                         </td>
                         <td nowrap>{{ $member->created_at->format('Y-m-d') }}</td>
@@ -215,7 +253,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center">No members found.</td>
+                        <td colspan="10" class="text-center">No members found.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -264,6 +302,99 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+
+    // 멤버 상태 토글 처리
+    document.querySelectorAll('.member-status-toggle').forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const memberId = this.dataset.memberId;
+            const currentStatus = this.dataset.currentStatus === 'true';
+            const newStatus = !currentStatus;
+            const actionText = newStatus ? 'activate' : 'deactivate';
+            
+            Swal.fire({
+                title: `Confirm ${actionText}`,
+                text: `Are you sure you want to ${actionText} this member?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: newStatus ? '#198754' : '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: `Yes, ${actionText}`,
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // AJAX 요청으로 상태 변경
+                    fetch(`/sitemanager/members/${memberId}/toggle-status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            active: newStatus
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Active 필터가 적용된 상태에서 inactive로 변경하면 행 제거
+                            const currentStatusParam = new URLSearchParams(window.location.search).get('status');
+                            const isActiveFilter = !currentStatusParam || currentStatusParam === 'active';
+                            
+                            if (isActiveFilter && !newStatus) {
+                                // Active 필터 상태에서 멤버를 inactive로 변경한 경우 행 제거
+                                const row = this.closest('tr');
+                                row.style.transition = 'opacity 0.3s ease';
+                                row.style.opacity = '0';
+                                setTimeout(() => {
+                                    row.remove();
+                                }, 300);
+                            } else {
+                                // 상태 업데이트
+                                this.textContent = newStatus ? 'Active' : 'Inactive';
+                                this.className = `badge bg-${newStatus ? 'success' : 'danger'} border-0 member-status-toggle`;
+                                this.dataset.currentStatus = newStatus.toString();
+                                this.title = `Click to ${newStatus ? 'deactivate' : 'activate'}`;
+                            }
+                            
+                            // 성공 메시지
+                            Swal.fire({
+                                title: 'Success!',
+                                text: data.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire('Error!', 'Failed to update member status.', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Error!', 'Network error occurred.', 'error');
+                    });
+                }
+            });
+        });
+    });
 });
 </script>
+
+<style>
+.member-status-toggle {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.member-status-toggle:hover {
+    transform: scale(1.05);
+    opacity: 0.8;
+}
+
+.member-status-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+</style>
 @endpush

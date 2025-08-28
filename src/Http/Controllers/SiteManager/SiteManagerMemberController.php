@@ -27,10 +27,12 @@ class SiteManagerMemberController extends Controller
         // 삭제된 멤버 포함 여부
         if ($request->get('status') === 'deleted') {
             $query->onlyTrashed();
+        } elseif ($request->get('status') === 'all') {
+            // 'all' 상태일 때만 모든 멤버 표시 (active + inactive, 삭제된 것 제외)
+        } else {
+            // 기본값: active 멤버만 표시 (status가 없거나 'active'인 경우)
+            $query->where('active', true);
         }
-        // } elseif ($request->get('status') !== 'all') {
-        //     $query->withTrashed();
-        // }
 
         // 검색 필터
         if ($request->filled('search')) {
@@ -43,9 +45,10 @@ class SiteManagerMemberController extends Controller
             });
         }
 
-        // 상태 필터 (active/inactive, 삭제된 것 제외)
-        if ($request->filled('status') && in_array($request->get('status'), ['active', 'inactive'])) {
-            $query->where('active', $request->get('status') === 'active');
+        // 상태 필터 (active/inactive, 삭제된 것 제외) - 위에서 이미 처리됨
+        if ($request->filled('status') && $request->get('status') === 'inactive') {
+            // inactive만 따로 처리 (위의 기본 active 필터를 덮어씀)
+            $query->where('active', false);
         }
 
         // 그룹 필터
@@ -92,6 +95,7 @@ class SiteManagerMemberController extends Controller
     {
         $validated = $request->validate([
             'username' => 'required|string|max:50|unique:members,username',
+            'title' => 'nullable|string|max:30',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:members,email',
             'phone' => 'nullable|string|max:20',
@@ -157,6 +161,7 @@ class SiteManagerMemberController extends Controller
         
         $validated = $request->validate([
             'username' => ['required', 'string', 'max:50', Rule::unique('members')->ignore($member->id)],
+            'title' => 'nullable|string|max:30',
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('members')->ignore($member->id)],
             'phone' => 'nullable|string|max:20',
@@ -176,6 +181,11 @@ class SiteManagerMemberController extends Controller
         }
 
         $validated['active'] = $request->boolean('active');
+
+        // 상태가 inactive로 변경되면 level을 0으로 설정
+        if (!$validated['active']) {
+            $validated['level'] = 0;
+        }
 
         // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
@@ -201,7 +211,9 @@ class SiteManagerMemberController extends Controller
             $member->groups()->sync($validated['groups']);
         }
 
-        return redirect()->route('sitemanager.members.show', $member)
+        // return redirect()->route('sitemanager.members.show', $member)
+        //     ->with('success', '멤버 정보가 성공적으로 수정되었습니다.');
+        return redirect()->route('sitemanager.members.index')
             ->with('success', '멤버 정보가 성공적으로 수정되었습니다.');
     }
 
@@ -258,12 +270,21 @@ class SiteManagerMemberController extends Controller
      */
     public function toggleStatus(Request $request, Member $member)
     {
-        $member->update(['active' => $request->boolean('active')]);
+        $newStatus = $request->boolean('active');
+        
+        // 상태가 inactive로 변경되면 level을 0으로 설정
+        $updateData = ['active' => $newStatus];
+        if (!$newStatus) {
+            $updateData['level'] = 0;
+        }
+        
+        $member->update($updateData);
         
         return response()->json([
             'success' => true,
             'message' => '멤버 상태가 변경되었습니다.',
-            'active' => $member->active
+            'active' => $member->active,
+            'level' => $member->level
         ]);
     }
 

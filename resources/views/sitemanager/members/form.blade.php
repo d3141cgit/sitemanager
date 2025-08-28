@@ -59,6 +59,21 @@
                         </div>
 
                         <div class="row mb-3 align-items-center">
+                            <label for="title" class="col-md-3 col-form-label text-md-end">Title</label>
+                            <div class="col-md-9">
+                                <input type="text" 
+                                       class="form-control @error('title') is-invalid @enderror" 
+                                       id="title" 
+                                       name="title" 
+                                       value="{{ old('title', isset($member) ? $member->title : '') }}" 
+                                       placeholder="Title or honorific (e.g., Mr., Mrs., etc.)">
+                                @error('title')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="row mb-3 align-items-center">
                             <label for="email" class="col-md-3 col-form-label text-md-end">Email</label>
                             <div class="col-md-9">
                                 <input type="email" 
@@ -136,7 +151,7 @@
                                             id="level" 
                                             name="level">
                                         @foreach($levels as $levelValue => $levelName)
-                                            <option value="{{ $levelValue }}" {{ old('level', isset($member) ? $member->level : 1) == $levelValue ? 'selected' : '' }}>
+                                            <option value="{{ $levelValue }}" {{ (string)old('level', isset($member) ? $member->level : 1) === (string)$levelValue ? 'selected' : '' }}>
                                                 {{ $levelValue }} - {{ $levelName }}
                                             </option>
                                         @endforeach

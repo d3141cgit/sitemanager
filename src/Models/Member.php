@@ -39,8 +39,10 @@ class Member extends Authenticatable
     use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
+        'id',
         'username',
         'password',
+        'title', // 직책 or 경칭(Mr., Mrs. 등)
         'name',
         'email',
         'level',
