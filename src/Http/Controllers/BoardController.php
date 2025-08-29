@@ -182,12 +182,22 @@ class BoardController extends Controller
             'slug' => 'nullable|string|max:200',
             'excerpt' => 'nullable|string|max:500',
             'category' => 'nullable|string|max:50',
+            'categories' => 'nullable|array', // categories[] 배열 지원
+            'categories.*' => 'nullable|string|max:50', // 각 카테고리 항목 검증
             'tags' => 'nullable|string',
             'options' => 'nullable|array',
             'files.*' => 'nullable|file|max:' . ($board->getSetting('max_file_size', 2048)),
             'file_names.*' => 'nullable|string|max:255',
             'file_descriptions.*' => 'nullable|string|max:500',
         ]);
+
+        // categories 배열이 있으면 category 필드로 변환
+        if (!empty($validated['categories'])) {
+            $validated['category'] = '|' . implode('|', $validated['categories']) . '|';
+        } elseif (!empty($validated['category'])) {
+            // 단일 category가 있으면 |category| 형식으로 변환
+            $validated['category'] = '|' . $validated['category'] . '|';
+        }
 
         DB::beginTransaction();
         
@@ -269,6 +279,8 @@ class BoardController extends Controller
             'slug' => 'nullable|string|max:200',
             'excerpt' => 'nullable|string|max:500',
             'category' => 'nullable|string|max:50',
+            'categories' => 'nullable|array', // categories[] 배열 지원
+            'categories.*' => 'nullable|string|max:50', // 각 카테고리 항목 검증
             'tags' => 'nullable|string',
             'options' => 'nullable|array',
             'files.*' => 'nullable|file|max:' . ($board->getSetting('max_file_size', 2048)),
@@ -278,6 +290,14 @@ class BoardController extends Controller
             'existing_file_descriptions.*' => 'nullable|string|max:500',
             'removed_files' => 'nullable|string',
         ]);
+
+        // categories 배열이 있으면 category 필드로 변환
+        if (!empty($validated['categories'])) {
+            $validated['category'] = '|' . implode('|', $validated['categories']) . '|';
+        } elseif (!empty($validated['category'])) {
+            // 단일 category가 있으면 |category| 형식으로 변환
+            $validated['category'] = '|' . $validated['category'] . '|';
+        }
 
         DB::beginTransaction();
         

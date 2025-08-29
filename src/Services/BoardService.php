@@ -247,9 +247,25 @@ class BoardService
             // ->orderByRaw("CASE WHEN options LIKE '%is_notice%' THEN 1 ELSE 0 END DESC")
             ->orderBy('published_at', 'desc');
 
-        // 카테고리 필터링
-        if ($request->filled('category')) {
-            $query->where('category', $request->input('category'));
+        // 카테고리 필터링 (다중 카테고리 지원)
+        if ($request->filled('categories')) {
+            $categories = $request->input('categories');
+            if (is_array($categories) && count($categories) > 0) {
+                $query->where(function($q) use ($categories) {
+                    foreach ($categories as $category) {
+                        $q->orWhere('category', 'like', "%|{$category}|%");
+                    }
+                });
+            }
+        } elseif ($request->filled('category')) {
+            // 기존 단일 카테고리 필터링 지원
+            $category = $request->input('category');
+            $query->where(function($q) use ($category) {
+                // |category1|category2| 형식으로 저장된 카테고리에서 검색
+                $q->where('category', 'like', "%|{$category}|%")
+                  // 기존 단일 카테고리 형식도 지원
+                  ->orWhere('category', $category);
+            });
         }
 
         // 옵션 필터링

@@ -159,7 +159,7 @@ abstract class BoardPost extends Model
      */
     public function scopeInCategory($query, string $category)
     {
-        return $query->where('category', $category);
+        return $query->where('category', 'like', '%|' . $category . '|%');
     }
 
     /**
@@ -339,6 +339,17 @@ abstract class BoardPost extends Model
         }
         
         return explode('|', $this->options);
+    }
+
+    public function getCategoriesAttribute(): array
+    {
+        if (empty($this->category)) {
+            return [];
+        }
+        
+        // 앞뒤 구분자 '|' 제거 후 분리
+        $trimmed = trim($this->category, '|');
+        return explode('|', $trimmed);
     }
 
     /**

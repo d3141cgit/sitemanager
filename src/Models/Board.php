@@ -89,13 +89,14 @@ class Board extends Model
         }
 
         // 카테고리별 게시물 수 집계
-        $counts = DB::table($postsTable)
-            ->select('category', DB::raw('COUNT(*) as count'))
-            ->where('status', 'published')
-            ->whereIn('category', $categories)
-            ->groupBy('category')
-            ->pluck('count', 'category')
-            ->toArray();
+        $counts = [];
+        foreach ($categories as $category) {
+            $count = DB::table($postsTable)
+                ->where('status', 'published')
+                ->where('category', 'like', "%|{$category}|%")
+                ->count();
+            $counts[$category] = $count;
+        }
 
         // 카테고리 배열에 count 정보 추가
         return array_map(function($category) use ($counts) {
