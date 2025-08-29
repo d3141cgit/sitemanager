@@ -116,7 +116,9 @@ class BoardController extends Controller
         // SEO 데이터 구성
         $seoData = $this->buildBoardSeoData($board, $request);
 
-        return view($this->selectView('index'), compact('board', 'posts', 'notices', 'seoData'));
+        return view($this->selectView('index'), compact('board', 'posts', 'notices', 'seoData') + [
+            'currentMenuId' => $board->menu_id // NavigationComposer에서 사용할 현재 메뉴 ID
+        ]);
     }
 
     /**
@@ -145,7 +147,14 @@ class BoardController extends Controller
 
         return view($this->selectView('show'), array_merge(
             compact('board', 'post', 'comments', 'attachments', 'seoData'),
-            $prevNext
+            $prevNext,
+            [
+                'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
+                'additionalBreadcrumb' => [
+                    'title' => $post->title,
+                    'url' => null
+                ]
+            ]
         ));
     }
 
@@ -161,7 +170,9 @@ class BoardController extends Controller
             abort(403, '게시글을 작성할 권한이 없습니다.');
         }
 
-        return view($this->selectView('form'), compact('board'));
+        return view($this->selectView('form'), compact('board') + [
+            'currentMenuId' => $board->menu_id // NavigationComposer에서 사용할 현재 메뉴 ID
+        ]);
     }
 
     /**
@@ -257,7 +268,9 @@ class BoardController extends Controller
             abort(403, '게시글을 수정할 권한이 없습니다.');
         }
 
-        return view($this->selectView('form'), compact('board', 'post'));
+        return view($this->selectView('form'), compact('board', 'post') + [
+            'currentMenuId' => $board->menu_id // NavigationComposer에서 사용할 현재 메뉴 ID
+        ]);
     }
 
     /**

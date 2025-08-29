@@ -30,8 +30,83 @@ class NavigationComposer
         $navigationTree = $this->buildNavigationTree($accessibleMenus);
         
         // 현재 페이지 관련 메뉴 정보
-        $currentMenu = $this->findCurrentMenu($accessibleMenus);
+        $viewData = $view->getData();
+        
+        // 뷰에서 명시적으로 전달된 currentMenuId나 currentMenu가 있으면 우선 사용
+        $currentMenuId = null;
+        if (isset($viewData['currentMenuId'])) {
+            $currentMenuId = $viewData['currentMenuId'];
+            Log::info("NavigationComposer: currentMenuId from view", [
+                'currentMenuId' => $currentMenuId
+            ]);
+        } elseif (isset($viewData['currentMenu'])) {
+            $currentMenu = $viewData['currentMenu'];
+            
+            Log::info("NavigationComposer: currentMenu from view", [
+                'currentMenu_value' => $currentMenu,
+                'is_numeric' => is_numeric($currentMenu)
+            ]);
+            
+            // Menu 객체인 경우 ID 추출, 숫자인 경우 그대로 사용
+            if (is_object($currentMenu) && isset($currentMenu->id)) {
+                $currentMenuId = $currentMenu->id;
+            } elseif (is_numeric($currentMenu)) {
+                $currentMenuId = $currentMenu;
+            }
+        }
+        
+        if ($currentMenuId) {
+            // 메뉴 ID로 실제 메뉴 객체 찾기
+            $foundMenu = $accessibleMenus->find($currentMenuId);
+            
+            Log::info("NavigationComposer: menu lookup result", [
+                'menu_id' => $currentMenuId,
+                'found' => $foundMenu ? true : false,
+                'menu_title' => $foundMenu ? $foundMenu->title : null,
+                'accessible_menus_count' => $accessibleMenus->count()
+            ]);
+            
+            $currentMenu = $foundMenu;
+        } else {
+            Log::info("NavigationComposer: no currentMenu in viewData, using auto-detection");
+            // 자동 감지 방식 사용 (라우트명, URL 패턴 매칭)
+            $currentMenu = $this->findCurrentMenuByRoute($accessibleMenus);
+        }
+        
         $breadcrumb = $this->buildBreadcrumb($currentMenu, $accessibleMenus);
+        
+        // 뷰에서 전달된 추가 브레드크럼 요소가 있으면 추가
+        $viewData = $view->getData();
+        if (isset($viewData['additionalBreadcrumb'])) {
+            $additionalBreadcrumb = $viewData['additionalBreadcrumb'];
+            
+            Log::info("NavigationComposer: additionalBreadcrumb found", [
+                'additionalBreadcrumb' => $additionalBreadcrumb,
+                'current_breadcrumb_count' => count($breadcrumb)
+            ]);
+            
+            // 기존 브레드크럼의 마지막 요소를 현재가 아닌 것으로 변경
+            if (!empty($breadcrumb)) {
+                $lastIndex = count($breadcrumb) - 1;
+                $breadcrumb[$lastIndex]['is_current'] = false;
+                $breadcrumb[$lastIndex]['url'] = $this->getMenuUrl($currentMenu);
+            }
+            
+            // 추가 브레드크럼 요소 추가
+            $breadcrumb[] = [
+                'title' => $additionalBreadcrumb['title'] ?? 'Page',
+                'url' => $additionalBreadcrumb['url'] ?? null,
+                'is_current' => true
+            ];
+            
+            Log::info("NavigationComposer: breadcrumb after adding additional", [
+                'final_breadcrumb_count' => count($breadcrumb),
+                'final_breadcrumb_titles' => array_map(function($item) { return $item['title']; }, $breadcrumb)
+            ]);
+        } else {
+            Log::info("NavigationComposer: no additionalBreadcrumb in viewData");
+        }
+        
         $menuTabs = $this->buildMenuTabs($currentMenu, $accessibleMenus);
         
         // SEO 정보 구성 (기존 seoData가 있으면 우선 사용)
@@ -96,9 +171,9 @@ class NavigationComposer
     }
 
     /**
-     * 현재 라우트에 해당하는 메뉴를 찾습니다.
+     * 라우트 정보를 기반으로 현재 메뉴를 찾습니다.
      */
-    private function findCurrentMenu($menus)
+    private function findCurrentMenuByRoute($menus)
     {
         $currentRouteName = Route::currentRouteName();
         $currentUrl = Request::url();
@@ -106,7 +181,7 @@ class NavigationComposer
         
         // 1. 정확한 라우트명 매칭
         $exactMatch = $menus->filter(function($menu) use ($currentRouteName) {
-            return $menu->type === 'route' && $menu->target === $currentRouteName;
+            return $menu && $menu->type === 'route' && $menu->target === $currentRouteName;
         })->first();
         
         if ($exactMatch) {
@@ -115,7 +190,7 @@ class NavigationComposer
         
         // 2. URL 패턴 매칭
         $urlMatch = $menus->filter(function($menu) use ($currentUrl, $currentPath) {
-            if ($menu->type === 'url' && $menu->target) {
+            if ($menu && $menu->type === 'url' && $menu->target) {
                 $menuUrl = $menu->target;
                 // 정확한 URL 매칭
                 if ($menuUrl === $currentUrl || $menuUrl === $currentPath) {
@@ -135,7 +210,7 @@ class NavigationComposer
         
         // 3. 패턴 매칭 (예: /about/* 패턴으로 /about/edm-korean-global-campus 매칭)
         $patternMatch = $menus->filter(function($menu) use ($currentPath) {
-            if ($menu->type === 'url' && $menu->target) {
+            if ($menu && $menu->type === 'url' && $menu->target) {
                 $menuPath = ltrim($menu->target, '/');
                 $currentPathClean = ltrim($currentPath, '/');
                 
@@ -159,7 +234,7 @@ class NavigationComposer
             return false;
         })->sortByDesc(function($menu) {
             // 더 구체적인 경로를 우선순위로
-            return strlen($menu->target ?? '');
+            return $menu ? strlen($menu->target ?? '') : 0;
         })->first();
         
         return $patternMatch;
@@ -170,6 +245,14 @@ class NavigationComposer
      */
     private function buildBreadcrumb($currentMenu, $menus)
     {
+        Log::info("NavigationComposer buildBreadcrumb", [
+            'currentMenu' => $currentMenu ? [
+                'id' => $currentMenu->id,
+                'title' => $currentMenu->title,
+                'parent_id' => $currentMenu->parent_id
+            ] : null
+        ]);
+        
         if (!$currentMenu) {
             return [
                 [
@@ -187,8 +270,18 @@ class NavigationComposer
         $menuChain = [];
         while ($menu) {
             $menuChain[] = $menu;
+            Log::info("NavigationComposer: adding menu to chain", [
+                'menu_id' => $menu->id,
+                'menu_title' => $menu->title,
+                'parent_id' => $menu->parent_id
+            ]);
             $menu = $menu->parent_id ? $menus->find($menu->parent_id) : null;
         }
+        
+        Log::info("NavigationComposer: final menuChain", [
+            'chain_count' => count($menuChain),
+            'chain_titles' => array_map(function($m) { return $m->title; }, $menuChain)
+        ]);
         
         // Home 추가
         $breadcrumb[] = [
@@ -200,15 +293,22 @@ class NavigationComposer
         // 역순으로 브레드크럼 구성
         $menuChain = array_reverse($menuChain);
         foreach ($menuChain as $index => $menu) {
+            if (!$menu) continue; // null 체크
+            
             $isLast = $index === count($menuChain) - 1;
             
             $breadcrumb[] = [
-                'title' => $menu->title,
+                'title' => $menu->title ?? 'Menu',
                 'url' => $isLast ? null : $this->getMenuUrl($menu),
                 'is_current' => $isLast,
-                'menu_id' => $menu->id
+                'menu_id' => $menu->id ?? null
             ];
         }
+        
+        Log::info("NavigationComposer: final breadcrumb", [
+            'breadcrumb_count' => count($breadcrumb),
+            'breadcrumb_titles' => array_map(function($item) { return $item['title']; }, $breadcrumb)
+        ]);
         
         return $breadcrumb;
     }
@@ -229,28 +329,28 @@ class NavigationComposer
         if ($parentMenu) {
             // 부모가 있는 경우: 같은 부모를 가진 메뉴들
             $siblings = $menus->filter(function($menu) use ($parentMenu) {
-                return $menu->parent_id === $parentMenu->id;
+                return $menu && $menu->parent_id === $parentMenu->id;
             });
         } else {
             // 루트 메뉴인 경우: 같은 섹션의 루트 메뉴들
             $siblings = $menus->filter(function($menu) use ($currentMenu) {
-                return $menu->section === $currentMenu->section && $menu->parent_id === null;
+                return $menu && $menu->section === $currentMenu->section && $menu->parent_id === null;
             });
         }
         
         $tabs = [];
         foreach ($siblings as $menu) {
+            if (!$menu) continue; // null 체크
+            
             // 사용자 권한 확인
             $userPerm = $this->permissionService->checkMenuPermission($menu);
             if (($userPerm & 1) !== 1) continue; // 읽기 권한 없음
             
             $tabs[] = [
-                'title' => $menu->title,
+                'title' => $menu->title ?? 'Menu',
                 'url' => $this->getMenuUrl($menu),
-                // 'type' => $menu->type,
-                // 'target' => $menu->target,
                 'is_current' => $menu->id === $currentMenu->id,
-                'menu_id' => $menu->id,
+                'menu_id' => $menu->id ?? null,
                 'icon' => $menu->icon ?? null
             ];
         }
@@ -270,6 +370,10 @@ class NavigationComposer
      */
     private function getMenuUrl($menu)
     {
+        if (!$menu) {
+            return '/';
+        }
+        
         switch ($menu->type) {
             case 'route':
                 try {
