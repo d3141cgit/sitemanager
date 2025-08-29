@@ -102,7 +102,7 @@ class BoardController extends Controller
      */
     public function index(Request $request, string $slug): View
     {
-        $board = Board::where('slug', $slug)->firstOrFail();
+        $board = Board::with('menu')->where('slug', $slug)->firstOrFail();
         
         // 권한 체크
         if ($board->menu_id && !can('index', $board)) {
@@ -124,7 +124,7 @@ class BoardController extends Controller
      */
     public function show(Request $request, string $slug, $id)
     {
-        $board = Board::where('slug', $slug)->firstOrFail();
+        $board = Board::with('menu')->where('slug', $slug)->firstOrFail();
         
         // 권한 체크
         if ($board->menu_id && !can('read', $board)) {
@@ -874,6 +874,9 @@ class BoardController extends Controller
     {
         $siteName = config_get('SITE_NAME');
         
+        // 연결된 메뉴에서 기본 SEO 데이터 가져오기 (관계를 통해)
+        $menu = $board->menu; // 이미 with('menu')로 로드됨
+        
         // 검색이나 카테고리 필터가 적용된 경우
         $searchTerm = $request->get('search');
         $category = $request->get('category');
@@ -887,8 +890,11 @@ class BoardController extends Controller
         }
         $title .= ' | ' . $siteName;
         
-        // 설명 구성
+        // 설명 구성 - 메뉴의 설명을 우선 사용
         $description = $board->description;
+        if (!$description && $menu && $menu->description) {
+            $description = $menu->description;
+        }
         if (!$description) {
             if ($searchTerm) {
                 $description = "'{$searchTerm}'에 대한 검색 결과를 {$board->name}에서 찾아보세요.";
@@ -899,8 +905,11 @@ class BoardController extends Controller
             }
         }
         
-        // 키워드
+        // 키워드 - 메뉴 제목도 포함
         $keywords = [$board->name];
+        if ($menu && $menu->title && $menu->title !== $board->name) {
+            $keywords[] = $menu->title;
+        }
         if ($searchTerm) {
             $keywords[] = $searchTerm;
         }
@@ -915,28 +924,25 @@ class BoardController extends Controller
         
         // 게시판 대표 이미지 (메뉴에서 가져오기)
         $seoImage = null;
-        if ($board->menu_id) {
-            $menu = \SiteManager\Models\Menu::find($board->menu_id);
-            if ($menu && !empty($menu->images)) {
-                $images = is_array($menu->images) 
-                    ? $menu->images 
-                    : json_decode($menu->images, true);
-                
-                if (is_array($images)) {
-                    // SEO 이미지 우선 사용
-                    if (isset($images['seo']['url'])) {
-                        $seoImage = \SiteManager\Services\FileUploadService::url($images['seo']['url']);
-                    }
-                    // 썸네일 이미지 사용
-                    elseif (isset($images['thumbnail']['url'])) {
-                        $seoImage = \SiteManager\Services\FileUploadService::url($images['thumbnail']['url']);
-                    }
-                    // 다른 이미지 사용
-                    else {
-                        $firstCategory = array_values($images)[0];
-                        if (isset($firstCategory['url'])) {
-                            $seoImage = \SiteManager\Services\FileUploadService::url($firstCategory['url']);
-                        }
+        if ($menu && !empty($menu->images)) {
+            $images = is_array($menu->images) 
+                ? $menu->images 
+                : json_decode($menu->images, true);
+            
+            if (is_array($images)) {
+                // SEO 이미지 우선 사용
+                if (isset($images['seo']['url'])) {
+                    $seoImage = \SiteManager\Services\FileUploadService::url($images['seo']['url']);
+                }
+                // 썸네일 이미지 사용
+                elseif (isset($images['thumbnail']['url'])) {
+                    $seoImage = \SiteManager\Services\FileUploadService::url($images['thumbnail']['url']);
+                }
+                // 다른 이미지 사용
+                else {
+                    $firstCategory = array_values($images)[0];
+                    if (isset($firstCategory['url'])) {
+                        $seoImage = \SiteManager\Services\FileUploadService::url($firstCategory['url']);
                     }
                 }
             }
@@ -947,16 +953,38 @@ class BoardController extends Controller
             $seoImage = asset('images/logo.svg');
         }
         
+        // JSON-LD 구조화 데이터 생성 (게시판 목록용)
+        $jsonLdData = [
+            '@context' => 'https://schema.org',
+            '@type' => 'CollectionPage',
+            'name' => $board->name,
+            'description' => $description,
+            'url' => $currentUrl,
+            'image' => $seoImage,
+            'isPartOf' => [
+                '@type' => 'WebSite',
+                'name' => $siteName,
+                'url' => request()->getSchemeAndHttpHost()
+            ]
+        ];
+        
+        // 검색 결과인 경우 SearchResultsPage로 변경
+        if ($searchTerm) {
+            $jsonLdData['@type'] = 'SearchResultsPage';
+            $jsonLdData['query'] = $searchTerm;
+        }
+        
         return [
             'title' => $title,
             'description' => $description,
             'keywords' => implode(', ', array_unique($keywords)),
-            'og_title' => $board->name,
+            'og_title' => $searchTerm ? "'{$searchTerm}' 검색결과" : $board->name,
             'og_description' => $description,
             'og_image' => $seoImage,
             'og_url' => $currentUrl,
             'canonical_url' => $boardUrl,
             'og_type' => 'website',
+            'json_ld' => $jsonLdData,
         ];
     }
 
@@ -995,6 +1023,33 @@ class BoardController extends Controller
             $seoImage = asset('images/logo.svg');
         }
         
+        // JSON-LD 구조화 데이터 생성
+        $jsonLdData = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Article',
+            'headline' => $post->title,
+            'description' => $description,
+            'image' => $seoImage,
+            'author' => [
+                '@type' => 'Person',
+                'name' => $post->author
+            ],
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => $siteName,
+                'logo' => [
+                    '@type' => 'ImageObject',
+                    'url' => asset('images/logo.svg')
+                ]
+            ],
+            'datePublished' => $post->created_at->toISOString(),
+            'dateModified' => $post->updated_at->toISOString(),
+            'mainEntityOfPage' => [
+                '@type' => 'WebPage',
+                '@id' => $postUrl
+            ]
+        ];
+
         return [
             'title' => $title,
             'description' => $description,
@@ -1010,6 +1065,7 @@ class BoardController extends Controller
             'article_modified_time' => $post->updated_at->toISOString(),
             'article_section' => $board->name,
             'article_tag' => $post->category,
+            'json_ld' => $jsonLdData,
         ];
     }
 

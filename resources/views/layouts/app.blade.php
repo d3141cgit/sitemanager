@@ -32,21 +32,14 @@
     <meta name="twitter:description" content="{{ $seoData['og_description'] ?? $seoData['description'] ?? config_get('SITE_DESCRIPTION') }}">
     <meta name="twitter:image" content="{{ $seoData['og_image'] ?? asset('images/logo.svg') }}">
     
-    {{-- JSON-LD Structured Data --}}
-    @if(isset($seoData['breadcrumb_json_ld']))
-    <script type="application/ld+json">
-        {!! json_encode($seoData['breadcrumb_json_ld'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
-    </script>
-    @endif
+    {{-- 공통 SEO 컴포넌트 (컨트롤러에서 생성된 seoData 사용) --}}
+    @include('sitemanager::components.seo')
     
-    {{-- 페이지별 추가 SEO 및 메타태그 --}}
-    @stack('seo')
-    @stack('meta')
+    {{-- 페이지별 추가 메타태그 및 스크립트 --}}
+    @stack('head')
 
     {!! setResources(['bootstrap', 'jquery']) !!}
     {!! resource('sitemanager::css/app.css') !!}
-    
-    @stack('head')
 </head>
 
 <body class="app-grid-layout">
