@@ -100,6 +100,18 @@ abstract class BoardPost extends Model
     }
 
     /**
+     * 에디터 이미지들
+     */
+    public function editorImages(): HasMany
+    {
+        return $this->hasMany(EditorImage::class, 'reference_id', 'id')
+                    ->where('reference_type', 'board')
+                    ->where('reference_slug', $this->getBoardSlug())
+                    ->where('is_used', true)
+                    ->orderBy('created_at');
+    }
+
+    /**
      * 게시판 slug 반환 (동적 모델을 위해)
      */
     protected function getBoardSlug(): string
@@ -304,11 +316,17 @@ abstract class BoardPost extends Model
     {
         $firstImage = $this->first_image;
         
-        if (!$firstImage) {
-            return null;
+        if ($firstImage) {
+            return $firstImage->preview_url;
         }
         
-        return $firstImage->preview_url;
+        // 첨부파일에 이미지가 없으면 에디터 이미지에서 첫 번째 이미지 사용
+        $firstEditorImage = $this->editorImages()->first();
+        if ($firstEditorImage) {
+            return $firstEditorImage->url;
+        }
+        
+        return null;
     }
 
     /**

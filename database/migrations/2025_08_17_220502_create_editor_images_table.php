@@ -19,12 +19,21 @@ return new class extends Migration
             $table->unsignedBigInteger('size')->comment('파일 크기 (bytes)');
             $table->string('mime_type', 100)->comment('MIME 타입');
             $table->unsignedBigInteger('uploaded_by')->nullable()->comment('업로드한 사용자 ID');
+            
+            // 참조 식별자 필드
+            $table->string('reference_type', 50)->nullable()->comment('참조 타입 (board, page, etc.)');
+            $table->string('reference_slug', 100)->nullable()->comment('참조 슬러그 (board slug, page slug, etc.)');
+            $table->unsignedBigInteger('reference_id')->nullable()->comment('참조 ID (post_id, page_id, etc.)');
+            $table->boolean('is_used')->default(false)->comment('사용 여부');
+            
             $table->timestamps();
             
             // 인덱스
             $table->index('uploaded_by');
             $table->index('created_at');
             $table->index(['uploaded_by', 'created_at']);
+            $table->index(['reference_type', 'reference_slug', 'reference_id']);
+            $table->index('is_used');
             
             // 외래키 (사용자 테이블이 있는 경우)
             // $table->foreign('uploaded_by')->references('id')->on('members')->onDelete('set null');

@@ -6,6 +6,7 @@ use SiteManager\Models\Board;
 use SiteManager\Models\BoardPost;
 use SiteManager\Models\BoardComment;
 use SiteManager\Models\BoardAttachment;
+use SiteManager\Models\EditorImage;
 use SiteManager\Services\BoardService;
 use SiteManager\Services\FileUploadService;
 use Illuminate\Http\Request;
@@ -206,7 +207,18 @@ class BoardController extends Controller
             }
 
             // 에디터에서 업로드된 파일들을 첨부파일로 등록
-            $this->extractAndRegisterEditorFiles($post->content, $post);
+            // $this->extractAndRegisterEditorFiles($post->content, $post);
+            
+            // 에디터 이미지를 사용됨으로 표시
+            EditorImage::markAsUsedByContent($post->content, 'board', $post->board->slug, $post->id);
+            
+            // 임시 참조 ID가 있다면 실제 ID로 업데이트 (create시)
+            if ($request->has('temp_reference_id')) {
+                $tempId = $request->input('temp_reference_id');
+                if ($tempId < 0) {
+                    EditorImage::updateTempReference($tempId, $post->id);
+                }
+            }
 
             DB::commit();
 
@@ -302,7 +314,10 @@ class BoardController extends Controller
             }
 
             // 에디터에서 업로드된 파일들을 첨부파일로 등록
-            $this->extractAndRegisterEditorFiles($post->content, $post);
+            // $this->extractAndRegisterEditorFiles($post->content, $post);
+            
+            // 에디터 이미지를 사용됨으로 표시
+            EditorImage::markAsUsedByContent($post->content, 'board', $post->board->slug, $post->id);
 
             DB::commit();
 
@@ -356,8 +371,9 @@ class BoardController extends Controller
     }
 
     /**
-     * 에디터에서 업로드된 파일들을 첨부파일로 등록
+     * 에디터에서 업로드된 파일들을 첨부파일로 등록 (주석 처리 - EditorImage 사용)
      */
+    /*
     private function extractAndRegisterEditorFiles(string $content, $post)
     {
         // 에디터 이미지 경로 패턴 (S3 및 로컬 모두 포함)
@@ -402,6 +418,7 @@ class BoardController extends Controller
             }
         }
     }
+    */
 
     /**
      * 에디터 파일 크기 확인

@@ -5,6 +5,7 @@ namespace SiteManager\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use SiteManager\Services\FileUploadService;
 use SiteManager\Models\EditorImage;
 
@@ -29,6 +30,16 @@ class EditorController extends Controller
         try {
             $file = $request->file('upload');
             
+            // 참조 정보 수집 (request에서 전달될 수 있음)
+            $referenceType = $request->input('reference_type', null);
+            $referenceSlug = $request->input('reference_slug', null);
+            $referenceId = $request->input('reference_id', null);
+            
+            // create 상황이면 임시 ID 생성
+            if ($referenceType === 'board' && !$referenceId) {
+                $referenceId = EditorImage::generateTempReferenceId();
+            }
+            
             // FileUploadService를 사용하여 이미지 업로드
             $uploadResult = $this->fileUploadService->uploadImage(
                 $file, 
@@ -46,13 +57,18 @@ class EditorController extends Controller
                 'path' => $uploadResult['path'],
                 'size' => $uploadResult['size'],
                 'mime_type' => $uploadResult['mime_type'],
-                'uploaded_by' => auth()->id()
+                'uploaded_by' => Auth::id(),
+                'reference_type' => $referenceType,
+                'reference_slug' => $referenceSlug,
+                'reference_id' => $referenceId,
+                'is_used' => false // 초기에는 false, 저장시 true로 변경
             ]);
             
             // CKEditor/Summernote 응답 형식
             return response()->json([
                 'url' => $uploadResult['url'],
-                'uploaded' => true
+                'uploaded' => true,
+                'temp_reference_id' => $referenceId < 0 ? $referenceId : null // 임시 ID인 경우만 반환
             ]);
             
         } catch (\Exception $e) {
@@ -137,16 +153,28 @@ class EditorController extends Controller
             }
             
             // 권한 체크 (관리자이거나 업로드한 사용자인 경우)
-            if (auth()->user()->id !== 1 && $image->uploaded_by !== auth()->id()) {
+            if (Auth::user()->id !== 1 && $image->uploaded_by !== Auth::id()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized'
                 ], 403);
             }
             
-            // 파일 삭제
-            if (Storage::disk('public')->exists($image->path)) {
-                Storage::disk('public')->delete($image->path);
+            // 파일 삭제 (S3 또는 로컬)
+            try {
+                // S3 URL인 경우와 로컬 경로인 경우를 구분하여 삭제
+                if (strpos($image->path, 'https://') === 0) {
+                    // S3 URL인 경우 - FileUploadService를 통해 삭제
+                    $this->fileUploadService->deleteFile($image->path);
+                } else {
+                    // 로컬 경로인 경우
+                    if (Storage::disk('public')->exists($image->path)) {
+                        Storage::disk('public')->delete($image->path);
+                    }
+                }
+            } catch (\Exception $e) {
+                // 파일 삭제 실패해도 데이터베이스에서는 삭제 진행
+                Log::warning("Failed to delete file {$image->path}: " . $e->getMessage());
             }
             
             // 데이터베이스에서 삭제
