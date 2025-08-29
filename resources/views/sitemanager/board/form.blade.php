@@ -237,6 +237,13 @@
                                    placeholder="jpg,jpeg,png,gif,pdf">
                             <div class="form-text">Separate with commas.</div>
                         </div>
+
+                        <div class="mb-3">
+                            <label for="file_categories" class="form-label">File Categories</label>
+                            <textarea class="form-control" id="file_categories" name="settings[file_categories]" rows="3"
+                                      placeholder="thumbnail&#10;seo&#10;header">{{ old('settings.file_categories', isset($board) ? $board->getSetting('file_categories', '') : '') }}</textarea>
+                            <div class="form-text">Enter one category per line. Used for organizing uploaded files (e.g. thumbnail, seo, header).</div>
+                        </div>
                     </div>
                 </div>
             </div>

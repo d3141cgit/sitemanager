@@ -144,6 +144,7 @@
                                 :max-file-size="$board->getMaxFileSize()"
                                 :max-files="$board->getMaxFilesPerPost()"
                                 :allowed-types="$board->getAllowedFileTypes()"
+                                :file-categories="$board->getFileCategories()"
                                 :enable-preview="true"
                                 :enable-edit="true"
                                 :show-file-info="true"

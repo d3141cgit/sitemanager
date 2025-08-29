@@ -5,6 +5,7 @@
     'maxFileSize' => 10240,
     'maxFiles' => 10,
     'allowedTypes' => null,
+    'fileCategories' => [],
     'enablePreview' => true,
     'enableEdit' => true,
     'showFileInfo' => true,
@@ -28,6 +29,7 @@
             window.FileUploadConfig.allowedTypes = {!! json_encode(config('sitemanager.board.allowed_extensions', ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'])) !!};
             window.FileUploadConfig.maxFileSize = {{ config('sitemanager.board.max_file_size', 2048) }};
             window.FileUploadConfig.maxFilesPerPost = {{ config('sitemanager.board.max_files_per_post', 5) }};
+            window.FileUploadConfig.fileCategories = {!! json_encode($fileCategories) !!};
         </script>
     @endpush
 @endonce
@@ -114,7 +116,7 @@
                             <div class="col">
                                 @if($enableEdit)
                                     <div class="row g-2">
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <label class="form-label small text-muted mb-1">Display Name</label>
                                             <input type="text" 
                                                    class="form-control form-control-sm" 
@@ -122,7 +124,7 @@
                                                    value="{{ $attachment->original_name ?? $attachment->name ?? '' }}"
                                                    placeholder="Display Name">
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <label class="form-label small text-muted mb-1">Description</label>
                                             <input type="text" 
                                                    class="form-control form-control-sm" 
@@ -130,6 +132,21 @@
                                                    value="{{ $attachment->description ?? '' }}"
                                                    placeholder="Description">
                                         </div>
+                                        @if(!empty($fileCategories))
+                                            <div class="col-md-4">
+                                                <label class="form-label small text-muted mb-1">Category</label>
+                                                <select class="form-select form-select-sm" 
+                                                        name="existing_file_categories[{{ $attachment->id }}]">
+                                                    <option value="">Select Category</option>
+                                                    @foreach($fileCategories as $category)
+                                                        <option value="{{ $category }}" 
+                                                                {{ (isset($attachment->category) && $attachment->category === $category) ? 'selected' : '' }}>
+                                                            {{ ucfirst($category) }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        @endif
                                     </div>
                                 @else
                                     <div class="fw-medium">{{ $attachment->original_name ?? $attachment->name ?? 'Unknown File' }}</div>

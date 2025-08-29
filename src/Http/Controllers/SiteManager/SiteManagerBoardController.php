@@ -69,6 +69,7 @@ class SiteManagerBoardController extends Controller
             'settings.max_file_size' => 'nullable|integer|min:100|max:51200',
             'settings.max_files_per_post' => 'nullable|integer|min:1|max:20',
             'settings.allowed_file_types' => 'nullable|string',
+            'settings.file_categories' => 'nullable|string',
             'custom_settings' => 'nullable|array',
             'custom_settings.*.key' => 'nullable|string|max:50',
             'custom_settings.*.value' => 'nullable|string|max:500',
@@ -193,6 +194,7 @@ class SiteManagerBoardController extends Controller
             'settings.max_file_size' => 'nullable|integer|min:100|max:51200',
             'settings.max_files_per_post' => 'nullable|integer|min:1|max:20',
             'settings.allowed_file_types' => 'nullable|string',
+            'settings.file_categories' => 'nullable|string',
             'custom_settings' => 'nullable|array',
             'custom_settings.*.key' => 'nullable|string|max:50',
             'custom_settings.*.value' => 'nullable|string|max:500',
@@ -208,7 +210,7 @@ class SiteManagerBoardController extends Controller
         // 기존 커스텀 설정 제거 (새로 덮어쓰기)
         $defaultKeys = [
             'use_categories', 'allow_file_upload', 'allow_comments', 'use_tags',
-            'max_file_size', 'max_files_per_post', 'allowed_file_types'
+            'max_file_size', 'max_files_per_post', 'allowed_file_types', 'file_categories'
         ];
         $settings = array_intersect_key($settings, array_flip($defaultKeys));
         

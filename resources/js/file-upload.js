@@ -272,18 +272,19 @@
                     <div class="col">
                         <div class="row g-2">
                             ${this.options.enableEdit ? `
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label class="form-label small text-muted mb-1">Display Name</label>
                                     <input type="text" class="form-control form-control-sm file-display-name" 
                                            value="${file.name}" name="file_names[${index}]"
                                            placeholder="Enter display name">
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label class="form-label small text-muted mb-1">Description</label>
                                     <input type="text" class="form-control form-control-sm file-description" 
                                            name="file_descriptions[${index}]"
                                            placeholder="File description (optional)">
                                 </div>
+                                ${this.getCategorySelectHTML(index)}
                             ` : `
                                 <div class="col-12">
                                     <div class="fw-medium">${file.name}</div>
@@ -389,6 +390,28 @@
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        getCategorySelectHTML(index) {
+            const fileCategories = window.FileUploadConfig?.fileCategories || [];
+            
+            if (fileCategories.length === 0) {
+                return '';
+            }
+            
+            let options = '';
+            fileCategories.forEach(category => {
+                options += `<option value="${category}">${category.charAt(0).toUpperCase() + category.slice(1)}</option>`;
+            });
+            
+            return `
+                <div class="col-md-4">
+                    <label class="form-label small text-muted mb-1">Category</label>
+                    <select class="form-select form-select-sm" name="file_categories[${index}]">
+                        ${options}
+                    </select>
+                </div>
+            `;
         }
         
         dispatchEvent(eventName, detail) {

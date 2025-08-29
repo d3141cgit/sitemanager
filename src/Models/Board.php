@@ -135,7 +135,7 @@ class Board extends Model
         // 기본 설정 키들 제외
         $defaultKeys = [
             'use_categories', 'allow_file_upload', 'allow_comments', 'use_tags',
-            'max_file_size', 'max_files_per_post', 'allowed_file_types'
+            'max_file_size', 'max_files_per_post', 'allowed_file_types', 'file_categories'
         ];
         
         return array_diff_key($settings, array_flip($defaultKeys));
@@ -254,5 +254,22 @@ class Board extends Model
         return DB::table($commentsTable)
             ->where('status', 'approved')
             ->count();
+    }
+
+    /**
+     * 파일 카테고리 목록 반환
+     */
+    public function getFileCategories(): array
+    {
+        $categories = $this->settings['file_categories'] ?? '';
+        
+        if (empty($categories)) {
+            return [];
+        }
+        
+        // 개행 문자로 분리하여 배열로 변환
+        return array_filter(
+            array_map('trim', explode("\n", $categories))
+        );
     }
 }

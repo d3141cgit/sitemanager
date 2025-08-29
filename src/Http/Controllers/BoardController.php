@@ -223,7 +223,8 @@ class BoardController extends Controller
                     $board, 
                     $post,
                     $request->input('file_names', []),
-                    $request->input('file_descriptions', [])
+                    $request->input('file_descriptions', []),
+                    $request->input('file_categories', [])
                 );
             }
 
@@ -323,6 +324,7 @@ class BoardController extends Controller
                 // 기존 첨부파일 정보 업데이트
                 $existingFileNames = $request->input('existing_file_names', []);
                 $existingFileDescriptions = $request->input('existing_file_descriptions', []);
+                $existingFileCategories = $request->input('existing_file_categories', []);
                 
                 foreach ($existingFileNames as $attachmentId => $originalName) {
                     $attachment = $post->attachments()->find($attachmentId);
@@ -330,6 +332,7 @@ class BoardController extends Controller
                         $attachment->update([
                             'original_name' => $originalName ?: $attachment->original_name,
                             'description' => $existingFileDescriptions[$attachmentId] ?? $attachment->description,
+                            'category' => $existingFileCategories[$attachmentId] ?? $attachment->category,
                         ]);
                     }
                 }
@@ -341,7 +344,8 @@ class BoardController extends Controller
                         $board, 
                         $post,
                         $request->input('file_names', []),
-                        $request->input('file_descriptions', [])
+                        $request->input('file_descriptions', []),
+                        $request->input('file_categories', [])
                     );
                 }
             }
@@ -495,7 +499,7 @@ class BoardController extends Controller
 
         return $mimeTypes[$extension] ?? 'application/octet-stream';
     }
-    private function handleFileUploads(array $files, Board $board, $post, array $fileNames = [], array $fileDescriptions = []): array
+    private function handleFileUploads(array $files, Board $board, $post, array $fileNames = [], array $fileDescriptions = [], array $fileCategories = []): array
     {
         $uploadedAttachments = [];
         $allowedTypes = $board->getAllowedFileTypes();
@@ -514,7 +518,8 @@ class BoardController extends Controller
         $uploadedFiles = $this->fileUploadService->uploadBoardAttachments($files, $board->slug, $post->id, [
             'allowed_types' => $allowedTypes,
             'max_size' => $maxSize,
-            'max_files' => $remainingSlots
+            'max_files' => $remainingSlots,
+            'file_categories' => $board->getFileCategories()
         ]);
         
         // BoardAttachment 모델에 저장
@@ -529,6 +534,11 @@ class BoardController extends Controller
                     ? $fileDescriptions[$index]
                     : null;
                 
+                // 사용자가 선택한 카테고리가 있으면 사용, 없으면 FileUploadService에서 결정한 카테고리 사용
+                $category = isset($fileCategories[$index]) && !empty($fileCategories[$index])
+                    ? $fileCategories[$index]
+                    : $fileInfo['category'];
+                
                 $attachment = BoardAttachment::create([
                     'post_id' => $post->id,
                     'board_slug' => $board->slug,
@@ -538,7 +548,7 @@ class BoardController extends Controller
                     'file_extension' => $fileInfo['file_extension'],
                     'file_size' => $fileInfo['file_size'],
                     'mime_type' => $fileInfo['mime_type'],
-                    'category' => $fileInfo['category'],
+                    'category' => $category, // 사용자가 선택한 카테고리 또는 자동 결정된 카테고리
                     'description' => $description, // 사용자 정의 설명 추가
                     'sort_order' => $currentFileCount + $index,
                     'download_count' => 0,

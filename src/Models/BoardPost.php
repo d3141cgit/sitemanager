@@ -301,10 +301,7 @@ abstract class BoardPost extends Model
     public function getFirstImageAttribute()
     {
         return $this->attachments()
-                    ->where(function($query) {
-                        $query->where('category', 'image')
-                              ->orWhere('mime_type', 'like', 'image/%');
-                    })
+                    ->Where('mime_type', 'like', 'image/%')
                     ->orderBy('sort_order')
                     ->first();
     }
@@ -328,6 +325,46 @@ abstract class BoardPost extends Model
         
         return null;
     }
+
+    /**
+     * 헤더 이미지 정보 반환 (category가 'header'인 이미지 우선)
+     */
+    public function getHeaderImageAttribute(): ?array
+    {
+        // 1. category가 'header'인 첨부파일 이미지 찾기
+        $headerImage = $this->attachments()
+                            ->where('mime_type', 'like', 'image/%')
+                            ->where('category', 'header')
+                            ->orderBy('sort_order')
+                            ->first();
+        
+        if ($headerImage) {
+            return [
+                'url' => $headerImage->preview_url,
+                'original_url' => $headerImage->url,
+                'filename' => $headerImage->filename,
+                'description' => $headerImage->description,
+                'alt' => $headerImage->description ?: $headerImage->filename,
+            ];
+        }
+        
+        // 2. header 카테고리가 없으면 첫 번째 이미지 첨부파일 사용
+        $firstImage = $this->first_image;
+        
+        if ($firstImage) {
+            return [
+                'url' => $firstImage->preview_url,
+                'original_url' => $firstImage->url,
+                'filename' => $firstImage->filename,
+                'description' => $firstImage->description,
+                'alt' => $firstImage->description ?: $firstImage->filename,
+            ];
+        }
+        
+        return null;
+    }
+
+    
 
     /**
      * 옵션 배열 반환

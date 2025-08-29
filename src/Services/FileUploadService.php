@@ -483,7 +483,14 @@ class FileUploadService
         $fileInfo['file_extension'] = strtolower($file->getClientOriginalExtension());
         $fileInfo['file_size'] = $file->getSize();
         $fileInfo['mime_type'] = $file->getMimeType();
-        $fileInfo['category'] = $this->getCategoryFromMimeType($file->getMimeType());
+        
+        // 게시판에 파일 카테고리가 설정되어 있으면 첫 번째 카테고리 사용, 없으면 MIME 타입 기반
+        $fileCategories = $config['file_categories'] ?? [];
+        if (!empty($fileCategories)) {
+            $fileInfo['category'] = $fileCategories[0]; // 첫 번째 카테고리를 기본값으로 사용
+        } else {
+            $fileInfo['category'] = $this->getCategoryFromMimeType($file->getMimeType());
+        }
         
         return $fileInfo;
     }
