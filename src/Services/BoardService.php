@@ -376,6 +376,7 @@ class BoardService
         $canEdit = false;
         $canDelete = false;
         $canReply = false;
+        $canManageComments = false;
         
         if ($board->menu_id && $user) {
             // 본인 댓글인 경우 수정/삭제 가능 (member_id가 존재하고 일치하는 경우만)

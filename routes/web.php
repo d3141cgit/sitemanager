@@ -82,6 +82,5 @@ Route::prefix('board')->name('board.')->group(function () {
         Route::put('/{commentId}', [CommentController::class, 'update'])->name('update');
         Route::delete('/{commentId}', [CommentController::class, 'destroy'])->name('destroy');
         Route::patch('/{commentId}/approve', [CommentController::class, 'approve'])->name('approve');
-        Route::patch('/{commentId}/reject', [CommentController::class, 'reject'])->name('reject');
     });
 });

@@ -366,4 +366,45 @@ class CommentController extends Controller
             'canManage' => $canManageComments ?? false, // 댓글 관리 권한 추가
         ];
     }
+
+    /**
+     * 댓글 승인
+     */
+    public function approve(string $slug, $postId, $commentId): JsonResponse
+    {
+        $board = Board::where('slug', $slug)->firstOrFail();
+        
+        // 댓글 관리 권한 체크
+        if (!can('manageComments', $board)) {
+            return response()->json(['error' => 'Access denied.'], 403);
+        }
+        
+        try {
+            $commentModelClass = BoardComment::forBoard($slug);
+            $comment = $commentModelClass::findOrFail($commentId);
+            
+            $comment->update(['status' => 'approved']);
+            
+            // 게시글의 댓글 수 업데이트
+            if ($comment->post) {
+                $comment->post->updateCommentCount();
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Comment has been approved.'
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Comment approval failed', [
+                'error' => $e->getMessage(),
+                'comment_id' => $commentId,
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while approving the comment.'
+            ], 500);
+        }
+    }
 }

@@ -40,15 +40,10 @@
                         </li>
                     @endif
                     
-                    @if($canManage && $comment->status === 'pending')
+                    @if($comment->permissions['canManage'] && $comment->status === 'pending')
                         <li>
                             <a class="dropdown-item" href="javascript:void(0)" onclick="approveComment({{ $comment->id }})">
                                 <i class="bi bi-check-circle text-success"></i> Approve
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="javascript:void(0)" onclick="rejectComment({{ $comment->id }})">
-                                <i class="bi bi-x-circle text-danger"></i> Reject
                             </a>
                         </li>
                     @endif
@@ -381,30 +376,6 @@
         .catch(error => {
             console.error('Error:', error);
             alert('An error occurred while approving the comment.');
-        });
-    }
-    
-    function rejectComment(commentId) {
-        fetch(`{{ route('board.comments.reject', [$board->slug, $post->id, ':id']) }}`.replace(':id', commentId), {
-            method: 'PATCH',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Hide comment
-                document.querySelector(`[data-comment-id="${commentId}"]`).style.opacity = '0.5';
-                showAlert(data.message, 'success');
-            } else {
-                alert(data.message || 'An error occurred while rejecting the comment.');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while rejecting the comment.');
         });
     }
     
