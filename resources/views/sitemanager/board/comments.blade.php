@@ -1,4 +1,4 @@
-@extends('sitemanager::admin.layout')
+@extends('sitemanager::layouts.sitemanager')
 
 @section('title', 'Comment Management')
 
@@ -33,7 +33,7 @@
                 <h3 class="card-title">Filters</h3>
             </div>
             <div class="card-body">
-                <form method="GET" action="{{ route('sitemanager.admin.comments.index') }}" class="row g-3">
+                <form method="GET" action="{{ route('sitemanager.comments.index') }}" class="row g-3">
                     <div class="col-md-4">
                         <label for="board_id" class="form-label">Board</label>
                         <select name="board_id" id="board_id" class="form-control">
@@ -73,7 +73,7 @@
                         <button type="button" class="btn btn-sm btn-success" onclick="bulkAction('approve')">
                             Approve Selected
                         </button>
-                        <button type="button" class="btn btn-sm btn-danger" onclick="bulkAction('reject')">
+                        <button type="button" class="btn btn-sm btn-danger" onclick="bulkAction('delete')">
                             Delete Selected
                         </button>
                     </div>
@@ -176,7 +176,7 @@
                                                 Approve
                                             </button>
                                             <button type="button" class="btn btn-danger btn-sm" 
-                                                onclick="rejectComment({{ $comment->id }}, '{{ $selectedBoard->slug }}')">
+                                                onclick="deleteComment({{ $comment->id }}, '{{ $selectedBoard->slug }}')">
                                                 Delete
                                             </button>
                                         @else
@@ -227,37 +227,7 @@ document.getElementById('checkAll')?.addEventListener('change', function() {
 function approveComment(commentId, boardSlug) {
     if (!confirm('Are you sure you want to approve this comment?')) return;
     
-    fetch('{{ route("sitemanager.admin.comments.approve") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({
-            comment_id: commentId,
-            board_slug: boardSlug
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.message);
-            location.reload();
-        } else {
-            alert(data.message || 'An error occurred.');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('A network error occurred.');
-    });
-}
-
-// Individual comment rejection (delete)
-function rejectComment(commentId, boardSlug) {
-    if (!confirm('Are you sure you want to delete this comment?')) return;
-    
-    fetch('{{ route("sitemanager.admin.comments.reject") }}', {
+    fetch('{{ route("sitemanager.comments.approve") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -287,7 +257,7 @@ function rejectComment(commentId, boardSlug) {
 function deleteComment(commentId, boardSlug) {
     if (!confirm('Are you sure you want to permanently delete this comment?')) return;
     
-    fetch('{{ route("sitemanager.admin.comments.delete") }}', {
+    fetch('{{ route("sitemanager.comments.delete") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -317,7 +287,7 @@ function deleteComment(commentId, boardSlug) {
 function restoreComment(commentId, boardSlug) {
     if (!confirm('Are you sure you want to restore this comment?')) return;
     
-    fetch('{{ route("sitemanager.admin.comments.restore") }}', {
+    fetch('{{ route("sitemanager.comments.restore") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -347,7 +317,7 @@ function restoreComment(commentId, boardSlug) {
 function forceDeleteComment(commentId, boardSlug) {
     if (!confirm('Are you sure you want to permanently delete this comment? This action cannot be undone.')) return;
     
-    fetch('{{ route("sitemanager.admin.comments.force-delete") }}', {
+    fetch('{{ route("sitemanager.comments.force-delete") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -385,7 +355,7 @@ function bulkAction(action) {
     
     const actionText = {
         'approve': 'approve',
-        'reject': 'delete',
+        'delete': 'delete',
         'restore': 'restore',
         'force_delete': 'permanently delete'
     }[action];
@@ -394,7 +364,7 @@ function bulkAction(action) {
     
     const boardSlug = '{{ $selectedBoard?->slug }}';
     
-    fetch('{{ route("sitemanager.admin.comments.bulk") }}', {
+    fetch('{{ route("sitemanager.comments.bulk") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

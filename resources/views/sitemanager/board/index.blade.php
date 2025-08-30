@@ -91,7 +91,7 @@
                     </td>
                     <td class="text-center">
                         @if($board->pending_comments_count > 0)
-                            <a href="{{ route('sitemanager.admin.comments.index', ['board_id' => $board->id, 'status' => 'pending']) }}" 
+                            <a href="{{ route('sitemanager.comments.index', ['board_id' => $board->id, 'status' => 'pending']) }}" 
                                class="badge bg-warning text-decoration-none" title="미승인 댓글 관리">
                                 {{ $board->pending_comments_count }}
                             </a>

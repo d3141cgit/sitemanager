@@ -71,6 +71,13 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.comments.*')]) 
+                           href="{{ route('sitemanager.comments.index') }}">
+                            <i class="bi bi-chat-text"></i>
+                            Comments
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.settings.*')]) 
                            href="{{ route('sitemanager.settings') }}">
                             <i class="bi bi-gear"></i>
