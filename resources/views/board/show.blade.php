@@ -324,6 +324,17 @@
 
 @push('scripts')
 <script>
+// Comment routes configuration
+window.commentRoutes = {
+    store: "{{ route('board.comments.store', [$board->slug, $post->id]) }}",
+    update: "{{ route('board.comments.update', [$board->slug, $post->id, ':id']) }}",
+    destroy: "{{ route('board.comments.destroy', [$board->slug, $post->id, ':id']) }}",
+    approve: "{{ route('board.comments.approve', [$board->slug, $post->id, ':id']) }}"
+};
+</script>
+{!! resource('sitemanager::js/board/comment.js') !!}
+
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     const commentForm = document.getElementById('commentForm');
     
@@ -454,4 +465,5 @@ function createImagePreviewModal() {
     return modal;
 }
 </script>
+@endpush
 @endpush
