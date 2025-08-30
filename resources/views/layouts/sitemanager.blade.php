@@ -64,17 +64,10 @@
                     </li>
                     
                     <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.boards.*')]) 
+                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.boards.*') || request()->routeIs('sitemanager.comments.*')]) 
                            href="{{ route('sitemanager.boards.index') }}">
                             <i class="bi bi-journal-text"></i>
                             Boards
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.comments.*')]) 
-                           href="{{ route('sitemanager.comments.index') }}">
-                            <i class="bi bi-chat-text"></i>
-                            Comments
                         </a>
                     </li>
                     <li class="nav-item">

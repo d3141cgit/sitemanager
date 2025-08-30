@@ -292,7 +292,7 @@ class BoardService
             });
         }
 
-        return $query->paginate($board->getSetting('posts_per_page', 20));
+        return $query->paginate($board->posts_per_page ?? 20);
     }
 
     /**

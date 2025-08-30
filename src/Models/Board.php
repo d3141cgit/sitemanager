@@ -126,19 +126,16 @@ class Board extends Model
     }
 
     /**
-     * 커스텀 설정값들 가져오기 (기본 설정 제외)
+     * 커스텀 설정값들 가져오기 (시스템 설정 제외)
      */
     public function getCustomSettings(): array
     {
         $settings = $this->settings ?? [];
         
-        // 기본 설정 키들 제외
-        $defaultKeys = [
-            'use_categories', 'allow_file_upload', 'allow_comments', 'use_tags',
-            'max_file_size', 'max_files_per_post', 'allowed_file_types', 'file_categories'
-        ];
+        // Controller에서 정의된 시스템 설정 키들 가져오기
+        $systemKeys = \SiteManager\Http\Controllers\SiteManager\SiteManagerBoardController::getSystemSettingKeys();
         
-        return array_diff_key($settings, array_flip($defaultKeys));
+        return array_diff_key($settings, array_flip($systemKeys));
     }
 
     /**

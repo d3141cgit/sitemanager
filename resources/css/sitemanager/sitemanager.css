@@ -324,3 +324,5 @@ a.btn-outline-dark:hover { color: #fff !important; }
 .member-list { padding: 0 0.5rem; }
 
 .form-label, .col-form-label { color: var(--bs-gray-700); font-weight: 900; font-size: 0.8rem; }
+
+#add-custom-setting { font-size: 0.9rem; padding: 0 0.5rem; line-height: 22px; }

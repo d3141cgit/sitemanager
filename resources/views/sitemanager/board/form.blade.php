@@ -38,70 +38,66 @@
         
         <!-- Basic Information Row -->
         <div class="row">
-            <div class="col-lg-8">
+            <div class="col-lg-4 mb-4">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Basic Information</h5>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="name" class="form-label">Board Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                       id="name" name="name" value="{{ old('name', isset($board) ? $board->name : '') }}" required maxlength="100">
-                                @error('name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="slug" class="form-label">Slug <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('slug') is-invalid @enderror" 
-                                       id="slug" name="slug" value="{{ old('slug', isset($board) ? $board->slug : '') }}" required maxlength="50"
-                                       pattern="[a-z0-9_]+" title="Only lowercase letters, numbers, and underscores are allowed">
-                                <div class="form-text">Used in URLs and database table names. Only lowercase letters, numbers, and underscores are allowed.</div>
-                                <div id="slug-feedback" class="mt-1" style="display: none;"></div>
-                                @error('slug')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Board Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                                    id="name" name="name" value="{{ old('name', isset($board) ? $board->name : '') }}" required maxlength="100">
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                         
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="menu_id" class="form-label">Connect to Menu</label>
-                                <select class="form-select @error('menu_id') is-invalid @enderror" id="menu_id" name="menu_id">
-                                    <option value="">Select Menu (Optional)</option>
-                                    @if(isset($menus))
-                                        @foreach($menus as $menu)
-                                            <option value="{{ $menu->id }}" 
-                                                    {{ old('menu_id', isset($board) ? $board->menu_id : '') == $menu->id ? 'selected' : '' }}>
-                                                {{ str_repeat('　', $menu->depth) }}{{ $menu->title }}
-                                            </option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                                @error('menu_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="status" class="form-label">Status</label>
-                                <select class="form-select @error('status') is-invalid @enderror" id="status" name="status">
-                                    <option value="active" {{ old('status', isset($board) ? $board->status : 'active') === 'active' ? 'selected' : '' }}>Active</option>
-                                    <option value="inactive" {{ old('status', isset($board) ? $board->status : '') === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                </select>
-                                @error('status')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        <div class="mb-3">
+                            <label for="slug" class="form-label">Slug <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control @error('slug') is-invalid @enderror" 
+                                    id="slug" name="slug" value="{{ old('slug', isset($board) ? $board->slug : '') }}" required maxlength="50"
+                                    pattern="[a-z0-9_]+" title="Only lowercase letters, numbers, and underscores are allowed">
+                            <div class="form-text">Used in URLs and database table names. Only lowercase letters, numbers, and underscores are allowed.</div>
+                            <div id="slug-feedback" class="mt-1" style="display: none;"></div>
+                            @error('slug')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="menu_id" class="form-label">Connect to Menu</label>
+                            <select class="form-select @error('menu_id') is-invalid @enderror" id="menu_id" name="menu_id">
+                                <option value="">Select Menu (Optional)</option>
+                                @if(isset($menus))
+                                    @foreach($menus as $menu)
+                                        <option value="{{ $menu->id }}" 
+                                                {{ old('menu_id', isset($board) ? $board->menu_id : '') == $menu->id ? 'selected' : '' }}>
+                                            {{ str_repeat('　', $menu->depth) }}{{ $menu->title }}
+                                        </option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            @error('menu_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select @error('status') is-invalid @enderror" id="status" name="status">
+                                <option value="active" {{ old('status', isset($board) ? $board->status : 'active') === 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="inactive" {{ old('status', isset($board) ? $board->status : '') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                            </select>
+                            @error('status')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="col-lg-4">
+            <div class="col-lg-4 mb-4">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Settings</h5>
@@ -118,46 +114,65 @@
                             @enderror
                         </div>
                         
-                        <div class="mb-3">
-                            <label class="form-label">Features</label>
-                            <div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="use_categories" name="use_categories" 
-                                           value="1" {{ old('use_categories', isset($board) ? $board->getSetting('use_categories', false) : false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="use_categories">Use Categories</label>
+                        @if(isset($systemSettings))
+                            @foreach($systemSettings as $key => $config)
+                                @php
+                                    $type = $config[0];
+                                    $label = $config[1];
+                                    $description = $config[2] ?? '';
+                                    $options = $config[3] ?? [];
+                                    $subSection = $options['sub_section'] ?? null;
+                                    $currentValue = old("settings.{$key}", isset($separatedSettings) ? ($separatedSettings['system'][$key] ?? null) : (isset($board) ? $board->getSetting($key) : null));
+                                @endphp
+                                
+                                <div class="mb-3">
+                                    @if(str_contains($type, 'boolean'))
+                                        <div class="form-check">
+                                            <input class="form-check-input parent-toggle" type="checkbox" id="{{ $key }}" name="{{ $key }}" 
+                                                   value="1" {{ old($key, $currentValue) ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="{{ $key }}">
+                                                {{ $label }} 
+                                                <small class="text-muted">({{ $key }})</small>
+                                            </label>
+                                            @if($description)
+                                                <div class="form-text">{{ $description }}</div>
+                                            @endif
+                                        </div>
+                                        
+                                        {{-- sub_section이 있는 경우 인라인 서브섹션은 렌더링하지 않음 (카드로만 표시) --}}
+                                    @else
+                                        <label for="settings_{{ $key }}" class="form-label">
+                                            {{ $label }} 
+                                            <small class="text-muted">({{ $key }})</small>
+                                        </label>
+                                        @if(str_contains($type, 'integer'))
+                                            <input type="number" class="form-control" id="settings_{{ $key }}" name="settings[{{ $key }}]" 
+                                                   value="{{ $currentValue }}" 
+                                                   @if(str_contains($type, 'min:')) min="{{ preg_match('/min:(\d+)/', $type, $matches) ? $matches[1] : '' }}" @endif
+                                                   @if(str_contains($type, 'max:')) max="{{ preg_match('/max:(\d+)/', $type, $matches) ? $matches[1] : '' }}" @endif>
+                                        @else
+                                            <input type="text" class="form-control" id="settings_{{ $key }}" name="settings[{{ $key }}]" 
+                                                   value="{{ $currentValue }}">
+                                        @endif
+                                        @if($description)
+                                            <div class="form-text">{{ $description }}</div>
+                                        @endif
+                                    @endif
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="use_files" name="use_files" 
-                                           value="1" {{ old('use_files', isset($board) ? $board->getSetting('allow_file_upload', false) : false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="use_files">Allow File Attachments</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="allow_comments" name="allow_comments" 
-                                           value="1" {{ old('allow_comments', isset($board) ? $board->getSetting('allow_comments', true) : true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="allow_comments">Enable Comments</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="use_tags" name="use_tags" 
-                                           value="1" {{ old('use_tags', isset($board) ? $board->getSetting('use_tags', false) : false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="use_tags">Enable Tags</label>
-                                </div>
-                            </div>
+                            @endforeach
+                        @endif
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6>Custom Settings</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="add-custom-setting">
+                                <i class="bi bi-plus"></i> Add Setting
+                            </button>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Custom Settings Card -->
-                <div class="card mt-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="card-title mb-0">Custom Settings</h6>
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-custom-setting">
-                            <i class="bi bi-plus"></i> Add Setting
-                        </button>
-                    </div>
-                    <div class="card-body">
+
                         <div id="custom-settings-container">
-                            @if(isset($board) && $board->getCustomSettings())
-                                @foreach($board->getCustomSettings() as $key => $value)
+                            @if(isset($separatedSettings) && !empty($separatedSettings['custom']))
+                                @foreach($separatedSettings['custom'] as $key => $value)
                                     <div class="custom-setting-item mb-3">
                                         <div class="row g-2">
                                             <div class="col-5">
@@ -180,6 +195,32 @@
                                         </div>
                                     </div>
                                 @endforeach
+                            @elseif(isset($board) && $board->getCustomSettings())
+                                @foreach($board->getCustomSettings() as $key => $value)
+                                    @if(!isset($systemSettings) || !array_key_exists($key, $systemSettings))
+                                        <div class="custom-setting-item mb-3">
+                                            <div class="row g-2">
+                                                <div class="col-5">
+                                                    <input type="text" class="form-control form-control-sm" 
+                                                           name="custom_settings[{{ $loop->index }}][key]" 
+                                                           value="{{ $key }}" 
+                                                           placeholder="Setting key">
+                                                </div>
+                                                <div class="col-6">
+                                                    <input type="text" class="form-control form-control-sm" 
+                                                           name="custom_settings[{{ $loop->index }}][value]" 
+                                                           value="{{ is_array($value) ? json_encode($value) : $value }}" 
+                                                           placeholder="Setting value">
+                                                </div>
+                                                <div class="col-1">
+                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-setting">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endforeach
                             @endif
                         </div>
                         <div class="form-text">
@@ -188,64 +229,98 @@
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Additional Settings Row (appears when needed) -->
-        <div class="row mt-4">
-            <!-- Category Settings -->
-            <div class="col-lg-6">
-                <div class="card" id="category_settings" style="display: none;">
-                    <div class="card-header">
-                        <h6 class="card-title mb-0">Category Settings</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="categories" class="form-label">Category List</label>
-                            <textarea class="form-control" id="categories" name="categories" rows="5" 
-                                      placeholder="Enter one category per line">{{ old('categories', isset($board) && $board->categories ? implode("\n", $board->categories) : '') }}</textarea>
-                            <div class="form-text">Enter one category name per line.</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- File Upload Settings -->
-            <div class="col-lg-6">
-                <div class="card" id="file_settings" style="display: none;">
-                    <div class="card-header">
-                        <h6 class="card-title mb-0">File Upload Settings</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="max_file_size" class="form-label">Max File Size (KB)</label>
-                            <input type="number" class="form-control" id="max_file_size" name="settings[max_file_size]" 
-                                   value="{{ old('settings.max_file_size', isset($board) ? $board->getSetting('max_file_size', 2048) : 2048) }}" 
-                                   min="100" max="51200">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="max_files_per_post" class="form-label">Max Files per Post</label>
-                            <input type="number" class="form-control" id="max_files_per_post" name="settings[max_files_per_post]" 
-                                   value="{{ old('settings.max_files_per_post', isset($board) ? $board->getSetting('max_files_per_post', 5) : 5) }}" 
-                                   min="1" max="20">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="allowed_file_types" class="form-label">Allowed File Types</label>
-                            <input type="text" class="form-control" id="allowed_file_types" name="settings[allowed_file_types]" 
-                                   value="{{ old('settings.allowed_file_types', isset($board) ? implode(',', $board->getAllowedFileTypes()) : implode(',', config('sitemanager.board.allowed_extensions'))) }}" 
-                                   placeholder="jpg,jpeg,png,gif,pdf">
-                            <div class="form-text">Separate with commas.</div>
-                        </div>
 
-                        <div class="mb-3">
-                            <label for="file_categories" class="form-label">File Categories</label>
-                            <textarea class="form-control" id="file_categories" name="settings[file_categories]" rows="3"
-                                      placeholder="thumbnail&#10;seo&#10;header">{{ old('settings.file_categories', isset($board) ? $board->getSetting('file_categories', '') : '') }}</textarea>
-                            <div class="form-text">Enter one category per line. Used for organizing uploaded files (e.g. thumbnail, seo, header).</div>
-                        </div>
-                    </div>
-                </div>
+            <div class="col-lg-4 mb-4">
+                {{-- Dynamic Sub Section Area from systemSettings --}}
+                @if(isset($systemSettings))
+                    @foreach($systemSettings as $key => $config)
+                        @php
+                            $type = $config[0];
+                            $label = $config[1];
+                            $options = $config[3] ?? [];
+                            $subSection = $options['sub_section'] ?? null;
+                        @endphp
+                        
+                        @if($subSection && str_contains($type, 'boolean'))
+                            <div class="card mb-4" id="{{ $key }}_card" style="display: none;">
+                                <div class="card-header">
+                                    <h6 class="card-title mb-0">{{ $subSection['title'] ?? $label . ' Settings' }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    @if(isset($subSection['settings']))
+                                        @foreach($subSection['settings'] as $fieldKey => $fieldConfig)
+                                            @php
+                                                $fieldType = $fieldConfig[0];
+                                                $fieldLabel = $fieldConfig[1];
+                                                $fieldDescription = $fieldConfig[2] ?? '';
+                                                $fieldOptions = $fieldConfig[3] ?? [];
+                                                
+                                                // Get current value based on field type
+                                                if ($fieldKey === 'categories') {
+                                                    $fieldValue = old($fieldKey, isset($board) && $board->categories ? implode("\n", $board->categories) : '');
+                                                } else {
+                                                    $fieldValue = old("settings.{$fieldKey}", isset($board) ? $board->getSetting($fieldKey, $fieldOptions['default'] ?? '') : ($fieldOptions['default'] ?? ''));
+                                                }
+                                            @endphp
+                                            
+                                            <div class="mb-3">
+                                                @if($fieldType === 'special')
+                                                    {{-- Special handling for categories field --}}
+                                                    <label for="{{ $fieldKey }}" class="form-label">
+                                                        {{ $fieldLabel }} 
+                                                        <small class="text-muted">({{ $fieldKey }})</small>
+                                                    </label>
+                                                    @if($fieldOptions['type'] === 'textarea')
+                                                        <textarea class="form-control" id="{{ $fieldKey }}" 
+                                                                  name="{{ $fieldKey }}" 
+                                                                  rows="{{ $fieldOptions['rows'] ?? 3 }}"
+                                                                  @if($fieldOptions['placeholder'] ?? null) placeholder="{{ $fieldOptions['placeholder'] }}" @endif>{{ $fieldValue }}</textarea>
+                                                    @endif
+                                                @elseif(str_contains($fieldType, 'boolean'))
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="{{ $fieldKey }}" name="{{ $fieldKey }}" 
+                                                               value="1" {{ old($fieldKey, $fieldValue) ? 'checked' : '' }}>
+                                                        <label class="form-check-label" for="{{ $fieldKey }}">
+                                                            {{ $fieldLabel }} 
+                                                            <small class="text-muted">({{ $fieldKey }})</small>
+                                                        </label>
+                                                    </div>
+                                                @else
+                                                    <label for="{{ $fieldKey }}" class="form-label">
+                                                        {{ $fieldLabel }} 
+                                                        <small class="text-muted">({{ $fieldKey }})</small>
+                                                    </label>
+                                                    @if($fieldOptions['type'] === 'textarea')
+                                                        <textarea class="form-control" id="{{ $fieldKey }}" 
+                                                                  name="settings[{{ $fieldKey }}]" 
+                                                                  rows="{{ $fieldOptions['rows'] ?? 3 }}"
+                                                                  @if($fieldOptions['placeholder'] ?? null) placeholder="{{ $fieldOptions['placeholder'] }}" @endif>{{ $fieldValue }}</textarea>
+                                                    @elseif($fieldOptions['type'] === 'number')
+                                                        <input type="number" class="form-control" id="{{ $fieldKey }}" 
+                                                               name="settings[{{ $fieldKey }}]" 
+                                                               value="{{ $fieldValue }}"
+                                                               @if($fieldOptions['min'] ?? null) min="{{ $fieldOptions['min'] }}" @endif
+                                                               @if($fieldOptions['max'] ?? null) max="{{ $fieldOptions['max'] }}" @endif
+                                                               @if($fieldOptions['placeholder'] ?? null) placeholder="{{ $fieldOptions['placeholder'] }}" @endif>
+                                                    @else
+                                                        <input type="text" class="form-control" id="{{ $fieldKey }}" 
+                                                               name="settings[{{ $fieldKey }}]" 
+                                                               value="{{ $fieldValue }}"
+                                                               @if($fieldOptions['placeholder'] ?? null) placeholder="{{ $fieldOptions['placeholder'] }}" @endif>
+                                                    @endif
+                                                @endif
+                                                
+                                                @if($fieldDescription)
+                                                    <div class="form-text">{{ $fieldDescription }}</div>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+                @endif
             </div>
         </div>
         
@@ -418,35 +493,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Category settings toggle
-    const useCategoriesCheckbox = document.getElementById('use_categories');
-    const categorySettings = document.getElementById('category_settings');
+    // Parent-toggle functionality for cards only
+    const parentToggles = document.querySelectorAll('.parent-toggle');
     
-    function toggleCategorySettings() {
-        if (useCategoriesCheckbox && categorySettings) {
-            categorySettings.style.display = useCategoriesCheckbox.checked ? 'block' : 'none';
+    function handleParentToggle(checkbox) {
+        // Handle card toggles (dynamic cards from systemSettings)
+        const cardId = checkbox.id + '_card';
+        const cardElement = document.getElementById(cardId);
+        if (cardElement) {
+            cardElement.style.display = checkbox.checked ? 'block' : 'none';
         }
     }
     
-    if (useCategoriesCheckbox) {
-        useCategoriesCheckbox.addEventListener('change', toggleCategorySettings);
-        toggleCategorySettings(); // Set initial state
-    }
-    
-    // File upload settings toggle
-    const useFilesCheckbox = document.getElementById('use_files');
-    const fileSettings = document.getElementById('file_settings');
-    
-    function toggleFileSettings() {
-        if (useFilesCheckbox && fileSettings) {
-            fileSettings.style.display = useFilesCheckbox.checked ? 'block' : 'none';
-        }
-    }
-    
-    if (useFilesCheckbox) {
-        useFilesCheckbox.addEventListener('change', toggleFileSettings);
-        toggleFileSettings(); // Set initial state
-    }
+    parentToggles.forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            handleParentToggle(this);
+        });
+        // Set initial state
+        handleParentToggle(checkbox);
+    });
     
     // Custom Settings functionality
     const addCustomSettingBtn = document.getElementById('add-custom-setting');
@@ -516,6 +581,36 @@ document.addEventListener('DOMContentLoaded', function() {
         font-size: 0.875rem;
         padding: 0.375rem 0.75rem;
     }
+}
+
+/* Sub-section styles */
+.sub-section {
+    background-color: #f8f9fa;
+    border-left: 3px solid #dee2e6 !important;
+    border-radius: 0.375rem;
+    padding: 0.75rem !important;
+    margin-top: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.sub-section:hover {
+    border-left-color: #0d6efd !important;
+    background-color: #f0f7ff;
+}
+
+.sub-section .form-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.375rem;
+}
+
+.sub-section .form-control-sm {
+    font-size: 0.875rem;
+}
+
+.sub-section .form-text {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
 }
 
 /* Slug validation styles */
