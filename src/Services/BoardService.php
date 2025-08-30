@@ -335,12 +335,65 @@ class BoardService
 
         $commentModelClass = BoardComment::forBoard($board->slug);
         
-        return $commentModelClass::with('member', 'children.member')
+        $comments = $commentModelClass::with('member', 'children.member')
             ->topLevel()
             ->approved()
             ->forPost($postId)
             ->orderBy('created_at', 'desc')
             ->get();
+            
+        // 각 댓글에 권한 정보 추가
+        $comments->each(function ($comment) use ($board) {
+            $comment->permissions = $this->calculateCommentPermissions($board, $comment);
+            
+            // 자식 댓글들에도 권한 정보 추가
+            if ($comment->children) {
+                $comment->children->each(function ($child) use ($board) {
+                    $child->permissions = $this->calculateCommentPermissions($board, $child);
+                });
+            }
+        });
+        
+        return $comments;
+    }
+    
+    /**
+     * 댓글 권한 계산
+     */
+    private function calculateCommentPermissions(Board $board, $comment): array
+    {
+        $user = Auth::user();
+        
+        $canEdit = false;
+        $canDelete = false;
+        $canReply = false;
+        
+        if ($board->menu_id && $user) {
+            // 본인 댓글인 경우 수정/삭제 가능 (member_id가 존재하고 일치하는 경우만)
+            $isAuthor = $comment->member_id && $comment->member_id === $user->id;
+            
+            // 댓글 관리 권한
+            $canManageComments = can('manageComments', $board);
+            
+            // 댓글 작성 권한 (답글용)
+            $canWriteComments = can('writeComments', $board);
+            
+            // 수정 권한: 댓글 관리 권한 OR 작성자 본인
+            $canEdit = $canManageComments || $isAuthor;
+            
+            // 삭제 권한: 댓글 관리 권한 OR 작성자 본인
+            $canDelete = $canManageComments || $isAuthor;
+            
+            // 답글 권한: 댓글 작성 권한
+            $canReply = $canWriteComments;
+        }
+        
+        return [
+            'canEdit' => $canEdit,
+            'canDelete' => $canDelete,
+            'canReply' => $canReply,
+            'canManage' => $canManageComments, // 댓글 관리 권한 추가
+        ];
     }
 
     /**
@@ -348,7 +401,9 @@ class BoardService
      */
     public function getPostAttachments(Board $board, $postId)
     {
-        if (!$board->allowsFileUpload()) {
+        // 첨부파일 보기는 게시판의 파일 업로드 설정이 활성화된 경우에만
+        // (업로드 권한과 관계없이 이미 업로드된 파일은 볼 수 있어야 함)
+        if (!$board->getSetting('allow_file_upload', false)) {
             return null;
         }
 

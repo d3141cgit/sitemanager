@@ -55,22 +55,6 @@
 
                         <!-- Action Buttons -->
                         <div class="d-flex gap-2 mt-2 mt-md-0">
-                            @php
-                                $user = auth()->user();
-                                $canEdit = false;
-                                $canDelete = false;
-                                
-                                if ($user) {
-                                    // Author or board manager or system admin
-                                    if ($post->member_id === $user->id || 
-                                        ($board->menu_id && can('manage', $board)) || 
-                                        $user->level >= config('member.admin_level', 200)) {
-                                        $canEdit = true;
-                                        $canDelete = true;
-                                    }
-                                }
-                            @endphp
-
                             @if($canEdit)
                                 <a href="{{ route('board.edit', [$board->slug, $post->slug ?: $post->id]) }}" 
                                    class="btn btn-sm btn-outline-primary">

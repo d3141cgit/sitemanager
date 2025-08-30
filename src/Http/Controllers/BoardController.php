@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -142,12 +143,16 @@ class BoardController extends Controller
         // 조회수 증가
         $this->boardService->incrementViewCount($post, $request);
 
+        // 게시글 관련 권한 계산
+        $permissions = $this->calculatePostPermissions($board, $post);
+
         // SEO 데이터 구성
         $seoData = $this->buildPostSeoData($board, $post, $attachments);
 
         return view($this->selectView('show'), array_merge(
             compact('board', 'post', 'comments', 'attachments', 'seoData'),
             $prevNext,
+            $permissions,
             [
                 'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
                 'additionalBreadcrumb' => [
@@ -156,6 +161,95 @@ class BoardController extends Controller
                 ]
             ]
         ));
+    }
+
+    /**
+     * 게시글 관련 권한 계산
+     */
+    private function calculatePostPermissions(Board $board, $post): array
+    {
+        $user = Auth::user();
+        
+        $canEdit = false;
+        $canDelete = false;
+        $canWriteComments = false;
+        $canUploadFiles = false;
+        
+        if ($board->menu_id) {
+            // 메뉴에서 가져온 최종 권한들 (이미 member, group, level, admin의 최대값으로 계산됨)
+            $canWrite = can('write', $board);
+            $canManage = can('manage', $board);
+            $canWriteComments = can('writeComments', $board);
+            $canUploadFiles = can('uploadFiles', $board);
+            
+            // 작성자 본인 여부 (로그인한 사용자이면서 member_id가 일치하는 경우만)
+            $isAuthor = $user && $post->member_id && $post->member_id === $user->id;
+            
+            // 수정 권한: 메뉴 관리 권한 OR (작성자 본인 && 글 작성 권한)
+            $canEdit = $canManage || ($isAuthor && $canWrite);
+            
+            // 삭제 권한: 메뉴 관리 권한 OR (작성자 본인 && 글 작성 권한)
+            $canDelete = $canManage || ($isAuthor && $canWrite);
+            
+            // 댓글 작성 권한: 게시판 설정 허용 && 메뉴 권한
+            if ($board->getSetting('allow_comments', true)) {
+                $canWriteComments = $canWriteComments;
+            } else {
+                $canWriteComments = false;
+            }
+            
+            // 파일 업로드 권한: 게시판 설정 허용 && 메뉴 권한
+            if ($board->getSetting('allow_file_upload', false)) {
+                $canUploadFiles = $canUploadFiles;
+            } else {
+                $canUploadFiles = false;
+            }
+        }
+        
+        return [
+            'canEdit' => $canEdit,
+            'canDelete' => $canDelete,
+            'canWriteComments' => $canWriteComments,
+            'canUploadFiles' => $canUploadFiles,
+        ];
+    }
+
+    /**
+     * 댓글 권한 계산
+     */
+    private function calculateCommentPermissions(Board $board, $comment): array
+    {
+        $user = Auth::user();
+        
+        $canEdit = false;
+        $canDelete = false;
+        $canReply = false;
+        
+        if ($board->menu_id && $user) {
+            // 본인 댓글인 경우 수정/삭제 가능 (member_id가 존재하고 일치하는 경우만)
+            $isAuthor = $comment->member_id && $comment->member_id === $user->id;
+            
+            // 댓글 관리 권한
+            $canManageComments = can('manageComments', $board);
+            
+            // 댓글 작성 권한 (답글용)
+            $canWriteComments = can('writeComments', $board);
+            
+            // 수정 권한: 댓글 관리 권한 OR 작성자 본인
+            $canEdit = $canManageComments || $isAuthor;
+            
+            // 삭제 권한: 댓글 관리 권한 OR 작성자 본인
+            $canDelete = $canManageComments || $isAuthor;
+            
+            // 답글 권한: 댓글 작성 권한
+            $canReply = $canWriteComments;
+        }
+        
+        return [
+            'canEdit' => $canEdit,
+            'canDelete' => $canDelete,
+            'canReply' => $canReply,
+        ];
     }
 
     /**

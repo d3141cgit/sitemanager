@@ -18,41 +18,13 @@
         
         <!-- Comment Actions -->
         <div class="dropdown">
-            @php
-                $user = auth()->user();
-                $canEdit = false;
-                $canDelete = false;
-                $canManage = false;
-                $canReply = false;
-                
-                if ($user) {
-                    // 본인 댓글인 경우 수정/삭제 가능
-                    if ($comment->member_id === $user->id) {
-                        $canEdit = true;
-                        $canDelete = true;
-                    }
-                    
-                    // 댓글 관리 권한이 있는 경우 모든 댓글 관리 가능
-                    if (can('manageComments', $board)) {
-                        $canEdit = true;
-                        $canDelete = true;
-                        $canManage = true;
-                    }
-                    
-                    // 댓글 쓰기 권한이 있는 경우 답글 가능
-                    if (can('writeComments', $board)) {
-                        $canReply = true;
-                    }
-                }
-            @endphp
-            
-            @if($canEdit || $canDelete || $canManage)
+            @if($comment->permissions['canEdit'] || $comment->permissions['canDelete'])
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
                         type="button" data-bs-toggle="dropdown">
                     <i class="bi bi-three-dots"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    @if($canEdit)
+                    @if($comment->permissions['canEdit'])
                         <li>
                             <a class="dropdown-item" href="javascript:void(0)" onclick="editComment({{ $comment->id }})">
                                 <i class="bi bi-pencil"></i> Edit
@@ -60,7 +32,7 @@
                         </li>
                     @endif
                     
-                    @if($canReply)
+                    @if($comment->permissions['canReply'])
                         <li>
                             <a class="dropdown-item" href="javascript:void(0)" onclick="event.preventDefault(); showReplyLoading({{ $comment->id }}); replyToComment({{ $comment->id }})">
                                 <i class="bi bi-reply"></i> <span class="reply-text">Reply</span>
@@ -81,7 +53,7 @@
                         </li>
                     @endif
                     
-                    @if($canDelete)
+                    @if($comment->permissions['canDelete'])
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item text-danger" href="javascript:void(0)" 
