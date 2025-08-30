@@ -5,6 +5,7 @@ namespace SiteManager\Http\Controllers;
 use SiteManager\Models\Board;
 use SiteManager\Models\BoardPost;
 use SiteManager\Models\BoardComment;
+use SiteManager\Services\BoardService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +15,10 @@ use Illuminate\Support\Facades\Log;
 
 class CommentController extends Controller
 {
+    public function __construct(
+        private BoardService $boardService
+    ) {}
+
     /**
      * 뷰 파일을 선택합니다. 프로젝트에 있으면 프로젝트 뷰를, 없으면 패키지 뷰를 반환합니다.
      */
@@ -185,6 +190,9 @@ class CommentController extends Controller
             // 댓글 생성
             $comment = $commentModelClass::create($commentData);
 
+            // 댓글에 권한 정보 추가
+            $comment->permissions = $this->calculateCommentPermissions($board, $comment);
+
             // 게시글의 댓글 수 업데이트
             $post->updateCommentCount();
 
@@ -247,6 +255,9 @@ class CommentController extends Controller
                 'content' => $this->filterHtml($validated['content']),
                 'is_edited' => true,
             ]);
+
+            // 권한 정보 추가
+            $comment->permissions = $this->calculateCommentPermissions($board, $comment);
 
             $commentHtml = view($this->selectView('comment'), compact('comment', 'board', 'post') + ['level' => 0])->render();
 
@@ -359,5 +370,44 @@ class CommentController extends Controller
             'comments_html' => $commentsHtml,
             'comment_count' => $comments->count(),
         ]);
+    }
+
+    /**
+     * 댓글 권한 계산
+     */
+    private function calculateCommentPermissions(Board $board, $comment): array
+    {
+        $user = Auth::user();
+        
+        $canEdit = false;
+        $canDelete = false;
+        $canReply = false;
+        
+        if ($board->menu_id && $user) {
+            // 본인 댓글인 경우 수정/삭제 가능 (member_id가 존재하고 일치하는 경우만)
+            $isAuthor = $comment->member_id && $comment->member_id === $user->id;
+            
+            // 댓글 관리 권한
+            $canManageComments = can('manageComments', $board);
+            
+            // 댓글 작성 권한 (답글용)
+            $canWriteComments = can('writeComments', $board);
+            
+            // 수정 권한: 댓글 관리 권한 OR 작성자 본인
+            $canEdit = $canManageComments || $isAuthor;
+            
+            // 삭제 권한: 댓글 관리 권한 OR 작성자 본인
+            $canDelete = $canManageComments || $isAuthor;
+            
+            // 답글 권한: 댓글 작성 권한
+            $canReply = $canWriteComments;
+        }
+        
+        return [
+            'canEdit' => $canEdit,
+            'canDelete' => $canDelete,
+            'canReply' => $canReply,
+            'canManage' => $canManageComments ?? false, // 댓글 관리 권한 추가
+        ];
     }
 }
