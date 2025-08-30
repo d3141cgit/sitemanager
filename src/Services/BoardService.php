@@ -96,7 +96,7 @@ class BoardService
                 $table->unsignedBigInteger('member_id')->nullable()->comment('작성자 회원 ID');
                 $table->string('author_name', 100)->nullable()->comment('작성자명 (비회원용)');
                 $table->text('content')->comment('댓글 내용');
-                $table->enum('status', ['approved', 'pending', 'spam'])->default('approved')->comment('승인 상태');
+                $table->enum('status', ['approved', 'pending', 'rejected', 'deleted'])->default('approved')->comment('승인 상태');
                 $table->unsignedInteger('file_count')->default(0)->comment('첨부파일 수');
                 $table->timestamps();
                 $table->softDeletes();
@@ -334,10 +334,19 @@ class BoardService
         }
 
         $commentModelClass = BoardComment::forBoard($board->slug);
+        $currentUserId = Auth::id();
         
+        // 댓글 조회 조건: 승인된 댓글 OR 본인이 작성한 댓글
         $comments = $commentModelClass::with('member', 'children.member')
             ->topLevel()
-            ->approved()
+            ->where(function($query) use ($currentUserId) {
+                $query->where('status', 'approved');
+                
+                // 로그인한 사용자의 경우 본인 댓글도 포함
+                if ($currentUserId) {
+                    $query->orWhere('member_id', $currentUserId);
+                }
+            })
             ->forPost($postId)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -584,5 +593,93 @@ class BoardService
         }
         
         $attachment->delete();
+    }
+
+    /**
+     * 댓글 삭제
+     */
+    public function deleteComment(Board $board, int $postId, int $commentId, int $userId): array
+    {
+        $commentModelClass = BoardComment::forBoard($board->slug);
+        $postModelClass = BoardPost::forBoard($board->slug);
+        
+        $comment = $commentModelClass::findOrFail($commentId);
+        $post = $postModelClass::findOrFail($postId);
+
+        // 권한 체크 (본인 댓글이거나 댓글 관리 권한이 있는지)
+        $isOwner = $userId === $comment->member_id;
+        $canManage = can('manageComments', $board);
+        
+        if (!$isOwner && !$canManage) {
+            throw new \Exception('삭제 권한이 없습니다.');
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            // 대댓글이 있는 경우 내용만 삭제하고 "[삭제된 댓글입니다]"로 표시
+            $hasReplies = $commentModelClass::where('parent_id', $comment->id)->exists();
+            
+            if ($hasReplies) {
+                $comment->update([
+                    'content' => '[삭제된 댓글입니다]',
+                    'status' => 'deleted',
+                ]);
+            } else {
+                $comment->delete();
+            }
+
+            // 게시글의 댓글 수 업데이트
+            $post->updateCommentCount();
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => '댓글이 삭제되었습니다.',
+                'comment_count' => $post->fresh()->comment_count,
+                'deleted_completely' => !$hasReplies,
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw $e;
+        }
+    }
+
+    /**
+     * 게시판의 미승인 댓글 수 조회
+     */
+    public function getPendingCommentsCount(Board $board): int
+    {
+        $commentModelClass = BoardComment::forBoard($board->slug);
+        
+        return $commentModelClass::where('status', 'pending')->count();
+    }
+
+    /**
+     * 모든 게시판의 미승인 댓글 수 조회 (성능 최적화 버전)
+     */
+    public function getAllBoardsPendingCommentsCount(): array
+    {
+        $boards = Board::all();
+        $pendingCounts = [];
+        
+        foreach ($boards as $board) {
+            try {
+                // 테이블이 존재하는지 확인
+                $tableName = "board_comments_{$board->slug}";
+                if (Schema::hasTable($tableName)) {
+                    $count = DB::table($tableName)->where('status', 'pending')->count();
+                    $pendingCounts[$board->id] = $count;
+                } else {
+                    $pendingCounts[$board->id] = 0;
+                }
+            } catch (\Exception $e) {
+                // 테이블이 없거나 오류가 발생한 경우 0으로 설정
+                $pendingCounts[$board->id] = 0;
+            }
+        }
+        
+        return $pendingCounts;
     }
 }

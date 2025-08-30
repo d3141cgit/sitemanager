@@ -58,6 +58,7 @@
                     <th>Connected Menu</th>
                     <th class="text-center">Posts</th>
                     <th class="text-center">Comments</th>
+                    <th class="text-center">Pending</th>
                     <th>Status</th>
                     <th>Created Date</th>
                     <th class="text-end">Actions</th>
@@ -87,6 +88,16 @@
                     </td>
                     <td class="text-center text-success">
                         {{ !empty($board->comments_count) ?? $board->getCommentsCount() }}
+                    </td>
+                    <td class="text-center">
+                        @if($board->pending_comments_count > 0)
+                            <a href="{{ route('sitemanager.admin.comments.index', ['board_id' => $board->id, 'status' => 'pending']) }}" 
+                               class="badge bg-warning text-decoration-none" title="미승인 댓글 관리">
+                                {{ $board->pending_comments_count }}
+                            </a>
+                        @else
+                            <span class="text-muted">0</span>
+                        @endif
                     </td>
                     <td>
                         @if($board->status === 'active')

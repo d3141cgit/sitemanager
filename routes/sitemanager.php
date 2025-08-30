@@ -5,6 +5,7 @@ use SiteManager\Http\Controllers\SiteManager\SiteManagerController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerMemberController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerGroupController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerBoardController;
+use SiteManager\Http\Controllers\Admin\CommentAdminController;
 use SiteManager\Http\Controllers\MenuController;
 
 // 사이트매니저 라우트
@@ -42,4 +43,15 @@ Route::middleware(['auth', 'sitemanager'])->prefix('sitemanager')->name('siteman
     Route::patch('/boards/{board}/toggle-status', [SiteManagerBoardController::class, 'toggleStatus'])->name('boards.toggle-status');
     Route::post('/boards/{board}/regenerate-tables', [SiteManagerBoardController::class, 'regenerateTables'])->name('boards.regenerate-tables');
     Route::resource('boards', SiteManagerBoardController::class);
+    
+    // 댓글 관리
+    Route::prefix('comments')->name('admin.comments.')->group(function () {
+        Route::get('/', [CommentAdminController::class, 'index'])->name('index');
+        Route::post('/approve', [CommentAdminController::class, 'approve'])->name('approve');
+        Route::post('/reject', [CommentAdminController::class, 'reject'])->name('reject');
+        Route::post('/delete', [CommentAdminController::class, 'delete'])->name('delete');
+        Route::post('/restore', [CommentAdminController::class, 'restore'])->name('restore');
+        Route::post('/force-delete', [CommentAdminController::class, 'forceDelete'])->name('force-delete');
+        Route::post('/bulk', [CommentAdminController::class, 'bulkAction'])->name('bulk');
+    });
 });

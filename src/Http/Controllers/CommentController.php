@@ -288,50 +288,11 @@ class CommentController extends Controller
     {
         $board = Board::where('slug', $slug)->firstOrFail();
         
-        $commentModelClass = BoardComment::forBoard($slug);
-        $postModelClass = BoardPost::forBoard($slug);
-        
-        $comment = $commentModelClass::findOrFail($commentId);
-        $post = $postModelClass::findOrFail($postId);
-
-        // 권한 체크 (본인 댓글이거나 댓글 관리 권한이 있는지)
-        $isOwner = Auth::id() === $comment->member_id;
-        $canManage = can('manageComments', $board);
-        
-        if (!$isOwner && !$canManage) {
-            return response()->json(['error' => '삭제 권한이 없습니다.'], 403);
-        }
-
-        DB::beginTransaction();
-        
         try {
-            // 대댓글이 있는 경우 내용만 삭제하고 "[삭제된 댓글입니다]"로 표시
-            $hasReplies = $commentModelClass::where('parent_id', $comment->id)->exists();
+            $result = $this->boardService->deleteComment($board, $postId, $commentId, Auth::id());
             
-            if ($hasReplies) {
-                $comment->update([
-                    'content' => '[삭제된 댓글입니다]',
-                    'status' => 'deleted',
-                ]);
-            } else {
-                $comment->delete();
-            }
-
-            // 게시글의 댓글 수 업데이트
-            $post->updateCommentCount();
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => '댓글이 삭제되었습니다.',
-                'comment_count' => $post->fresh()->comment_count,
-                'deleted_completely' => !$hasReplies,
-            ]);
-
+            return response()->json($result);
         } catch (\Exception $e) {
-            DB::rollBack();
-            
             Log::error('Comment deletion failed', [
                 'error' => $e->getMessage(),
                 'comment_id' => $commentId,
@@ -339,8 +300,8 @@ class CommentController extends Controller
             
             return response()->json([
                 'success' => false,
-                'message' => '댓글 삭제 중 오류가 발생했습니다.'
-            ], 500);
+                'message' => $e->getMessage()
+            ], 403);
         }
     }
 
@@ -351,16 +312,11 @@ class CommentController extends Controller
     {
         $board = Board::where('slug', $slug)->firstOrFail();
         
-        $commentModelClass = BoardComment::forBoard($slug);
         $postModelClass = BoardPost::forBoard($slug);
-        
         $post = $postModelClass::findOrFail($postId);
         
-        // 승인된 댓글만 조회 (최신순)
-        $comments = $commentModelClass::where('post_id', $postId)
-            ->where('status', 'approved')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // 서비스 레이어를 통해 댓글 조회
+        $comments = $this->boardService->getPostComments($board, $postId);
 
         $commentsHtml = view($this->selectView('comments'), compact('comments', 'board'))->render();
 
@@ -368,7 +324,7 @@ class CommentController extends Controller
             'success' => true,
             'comments' => $comments,
             'comments_html' => $commentsHtml,
-            'comment_count' => $comments->count(),
+            'comment_count' => $comments ? $comments->count() : 0,
         ]);
     }
 

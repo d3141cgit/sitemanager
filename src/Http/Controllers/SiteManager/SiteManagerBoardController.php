@@ -28,9 +28,12 @@ class SiteManagerBoardController extends Controller
             ->paginate(20);
 
         // 각 게시판의 통계 정보를 미리 계산
+        $pendingCommentsCount = $this->boardService->getAllBoardsPendingCommentsCount();
+        
         foreach ($boards as $board) {
             $board->posts_count = $board->getPostsCount();
             $board->comments_count = $board->getCommentsCount();
+            $board->pending_comments_count = $pendingCommentsCount[$board->id] ?? 0;
         }
 
         return view('sitemanager::sitemanager.board.index', compact('boards'));
