@@ -139,8 +139,8 @@ class BoardController extends Controller
         
         // 비밀글 접근 권한 확인
         if ($post->isSecret() && !$post->canAccess(Auth::id())) {
-            // 비밀번호 입력 폼 표시
-            return view('sitemanager::board.password-form', compact('board', 'post'));
+            // 비밀번호 입력 폼 표시 (스킨 적용)
+            return view($this->selectView('password-form'), compact('board', 'post'));
         }
         
         $comments = $this->boardService->getPostComments($board, $post->id);
