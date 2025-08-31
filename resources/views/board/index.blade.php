@@ -92,7 +92,13 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="flex-grow-1">
                                             <span class="badge bg-warning text-dark me-2">Notice</span>
-                                            <strong>{{ $notice->title }}</strong>
+                                            @if($notice->isSecret())
+                                                <i class="bi bi-lock-fill text-warning me-1"></i>
+                                                <strong>{{ $notice->title }}</strong>
+                                                <small class="text-muted">(비밀글)</small>
+                                            @else
+                                                <strong>{{ $notice->title }}</strong>
+                                            @endif
                                         </div>
                                         <div class="text-muted small d-none d-md-block">
                                             {{ $notice->created_at->format('M j') }}
@@ -133,7 +139,13 @@
                                             <td>
                                                 <a href="{{ route('board.show', [$board->slug, $post->slug ?: $post->id]) }}" 
                                                    class="text-decoration-none">
-                                                    {{ $post->title }}
+                                                    @if($post->isSecret())
+                                                        <i class="bi bi-lock-fill text-warning me-1"></i>
+                                                        {{ $post->title }}
+                                                        <small class="text-muted">(비밀글)</small>
+                                                    @else
+                                                        {{ $post->title }}
+                                                    @endif
                                                     @if($post->comment_count > 0)
                                                         <span class="badge bg-primary rounded-pill ms-1">{{ $post->comment_count }}</span>
                                                     @endif
@@ -168,7 +180,13 @@
                                         <a href="{{ route('board.show', [$board->slug, $post->slug ?: $post->id]) }}" 
                                            class="text-decoration-none flex-grow-1">
                                             <h6 class="mb-1">
-                                                {{ $post->title }}
+                                                @if($post->isSecret())
+                                                    <i class="bi bi-lock-fill text-warning me-1"></i>
+                                                    {{ $post->title }}
+                                                    <small class="text-muted">(비밀글)</small>
+                                                @else
+                                                    {{ $post->title }}
+                                                @endif
                                             </h6>
                                         </a>
                                         @if($post->comment_count > 0)

@@ -118,7 +118,25 @@ class MemberService
      */
     public function logout(): void
     {
+        // 비밀글 세션 정리
+        $this->clearSecretPostSessions();
+        
         Auth::logout();
+    }
+    
+    /**
+     * 비밀글 관련 세션 정리
+     */
+    private function clearSecretPostSessions(): void
+    {
+        $sessionData = session()->all();
+        
+        foreach ($sessionData as $key => $value) {
+            // 비밀글 비밀번호 확인 세션 삭제
+            if (str_starts_with($key, 'post_password_verified_')) {
+                session()->forget($key);
+            }
+        }
     }
     
     /**

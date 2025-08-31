@@ -43,6 +43,10 @@ Route::prefix('board')->name('board.')->group(function () {
         ->name('show')
         ->where('slug', '[a-z0-9_]+')
         ->where('id', '[a-z0-9\-_]+');
+    Route::post('/{slug}/{id}/verify-password', [BoardController::class, 'verifyPassword'])
+        ->name('verify-password')
+        ->where('slug', '[a-z0-9_]+')
+        ->where('id', '[a-z0-9\-_]+');
     Route::get('/{slug}/{id}/edit', [BoardController::class, 'edit'])
         ->name('edit')
         ->where('slug', '[a-z0-9_]+')

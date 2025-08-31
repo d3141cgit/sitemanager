@@ -57,6 +57,11 @@ document.addEventListener('DOMContentLoaded', function() {
             excerptCount.parentElement.className = length > 1000 ? 'form-text text-danger' : 'form-text';
         }
     }
+
+    // Initialize secret post functionality (if secret.js is loaded)
+    if (typeof initializeSecretPostForm === 'function') {
+        initializeSecretPostForm();
+    }
     
     // Generate slug from title
     function generateSlugFromTitle() {

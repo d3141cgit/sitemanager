@@ -1,5 +1,116 @@
 // Comment Management JavaScript Functions
 
+// Initialize comment form when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCommentForm();
+});
+
+function initializeCommentForm() {
+    const commentForm = document.getElementById('commentForm');
+    
+    if (commentForm) {
+        commentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const content = formData.get('content');
+            const postId = formData.get('post_id');
+            
+            if (!content.trim()) {
+                alert('Please write a comment.');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Posting...';
+            submitBtn.disabled = true;
+            
+            // Get route from global variables
+            const storeUrl = window.commentRoutes?.store;
+            if (!storeUrl) {
+                console.error('Comment store route not found');
+                alert('Configuration error. Please refresh the page.');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                return;
+            }
+            
+            // Submit comment
+            fetch(storeUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    content: content,
+                    post_id: postId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Clear form
+                    this.reset();
+                    
+                    // Show success message
+                    showAlert(data.message, 'success');
+                    
+                    // Remove no comments message if exists
+                    const noComments = document.getElementById('no-comments');
+                    if (noComments) {
+                        noComments.remove();
+                    }
+                    
+                    // Add new comment HTML to the top of comments container
+                    if (data.comment_html) {
+                        const commentsContainer = document.getElementById('comments-container');
+                        if (commentsContainer) {
+                            // Insert new comment at the beginning (top)
+                            commentsContainer.insertAdjacentHTML('afterbegin', data.comment_html);
+                        } else {
+                            // Create comments container if it doesn't exist
+                            const commentsSection = document.querySelector('.comments');
+                            if (commentsSection) {
+                                const newContainer = document.createElement('div');
+                                newContainer.id = 'comments-container';
+                                newContainer.innerHTML = data.comment_html;
+                                commentsSection.appendChild(newContainer);
+                            }
+                        }
+                    }
+                    
+                    // Update comment count if provided
+                    if (data.comment_count !== undefined) {
+                        const commentCountElements = document.querySelectorAll('[data-comment-count]');
+                        commentCountElements.forEach(el => {
+                            if (el.textContent.includes('Comments')) {
+                                el.textContent = `Comments (${data.comment_count})`;
+                            } else {
+                                el.textContent = `${data.comment_count} comments`;
+                            }
+                        });
+                    }
+                } else {
+                    alert(data.message || 'An error occurred while posting your comment.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while posting your comment.');
+            })
+            .finally(() => {
+                // Restore button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
+}
+
 function createLoadingOverlay() {
     // Remove existing overlay if any
     const existingOverlay = document.getElementById('page-loading-overlay');

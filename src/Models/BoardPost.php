@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 abstract class BoardPost extends Model
 {
@@ -24,6 +25,7 @@ abstract class BoardPost extends Model
         'category',
         'tags',
         'status',
+        'secret_password',
         'options',
         'view_count',
         'comment_count',
@@ -444,4 +446,108 @@ abstract class BoardPost extends Model
         
         $this->options = empty($filteredOptions) ? null : implode('|', $filteredOptions);
     }
+
+    /**
+     * 비밀글인지 확인
+     */
+    public function isSecret(): bool
+    {
+        return !empty($this->secret_password);
+    }
+
+    /**
+     * 비밀번호 확인
+     */
+    public function checkSecretPassword(string $password): bool
+    {
+        if (!$this->isSecret()) {
+            return true; // 비밀글이 아니면 항상 통과
+        }
+        
+        return password_verify($password, $this->secret_password);
+    }
+
+    /**
+     * 비밀번호 설정 (해시화)
+     */
+    public function setSecretPassword(?string $password): void
+    {
+        $this->secret_password = $password ? password_hash($password, PASSWORD_DEFAULT) : null;
+    }
+
+    /**
+     * 세션에서 비밀번호 확인 여부 체크
+     */
+    public function isPasswordVerified(): bool
+    {
+        if (!$this->isSecret()) {
+            return true;
+        }
+        
+        $userId = Auth::id() ?? 'guest';
+        $sessionKey = "post_password_verified_{$this->id}_{$userId}";
+        $sessionData = session($sessionKey);
+        
+        // 세션 데이터가 존재하고 유효한지 확인
+        if ($sessionData && is_array($sessionData)) {
+            return isset($sessionData['user_id']) && 
+                   $sessionData['user_id'] === $userId &&
+                   isset($sessionData['post_id']) && 
+                   $sessionData['post_id'] === $this->id;
+        }
+        
+        return false;
+    }
+
+    /**
+     * 세션에 비밀번호 확인 상태 저장
+     */
+    public function markPasswordVerified(): void
+    {
+        if ($this->isSecret()) {
+            $userId = Auth::id() ?? 'guest';
+            $sessionKey = "post_password_verified_{$this->id}_{$userId}";
+            session()->put($sessionKey, [
+                'verified_at' => now(),
+                'user_id' => $userId,
+                'post_id' => $this->id
+            ]);
+        }
+    }
+
+    /**
+     * 비밀글 접근 권한 확인 (비밀번호 확인 + 작성자 확인)
+     */
+    public function canAccess(?int $userId = null): bool
+    {
+        if (!$this->isSecret()) {
+            return true;
+        }
+
+        // 작성자는 항상 접근 가능
+        if ($userId && $this->member_id === $userId) {
+            return true;
+        }
+
+        // 관리자는 항상 접근 가능 (선택사항)
+        // if ($userId && User::find($userId)?->isAdmin()) {
+        //     return true;
+        // }
+
+        // 세션에서 비밀번호 확인 여부 체크
+        return $this->isPasswordVerified();
+    }
+
+    /**
+     * 미리보기 콘텐츠 (비밀글은 제한)
+     */
+    public function getPreviewContentAttribute(): string
+    {
+        if ($this->isSecret() && !$this->isPasswordVerified()) {
+            return '🔒 This post is private.';
+        }
+        
+        return $this->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($this->content), 200);
+    }
+
 }

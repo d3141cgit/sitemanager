@@ -135,6 +135,11 @@ class SiteManagerBoardController extends Controller
             'Enable Search', 
             'Enable search functionality for this board'
         ],
+        'allow_secret_posts' => [
+            'boolean', 
+            'Allow Secret Posts', 
+            'Allow secret post functionality with password protection'
+        ],
     ];
 
     public function __construct(

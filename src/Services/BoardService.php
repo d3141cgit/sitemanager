@@ -68,6 +68,7 @@ class BoardService
                 $table->string('category', 100)->nullable()->comment('카테고리');
                 $table->json('tags')->nullable()->comment('태그 목록');
                 $table->enum('status', ['draft', 'published', 'private'])->default('published')->comment('게시 상태');
+                $table->string('secret_password', 255)->nullable()->comment('비밀글 비밀번호');
                 $table->string('options', 500)->nullable()->comment('게시글 옵션 (is_notice|show_image|no_indent 등, | 구분자)');
                 $table->unsignedInteger('view_count')->default(0)->comment('조회수');
                 $table->unsignedInteger('comment_count')->default(0)->comment('댓글 수');

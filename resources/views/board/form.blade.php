@@ -3,6 +3,13 @@
 @section('title', isset($post) ? 'Edit Post - ' . $post->title : 'Write New Post - ' . $board->name)
 
 @push('head')
+    {!! resource('sitemanager::js/board/form.js') !!}
+    @if($board->getSetting('allow_secret_posts', false))
+        {!! resource('sitemanager::js/board/secret.js') !!}
+    @endif
+@endpush
+
+@push('head')
 {!! resource('sitemanager::js/board/form.js') !!}
 @endpush
 
@@ -212,6 +219,55 @@
                             </div>
                         @endif
 
+                        <!-- Secret Password Section -->
+                        @if($board->getSetting('allow_secret_posts', false))
+                            <div class="mb-3">
+                                <label class="form-label">🔒 비밀글 설정</label>
+                                <div class="card border-light">
+                                    <div class="card-body p-3">
+                                        @if(isset($post) && $post->isSecret())
+                                            <div class="alert alert-info mb-3">
+                                                <i class="bi bi-lock"></i> 현재 이 게시글은 비밀글로 설정되어 있습니다.
+                                            </div>
+                                            
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" id="remove_secret_password" 
+                                                       name="remove_secret_password" value="1">
+                                                <label class="form-check-label" for="remove_secret_password">
+                                                    <span class="text-danger">비밀글 설정 해제</span>
+                                                    <small class="text-muted d-block">체크하면 비밀번호가 제거되어 일반 게시글이 됩니다.</small>
+                                                </label>
+                                            </div>
+                                            
+                                            <div id="password-change-section">
+                                                <label for="secret_password" class="form-label">비밀번호 변경</label>
+                                                <input type="password" class="form-control @error('secret_password') is-invalid @enderror" 
+                                                       id="secret_password" name="secret_password" 
+                                                       placeholder="새 비밀번호 (변경하지 않으려면 비워두세요)"
+                                                       minlength="4" maxlength="20">
+                                                <div class="form-text">기존 비밀번호를 변경하려면 새 비밀번호를 입력하세요.</div>
+                                            </div>
+                                        @else
+                                            <label for="secret_password" class="form-label">비밀번호</label>
+                                            <input type="password" class="form-control @error('secret_password') is-invalid @enderror" 
+                                                   id="secret_password" name="secret_password" 
+                                                   value="{{ old('secret_password') }}"
+                                                   placeholder="비밀번호를 입력하면 비밀글로 설정됩니다 (4-20자)"
+                                                   minlength="4" maxlength="20">
+                                            <div class="form-text">
+                                                <i class="bi bi-info-circle"></i> 
+                                                비밀번호를 설정하면 해당 비밀번호를 아는 사용자만 게시글을 볼 수 있습니다.
+                                            </div>
+                                        @endif
+                                        
+                                        @error('secret_password')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
                         <!-- Special Options (for admins) -->
                         @php
                             $user = auth()->user();
@@ -307,12 +363,3 @@
 </div>
 
 @endsection
-
-
-@push('scripts')
-<style>
-.form-control:focus { border-color: #86b7fe; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
-textarea { resize: vertical; min-height: 200px; }
-.card { box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); }
-</style>
-@endpush

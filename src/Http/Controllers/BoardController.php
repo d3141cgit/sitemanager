@@ -136,6 +136,13 @@ class BoardController extends Controller
         
         // 서비스를 통해 데이터 조회
         $post = $this->boardService->getPost($board, $id);
+        
+        // 비밀글 접근 권한 확인
+        if ($post->isSecret() && !$post->canAccess(Auth::id())) {
+            // 비밀번호 입력 폼 표시
+            return view('sitemanager::board.password-form', compact('board', 'post'));
+        }
+        
         $comments = $this->boardService->getPostComments($board, $post->id);
         $attachments = $this->boardService->getPostAttachments($board, $post->id);
         $prevNext = $this->boardService->getPrevNextPosts($board, $post);
@@ -290,6 +297,7 @@ class BoardController extends Controller
             'categories' => 'nullable|array', // categories[] 배열 지원
             'categories.*' => 'nullable|string|max:50', // 각 카테고리 항목 검증
             'tags' => 'nullable|string',
+            'secret_password' => 'nullable|string|min:4|max:20',
             'options' => 'nullable|array',
             'files.*' => 'nullable|file|max:' . ($board->getSetting('max_file_size', 2048)),
             'file_names.*' => 'nullable|string|max:255',
@@ -309,6 +317,12 @@ class BoardController extends Controller
         try {
             // 서비스를 통해 게시물 생성
             $post = $this->boardService->createPost($board, $validated);
+            
+            // 비밀번호 처리
+            if (!empty($validated['secret_password'])) {
+                $post->setSecretPassword($validated['secret_password']);
+                $post->save();
+            }
 
             // 파일 업로드 처리
             if ($request->hasFile('files') && $board->allowsFileUpload()) {
@@ -353,7 +367,7 @@ class BoardController extends Controller
     /**
      * 게시글 수정 폼
      */
-    public function edit(string $slug, $id): View
+    public function edit(string $slug, $id)
     {
         $board = Board::where('slug', $slug)->firstOrFail();
         $post = $this->boardService->getPost($board, $id);
@@ -361,6 +375,11 @@ class BoardController extends Controller
         // 권한 체크
         if (!$this->boardService->canManagePost($board, $post)) {
             abort(403, '게시글을 수정할 권한이 없습니다.');
+        }
+
+        // 비밀글 접근 권한 확인 (작성자가 아닌 경우)
+        if ($post->isSecret() && !$post->canAccess(Auth::id()) && $post->member_id !== Auth::id()) {
+            return redirect()->route('board.show', [$slug, $id]);
         }
 
         return view($this->selectView('form'), compact('board', 'post') + [
@@ -390,6 +409,8 @@ class BoardController extends Controller
             'categories' => 'nullable|array', // categories[] 배열 지원
             'categories.*' => 'nullable|string|max:50', // 각 카테고리 항목 검증
             'tags' => 'nullable|string',
+            'secret_password' => 'nullable|string|min:4|max:20',
+            'remove_secret_password' => 'nullable|boolean',
             'options' => 'nullable|array',
             'files.*' => 'nullable|file|max:' . ($board->getSetting('max_file_size', 2048)),
             'file_names.*' => 'nullable|string|max:255',
@@ -412,6 +433,17 @@ class BoardController extends Controller
         try {
             // 서비스를 통해 게시물 수정
             $post = $this->boardService->updatePost($board, $post, $validated);
+            
+            // 비밀번호 처리
+            if ($request->has('remove_secret_password') && $request->remove_secret_password) {
+                // 비밀번호 해제
+                $post->secret_password = null;
+                $post->save();
+            } elseif (!empty($validated['secret_password'])) {
+                // 새 비밀번호 설정
+                $post->setSecretPassword($validated['secret_password']);
+                $post->save();
+            }
 
             // 파일 처리
             if ($board->allowsFileUpload()) {
@@ -1214,5 +1246,31 @@ class BoardController extends Controller
         }
         
         return null;
+    }
+
+    /**
+     * 비밀글 비밀번호 확인
+     */
+    public function verifyPassword(Request $request, string $slug, $id)
+    {
+        $request->validate([
+            'password' => 'required|string'
+        ]);
+
+        $board = Board::where('slug', $slug)->firstOrFail();
+        $post = $this->boardService->getPost($board, $id);
+
+        if (!$post->isSecret()) {
+            return redirect()->route('board.show', [$slug, $id]);
+        }
+
+        if ($post->checkSecretPassword($request->password)) {
+            $post->markPasswordVerified();
+            return redirect()->route('board.show', [$slug, $id]);
+        }
+
+        return back()
+            ->withInput()
+            ->withErrors(['password' => '비밀번호가 일치하지 않습니다.']);
     }
 }

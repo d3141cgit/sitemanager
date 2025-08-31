@@ -2,6 +2,16 @@
 
 @section('title', $post->title . ' - ' . $board->name)
 
+@push('head')
+    @if($post->isSecret())
+        <meta name="robots" content="noindex,nofollow">
+    @endif
+    {!! resource('sitemanager::js/board/show.js') !!}
+    @if($board->getSetting('allow_comments', true))
+        {!! resource('sitemanager::js/board/comment.js') !!}
+    @endif
+@endpush
+
 @section('content')
 <div class="container py-4">
     <!-- Navigation Breadcrumb -->
@@ -28,6 +38,9 @@
                                 @endif
                                 @if($post->is_featured)
                                     <i class="bi bi-star-fill text-warning me-2"></i>
+                                @endif
+                                @if($post->isSecret())
+                                    <i class="bi bi-lock-fill text-warning me-2"></i>
                                 @endif
                                 {{ $post->title }}
                             </h1>
@@ -100,7 +113,7 @@
                                                             <div style="width: 60px; height: 60px; overflow: hidden; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; transition: transform 0.2s ease;"
                                                                  onmouseover="this.style.transform='scale(1.05)'"
                                                                  onmouseout="this.style.transform='scale(1)'"
-                                                                 onclick="previewImage('{{ $attachment->preview_url }}', '{{ $attachment->original_name }}')"
+                                                                 onclick="showImagePreview('{{ $attachment->preview_url }}', '{{ $attachment->original_name }}')"
                                                                  title="Click to view full image">
                                                                 <img src="{{ $attachment->preview_url }}" 
                                                                      style="width: 100%; height: 100%; object-fit: cover;" 
@@ -134,7 +147,7 @@
                                                             </a>
                                                             @if($attachment->is_image)
                                                                 <button type="button" class="btn btn-sm btn-outline-secondary ms-1"
-                                                                        onclick="previewImage('{{ $attachment->preview_url }}', '{{ $attachment->original_name }}')">
+                                                                        onclick="showImagePreview('{{ $attachment->preview_url }}', '{{ $attachment->original_name }}')">
                                                                     <i class="bi bi-arrows-fullscreen"></i> Full Size
                                                                 </button>
                                                             @endif
@@ -215,7 +228,7 @@
                     <div class="card-body">
                         <!-- Comment Form -->
                         @if(can('writeComments', $board))
-                            <form id="commentForm" class="mb-4">
+                            <form id="commentForm" action="{{ route('board.comments.store', [$board->slug, $post->id]) }}" method="POST" class="mb-4">
                                 @csrf
                                 <input type="hidden" name="post_id" value="{{ $post->id }}">
                                 <div class="mb-3">
@@ -324,7 +337,7 @@
 
 @push('scripts')
 <script>
-// Comment routes configuration
+// Comment routes configuration for comment.js
 window.commentRoutes = {
     store: "{{ route('board.comments.store', [$board->slug, $post->id]) }}",
     update: "{{ route('board.comments.update', [$board->slug, $post->id, ':id']) }}",
@@ -332,138 +345,4 @@ window.commentRoutes = {
     approve: "{{ route('board.comments.approve', [$board->slug, $post->id, ':id']) }}"
 };
 </script>
-{!! resource('sitemanager::js/board/comment.js') !!}
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const commentForm = document.getElementById('commentForm');
-    
-    if (commentForm) {
-        commentForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const content = formData.get('content');
-            const postId = formData.get('post_id');
-            
-            if (!content.trim()) {
-                alert('Please write a comment.');
-                return;
-            }
-            
-            // Show loading state
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Posting...';
-            submitBtn.disabled = true;
-            
-            // Submit comment
-            fetch(`{{ route('board.comments.store', [$board->slug, $post->id]) }}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    content: content,
-                    post_id: postId
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Clear form
-                    this.reset();
-                    
-                    // Show success message
-                    const alert = document.createElement('div');
-                    alert.className = 'alert alert-success alert-dismissible fade show';
-                    alert.innerHTML = `
-                        ${data.message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    `;
-                    this.parentNode.insertBefore(alert, this);
-                    
-                    // Remove no comments message if exists
-                    const noComments = document.getElementById('no-comments');
-                    if (noComments) {
-                        noComments.remove();
-                    }
-                    
-                    // Add new comment HTML to the top of comments container
-                    if (data.comment_html) {
-                        const commentsContainer = document.getElementById('comments-container');
-                        if (commentsContainer) {
-                            // Insert new comment at the beginning (top)
-                            commentsContainer.insertAdjacentHTML('afterbegin', data.comment_html);
-                        }
-                    }
-                    
-                    // Update comment count if provided
-                    if (data.comment_count !== undefined) {
-                        const commentCountElements = document.querySelectorAll('[data-comment-count]');
-                        commentCountElements.forEach(el => {
-                            el.textContent = data.comment_count + ' comments';
-                        });
-                    }
-                    
-                    // Clear form
-                    this.reset();
-                } else {
-                    alert(data.message || 'An error occurred while posting your comment.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while posting your comment.');
-            })
-            .finally(() => {
-                // Restore button state
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            });
-        });
-    }
-});
-
-// Image preview functionality
-function previewImage(url, name) {
-    const modal = document.getElementById('imagePreviewModal') || createImagePreviewModal();
-    const modalImage = modal.querySelector('#previewImage');
-    const modalTitle = modal.querySelector('.modal-title');
-    
-    modalImage.src = url;
-    modalTitle.textContent = name;
-    
-    const bootstrapModal = new bootstrap.Modal(modal);
-    bootstrapModal.show();
-}
-
-function createImagePreviewModal() {
-    const modal = document.createElement('div');
-    modal.className = 'modal fade';
-    modal.id = 'imagePreviewModal';
-    modal.tabIndex = -1;
-    modal.innerHTML = `
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Image Preview</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <img id="previewImage" src="" alt="Preview" class="img-fluid" style="max-height: 70vh;">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    return modal;
-}
-</script>
-@endpush
 @endpush
