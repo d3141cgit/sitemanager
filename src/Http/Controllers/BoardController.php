@@ -140,7 +140,13 @@ class BoardController extends Controller
         // 비밀글 접근 권한 확인
         if ($post->isSecret() && !$post->canAccess(Auth::id())) {
             // 비밀번호 입력 폼 표시 (스킨 적용)
-            return view($this->selectView('password-form'), compact('board', 'post'));
+            return view($this->selectView('password-form'), array_merge(compact('board', 'post'), [
+                'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
+                'additionalBreadcrumb' => [
+                    'title' => '[Private] '.$post->title,
+                    'url' => null
+                ]
+            ]));
         }
         
         $comments = $this->boardService->getPostComments($board, $post->id);
