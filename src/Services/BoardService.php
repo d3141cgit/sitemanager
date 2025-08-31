@@ -429,14 +429,15 @@ class BoardService
     {
         $postModelClass = BoardPost::forBoard($board->slug);
         
-        $prevPost = $postModelClass::where('id', '<', $post->id)
+        // 게시글 목록과 동일한 순서(published_at desc)를 따라 이전/다음 찾기
+        $prevPost = $postModelClass::where('published_at', '>', $post->published_at)
             ->published()
-            ->orderBy('id', 'desc')
+            ->orderBy('published_at', 'asc')
             ->first();
 
-        $nextPost = $postModelClass::where('id', '>', $post->id)
+        $nextPost = $postModelClass::where('published_at', '<', $post->published_at)
             ->published()
-            ->orderBy('id', 'asc')
+            ->orderBy('published_at', 'desc')
             ->first();
 
         return compact('prevPost', 'nextPost');
