@@ -231,9 +231,16 @@ class Board extends Model
             return 0;
         }
         
-        return DB::table($postsTable)
-            ->where('status', 'published')
-            ->count();
+        // 동적 모델을 사용하여 published scope 활용
+        try {
+            $postModelClass = \SiteManager\Models\BoardPost::forBoard($this->slug);
+            return $postModelClass::published()->count();
+        } catch (\Exception $e) {
+            // 모델 생성 실패 시 fallback으로 DB 쿼리 사용
+            return DB::table($postsTable)
+                ->where('status', 'published')
+                ->count();
+        }
     }
 
     /**
@@ -248,9 +255,72 @@ class Board extends Model
             return 0;
         }
         
-        return DB::table($commentsTable)
-            ->where('status', 'approved')
-            ->count();
+        // 동적 모델을 사용하여 approved scope 활용
+        try {
+            $commentModelClass = \SiteManager\Models\BoardComment::forBoard($this->slug);
+            return $commentModelClass::approved()->count();
+        } catch (\Exception $e) {
+            // 모델 생성 실패 시 fallback으로 DB 쿼리 사용
+            return DB::table($commentsTable)
+                ->where('status', 'approved')
+                ->count();
+        }
+    }
+
+    /**
+     * 삭제된 게시물 수 계산
+     */
+    public function getDeletedPostsCount(): int
+    {
+        $postsTable = "board_posts_{$this->slug}";
+        
+        // 테이블이 존재하지 않으면 0
+        if (!Schema::hasTable($postsTable)) {
+            return 0;
+        }
+        
+        // 동적 모델을 사용하여 soft deleted 게시물 계산
+        try {
+            $postModelClass = \SiteManager\Models\BoardPost::forBoard($this->slug);
+            return $postModelClass::onlyTrashed()->count();
+        } catch (\Exception $e) {
+            // 모델 생성 실패 시 fallback으로 DB 쿼리 사용
+            return DB::table($postsTable)
+                ->whereNotNull('deleted_at')
+                ->count();
+        }
+    }
+
+    /**
+     * 삭제된 댓글 수 계산
+     */
+    public function getDeletedCommentsCount(): int
+    {
+        $commentsTable = "board_comments_{$this->slug}";
+        
+        // 테이블이 존재하지 않으면 0
+        if (!Schema::hasTable($commentsTable)) {
+            return 0;
+        }
+        
+        // 동적 모델을 사용하여 soft deleted 댓글 계산
+        try {
+            $commentModelClass = \SiteManager\Models\BoardComment::forBoard($this->slug);
+            return $commentModelClass::onlyTrashed()->count();
+        } catch (\Exception $e) {
+            // 모델 생성 실패 시 fallback으로 DB 쿼리 사용
+            return DB::table($commentsTable)
+                ->whereNotNull('deleted_at')
+                ->count();
+        }
+    }
+
+    /**
+     * 전체 첨부파일 수 계산
+     */
+    public function getAttachmentsCount(): int
+    {
+        return BoardAttachment::where('board_slug', $this->slug)->count();
     }
 
     /**

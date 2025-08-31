@@ -120,7 +120,7 @@ abstract class BoardComment extends Model
      */
     public function getAuthorAttribute(): string
     {
-        return $this->member ? $this->member->name : ($this->author_name ?? '익명');
+        return $this->member ? $this->member->name : ($this->author_name ?? 'Anonymous');
     }
 
     /**
@@ -167,5 +167,89 @@ abstract class BoardComment extends Model
         }
         
         return $count;
+    }
+
+    /**
+     * 승인 가능 여부 체크
+     */
+    public function canApprove(): bool
+    {
+        // 이미 승인된 댓글은 승인 불가
+        if ($this->status === 'approved') {
+            return false;
+        }
+        
+        // 부모 댓글이 있고 부모가 승인되지 않은 경우 승인 불가
+        if ($this->parent_id && $this->parent && $this->parent->status !== 'approved') {
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * 삭제 가능 여부 체크
+     */
+    public function canDelete(): bool
+    {
+        // 자식 댓글이 있으면 삭제 불가
+        return $this->children()->count() === 0;
+    }
+
+    /**
+     * 복원 가능 여부 체크
+     */
+    public function canRestore(): bool
+    {
+        // 삭제된 상태가 아니면 복원 불가
+        if (!$this->trashed()) {
+            return false;
+        }
+        
+        // 부모 댓글이 있고 부모가 삭제된 경우 복원 불가
+        if ($this->parent_id) {
+            $parent = static::withTrashed()->find($this->parent_id);
+            if ($parent && $parent->trashed()) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    /**
+     * 완전 삭제 가능 여부 체크
+     */
+    public function canForceDelete(): bool
+    {
+        // 자식 댓글이 있으면 완전 삭제 불가 (삭제된 자식 포함)
+        return static::withTrashed()->where('parent_id', $this->id)->count() === 0;
+    }
+
+    /**
+     * 액션별 가능 여부와 이유 반환
+     */
+    public function getActionAvailability(): array
+    {
+        return [
+            'approve' => [
+                'can' => $this->canApprove(),
+                'reason' => !$this->canApprove() ? 
+                    ($this->status === 'approved' ? 'Already approved' : 'Parent comment must be approved first') : null
+            ],
+            'delete' => [
+                'can' => $this->canDelete(),
+                'reason' => !$this->canDelete() ? 'Cannot delete comment with replies' : null
+            ],
+            'restore' => [
+                'can' => $this->canRestore(),
+                'reason' => !$this->canRestore() ? 
+                    (!$this->trashed() ? 'Comment is not deleted' : 'Parent comment must be restored first') : null
+            ],
+            'force_delete' => [
+                'can' => $this->canForceDelete(),
+                'reason' => !$this->canForceDelete() ? 'Cannot permanently delete comment with replies' : null
+            ]
+        ];
     }
 }

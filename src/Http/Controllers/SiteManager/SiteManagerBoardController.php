@@ -365,6 +365,9 @@ class SiteManagerBoardController extends Controller
         foreach ($boards as $board) {
             $board->posts_count = $board->getPostsCount();
             $board->comments_count = $board->getCommentsCount();
+            $board->deleted_posts_count = $board->getDeletedPostsCount();
+            $board->deleted_comments_count = $board->getDeletedCommentsCount();
+            $board->attachments_count = $board->getAttachmentsCount();
             $board->pending_comments_count = $pendingCommentsCount[$board->id] ?? 0;
         }
 

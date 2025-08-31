@@ -3,7 +3,7 @@
 @section('title', 'Board Management')
 
 @section('content')
-<div class="container">
+<div class="container board">
 
     <!-- Header Section - Responsive -->
     <div class="mb-4">
@@ -49,7 +49,7 @@
     @endif
 
     <div class="table-responsive">
-        <table class="table table-striped">
+        <table class="table table-striped table-hover">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -58,7 +58,8 @@
                     <th>Connected Menu</th>
                     <th class="text-center">Posts</th>
                     <th class="text-center">Comments</th>
-                    <th class="text-center">Pending</th>
+                    <th class="text-center">Files</th>
+                    <th class="text-center">Pending Comments</th>
                     <th>Status</th>
                     <th>Created Date</th>
                     <th class="text-end">Actions</th>
@@ -83,20 +84,55 @@
                             <span class="text-muted">-</span>
                         @endif
                     </td>
-                    <td class="text-center text-primary">
-                        {{ !empty($board->posts_count) ?? $board->getPostsCount() }}
+                    <td class="text-center">
+                        @php
+                            $postsCount = $board->posts_count ?? $board->getPostsCount();
+                            $deletedPostsCount = $board->deleted_posts_count ?? $board->getDeletedPostsCount();
+                        @endphp
+                        
+                        @if($postsCount == 0 && $deletedPostsCount == 0)
+                            <span class="text-muted">-</span>
+                        @else
+                            <span class="text-primary fw-bold">{{ $postsCount }}</span>
+                            @if($deletedPostsCount > 0)
+                                <span class="text-danger"> / {{ $deletedPostsCount }}</span>
+                            @endif
+                        @endif
                     </td>
-                    <td class="text-center text-success">
-                        {{ !empty($board->comments_count) ?? $board->getCommentsCount() }}
+                    <td class="text-center">
+                        @php
+                            $commentsCount = $board->comments_count ?? $board->getCommentsCount();
+                            $deletedCommentsCount = $board->deleted_comments_count ?? $board->getDeletedCommentsCount();
+                        @endphp
+                        
+                        @if($commentsCount == 0 && $deletedCommentsCount == 0)
+                            <span class="text-muted">-</span>
+                        @else
+                            <span class="text-success fw-bold">{{ $commentsCount }}</span>
+                            @if($deletedCommentsCount > 0)
+                                <span class="text-danger"> / {{ $deletedCommentsCount }}</span>
+                            @endif
+                        @endif
+                    </td>
+                    <td class="text-center">
+                        @php
+                            $attachmentsCount = $board->attachments_count ?? $board->getAttachmentsCount();
+                        @endphp
+                        
+                        @if($attachmentsCount == 0)
+                            <span class="text-muted">-</span>
+                        @else
+                            <span class="text-info fw-bold">{{ $attachmentsCount }}</span>
+                        @endif
                     </td>
                     <td class="text-center">
                         @if($board->pending_comments_count > 0)
                             <a href="{{ route('sitemanager.comments.index', ['board_id' => $board->id, 'status' => 'pending']) }}" 
-                               class="badge bg-warning text-decoration-none" title="미승인 댓글 관리">
+                               class="badge bg-warning text-decoration-none" title="Manage pending comments">
                                 {{ $board->pending_comments_count }}
                             </a>
                         @else
-                            <span class="text-muted">0</span>
+                            <small class="text-muted">-</small>
                         @endif
                     </td>
                     <td>
@@ -132,7 +168,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" class="text-center py-5">
+                    <td colspan="11" class="text-center py-5">
                         <i class="bi bi-list-ul display-1 text-muted mb-3"></i>
                         <h5 class="text-muted">No boards found</h5>
                         <p class="text-muted">Please create a new board.</p>

@@ -31,6 +31,7 @@ class SiteManagerCommentController extends Controller
         
         $pendingComments = collect();
         $selectedBoard = null;
+        $statusCounts = ['pending' => 0, 'approved' => 0, 'deleted' => 0];
         
         if ($selectedBoardId) {
             $selectedBoard = Board::findOrFail($selectedBoardId);
@@ -38,8 +39,13 @@ class SiteManagerCommentController extends Controller
             // 해당 게시판의 댓글 모델 클래스 가져오기
             $commentModelClass = BoardComment::forBoard($selectedBoard->slug);
             
-            // 상태별 댓글 조회
-            $query = $commentModelClass::with(['member', 'post']);
+            // 상태별 개수 계산
+            $statusCounts['pending'] = $commentModelClass::where('status', 'pending')->count();
+            $statusCounts['approved'] = $commentModelClass::where('status', 'approved')->count();
+            $statusCounts['deleted'] = $commentModelClass::onlyTrashed()->count();
+            
+            // 상태별 댓글 조회 - 계층적 정렬
+            $query = $commentModelClass::with(['member', 'post', 'parent', 'children']);
             
             // 삭제된 댓글을 보려면 withTrashed() 사용
             if ($status === 'deleted') {
@@ -48,7 +54,39 @@ class SiteManagerCommentController extends Controller
                 $query = $query->where('status', $status);
             }
             
-            $pendingComments = $query->orderBy('created_at', 'desc')->paginate(20);
+            // 계층적 정렬: 부모 댓글의 created_at 기준으로 정렬하되, 자식은 부모 바로 아래 배치
+            $allComments = $query->orderByRaw('
+                CASE 
+                    WHEN parent_id IS NULL THEN created_at 
+                    ELSE (SELECT created_at FROM ' . (new $commentModelClass)->getTable() . ' parent WHERE parent.id = ' . (new $commentModelClass)->getTable() . '.parent_id)
+                END DESC,
+                CASE 
+                    WHEN parent_id IS NULL THEN 0 
+                    ELSE 1 
+                END ASC,
+                created_at ASC
+            ')->get();
+            
+            // 페이지네이션을 위한 수동 처리
+            $currentPage = request()->get('page', 1);
+            $perPage = 20;
+            $total = $allComments->count();
+            
+            $pendingComments = new \Illuminate\Pagination\LengthAwarePaginator(
+                $allComments->forPage($currentPage, $perPage),
+                $total,
+                $perPage,
+                $currentPage,
+                [
+                    'path' => request()->url(),
+                    'pageName' => 'page',
+                ]
+            );
+            
+            // 각 댓글의 액션 가능 여부 계산
+            $pendingComments->getCollection()->each(function ($comment) {
+                $comment->actions = $comment->getActionAvailability();
+            });
         }
         
         return view('sitemanager::sitemanager.board.comments', compact(
@@ -56,7 +94,8 @@ class SiteManagerCommentController extends Controller
             'pendingComments', 
             'selectedBoard', 
             'selectedBoardId',
-            'status'
+            'status',
+            'statusCounts'
         ));
     }
 
