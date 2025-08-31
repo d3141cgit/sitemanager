@@ -326,3 +326,5 @@ a.btn-outline-dark:hover { color: #fff !important; }
 .form-label, .col-form-label { color: var(--bs-gray-700); font-weight: 900; font-size: 0.8rem; }
 
 #add-custom-setting { font-size: 0.9rem; padding: 0 0.5rem; line-height: 22px; }
+
+.table thead th { border-bottom: 2px solid #000; color: #000; font-size: 0.7rem; font-weight: 600; }
