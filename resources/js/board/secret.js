@@ -90,37 +90,37 @@ function calculatePasswordStrength(password) {
     let score = 0;
     let feedback = [];
 
-    // Length check
-    if (password.length >= 8) score += 25;
-    else feedback.push('최소 8자 이상');
+        // Length check
+        if (password.length >= 8) score += 25;
+        else feedback.push('At least 8 characters');
 
-    // Uppercase check
-    if (/[A-Z]/.test(password)) score += 25;
-    else feedback.push('대문자 포함');
+        // Uppercase check
+        if (/[A-Z]/.test(password)) score += 25;
+        else feedback.push('Include uppercase letter');
 
-    // Lowercase check  
-    if (/[a-z]/.test(password)) score += 25;
-    else feedback.push('소문자 포함');
+        // Lowercase check  
+        if (/[a-z]/.test(password)) score += 25;
+        else feedback.push('Include lowercase letter');
 
-    // Number or special char check
-    if (/[\d\W]/.test(password)) score += 25;
-    else feedback.push('숫자 또는 특수문자 포함');
+        // Number or special char check
+        if (/[\d\W]/.test(password)) score += 25;
+        else feedback.push('Include number or special character');
 
-    let strength = {
-        percentage: score,
-        class: 'bg-danger',
-        text: '약함'
-    };
+        let strength = {
+            percentage: score,
+            class: 'bg-danger',
+            text: 'Weak'
+        };
 
-    if (score >= 75) {
-        strength.class = 'bg-success';
-        strength.text = '강함';
-    } else if (score >= 50) {
-        strength.class = 'bg-warning';
-        strength.text = '보통';
-    } else if (score >= 25) {
-        strength.class = 'bg-info';
-        strength.text = '약간 약함';
+        if (score >= 75) {
+            strength.class = 'bg-success';
+            strength.text = 'Strong';
+        } else if (score >= 50) {
+            strength.class = 'bg-warning';
+            strength.text = 'Medium';
+        } else if (score >= 25) {
+            strength.class = 'bg-info';
+            strength.text = 'Slightly weak';
     }
 
     if (feedback.length > 0 && score < 100) {
@@ -147,7 +147,7 @@ function validateSecretPasswordForm(form) {
         const password = passwordInput.value;
         
         if (password.length < 4) {
-            alert('비밀번호는 최소 4자 이상이어야 합니다.');
+            alert('Password must be at least 4 characters.');
             passwordInput.focus();
             return false;
         }
@@ -155,9 +155,9 @@ function validateSecretPasswordForm(form) {
         // Confirm password if this is a new post
         const isNewPost = !document.querySelector('input[name="_method"][value="PUT"]');
         if (isNewPost) {
-            const confirmPassword = prompt('비밀번호를 다시 입력해주세요:');
+            const confirmPassword = prompt('Please re-enter your password:');
             if (confirmPassword !== password) {
-                alert('비밀번호가 일치하지 않습니다.');
+                alert('Passwords do not match.');
                 passwordInput.focus();
                 return false;
             }

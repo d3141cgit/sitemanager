@@ -131,7 +131,7 @@ class BoardController extends Controller
         
         // 권한 체크
         if ($board->menu_id && !can('read', $board)) {
-            abort(403, '게시글을 읽을 권한이 없습니다.');
+            abort(403, 'You do not have permission to read this post.');
         }
         
         // 서비스를 통해 데이터 조회
@@ -274,7 +274,7 @@ class BoardController extends Controller
 
         // 권한 체크
         if ($board->menu_id && !can('write', $board)) {
-            abort(403, '게시글을 작성할 권한이 없습니다.');
+            abort(403, 'You do not have permission to write a post.');
         }
 
         return view($this->selectView('form'), compact('board') + [
@@ -291,7 +291,7 @@ class BoardController extends Controller
         
         // 권한 체크
         if ($board->menu_id && !can('write', $board)) {
-            abort(403, '게시글을 작성할 권한이 없습니다.');
+            abort(403, 'You do not have permission to write a post.');
         }
 
         $validated = $request->validate([
@@ -360,13 +360,13 @@ class BoardController extends Controller
 
             return redirect()
                 ->route('board.show', [$slug, $post->slug ?: $post->id])
-                ->with('success', '게시글이 등록되었습니다.');
+                ->with('success', 'The post has been created successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             return back()
                 ->withInput()
-                ->with('error', '게시글 등록 중 오류가 발생했습니다: ' . $e->getMessage());
+                ->with('error', 'An error occurred while creating the post: ' . $e->getMessage());
         }
     }
 
@@ -380,7 +380,7 @@ class BoardController extends Controller
 
         // 권한 체크
         if (!$this->boardService->canManagePost($board, $post)) {
-            abort(403, '게시글을 수정할 권한이 없습니다.');
+            abort(403, 'You do not have permission to edit this post.');
         }
 
         // 비밀글 접근 권한 확인 (작성자가 아닌 경우)
@@ -403,7 +403,7 @@ class BoardController extends Controller
 
         // 권한 체크
         if (!$this->boardService->canManagePost($board, $post)) {
-            abort(403, '게시글을 수정할 권한이 없습니다.');
+            abort(403, 'You do not have permission to edit this post.');
         }
 
         $validated = $request->validate([
@@ -492,13 +492,13 @@ class BoardController extends Controller
 
             return redirect()
                 ->route('board.show', [$slug, $post->slug ?: $post->id])
-                ->with('success', '게시글이 수정되었습니다.');
+                ->with('success', 'The post has been updated successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             return back()
                 ->withInput()
-                ->with('error', '게시글 수정 중 오류가 발생했습니다: ' . $e->getMessage());
+                ->with('error', 'An error occurred while updating the post: ' . $e->getMessage());
         }
     }
 
@@ -512,7 +512,7 @@ class BoardController extends Controller
 
         // 권한 체크
         if (!$this->boardService->canManagePost($board, $post)) {
-            abort(403, '게시글을 삭제할 권한이 없습니다.');
+            abort(403, 'You do not have permission to delete this post.');
         }
 
         DB::beginTransaction();
@@ -530,12 +530,12 @@ class BoardController extends Controller
 
             return redirect()
                 ->route('board.index', $slug)
-                ->with('success', '게시글이 삭제되었습니다.');
+                ->with('success', 'The post has been deleted.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             return back()
-                ->with('error', '게시글 삭제 중 오류가 발생했습니다: ' . $e->getMessage());
+                ->with('error', 'An error occurred while deleting the post: ' . $e->getMessage());
         }
     }
 
@@ -752,7 +752,7 @@ class BoardController extends Controller
         
         // 권한 체크: 게시판을 볼 수 있어야 파일도 다운로드 가능
         if ($board->menu_id && !can('read', $board)) {
-            abort(403, '파일에 접근할 권한이 없습니다.');
+            abort(403, 'You do not have permission to access this file.');
         }
         
         // 첨부파일 찾기
@@ -842,14 +842,14 @@ class BoardController extends Controller
         }
 
         if (!$canDelete) {
-            return response()->json(['success' => false, 'message' => '파일을 삭제할 권한이 없습니다.'], 403);
+            return response()->json(['success' => false, 'message' => 'You do not have permission to delete this file.'], 403);
         }
 
         try {
             $attachment->delete();
-            return response()->json(['success' => true, 'message' => '파일이 삭제되었습니다.']);
+            return response()->json(['success' => true, 'message' => 'The file has been deleted.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => '파일 삭제 중 오류가 발생했습니다.'], 500);
+            return response()->json(['success' => false, 'message' => 'An error occurred while deleting the file.'], 500);
         }
     }
 
@@ -895,7 +895,7 @@ class BoardController extends Controller
 
                 if (!$canUpdate) {
                     DB::rollBack();
-                    return response()->json(['success' => false, 'message' => '파일 순서를 변경할 권한이 없습니다.'], 403);
+                    return response()->json(['success' => false, 'message' => 'You do not have permission to change the file order.'], 403);
                 }
 
                 // 순서 업데이트
@@ -906,7 +906,7 @@ class BoardController extends Controller
             
             return response()->json([
                 'success' => true, 
-                'message' => '파일 순서가 업데이트되었습니다.',
+                'message' => 'The file order has been updated.',
                 'updated_count' => count($request->attachments)
             ]);
 
@@ -916,7 +916,7 @@ class BoardController extends Controller
             
             return response()->json([
                 'success' => false, 
-                'message' => '파일 순서 업데이트 중 오류가 발생했습니다.'
+                'message' => 'An error occurred while updating the file order.'
             ], 500);
         }
     }
@@ -1052,11 +1052,11 @@ class BoardController extends Controller
         }
         if (!$description) {
             if ($searchTerm) {
-                $description = "'{$searchTerm}'에 대한 검색 결과를 {$board->name}에서 찾아보세요.";
+                $description = "Find search results for '{$searchTerm}' in {$board->name}.";
             } elseif ($category) {
-                $description = "{$board->name}의 {$category} 카테고리 게시물들을 확인하세요.";
+                $description = "Check out posts in the {$category} category of {$board->name}.";
             } else {
-                $description = "{$board->name} 게시판의 최신 게시물들을 확인하세요.";
+                $description = "Check out the latest posts on the {$board->name} board.";
             }
         }
         
@@ -1133,7 +1133,7 @@ class BoardController extends Controller
             'title' => $title,
             'description' => $description,
             'keywords' => implode(', ', array_unique($keywords)),
-            'og_title' => $searchTerm ? "'{$searchTerm}' 검색결과" : $board->name,
+            'og_title' => $searchTerm ? "'{$searchTerm}' Search Result" : $board->name,
             'og_description' => $description,
             'og_image' => $seoImage,
             'og_url' => $currentUrl,
@@ -1277,6 +1277,6 @@ class BoardController extends Controller
 
         return back()
             ->withInput()
-            ->withErrors(['password' => '비밀번호가 일치하지 않습니다.']);
+            ->withErrors(['password' => 'Passwords do not match.']);
     }
 }

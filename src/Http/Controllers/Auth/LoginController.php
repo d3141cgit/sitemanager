@@ -74,7 +74,7 @@ class LoginController extends Controller
         }
 
         return back()->withErrors([
-            'username' => '아이디 또는 비밀번호가 일치하지 않습니다.',
+            'username' => 'The username or password is incorrect.',
         ])->withInput($request->only('username'));
     }
 
