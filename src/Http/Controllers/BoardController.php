@@ -307,7 +307,11 @@ class BoardController extends Controller
             abort(403, 'You do not have permission to write a post.');
         }
 
+        // Calculate permissions for the form
+        $canManage = $board->menu_id ? can('manage', $board) : false;
+
         return view($this->selectView('form'), compact('board') + [
+            'canManage' => $canManage,
             'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
             'layoutPath' => $this->getLayoutPath() // 프로젝트 레이아웃 경로
         ]);
@@ -419,7 +423,11 @@ class BoardController extends Controller
             return redirect()->route('board.show', [$slug, $id]);
         }
 
+        // Calculate permissions for the form
+        $canManage = $board->menu_id ? can('manage', $board) : false;
+
         return view($this->selectView('form'), compact('board', 'post') + [
+            'canManage' => $canManage,
             'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
             'layoutPath' => $this->getLayoutPath() // 프로젝트 레이아웃 경로
         ]);

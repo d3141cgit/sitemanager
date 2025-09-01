@@ -14,7 +14,7 @@
 @endpush
 
 @section('content')
-<div class="container py-4">
+<div class="container board py-4">
     <!-- Navigation Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
@@ -176,19 +176,49 @@
                         <!-- Category -->
                         @if($board->usesCategories() && count($board->getCategoryOptions()) > 0)
                             <div class="mb-3">
-                                <label for="category" class="form-label">Category</label>
-                                <select class="form-select @error('category') is-invalid @enderror" 
-                                        id="category" name="category">
-                                    <option value="">Select Category</option>
-                                    @foreach($board->getCategoryOptions() as $category)
-                                        <option value="{{ $category }}" {{ old('category', isset($post) ? $post->category : '') === $category ? 'selected' : '' }}>
-                                            {{ $category }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('category')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label class="form-label">Category</label>
+                                
+                                @if($board->getSetting('category_multiple', false))
+                                    <!-- Multiple Category Selection (Checkboxes) -->
+                                    @php
+                                        $selectedCategories = old('categories', isset($post) ? $post->categories : []);
+                                    @endphp
+                                    
+                                    <div class="row">
+                                        @foreach($board->getCategoryOptions() as $category)
+                                            <div class="col-md-6 col-lg-4 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input @error('categories') is-invalid @enderror" 
+                                                           type="checkbox" 
+                                                           name="categories[]" 
+                                                           value="{{ $category }}" 
+                                                           id="category_{{ $loop->index }}"
+                                                           {{ in_array($category, $selectedCategories) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="category_{{ $loop->index }}">
+                                                        {{ $category }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    @error('categories')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                @else
+                                    <!-- Single Category Selection (Dropdown) -->
+                                    <select class="form-select @error('category') is-invalid @enderror" 
+                                            id="category" name="category">
+                                        <option value="">Select Category</option>
+                                        @foreach($board->getCategoryOptions() as $category)
+                                            <option value="{{ $category }}" {{ old('category', isset($post) ? $post->category : '') === '|'.$category.'|' ? 'selected' : '' }}>
+                                                {{ $category }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('category')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                @endif
                             </div>
                         @endif
 
@@ -222,41 +252,41 @@
                         <!-- Secret Password Section -->
                         @if($board->getSetting('allow_secret_posts', false))
                             <div class="mb-3">
-                                <label class="form-label">🔒 비밀글 설정</label>
+                                <label class="form-label">🔒 Private Post Settings</label>
                                 <div class="card border-light">
                                     <div class="card-body p-3">
                                         @if(isset($post) && $post->isSecret())
                                             <div class="alert alert-info mb-3">
-                                                <i class="bi bi-lock"></i> 현재 이 게시글은 비밀글로 설정되어 있습니다.
+                                                <i class="bi bi-lock"></i> This post is currently set as private.
                                             </div>
                                             
                                             <div class="form-check mb-3">
                                                 <input class="form-check-input" type="checkbox" id="remove_secret_password" 
                                                        name="remove_secret_password" value="1">
                                                 <label class="form-check-label" for="remove_secret_password">
-                                                    <span class="text-danger">비밀글 설정 해제</span>
-                                                    <small class="text-muted d-block">체크하면 비밀번호가 제거되어 일반 게시글이 됩니다.</small>
+                                                    <span class="text-danger">Remove Private Setting</span>
+                                                    <small class="text-muted d-block">Check to remove password and make this a public post.</small>
                                                 </label>
                                             </div>
                                             
                                             <div id="password-change-section">
-                                                <label for="secret_password" class="form-label">비밀번호 변경</label>
+                                                <label for="secret_password" class="form-label">Change Password</label>
                                                 <input type="password" class="form-control @error('secret_password') is-invalid @enderror" 
                                                        id="secret_password" name="secret_password" 
-                                                       placeholder="새 비밀번호 (변경하지 않으려면 비워두세요)"
+                                                       placeholder="New password (leave empty to keep current password)"
                                                        minlength="4" maxlength="20">
-                                                <div class="form-text">기존 비밀번호를 변경하려면 새 비밀번호를 입력하세요.</div>
+                                                <div class="form-text">Enter a new password to change the existing one.</div>
                                             </div>
                                         @else
-                                            <label for="secret_password" class="form-label">비밀번호</label>
+                                            <label for="secret_password" class="form-label">Password</label>
                                             <input type="password" class="form-control @error('secret_password') is-invalid @enderror" 
                                                    id="secret_password" name="secret_password" 
                                                    value="{{ old('secret_password') }}"
-                                                   placeholder="비밀번호를 입력하면 비밀글로 설정됩니다 (4-20자)"
+                                                   placeholder="Enter password to make this post private (4-20 characters)"
                                                    minlength="4" maxlength="20">
                                             <div class="form-text">
                                                 <i class="bi bi-info-circle"></i> 
-                                                비밀번호를 설정하면 해당 비밀번호를 아는 사용자만 게시글을 볼 수 있습니다.
+                                                Setting a password will make this post visible only to users who know the password.
                                             </div>
                                         @endif
                                         
@@ -268,13 +298,8 @@
                             </div>
                         @endif
 
-                        <!-- Special Options (for admins) -->
-                        @php
-                            $user = auth()->user();
-                            $isAdmin = $user && $user->level >= config('member.admin_level', 200);
-                        @endphp
-                        
-                        @if($isAdmin)
+                        <!-- Special Options (for users with manage permission) -->
+                        @if($canManage ?? false)
                             <div class="mb-3">
                                 <label class="form-label">Options</label>
                                 <div class="form-check">
@@ -285,53 +310,8 @@
                                         Mark as Notice
                                     </label>
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="option_show_image" 
-                                           name="options[show_image]" value="1" 
-                                           {{ old('options.show_image', isset($post) && $post->hasOption('show_image') ? '1' : '') ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="option_show_image">
-                                        Show Image in List
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="option_no_indent" 
-                                           name="options[no_indent]" value="1" 
-                                           {{ old('options.no_indent', isset($post) && $post->hasOption('no_indent') ? '1' : '') ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="option_no_indent">
-                                        No Indent
-                                    </label>
-                                </div>
                             </div>
                         @endif
-                    </div>
-                </div>
-
-                <!-- Tips Card -->
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h6 class="card-title mb-0">{{ isset($post) ? 'Edit Tips' : 'Writing Tips' }}</h6>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled small text-muted mb-0">
-                            <li class="mb-2">
-                                <i class="bi bi-lightbulb text-warning"></i>
-                                Write a clear and descriptive title
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-lightbulb text-warning"></i>
-                                Use proper formatting and paragraphs
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-lightbulb text-warning"></i>
-                                Be respectful and constructive
-                            </li>
-                            @if($board->getSetting('moderate_comments', false))
-                                <li class="mb-2">
-                                    <i class="bi bi-info-circle text-info"></i>
-                                    {{ isset($post) ? 'Changes require approval' : 'Posts require approval before being published' }}
-                                </li>
-                            @endif
-                        </ul>
                     </div>
                 </div>
             </div>

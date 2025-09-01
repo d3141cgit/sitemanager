@@ -13,7 +13,7 @@
 @endpush
 
 @section('content')
-<div class="container py-4">
+<div class="container board py-4">
     <!-- Navigation Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">

@@ -120,15 +120,15 @@ class SiteManagerBoardController extends Controller
             'Require Approval', 
             'Posts require admin approval before publishing'
         ],
-        'show_name' => [
-            'boolean', 
-            'Show Name', 
-            'Display author information on posts'
-        ],
         'show_info' => [
             'boolean', 
             'Show Info', 
             'Display meta data on posts'
+        ],
+        'show_name' => [
+            'boolean', 
+            'Show Name', 
+            'Display author information on posts'
         ],
         'enable_search' => [
             'boolean', 

@@ -229,7 +229,12 @@
         @if($posts->hasPages())
             <div class="d-flex justify-content-center my-5">
                 <nav aria-label="Page navigation">
-                    {{ $posts->appends(request()->query())->onEachSide(1)->links('pagination::bootstrap-4') }}
+                    <div class="d-none d-md-block">
+                        {{ $posts->appends(request()->query())->onEachSide(1)->links('pagination::bootstrap-4') }}
+                    </div>
+                    <div class="d-md-none">
+                        {{ $posts->appends(request()->query())->links('pagination::simple-bootstrap-4') }}
+                    </div>
                 </nav>
             </div>
         @endif
