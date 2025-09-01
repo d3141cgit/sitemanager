@@ -39,50 +39,10 @@
     <!-- Search Form -->
     <div class="row mb-4">
         <div class="col-12">
-            <form method="GET" action="{{ route('sitemanager.members.index') }}">
-                <!-- Desktop Search Layout -->
-                <div class="d-none d-md-flex">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" name="search" class="form-control" 
-                               placeholder="Search by name, username, or email..." 
-                               value="{{ request('search') }}">
-                        <select name="level" class="form-select" style="max-width: 150px;">
-                            <option value="">All Levels</option>
-                            @foreach($levels as $levelValue => $levelName)
-                                <option value="{{ $levelValue }}" {{ request('level') == $levelValue ? 'selected' : '' }}>
-                                    {{ $levelValue }} - {{ $levelName }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <select name="group_id" class="form-select" style="max-width: 150px;">
-                            <option value="">All Groups</option>
-                            @foreach($groups as $group)
-                                <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>
-                                    {{ $group->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <select name="status" class="form-select" style="max-width: 120px;">
-                            <option value="active" {{ (request('status', 'active') == 'active') ? 'selected' : '' }}>Active</option>
-                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>All Status</option>
-                            <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>Deleted</option>
-                        </select>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search"></i> Search
-                        </button>
-                        @if(request()->hasAny(['search', 'level', 'group_id', 'status']))
-                            <a href="{{ route('sitemanager.members.index') }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-x-circle"></i> Clear
-                            </a>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Mobile Search Layout -->
-                <div class="d-md-none">
-                    <div class="mb-3">
+            <form method="GET" action="{{ route('sitemanager.members.index') }}" class="search-form">
+                <!-- Search Input Row -->
+                <div class="row mb-3">
+                    <div class="col-12">
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-search"></i></span>
                             <input type="text" name="search" class="form-control" 
@@ -90,47 +50,49 @@
                                    value="{{ request('search') }}">
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <select name="level" class="form-select">
-                                <option value="">All Levels</option>
-                                @foreach($levels as $levelValue => $levelName)
-                                    <option value="{{ $levelValue }}" {{ request('level') == $levelValue ? 'selected' : '' }}>
-                                        {{ $levelValue }} - {{ $levelName }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <select name="group_id" class="form-select">
-                                <option value="">All Groups</option>
-                                @foreach($groups as $group)
-                                    <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>
-                                        {{ $group->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                </div>
+
+                <!-- Filter Options Row -->
+                <div class="row mb-3">
+                    <div class="col-md-3 col-6 mb-2 mb-md-0">
+                        <select name="level" class="form-select">
+                            <option value="">All Levels</option>
+                            @foreach($levels as $levelValue => $levelName)
+                                <option value="{{ $levelValue }}" {{ request('level') == $levelValue ? 'selected' : '' }}>
+                                    {{ $levelValue }} - {{ $levelName }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <select name="status" class="form-select">
-                                <option value="active" {{ (request('status', 'active') == 'active') ? 'selected' : '' }}>Active</option>
-                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>All Status</option>
-                                <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>Deleted</option>
-                            </select>
-                        </div>
+                    <div class="col-md-3 col-6 mb-2 mb-md-0">
+                        <select name="group_id" class="form-select">
+                            <option value="">All Groups</option>
+                            @foreach($groups as $group)
+                                <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>
+                                    {{ $group->name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search me-2"></i>Search
-                        </button>
-                        @if(request()->hasAny(['search', 'level', 'group_id', 'status']))
-                            <a href="{{ route('sitemanager.members.index') }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-x-circle me-2"></i>Clear
-                            </a>
-                        @endif
+                    <div class="col-md-3 col-12 mb-2 mb-md-0">
+                        <select name="status" class="form-select">
+                            <option value="active" {{ (request('status', 'active') == 'active') ? 'selected' : '' }}>Active</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                            <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>All Status</option>
+                            <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>Deleted</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-12">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-fill">
+                                <i class="bi bi-search me-2"></i>Search
+                            </button>
+                            @if(request()->hasAny(['search', 'level', 'group_id', 'status']))
+                                <a href="{{ route('sitemanager.members.index') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i>
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </form>
@@ -397,4 +359,31 @@ document.addEventListener('DOMContentLoaded', function() {
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.querySelector('.search-form');
+    const selectElements = searchForm.querySelectorAll('select');
+    
+    // Auto-submit when select options change
+    selectElements.forEach(function(select) {
+        select.addEventListener('change', function() {
+            searchForm.submit();
+        });
+    });
+    
+    // Debounced search for input field
+    const searchInput = searchForm.querySelector('input[name="search"]');
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+            if (searchInput.value.length >= 2 || searchInput.value.length === 0) {
+                searchForm.submit();
+            }
+        }, 500); // 500ms delay
+    });
+});
+</script>
 @endpush

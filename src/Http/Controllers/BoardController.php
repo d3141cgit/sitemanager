@@ -81,7 +81,14 @@ class BoardController extends Controller
      */
     private function getCurrentBoard(): ?Board
     {
-        // URL에서 board_slug 파라미터 확인
+        // URL에서 slug 파라미터 확인 (라우트에서 {slug}로 정의됨)
+        $boardSlug = request()->route('slug');
+        
+        if ($boardSlug) {
+            return Board::where('slug', $boardSlug)->first();
+        }
+        
+        // 대체 파라미터 이름들 확인
         $boardSlug = request()->route('board') ?? request()->route('board_slug');
         
         if ($boardSlug) {
@@ -803,11 +810,12 @@ class BoardController extends Controller
         // 다운로드 카운트 증가
         $attachment->increment('download_count');
         
-        // 파일 다운로드
+        // 파일 다운로드 (강제 다운로드)
         return $this->fileUploadService->downloadFile(
             $attachment->file_path, 
             $this->fileUploadService->getDisk(), 
-            $attachment->original_name
+            $attachment->original_name,
+            true // 강제 다운로드 활성화
         );
     }    /**
      * 조회수 증가 (중복 방지)

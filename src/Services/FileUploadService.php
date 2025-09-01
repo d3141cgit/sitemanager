@@ -330,7 +330,7 @@ class FileUploadService
     /**
      * Get file download response
      */
-    public function downloadFile(string $path, string $disk = null, string $name = null)
+    public function downloadFile(string $path, string $disk = null, string $name = null, bool $forceDownload = true)
     {
         $diskToUse = $disk ?? $this->disk;
         
@@ -341,12 +341,36 @@ class FileUploadService
         $filename = $name ?? basename($path);
         
         if ($diskToUse === 's3') {
-            // For S3, redirect to the file URL
-            return redirect($this->getFileUrl($path));
+            // For S3, get the file content and create download response
+            $fileContent = Storage::disk($diskToUse)->get($path);
+            $mimeType = $this->getMimeTypeFromPath($path);
+            
+            $response = response($fileContent, 200, [
+                'Content-Type' => $forceDownload ? 'application/octet-stream' : $mimeType,
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Length' => strlen($fileContent),
+                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0'
+            ]);
+            
+            return $response;
         }
         
         // For local storage, use response download
         $fullPath = Storage::disk($diskToUse)->path($path);
+        
+        if ($forceDownload) {
+            // Force download with proper headers
+            return response()->download($fullPath, $filename, [
+                'Content-Type' => 'application/octet-stream',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0'
+            ]);
+        }
+        
         return response()->download($fullPath, $filename);
     }
     
@@ -735,5 +759,52 @@ class FileUploadService
             ]);
             return null;
         }
+    }
+    
+    /**
+     * Get MIME type from file path
+     */
+    private function getMimeTypeFromPath(string $path): string
+    {
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        
+        $mimeTypes = [
+            // Documents
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ppt' => 'application/vnd.ms-powerpoint',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            
+            // Images
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'svg' => 'image/svg+xml',
+            'bmp' => 'image/bmp',
+            
+            // Archives
+            'zip' => 'application/zip',
+            'rar' => 'application/x-rar-compressed',
+            '7z' => 'application/x-7z-compressed',
+            
+            // Text
+            'txt' => 'text/plain',
+            'csv' => 'text/csv',
+            'json' => 'application/json',
+            'xml' => 'application/xml',
+            
+            // Audio/Video
+            'mp3' => 'audio/mpeg',
+            'mp4' => 'video/mp4',
+            'avi' => 'video/x-msvideo',
+            'mov' => 'video/quicktime',
+        ];
+        
+        return $mimeTypes[$extension] ?? 'application/octet-stream';
     }
 }

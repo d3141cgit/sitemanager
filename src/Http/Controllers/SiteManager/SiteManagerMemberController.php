@@ -22,7 +22,7 @@ class SiteManagerMemberController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Member::with('groups');
+        $query = Member::with('groups')->orderBy('name');
 
         // 삭제된 멤버 포함 여부
         if ($request->get('status') === 'deleted') {
