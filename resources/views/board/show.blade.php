@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.app')
+@extends($layoutPath ?? 'sitemanager::layouts.app')
 
 @section('title', $post->title . ' - ' . $board->name)
 

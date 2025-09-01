@@ -90,8 +90,19 @@ class CommentController extends Controller
      */
     private function getPackageViewPath(string $viewName): string
     {
-        $viewPath = str_replace('.', '/', $viewName);
-        return __DIR__ . "/../../../resources/views/{$viewPath}.blade.php";
+        // 서비스 프로바이더에서 등록된 패키지 뷰 네임스페이스 사용
+        try {
+            $viewFactory = app('view');
+            $finder = $viewFactory->getFinder();
+            
+            // 패키지 뷰 경로 찾기
+            $packageViewName = "sitemanager::{$viewName}";
+            return $finder->find($packageViewName);
+            
+        } catch (\Exception $e) {
+            // 뷰를 찾을 수 없는 경우 빈 문자열 반환
+            return '';
+        }
     }
 
     /**

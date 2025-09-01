@@ -50,8 +50,30 @@ class BoardController extends Controller
             }
         }
         
-        // 3. 패키지의 기본 뷰 사용 (예: sitemanager::board.index)
+        // 3. 프로젝트에 패키지 뷰를 override한 버전이 있는지 확인
+        $projectOverridePath = resource_path("views/sitemanager/board/{$viewName}.blade.php");
+        if (file_exists($projectOverridePath)) {
+            return "sitemanager.board.{$viewName}";
+        }
+        
+        // 4. 패키지의 기본 뷰 사용 (예: sitemanager::board.index)
         return "sitemanager::board.{$viewName}";
+    }
+    
+    /**
+     * 프로젝트 레이아웃 경로를 반환합니다.
+     */
+    private function getLayoutPath(): string
+    {
+        // 프로젝트에 app 레이아웃이 있는지 확인
+        $projectLayoutPath = resource_path('views/layouts/app.blade.php');
+        
+        if (file_exists($projectLayoutPath)) {
+            return 'layouts.app';
+        }
+        
+        // 기본적으로 패키지 레이아웃 사용
+        return 'sitemanager::layouts.app';
     }
     
     /**
@@ -86,8 +108,19 @@ class BoardController extends Controller
      */
     private function getPackageViewPath(string $viewName): string
     {
-        $viewPath = str_replace('.', '/', $viewName);
-        return __DIR__ . "/../../../resources/views/{$viewPath}.blade.php";
+        // 서비스 프로바이더에서 등록된 패키지 뷰 네임스페이스 사용
+        try {
+            $viewFactory = app('view');
+            $finder = $viewFactory->getFinder();
+            
+            // 패키지 뷰 경로 찾기
+            $packageViewName = "sitemanager::{$viewName}";
+            return $finder->find($packageViewName);
+            
+        } catch (\Exception $e) {
+            // 뷰를 찾을 수 없는 경우 빈 문자열 반환
+            return '';
+        }
     }
 
     /**
@@ -111,7 +144,8 @@ class BoardController extends Controller
 
         return view($this->selectView('index'), compact('board', 'posts', 'notices', 'seoData') + [
             'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
-            'currentSkin' => $board->skin ?? 'default' // 현재 스킨 정보
+            'currentSkin' => $board->skin ?? 'default', // 현재 스킨 정보
+            'layoutPath' => $this->getLayoutPath() // 프로젝트 레이아웃 경로
         ]);
     }
 
@@ -135,6 +169,7 @@ class BoardController extends Controller
             // 비밀번호 입력 폼 표시 (스킨 적용)
             return view($this->selectView('password-form'), array_merge(compact('board', 'post'), [
                 'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
+                'layoutPath' => $this->getLayoutPath(), // 프로젝트 레이아웃 경로
                 'additionalBreadcrumb' => [
                     'title' => '[Private] '.$post->title,
                     'url' => null
@@ -162,6 +197,7 @@ class BoardController extends Controller
             [
                 'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
                 'currentSkin' => $board->skin ?? 'default', // 현재 스킨 정보
+                'layoutPath' => $this->getLayoutPath(), // 프로젝트 레이아웃 경로
                 'additionalBreadcrumb' => [
                     'title' => $post->title,
                     'url' => null
@@ -272,7 +308,8 @@ class BoardController extends Controller
         }
 
         return view($this->selectView('form'), compact('board') + [
-            'currentMenuId' => $board->menu_id // NavigationComposer에서 사용할 현재 메뉴 ID
+            'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
+            'layoutPath' => $this->getLayoutPath() // 프로젝트 레이아웃 경로
         ]);
     }
 
@@ -383,7 +420,8 @@ class BoardController extends Controller
         }
 
         return view($this->selectView('form'), compact('board', 'post') + [
-            'currentMenuId' => $board->menu_id // NavigationComposer에서 사용할 현재 메뉴 ID
+            'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
+            'layoutPath' => $this->getLayoutPath() // 프로젝트 레이아웃 경로
         ]);
     }
 
