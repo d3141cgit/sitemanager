@@ -149,7 +149,13 @@ class BoardController extends Controller
         // SEO 데이터 구성
         $seoData = $this->buildBoardSeoData($board, $request);
 
-        return view($this->selectView('index'), compact('board', 'posts', 'notices', 'seoData') + [
+        // 카테고리 관련 데이터 준비
+        $categoryData = $this->prepareCategoryData($board, $request);
+        
+        // 검색 관련 데이터 준비
+        $searchData = $this->prepareSearchData($request);
+
+        return view($this->selectView('index'), compact('board', 'posts', 'notices', 'seoData') + $categoryData + $searchData + [
             'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
             'currentSkin' => $board->skin ?? 'default', // 현재 스킨 정보
             'layoutPath' => $this->getLayoutPath() // 프로젝트 레이아웃 경로
@@ -1326,5 +1332,61 @@ class BoardController extends Controller
         return back()
             ->withInput()
             ->withErrors(['password' => 'Passwords do not match.']);
+    }
+
+    /**
+     * 카테고리 관련 데이터를 준비합니다.
+     */
+    private function prepareCategoryData(Board $board, Request $request): array
+    {
+        // 카테고리 사용 여부 확인
+        $usesCategories = $board->getSetting('use_categories', false) && count($board->getCategoryOptions()) > 0;
+        
+        if (!$usesCategories) {
+            return [
+                'usesCategories' => false,
+                'categoriesWithCounts' => [],
+                'totalPosts' => 0,
+                'currentCategory' => null,
+                'selectedCategories' => [],
+            ];
+        }
+
+        // 카테고리 관련 데이터 수집
+        $categoriesWithCounts = $board->getCategoryOptionsWithCounts();
+        $totalPosts = $board->getPostsCount();
+        $currentCategory = $request->input('category');
+        $selectedCategories = $request->input('categories', []);
+        
+        // 문자열로 전달된 경우 배열로 변환
+        if (is_string($selectedCategories)) {
+            $selectedCategories = explode(',', $selectedCategories);
+        }
+        
+        // 기존 단일 category 파라미터도 지원 (하위 호환성)
+        if ($currentCategory && !in_array($currentCategory, $selectedCategories)) {
+            $selectedCategories[] = $currentCategory;
+        }
+
+        return [
+            'usesCategories' => $usesCategories,
+            'categoriesWithCounts' => $categoriesWithCounts,
+            'totalPosts' => $totalPosts,
+            'currentCategory' => $currentCategory,
+            'selectedCategories' => $selectedCategories,
+        ];
+    }
+
+    /**
+     * 검색 관련 데이터를 준비합니다.
+     */
+    private function prepareSearchData(Request $request): array
+    {
+        return [
+            'currentSearch' => $request->input('search'),
+            'hasSearchFilter' => $request->has('search') && !empty($request->input('search')),
+            'hasCategoryFilter' => $request->has('category') && !empty($request->input('category')),
+            'hasAnyFilter' => $request->hasAny(['search', 'category', 'categories']),
+        ];
     }
 }

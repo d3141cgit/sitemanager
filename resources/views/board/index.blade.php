@@ -20,13 +20,7 @@
     <!-- Search & Filter -->
     <form method="GET" class="d-flex gap-4 align-items-center flex-wrap mb-4">
         <!-- Category Filter -->
-        @if($board->getSetting('use_categories', false) && count($board->getCategoryOptions()) > 0)
-            @php
-                $categoriesWithCounts = $board->getCategoryOptionsWithCounts();
-                $totalPosts = $board->getPostsCount();
-                $currentCategory = request('category');
-                $currentSearch = request('search');
-            @endphp
+        @if($usesCategories)
             <div class="d-flex align-items-center">
                 <label class="form-label me-3 mb-0 text-secondary">Category</label>
                 <select name="category" class="form-select" style="min-width: 180px;" onchange="this.form.submit()">
@@ -47,14 +41,14 @@
             <label class="form-label me-3 mb-0 text-secondary">Search</label>
             <div class="input-group">
                 <input type="text" name="search" class="form-control border-end-0" 
-                        placeholder="Search posts..." value="{{ request('search') }}">
+                        placeholder="Search posts..." value="{{ $currentSearch ?? '' }}">
                 <button type="submit" class="btn btn-outline-primary border-start-0">
                     <i class="bi bi-search"></i>
                 </button>
             </div>
         </div>
 
-        @if(request('category') || request('search'))
+        @if($hasAnyFilter)
             <a href="{{ route('board.index', $board->slug) }}" class="btn btn-outline-secondary">
                 <i class="bi bi-x-circle me-1"></i>Clear
             </a>
@@ -247,7 +241,7 @@
                 </div>
                 <h5 class="text-muted mb-3 fw-semibold">No posts found</h5>
                 <p class="text-muted mb-4">
-                    @if(request('search') || request('category'))
+                    @if($hasAnyFilter)
                         No posts match your search criteria.
                     @else
                         This board doesn't have any posts yet.
