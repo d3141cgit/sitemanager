@@ -390,8 +390,9 @@ class SiteManagerBoardController extends Controller
 
         $systemSettings = $this->systemSettings;
         $separatedSettings = ['system' => [], 'custom' => []]; // 새 게시판용 빈 설정
+        $availableSkins = $this->boardService->getAvailableSkins();
 
-        return view('sitemanager::sitemanager.board.form', compact('menus', 'systemSettings', 'separatedSettings'));
+        return view('sitemanager::sitemanager.board.form', compact('menus', 'systemSettings', 'separatedSettings', 'availableSkins'));
     }
 
     /**
@@ -451,8 +452,9 @@ class SiteManagerBoardController extends Controller
 
         $systemSettings = $this->systemSettings;
         $separatedSettings = $this->separateSettings($board->settings ?? []);
+        $availableSkins = $this->boardService->getAvailableSkins();
 
-        return view('sitemanager::sitemanager.board.form', compact('board', 'menus', 'systemSettings', 'separatedSettings'));
+        return view('sitemanager::sitemanager.board.form', compact('board', 'menus', 'systemSettings', 'separatedSettings', 'availableSkins'));
     }
 
     /**
@@ -466,8 +468,9 @@ class SiteManagerBoardController extends Controller
 
         $systemSettings = $this->systemSettings;
         $separatedSettings = $this->separateSettings($board->settings ?? []);
+        $availableSkins = $this->boardService->getAvailableSkins();
 
-        return view('sitemanager::sitemanager.board.form', compact('board', 'menus', 'systemSettings', 'separatedSettings'));
+        return view('sitemanager::sitemanager.board.form', compact('board', 'menus', 'systemSettings', 'separatedSettings', 'availableSkins'));
     }
 
     /**

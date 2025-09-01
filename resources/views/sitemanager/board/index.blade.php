@@ -55,6 +55,7 @@
                     <th>ID</th>
                     <th>Board Name</th>
                     <th>Slug</th>
+                    <th>Skin</th>
                     <th>Connected Menu</th>
                     <th class="text-center">Posts</th>
                     <th class="text-center">Comments</th>
@@ -76,6 +77,11 @@
                     </td>
                     <td>
                         <code>{{ $board->slug }}</code>
+                    </td>
+                    <td>
+                        <span class="badge bg-{{ $board->skin === 'default' ? 'secondary' : 'primary' }}">
+                            {{ $board->skin ?? 'default' }}
+                        </span>
                     </td>
                     <td>
                         @if($board->menu)

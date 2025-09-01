@@ -35,30 +35,22 @@ class BoardController extends Controller
         $board = $this->getCurrentBoard();
         $skin = $board?->skin ?? 'default';
         
-        // 스킨이 있고 'default'가 아닌 경우
-        if ($skin && $skin !== 'default') {
-            // 1. 프로젝트의 스킨 뷰 확인 (예: views/board/gallery/index.blade.php)
-            $skinViewPath = resource_path("views/board/{$skin}/{$viewName}.blade.php");
-            
-            if (file_exists($skinViewPath)) {
-                return "board.{$skin}.{$viewName}";
-            }
-            
-            // 2. 패키지의 스킨 뷰 확인 (예: sitemanager::board.gallery.index)
-            $packageSkinViewPath = $this->getPackageViewPath("board.{$skin}.{$viewName}");
-            if (file_exists($packageSkinViewPath)) {
-                return "sitemanager::board.{$skin}.{$viewName}";
+        // 1. 프로젝트의 스킨 뷰 확인 (예: views/board/default/index.blade.php 또는 views/board/gallery/index.blade.php)
+        $skinViewPath = resource_path("views/board/{$skin}/{$viewName}.blade.php");
+        
+        if (file_exists($skinViewPath)) {
+            return "board.{$skin}.{$viewName}";
+        }
+        
+        // 2. 스킨이 'default'가 아닌 경우에만 default 스킨으로 fallback (default 스킨이 있는 경우에만)
+        if ($skin !== 'default') {
+            $defaultViewPath = resource_path("views/board/default/{$viewName}.blade.php");
+            if (file_exists($defaultViewPath)) {
+                return "board.default.{$viewName}";
             }
         }
         
-        // 3. 프로젝트의 기본 뷰 확인 (예: views/board/index.blade.php)
-        $projectViewPath = resource_path("views/board/{$viewName}.blade.php");
-        
-        if (file_exists($projectViewPath)) {
-            return "board.{$viewName}";
-        }
-        
-        // 4. 패키지의 기본 뷰 사용 (예: sitemanager::board.index)
+        // 3. 패키지의 기본 뷰 사용 (예: sitemanager::board.index)
         return "sitemanager::board.{$viewName}";
     }
     
@@ -118,7 +110,8 @@ class BoardController extends Controller
         $seoData = $this->buildBoardSeoData($board, $request);
 
         return view($this->selectView('index'), compact('board', 'posts', 'notices', 'seoData') + [
-            'currentMenuId' => $board->menu_id // NavigationComposer에서 사용할 현재 메뉴 ID
+            'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
+            'currentSkin' => $board->skin ?? 'default' // 현재 스킨 정보
         ]);
     }
 
@@ -168,6 +161,7 @@ class BoardController extends Controller
             $permissions,
             [
                 'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
+                'currentSkin' => $board->skin ?? 'default', // 현재 스킨 정보
                 'additionalBreadcrumb' => [
                     'title' => $post->title,
                     'url' => null

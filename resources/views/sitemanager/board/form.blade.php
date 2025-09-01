@@ -93,6 +93,26 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        
+                        <div class="mb-3">
+                            <label for="skin" class="form-label">Theme/Skin</label>
+                            <select class="form-select @error('skin') is-invalid @enderror" id="skin" name="skin">
+                                @if(isset($availableSkins))
+                                    @foreach($availableSkins as $skinKey => $skinName)
+                                        <option value="{{ $skinKey }}" 
+                                                {{ old('skin', isset($board) ? $board->skin : 'default') === $skinKey ? 'selected' : '' }}>
+                                            {{ $skinName }}
+                                        </option>
+                                    @endforeach
+                                @else
+                                    <option value="default" selected>Default</option>
+                                @endif
+                            </select>
+                            <div class="form-text">Choose the theme/skin for this board's appearance.</div>
+                            @error('skin')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
                 </div>
             </div>

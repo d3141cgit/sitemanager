@@ -685,4 +685,30 @@ class BoardService
         
         return $pendingCounts;
     }
+
+    /**
+     * 사용 가능한 게시판 스킨 목록 조회
+     */
+    public function getAvailableSkins(): array
+    {
+        $skins = ['default' => 'Default'];
+        
+        // 프로젝트의 board 스킨 폴더들 확인
+        $boardViewPath = resource_path('views/board');
+        
+        if (is_dir($boardViewPath)) {
+            $directories = array_filter(glob($boardViewPath . '/*'), 'is_dir');
+            
+            foreach ($directories as $dir) {
+                $skinName = basename($dir);
+                
+                // 기본 뷰 파일들이 있는지 확인 (index.blade.php는 필수)
+                if (file_exists($dir . '/index.blade.php')) {
+                    $skins[$skinName] = ucfirst($skinName);
+                }
+            }
+        }
+        
+        return $skins;
+    }
 }
