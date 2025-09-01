@@ -42,23 +42,23 @@ Route::prefix('board')->name('board.')->group(function () {
     Route::get('/{slug}/{id}', [BoardController::class, 'show'])
         ->name('show')
         ->where('slug', '[a-z0-9_]+')
-        ->where('id', '[a-z0-9\-_]+');
+        ->where('id', '[\w\-\p{Hangul}]+');
     Route::post('/{slug}/{id}/verify-password', [BoardController::class, 'verifyPassword'])
         ->name('verify-password')
         ->where('slug', '[a-z0-9_]+')
-        ->where('id', '[a-z0-9\-_]+');
+        ->where('id', '[\w\-\p{Hangul}]+');
     Route::get('/{slug}/{id}/edit', [BoardController::class, 'edit'])
         ->name('edit')
         ->where('slug', '[a-z0-9_]+')
-        ->where('id', '[a-z0-9\-_]+');
+        ->where('id', '[\w\-\p{Hangul}]+');
     Route::put('/{slug}/{id}', [BoardController::class, 'update'])
         ->name('update')
         ->where('slug', '[a-z0-9_]+')
-        ->where('id', '[a-z0-9\-_]+');
+        ->where('id', '[\w\-\p{Hangul}]+');
     Route::delete('/{slug}/{id}', [BoardController::class, 'destroy'])
         ->name('destroy')
         ->where('slug', '[a-z0-9_]+')
-        ->where('id', '[a-z0-9\-_]+');
+        ->where('id', '[\w\-\p{Hangul}]+');
     
     // 파일 다운로드
     Route::get('/{slug}/attachment/{attachmentId}', [BoardController::class, 'downloadFile'])
@@ -78,7 +78,7 @@ Route::prefix('board')->name('board.')->group(function () {
     // 댓글 라우트
     Route::group([
         'prefix' => '/{slug}/{postId}/comments',
-        'where' => ['slug' => '[a-z0-9_]+', 'postId' => '[a-z0-9\-_]+'],
+        'where' => ['slug' => '[a-z0-9_]+', 'postId' => '[\w\-\p{Hangul}]+'],
         'as' => 'comments.'
     ], function () {
         Route::get('/', [CommentController::class, 'index'])->name('index');

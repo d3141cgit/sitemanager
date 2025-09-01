@@ -221,6 +221,45 @@ abstract class BoardPost extends Model
     {
         $title = $this->title;
         
+        // 한글과 영문을 모두 지원하는 slug 생성
+        $slug = mb_strtolower($title);
+        
+        // 특수문자 제거 (한글, 영문, 숫자, 공백, 하이픈만 허용)
+        $slug = preg_replace('/[^\p{L}\p{N}\s-]/u', '', $slug);
+        
+        // 공백을 하이픈으로 변환
+        $slug = preg_replace('/\s+/', '-', trim($slug));
+        
+        // 연속된 하이픈 제거
+        $slug = preg_replace('/-+/', '-', $slug);
+        
+        // 앞뒤 하이픈 제거
+        $slug = trim($slug, '-');
+        
+        // 빈 문자열이면 ID 기반으로 생성
+        if (empty($slug)) {
+            $slug = 'post-' . ($this->id ?: time());
+        }
+        
+        // 중복 체크 및 번호 추가
+        $originalSlug = $slug;
+        $counter = 1;
+
+        while (static::where('slug', $slug)->where('id', '!=', $this->id)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    /**
+     * SEO용 슬러그 생성 (영문 변환 방식 - 백업)
+     */
+    public function generateSlugTransliterated(): string
+    {
+        $title = $this->title;
+        
         // 1. 한글을 로마자로 변환 (기본적인 음성학적 변환)
         $transliterated = $this->transliterateKorean($title);
         
