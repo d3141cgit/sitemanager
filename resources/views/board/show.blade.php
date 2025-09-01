@@ -47,7 +47,14 @@
                             
                             <div class="d-flex flex-wrap gap-3 text-muted small">
                                 <span>
-                                    <i class="bi bi-person"></i> {{ $post->author }}
+                                    <i class="bi bi-person"></i> 
+                                    @if($post->author_profile_photo)
+                                        <img src="{{ $post->author_profile_photo }}" 
+                                             alt="{{ $post->author }}" 
+                                             class="profile-photo me-1"
+                                             style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">
+                                    @endif
+                                    {{ $post->author }}
                                 </span>
                                 <span>
                                     <i class="bi bi-calendar"></i> {{ $post->created_at->format('M j, Y H:i') }}

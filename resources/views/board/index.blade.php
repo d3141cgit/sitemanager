@@ -155,7 +155,15 @@
                                                 @endif
                                             </td>
                                             <td class="text-center">
-                                                <small>{{ $post->author }}</small>
+                                                <small>
+                                                    @if($post->author_profile_photo)
+                                                        <img src="{{ $post->author_profile_photo }}" 
+                                                             alt="{{ $post->author }}" 
+                                                             class="profile-photo me-1"
+                                                             style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover;">
+                                                    @endif
+                                                    {{ $post->author }}
+                                                </small>
                                             </td>
                                             <td class="text-center text-muted">
                                                 <small>{{ number_format($post->view_count) }}</small>
@@ -196,7 +204,15 @@
                                     
                                     <div class="d-flex justify-content-between align-items-center text-muted small">
                                         <div>
-                                            <span>{{ $post->author }}</span>
+                                            <span>
+                                                @if($post->author_profile_photo)
+                                                    <img src="{{ $post->author_profile_photo }}" 
+                                                         alt="{{ $post->author }}" 
+                                                         class="profile-photo me-1"
+                                                         style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover;">
+                                                @endif
+                                                {{ $post->author }}
+                                            </span>
                                             @if($post->category)
                                                 <span class="badge bg-secondary ms-1">{{ $post->category }}</span>
                                             @endif

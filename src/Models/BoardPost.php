@@ -189,7 +189,16 @@ abstract class BoardPost extends Model
      */
     public function getAuthorAttribute(): string
     {
-        return $this->member ? $this->member->name : ($this->author_name ?? '익명');
+        // return $this->member ? $this->member->name : ($this->author_name ?? 'Anonymous');
+        return $this->author_name ?? $this->member?->name ?? 'Anonymous';
+    }
+
+    /**
+     * 작성자 프로필 사진 URL 반환
+     */
+    public function getAuthorProfilePhotoAttribute(): ?string
+    {
+        return $this->member ? $this->member->profile_photo_url : null;
     }
 
     /**

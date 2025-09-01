@@ -4,7 +4,15 @@
             @if(($level ?? 0) > 0)
                 <i class="bi bi-arrow-return-right me-2 text-muted"></i>
             @endif
-            <strong class="me-2">{{ $comment->author_name }}</strong>
+            <div class="d-flex align-items-center">
+                @if($comment->author_profile_photo)
+                    <img src="{{ $comment->author_profile_photo }}" 
+                         alt="{{ $comment->author }}" 
+                         class="profile-photo me-2"
+                         style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                @endif
+                <strong class="me-2">{{ $comment->author_name }}</strong>
+            </div>
             <small class="text-muted">
                 {{ $comment->created_at->diffForHumans() }}
                 @if($comment->is_edited)
