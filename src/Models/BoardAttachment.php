@@ -291,4 +291,20 @@ class BoardAttachment extends Model
             }
         });
     }
+
+    /**
+     * 연관된 게시판과의 관계
+     */
+    public function board()
+    {
+        return Board::where('slug', $this->board_slug)->first();
+    }
+
+    /**
+     * 파일 크기를 인간이 읽기 쉬운 형태로 반환 (별칭)
+     */
+    public function getHumanSizeAttribute(): string
+    {
+        return $this->getFileSizeHumanAttribute();
+    }
 }

@@ -6,6 +6,7 @@ use SiteManager\Http\Controllers\SiteManager\SiteManagerMemberController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerGroupController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerBoardController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerCommentController;
+use SiteManager\Http\Controllers\SiteManager\SiteManagerFileController;
 use SiteManager\Http\Controllers\MenuController;
 
 // 사이트매니저 라우트
@@ -53,4 +54,22 @@ Route::middleware(['auth', 'sitemanager'])->prefix('sitemanager')->name('siteman
         Route::post('/force-delete', [SiteManagerCommentController::class, 'forceDelete'])->name('force-delete');
         Route::post('/bulk', [SiteManagerCommentController::class, 'bulkAction'])->name('bulk');
     });
+    
+    // 파일 관리
+    Route::prefix('files')->name('files.')->group(function () {
+        // 에디터 이미지 관리
+        Route::get('/editor-images', [SiteManagerFileController::class, 'editorImages'])->name('editor-images');
+        Route::delete('/editor-images/{image}', [SiteManagerFileController::class, 'deleteEditorImage'])->name('editor-images.delete');
+        Route::post('/editor-images/{image}/replace', [SiteManagerFileController::class, 'replaceEditorImage'])->name('editor-images.replace');
+        Route::get('/editor-images/{image}/check-usage', [SiteManagerFileController::class, 'checkEditorImageUsage'])->name('editor-images.check-usage');
+        Route::patch('/editor-images/{image}/update-usage', [SiteManagerFileController::class, 'updateEditorImageUsage'])->name('editor-images.update-usage');
+        
+        // 게시판 첨부파일 관리
+        Route::get('/board-attachments', [SiteManagerFileController::class, 'boardAttachments'])->name('board-attachments');
+        Route::delete('/board-attachments/{attachment}', [SiteManagerFileController::class, 'deleteBoardAttachment'])->name('board-attachments.delete');
+        Route::post('/board-attachments/{attachment}/replace', [SiteManagerFileController::class, 'replaceBoardAttachment'])->name('board-attachments.replace');
+    });
+    
+    // 게시물 보기 (새 창용)
+    Route::get('/board/{boardSlug}/posts/{postId}', [SiteManagerFileController::class, 'viewPost'])->name('files.view-post');
 });

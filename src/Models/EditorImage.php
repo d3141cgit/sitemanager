@@ -38,6 +38,29 @@ class EditorImage extends Model
     }
 
     /**
+     * 연관된 게시판과의 관계
+     */
+    public function board()
+    {
+        if ($this->reference_type === 'board' && $this->reference_slug) {
+            return Board::where('slug', $this->reference_slug)->first();
+        }
+        return null;
+    }
+
+    /**
+     * 연관된 게시물과의 관계
+     */
+    public function post()
+    {
+        if ($this->reference_type === 'board' && $this->reference_slug && $this->reference_id) {
+            $postModelClass = BoardPost::forBoard($this->reference_slug);
+            return $postModelClass::find($this->reference_id);
+        }
+        return null;
+    }
+
+    /**
      * 파일 URL 반환 (S3 또는 로컬)
      */
     public function getUrlAttribute(): string

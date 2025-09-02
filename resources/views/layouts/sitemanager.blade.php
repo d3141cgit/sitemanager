@@ -70,6 +70,30 @@
                             Boards
                         </a>
                     </li>
+                    
+                    <li class="nav-item dropdown">
+                        <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.files.*')]) 
+                           href="#" id="filesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-files"></i>
+                            Files
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.files.editor-images')]) 
+                                   href="{{ route('sitemanager.files.editor-images') }}">
+                                    <i class="bi bi-image"></i>
+                                    Editor Images
+                                </a>
+                            </li>
+                            <li>
+                                <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.files.board-attachments')]) 
+                                   href="{{ route('sitemanager.files.board-attachments') }}">
+                                    <i class="bi bi-paperclip"></i>
+                                    Board Attachments
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
                     <li class="nav-item">
                         <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.settings.*')]) 
                            href="{{ route('sitemanager.settings') }}">
