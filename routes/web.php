@@ -60,6 +60,12 @@ Route::prefix('board')->name('board.')->group(function () {
         ->where('slug', '[a-z0-9_]+')
         ->where('id', '[\w\-\p{Hangul}]+');
     
+    // 좋아요 기능
+    Route::post('/{slug}/{id}/like', [BoardController::class, 'toggleLike'])
+        ->name('like')
+        ->where('slug', '[a-z0-9_]+')
+        ->where('id', '[\w\-\p{Hangul}]+');
+    
     // 파일 다운로드
     Route::get('/{slug}/attachment/{attachmentId}', [BoardController::class, 'downloadFile'])
         ->name('attachment.download')

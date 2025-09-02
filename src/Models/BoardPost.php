@@ -30,6 +30,7 @@ abstract class BoardPost extends Model
         'view_count',
         'comment_count',
         'file_count',
+        'like_count',
         'published_at',
         'created_at',
         'updated_at'
@@ -40,6 +41,7 @@ abstract class BoardPost extends Model
         'view_count' => 'integer',
         'comment_count' => 'integer',
         'file_count' => 'integer',
+        'like_count' => 'integer',
         'published_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

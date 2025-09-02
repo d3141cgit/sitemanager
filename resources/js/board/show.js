@@ -6,6 +6,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Image preview modal functionality
     initializeImagePreview();
+    
+    // Like button functionality
+    initializeLikeButton();
 });
 
 /**
@@ -123,6 +126,113 @@ function printPost() {
     printWindow.close();
 }
 
+/**
+ * Initialize like button functionality
+ */
+function initializeLikeButton() {
+    const likeBtn = document.querySelector('.like-btn');
+    
+    if (likeBtn) {
+        const hasLiked = likeBtn.dataset.hasLiked === 'true';
+        
+        // 이미 좋아요를 눌렀다면 툴팁 추가
+        if (hasLiked) {
+            likeBtn.title = 'You have already liked this post';
+        }
+        
+        likeBtn.addEventListener('click', function() {
+            // 이미 좋아요를 눌렀다면 동작하지 않음
+            if (this.dataset.hasLiked === 'true') {
+                showMessage('info', 'You have already liked this post');
+                return;
+            }
+            
+            const postId = this.dataset.postId;
+            const boardSlug = this.dataset.boardSlug;
+            const likeCountSpan = this.querySelector('.like-count');
+            const icon = this.querySelector('i');
+            
+            // Disable button to prevent multiple clicks
+            this.disabled = true;
+            
+            fetch(`/board/${boardSlug}/${postId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update like count
+                    likeCountSpan.textContent = new Intl.NumberFormat().format(data.like_count);
+                    
+                    // Change icon to filled heart
+                    icon.className = 'bi bi-heart-fill';
+                    
+                    // Change button style to indicate it's been liked
+                    this.className = 'btn btn-sm btn-danger like-btn';
+                    
+                    // Mark as liked and keep disabled
+                    this.dataset.hasLiked = 'true';
+                    this.title = 'You have already liked this post';
+                    
+                    // Show success message
+                    showMessage('success', data.message || 'Like added successfully!');
+                } else if (data.already_liked) {
+                    // Handle case where user already liked (shouldn't happen with proper state management)
+                    showMessage('info', data.error || 'You have already liked this post');
+                    
+                    // Update UI to reflect already liked state
+                    icon.className = 'bi bi-heart-fill';
+                    this.className = 'btn btn-sm btn-danger like-btn';
+                    this.dataset.hasLiked = 'true';
+                    this.title = 'You have already liked this post';
+                } else {
+                    showMessage('error', data.error || 'Failed to like post');
+                    this.disabled = false; // Re-enable if it was a different error
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('error', 'An error occurred while liking the post');
+                this.disabled = false; // Re-enable on network error
+            });
+        });
+    }
+}
+
+/**
+ * Helper function to show messages
+ */
+function showMessage(type, message) {
+    let alertClass = 'alert-info';
+    if (type === 'success') alertClass = 'alert-success';
+    else if (type === 'error') alertClass = 'alert-danger';
+    else if (type === 'info') alertClass = 'alert-info';
+    
+    // Create alert element
+    const alert = document.createElement('div');
+    alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Add to body
+    document.body.appendChild(alert);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 3000);
+}
+
 // Global functions
 window.showImagePreview = showImagePreview;
 window.printPost = printPost;
+window.showMessage = showMessage;

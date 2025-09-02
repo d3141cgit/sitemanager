@@ -73,6 +73,7 @@ class BoardService
                 $table->unsignedInteger('view_count')->default(0)->comment('조회수');
                 $table->unsignedInteger('comment_count')->default(0)->comment('댓글 수');
                 $table->unsignedInteger('file_count')->default(0)->comment('첨부파일 수');
+                $table->unsignedInteger('like_count')->default(0)->comment('좋아요 수');
                 $table->timestamp('published_at')->nullable()->comment('게시 일시');
                 $table->timestamps();
                 $table->softDeletes();

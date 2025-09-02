@@ -75,6 +75,18 @@
 
                         <!-- Action Buttons -->
                         <div class="d-flex gap-2 mt-2 mt-md-0">
+                            <!-- Like Button -->
+                            <button type="button" 
+                                    class="btn btn-sm {{ $hasLiked ? 'btn-danger' : 'btn-outline-danger' }} like-btn" 
+                                    data-post-id="{{ $post->id }}"
+                                    data-board-slug="{{ $board->slug }}"
+                                    data-like-count="{{ $post->like_count ?? 0 }}"
+                                    data-has-liked="{{ $hasLiked ? 'true' : 'false' }}"
+                                    {{ $hasLiked ? 'disabled' : '' }}>
+                                <i class="bi {{ $hasLiked ? 'bi-heart-fill' : 'bi-heart' }}"></i> 
+                                <span class="like-count">{{ number_format($post->like_count ?? 0) }}</span>
+                            </button>
+
                             @if($canEdit)
                                 <a href="{{ route('board.edit', [$board->slug, $post->slug ?: $post->id]) }}" 
                                    class="btn btn-sm btn-outline-primary">

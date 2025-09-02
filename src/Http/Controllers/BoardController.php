@@ -203,8 +203,12 @@ class BoardController extends Controller
         // SEO 데이터 구성
         $seoData = $this->buildPostSeoData($board, $post, $attachments);
 
+        // 좋아요 상태 확인
+        $sessionKey = "liked_post_{$board->slug}_{$post->id}";
+        $hasLiked = session()->has($sessionKey);
+
         return view($this->selectView('show'), array_merge(
-            compact('board', 'post', 'comments', 'attachments', 'seoData'),
+            compact('board', 'post', 'comments', 'attachments', 'seoData', 'hasLiked'),
             $prevNext,
             $permissions,
             [
@@ -1388,5 +1392,65 @@ class BoardController extends Controller
             'hasCategoryFilter' => $request->has('category') && !empty($request->input('category')),
             'hasAnyFilter' => $request->hasAny(['search', 'category', 'categories']),
         ];
+    }
+
+    /**
+     * 게시글 좋아요 토글
+     */
+    public function toggleLike(Request $request, string $slug, $id)
+    {
+        $board = Board::where('slug', $slug)->firstOrFail();
+        
+        // 권한 체크
+        if ($board->menu_id && !can('read', $board)) {
+            return response()->json(['error' => 'Permission denied'], 403);
+        }
+
+        $post = $this->boardService->getPost($board, $id);
+        
+        // 비밀글 접근 권한 확인
+        if ($post->isSecret() && !$post->canAccess(Auth::id())) {
+            return response()->json(['error' => 'Cannot access private post'], 403);
+        }
+
+        // 세션 키 생성 (게시판별, 게시글별로 구분)
+        $sessionKey = "liked_post_{$board->slug}_{$post->id}";
+        
+        // 이미 좋아요를 눌렀는지 확인
+        if (session()->has($sessionKey)) {
+            return response()->json([
+                'error' => 'You have already liked this post',
+                'already_liked' => true,
+                'like_count' => $post->like_count ?? 0
+            ], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+            
+            // 좋아요 수 증가
+            $currentLikes = $post->like_count ?? 0;
+            $post->like_count = $currentLikes + 1;
+            $post->save();
+            
+            // 세션에 좋아요 기록 저장
+            session()->put($sessionKey, true);
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'like_count' => $post->like_count,
+                'message' => 'Like added successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error toggling like: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Failed to toggle like'
+            ], 500);
+        }
     }
 }
