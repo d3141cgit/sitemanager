@@ -21,12 +21,13 @@
     <!-- Header Section - Responsive -->
     <div class="mb-4">
         <!-- Desktop Header -->
-        <div class="d-none d-md-flex justify-content-between align-items-center mb-3">
+        <div class="d-none d-md-flex align-items-center mb-3">
             <h1 class="mb-0">
                 <a href="{{ route('sitemanager.files.editor-images') }}" class="text-decoration-none text-dark">
                     <i class="bi bi-images opacity-75"></i> Editor Images Management
                 </a>
             </h1>
+            <div class="ms-2">({{ $images->total() }} images)</div>
         </div>
 
         <!-- Mobile Header -->
