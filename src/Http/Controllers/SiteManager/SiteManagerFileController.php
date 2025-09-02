@@ -272,64 +272,39 @@ class SiteManagerFileController extends Controller
 
             $file = $request->file('replacement_file');
             
-            Log::info("Starting image replacement", [
-                'image_id' => $image->id,
-                'original_path' => $image->path,
-                'filename' => $image->filename,
-                'new_file_size' => $file->getSize(),
-                'new_file_mime' => $file->getMimeType()
-            ]);
+            // 기존 파일 삭제
+            $this->deleteFile($image->path);
             
-            // FileUploadService를 사용해서 안전하게 처리
-            try {
-                // 기존 파일 삭제
-                $this->deleteFile($image->path);
-                Log::info("Successfully deleted old file");
+            // 새 파일을 같은 경로 구조로 업로드
+            $uploadFolder = 'editor/images';
+            if ($image->reference_type === 'board' && $image->reference_slug) {
+                $uploadFolder = "editor/images/{$image->reference_slug}";
+            }
+            
+            // 새 파일 업로드
+            $uploadResult = $this->fileUploadService->uploadImage($file, $uploadFolder);
+            
+            // 새 파일을 기존 파일명으로 복사
+            if (isset($uploadResult['path'])) {
+                $oldS3Key = $image->path;
+                $newS3Key = $uploadResult['path'];
                 
-                // 새 파일을 같은 경로 구조로 업로드하되, 같은 파일명 사용
-                $uploadFolder = 'editor/images';
-                if ($image->reference_type === 'board' && $image->reference_slug) {
-                    $uploadFolder = "editor/images/{$image->reference_slug}";
+                // URL에서 키 추출
+                if (strpos($oldS3Key, 'https://') === 0) {
+                    $urlParts = parse_url($oldS3Key);
+                    $oldS3Key = ltrim($urlParts['path'], '/');
                 }
                 
-                // 임시로 새 파일명으로 업로드 후 URL과 경로 확인
-                $uploadResult = $this->fileUploadService->uploadImage($file, $uploadFolder);
-                
-                Log::info("New file uploaded", [
-                    'upload_result' => $uploadResult
-                ]);
-                
-                // 새 파일을 기존 파일명으로 복사
-                if (isset($uploadResult['path'])) {
-                    $oldS3Key = $image->path;
-                    $newS3Key = $uploadResult['path'];
-                    
-                    // URL에서 키 추출
-                    if (strpos($oldS3Key, 'https://') === 0) {
-                        $urlParts = parse_url($oldS3Key);
-                        $oldS3Key = ltrim($urlParts['path'], '/');
-                    }
-                    
-                    if (strpos($newS3Key, 'https://') === 0) {
-                        $urlParts = parse_url($newS3Key);
-                        $newS3Key = ltrim($urlParts['path'], '/');
-                    }
-                    
-                    // 새 파일을 기존 경로로 복사
-                    $copySuccess = Storage::disk('s3')->copy($newS3Key, $oldS3Key);
-                    
-                    if ($copySuccess) {
-                        // 임시 파일 삭제
-                        Storage::disk('s3')->delete($newS3Key);
-                        Log::info("Successfully copied file to original path and deleted temp file");
-                    } else {
-                        throw new \Exception("Failed to copy file to original path");
-                    }
+                if (strpos($newS3Key, 'https://') === 0) {
+                    $urlParts = parse_url($newS3Key);
+                    $newS3Key = ltrim($urlParts['path'], '/');
                 }
                 
-            } catch (\Exception $uploadError) {
-                Log::error("Upload/copy process failed", ['error' => $uploadError->getMessage()]);
-                throw $uploadError;
+                // 새 파일을 기존 경로로 복사
+                Storage::disk('s3')->copy($newS3Key, $oldS3Key);
+                
+                // 임시 파일 삭제
+                Storage::disk('s3')->delete($newS3Key);
             }
             
             // 데이터베이스 메타데이터 업데이트 (경로는 동일하게 유지)
@@ -339,8 +314,6 @@ class SiteManagerFileController extends Controller
                 'mime_type' => $file->getMimeType(),
                 'updated_at' => now()
             ]);
-            
-            Log::info("Database updated successfully");
 
             DB::commit();
 
