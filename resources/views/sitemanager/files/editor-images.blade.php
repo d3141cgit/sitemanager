@@ -16,176 +16,194 @@
 @endpush
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="bi bi-images me-2"></i>Editor Images Management
-                    </h5>
-                </div>
+<div class="container editor-images">
 
-                <div class="card-body">
-                    <!-- 필터 -->
-                    <form method="GET" class="row g-3 mb-4">
-                        <div class="col-md-3">
-                            <label for="board_slug" class="form-label">Board</label>
-                            <select name="board_slug" id="board_slug" class="form-select">
-                                <option value="">All Boards</option>
-                                @foreach($boards as $board)
-                                    <option value="{{ $board->slug }}" 
-                                        {{ request('board_slug') === $board->slug ? 'selected' : '' }}>
-                                        {{ $board->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-3">
-                            <label for="used_status" class="form-label">Usage Status</label>
-                            <select name="used_status" id="used_status" class="form-select">
-                                <option value="">All Status</option>
-                                <option value="used" {{ request('used_status') === 'used' ? 'selected' : '' }}>Used</option>
-                                <option value="unused" {{ request('used_status') === 'unused' ? 'selected' : '' }}>Unused</option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <label for="search" class="form-label">Search</label>
-                            <input type="text" name="search" id="search" class="form-control" 
-                                   placeholder="Search by filename..." value="{{ request('search') }}">
-                        </div>
-                        
-                        <div class="col-md-2">
-                            <label class="form-label">&nbsp;</label>
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-search"></i> Filter
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+    <!-- Header Section - Responsive -->
+    <div class="mb-4">
+        <!-- Desktop Header -->
+        <div class="d-none d-md-flex justify-content-between align-items-center mb-3">
+            <h1 class="mb-0">
+                <a href="{{ route('sitemanager.files.editor-images') }}" class="text-decoration-none text-dark">
+                    <i class="bi bi-images opacity-75"></i> Editor Images Management
+                </a>
+            </h1>
+        </div>
 
-                    <!-- 이미지 목록 -->
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th width="80">Preview</th>
-                                    <th>Filename</th>
-                                    <th>Board</th>
-                                    <th>Size</th>
-                                    <th>Used</th>
-                                    <th>Upload Date</th>
-                                    <th width="200">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($images as $image)
-                                    <tr>
-                                        <td>
-                                            <img src="{{ $image->url }}" alt="{{ $image->filename }}" 
-                                                 class="img-thumbnail cursor-pointer" style="max-width: 60px; max-height: 60px;"
-                                                 onclick="showImagePreview('{{ $image->url }}', '{{ addslashes($image->original_name) }}')"
-                                                 title="클릭해서 크게 보기">
-                                        </td>
-                                        <td>
-                                            <div class="fw-bold">
-                                                <a href="{{ $image->url }}" download="{{ $image->original_name }}" 
-                                                   class="text-decoration-none" title="클릭해서 다운로드">
-                                                    {{ $image->original_name }}
-                                                </a>
-                                            </div>
-                                            <small class="text-muted">{{ $image->filename }}</small>
-                                        </td>
-                                        <td>
-                                            @if($image->reference_slug)
-                                                <span class="badge bg-info">{{ $image->reference_slug }}</span>
-                                                @if($image->reference_id && $image->reference_id > 0)
-                                                    @php
-                                                        $postModelClass = \SiteManager\Models\BoardPost::forBoard($image->reference_slug);
-                                                        $post = $postModelClass::find($image->reference_id);
-                                                    @endphp
-                                                    @if($post)
-                                                        <div class="mt-1">
-                                                            <a href="javascript:void(0)" 
-                                                               onclick="openPostInNewWindow('{{ $image->reference_slug }}', {{ $image->reference_id }})"
-                                                               class="text-decoration-none small"
-                                                               title="게시물 보기">
-                                                                <i class="bi bi-box-arrow-up-right"></i> {{ Str::limit($post->title ?? 'No Title', 30) }}
-                                                            </a>
-                                                        </div>
-                                                    @endif
-                                                @elseif($image->reference_id && $image->reference_id < 0)
-                                                    <div class="mt-1">
-                                                        <span class="badge bg-warning text-dark">
-                                                            <i class="bi bi-exclamation-triangle"></i> Temp ID: {{ $image->reference_id }}
-                                                        </span>
-                                                        <br><small class="text-muted">Reference needs update</small>
-                                                    </div>
-                                                @endif
-                                            @else
-                                                <span class="badge bg-secondary">No Board</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $image->human_size }}</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <span class="badge {{ $image->is_used ? 'bg-success' : 'bg-warning' }} me-2">
-                                                    {{ $image->is_used ? 'Used' : 'Unused' }}
-                                                </span>
-                                                <button type="button" class="btn btn-sm btn-outline-info" 
-                                                        onclick="checkActualUsage({{ $image->id }}, '{{ addslashes($image->filename) }}', {{ $image->is_used ? 'true' : 'false' }})" 
-                                                        title="실제 사용 상태 확인">
-                                                    <i class="bi bi-search"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td>{{ $image->created_at->format('Y-m-d H:i') }}</td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <!-- 이미지 교체 -->
-                                                <button type="button" class="btn btn-outline-warning" 
-                                                        onclick="showReplaceModal({{ $image->id }}, '{{ $image->original_name }}')">
-                                                    <i class="bi bi-arrow-repeat"></i>
-                                                </button>
-                                                
-                                                <!-- 이미지 삭제 -->
-                                                @if(!$image->is_used)
-                                                    <form method="POST" action="{{ route('sitemanager.files.editor-images.delete', $image) }}" 
-                                                          style="display: inline;">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-outline-danger" 
-                                                                onclick="return confirm('Are you sure you want to delete this image?')">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                @endif
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="text-center py-4">
-                                            <i class="bi bi-images" style="font-size: 3rem; color: #6c757d;"></i>
-                                            <p class="text-muted mt-3">No editor images found.</p>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- 페이지네이션 -->
-                    <div class="d-flex justify-content-center">
-                        {{ $images->withQueryString()->links() }}
-                    </div>
-                </div>
-            </div>
+        <!-- Mobile Header -->
+        <div class="d-md-none">
+            <h4 class="mb-3">
+                <a href="{{ route('sitemanager.files.editor-images') }}" class="text-decoration-none text-dark">
+                    <i class="bi bi-images opacity-75"></i> Editor Images Management
+                </a>
+            </h4>
         </div>
     </div>
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    <!-- 필터 -->
+    <form method="GET" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label for="board_slug" class="form-label">Board</label>
+            <select name="board_slug" id="board_slug" class="form-select">
+                <option value="">All Boards</option>
+                @foreach($boards as $board)
+                    <option value="{{ $board->slug }}" 
+                        {{ request('board_slug') === $board->slug ? 'selected' : '' }}>
+                        {{ $board->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <label for="used_status" class="form-label">Usage Status</label>
+            <select name="used_status" id="used_status" class="form-select">
+                <option value="">All Status</option>
+                <option value="used" {{ request('used_status') === 'used' ? 'selected' : '' }}>Used</option>
+                <option value="unused" {{ request('used_status') === 'unused' ? 'selected' : '' }}>Unused</option>
+            </select>
+        </div>
+        
+        <div class="col-md-4">
+            <label for="search" class="form-label">Search</label>
+            <input type="text" name="search" id="search" class="form-control" 
+                   placeholder="Search by filename..." value="{{ request('search') }}">
+        </div>
+        
+        <div class="col-md-2">
+            <label class="form-label">&nbsp;</label>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filter
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 이미지 목록 -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th width="80">Preview</th>
+                    <th>Filename</th>
+                    <th>Board</th>
+                    <th>Size</th>
+                    <th>Used</th>
+                    <th>Upload Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($images as $image)
+                    <tr>
+                        <td>
+                            <img src="{{ $image->url }}" alt="{{ $image->filename }}" 
+                                 class="img-thumbnail cursor-pointer" style="max-width: 60px; max-height: 60px;"
+                                 onclick="showImagePreview('{{ $image->url }}', '{{ addslashes($image->original_name) }}')"
+                                 title="클릭해서 크게 보기">
+                        </td>
+                        <td>
+                            <div class="fw-bold">
+                                <a href="{{ $image->url }}" download="{{ $image->original_name }}" 
+                                    class="text-decoration-none" title="클릭해서 다운로드">
+                                    {{ $image->original_name }}
+                                </a>
+                            </div>
+                            <small class="text-muted">{{ $image->filename }}</small>
+                        </td>
+                        <td>
+                            @if($image->reference_slug)
+                                <span class="badge bg-info me-1">{{ $image->reference_slug }}</span>
+                                @if($image->reference_id && $image->reference_id > 0)
+                                    @php
+                                        $postModelClass = \SiteManager\Models\BoardPost::forBoard($image->reference_slug);
+                                        $post = $postModelClass::find($image->reference_id);
+                                    @endphp
+                                    @if($post)
+                                        <a href="javascript:void(0)" onclick="openPostInNewWindow('{{ $image->reference_slug }}', {{ $image->reference_id }})" class="text-decoration-none small" title="게시물 보기">
+                                            {{ $post->title ?? 'No Title' }}
+                                        </a>
+                                    @endif
+                                @elseif($image->reference_id && $image->reference_id < 0)
+                                    <div class="mt-1">
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-exclamation-triangle"></i> Temp ID: {{ $image->reference_id }}
+                                        </span>
+                                        <br><small class="text-muted">Reference needs update</small>
+                                    </div>
+                                @endif
+                            @else
+                                <span class="badge bg-secondary">No Board</span>
+                            @endif
+                        </td>
+                        <td nowrap>{{ $image->human_size }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="badge {{ $image->is_used ? 'bg-success' : 'bg-warning' }} me-2">
+                                    {{ $image->is_used ? 'Used' : 'Unused' }}
+                                </span>
+                                <button type="button" class="btn btn-sm btn-outline-info" 
+                                        onclick="checkActualUsage({{ $image->id }}, '{{ addslashes($image->filename) }}', {{ $image->is_used ? 'true' : 'false' }})" 
+                                        title="실제 사용 상태 확인">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="text-nowrap">{{ $image->created_at->format('Y-m-d H:i') }}</td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <!-- 이미지 교체 -->
+                                <button type="button" class="btn btn-sm btn-outline-warning" 
+                                        onclick="showReplaceModal({{ $image->id }}, '{{ $image->original_name }}')">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+                                
+                                <!-- 이미지 삭제 -->
+                                @if(!$image->is_used)
+                                    <form method="POST" action="{{ route('sitemanager.files.editor-images.delete', $image) }}" 
+                                            style="display: inline;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                onclick="return confirm('Are you sure you want to delete this image?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="bi bi-images" style="font-size: 3rem; color: #6c757d;"></i>
+                            <p class="text-muted mt-3">No editor images found.</p>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 페이지네이션 -->
+    @if($images->hasPages())
+        <div class="d-flex justify-content-center mt-4">
+            {{ $images->links('pagination::bootstrap-4') }}
+        </div>
+    @endif
 </div>
 
 <!-- 이미지 교체 모달 -->
@@ -245,6 +263,7 @@
         </div>
     </div>
 </div>
+
 <!-- Image Preview Modal -->
 <div class="modal fade" id="imagePreviewModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">

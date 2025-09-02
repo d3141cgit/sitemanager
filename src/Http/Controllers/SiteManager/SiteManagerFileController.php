@@ -53,7 +53,7 @@ class SiteManagerFileController extends Controller
         $images = $query->paginate(20);
         $boards = Board::orderBy('name')->get();
 
-        return view('sitemanager::files.editor-images', compact('images', 'boards'));
+        return view('sitemanager::sitemanager.files.editor-images', compact('images', 'boards'));
     }
 
     /**
@@ -80,7 +80,7 @@ class SiteManagerFileController extends Controller
         $attachments = $query->paginate(20);
         $boards = Board::orderBy('name')->get();
 
-        return view('sitemanager::files.board-attachments', compact('attachments', 'boards'));
+        return view('sitemanager::sitemanager.files.board-attachments', compact('attachments', 'boards'));
     }
 
     /**
@@ -550,13 +550,12 @@ class SiteManagerFileController extends Controller
             $postModelClass = BoardPost::forBoard($boardSlug);
             $post = $postModelClass::findOrFail($postId);
             
-            return view('sitemanager::files.post-view', [
+            return view('sitemanager::sitemanager.files.post-view', [
                 'post' => $post,
                 'boardSlug' => $boardSlug
             ]);
-            
         } catch (\Exception $e) {
-            return response()->view('sitemanager::files.post-view', [
+            return response()->view('sitemanager::sitemanager.files.post-view', [
                 'error' => 'Post not found or access denied.',
                 'boardSlug' => $boardSlug
             ], 404);
