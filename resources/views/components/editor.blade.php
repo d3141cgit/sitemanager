@@ -1,4 +1,12 @@
-@props(['name' => 'content', 'value' => '', 'height' => '400', 'placeholder' => 'Enter your content...'])
+@props([
+    'name' => 'content', 
+    'value' => '', 
+    'height' => '400', 
+    'placeholder' => 'Enter your content...',
+    'referenceType' => null,
+    'referenceSlug' => null,
+    'referenceId' => null
+])
 
 <div class="editor-wrapper">
     <textarea 
@@ -111,6 +119,18 @@ $(document).ready(function() {
         formData.append('upload', file);
         formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
         
+        @if($referenceType)
+        formData.append('reference_type', '{{ $referenceType }}');
+        @endif
+        
+        @if($referenceSlug)
+        formData.append('reference_slug', '{{ $referenceSlug }}');
+        @endif
+        
+        @if($referenceId)
+        formData.append('reference_id', '{{ $referenceId }}');
+        @endif
+        
         // Show progress indicator
         showUploadProgress();
         
@@ -131,6 +151,17 @@ $(document).ready(function() {
                         image.css('height', 'auto');
                         image.attr('alt', file.name);
                     });
+                    
+                    // 임시 reference_id가 있으면 form에 hidden input으로 추가
+                    if (result.temp_reference_id) {
+                        var form = $('#{{ $name }}_editor').closest('form');
+                        var existingInput = form.find('input[name="temp_reference_id"]');
+                        if (existingInput.length === 0) {
+                            form.append('<input type="hidden" name="temp_reference_id" value="' + result.temp_reference_id + '">');
+                        } else {
+                            existingInput.val(result.temp_reference_id);
+                        }
+                    }
                     
                     // Success notification (optional)
                     if (typeof showNotification === 'function') {

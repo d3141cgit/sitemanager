@@ -40,10 +40,16 @@ class EditorController extends Controller
                 $referenceId = EditorImage::generateTempReferenceId();
             }
             
+            // 업로드 폴더 결정 (보드별 구분 지원)
+            $uploadFolder = 'editor/images';
+            if ($referenceType === 'board' && !empty($referenceSlug)) {
+                $uploadFolder = "editor/images/{$referenceSlug}";
+            }
+            
             // FileUploadService를 사용하여 이미지 업로드
             $uploadResult = $this->fileUploadService->uploadImage(
                 $file, 
-                'editor/images',
+                $uploadFolder,
                 [
                     'max_size' => 5120, // 5MB
                     'allowed_types' => ['jpg', 'jpeg', 'png', 'gif', 'webp']

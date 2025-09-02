@@ -6,6 +6,7 @@ use SiteManager\Models\Board;
 use SiteManager\Models\BoardPost;
 use SiteManager\Models\BoardComment;
 use SiteManager\Models\BoardAttachment;
+use SiteManager\Models\EditorImage;
 use SiteManager\Models\Menu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -13,6 +14,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class BoardService
@@ -581,6 +583,9 @@ class BoardService
      */
     public function deletePost(Board $board, $post): void
     {
+        // 해당 게시물과 연관된 EditorImage들 삭제
+        $this->deletePostEditorImages($board->slug, $post->id);
+        
         $post->delete();
     }
 
@@ -711,5 +716,37 @@ class BoardService
         }
         
         return $skins;
+    }
+
+    /**
+     * 게시물과 연관된 EditorImage들 삭제
+     */
+    private function deletePostEditorImages(string $boardSlug, int $postId): void
+    {
+        $editorImages = EditorImage::where('reference_type', 'board')
+            ->where('reference_slug', $boardSlug)
+            ->where('reference_id', $postId)
+            ->get();
+
+        foreach ($editorImages as $image) {
+            try {
+                // S3 파일 삭제
+                if (strpos($image->path, 'https://') === 0) {
+                    // S3 URL인 경우 - FileUploadService를 통해 삭제
+                    app(FileUploadService::class)->deleteFile($image->path);
+                } else {
+                    // 로컬 파일인 경우
+                    if (Storage::disk('public')->exists($image->path)) {
+                        Storage::disk('public')->delete($image->path);
+                    }
+                }
+            } catch (\Exception $e) {
+                // 파일 삭제 실패해도 로그만 남기고 계속 진행
+                Log::warning("Failed to delete editor image file {$image->path}: " . $e->getMessage());
+            }
+
+            // 데이터베이스에서 삭제
+            $image->delete();
+        }
     }
 }

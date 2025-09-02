@@ -233,6 +233,7 @@
         @yield('content')
     </main>
 
+    @stack('styles')
     @stack('scripts')
     
     <!-- Mobile Sidebar Toggle Script -->

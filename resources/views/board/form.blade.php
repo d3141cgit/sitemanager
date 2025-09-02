@@ -132,6 +132,9 @@
                                 :value="old('content', isset($post) ? $post->content : '')"
                                 height="500"
                                 placeholder="Write your post content here..." 
+                                referenceType="board"
+                                :referenceSlug="$board->slug"
+                                :referenceId="isset($post) ? $post->id : null"
                             />
                             @error('content')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
