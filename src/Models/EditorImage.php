@@ -118,7 +118,7 @@ class EditorImage extends Model
     /**
      * 콘텐츠에서 사용된 이미지들을 사용됨으로 표시
      */
-    public static function markAsUsedByContent(string $content, string $type, string $slug, int $id): int
+    public static function markAsUsedByContent(?string $content, string $type, string $slug, int $id): int
     {
         // 다양한 에디터 이미지 URL 패턴들
         $patterns = [

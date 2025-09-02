@@ -456,7 +456,7 @@ class BoardService
             'member_id' => Auth::id(),
             'author_name' => Auth::user()?->name,
             'title' => $data['title'],
-            'content' => $data['content'],
+            'content' => $data['content'] ?? null,
             'content_type' => 'html',
             'category' => $data['category'] ?? null,
             'tags' => isset($data['tags']) && $data['tags'] ? explode(',', $data['tags']) : null,
@@ -482,7 +482,7 @@ class BoardService
     {
         $post->update([
             'title' => $data['title'],
-            'content' => $data['content'],
+            'content' => $data['content'] ?? null,
             'category' => $data['category'] ?? null,
             'tags' => isset($data['tags']) && $data['tags'] ? explode(',', $data['tags']) : null,
             'options' => $this->buildOptionsString($data),

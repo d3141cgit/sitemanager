@@ -9,10 +9,6 @@
     @endif
 @endpush
 
-@push('head')
-{!! resource('sitemanager::js/board/form.js') !!}
-@endpush
-
 @section('content')
 <div class="container board py-4">
     <!-- Navigation Breadcrumb -->
@@ -97,7 +93,7 @@
                                 </button>
                             </div>
                             <div class="form-text">
-                                <span id="slug-preview">{{ url('/board/' . $board->slug . '/') }}<span id="slug-value">{{ old('slug', isset($post) ? $post->slug : 'your-slug') }}</span></span>
+                                <span id="slug-preview">{{ url('/board/' . $board->slug . '/') }}/<span id="slug-value">{{ old('slug', isset($post) ? $post->slug : 'your-slug') }}</span></span>
                             </div>
                             <div id="slug-feedback" class="mt-1"></div>
                             @error('slug')
