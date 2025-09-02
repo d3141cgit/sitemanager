@@ -14,6 +14,7 @@ use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SiteManagerFileController extends Controller
 {
@@ -89,15 +90,14 @@ class SiteManagerFileController extends Controller
     {
         try {
             $found = false;
-            $foundInBoards = [];
+            $foundInModules = [];
             
-            // 모든 게시판에서 이미지 파일명으로 검색
+            // 1. 게시판에서 검색
             $boards = Board::where('status', 'active')->get();
             
             foreach ($boards as $board) {
                 $postModelClass = BoardPost::forBoard($board->slug);
                 
-                // 이미지를 사용하는 게시물들을 구체적으로 가져오기
                 $postsWithImage = $postModelClass::where('content', 'LIKE', '%' . $image->filename . '%')
                     // ->orWhere('content', 'LIKE', '%' . $image->original_name . '%')
                     ->select('id', 'title', 'created_at')
@@ -105,7 +105,8 @@ class SiteManagerFileController extends Controller
                 
                 if ($postsWithImage->count() > 0) {
                     $found = true;
-                    $foundInBoards[] = [
+                    $foundInModules[] = [
+                        'type' => 'board',
                         'title' => $board->name,
                         'slug' => $board->slug,
                         'posts_count' => $postsWithImage->count(),
@@ -114,16 +115,24 @@ class SiteManagerFileController extends Controller
                                 'id' => $post->id,
                                 'title' => $post->title,
                                 'created_at' => $post->created_at->format('Y-m-d'),
-                                'board_slug' => $board->slug
+                                'url' => "/sitemanager/board/{$board->slug}/posts/{$post->id}"
                             ];
                         })->toArray()
                     ];
                 }
             }
             
+            // 2. 다른 모듈들에서 검색 (확장 가능)
+            $otherModules = $this->checkImageUsageInOtherModules($image);
+            $foundInModules = array_merge($foundInModules, $otherModules);
+            
+            if (!empty($otherModules)) {
+                $found = true;
+            }
+            
             return response()->json([
                 'found' => $found,
-                'boards' => $foundInBoards,
+                'boards' => $foundInModules, // boards라는 이름이지만 실제로는 모든 모듈 포함
                 'filename' => $image->filename,
                 'original_name' => $image->original_name
             ]);
@@ -133,6 +142,78 @@ class SiteManagerFileController extends Controller
                 'error' => 'Failed to check image usage: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * 다른 모듈들에서 이미지 사용 여부 확인 (확장 가능)
+     */
+    private function checkImageUsageInOtherModules(EditorImage $image): array
+    {
+        $foundInModules = [];
+        
+        // 향후 다른 모듈 추가 시 아래 패턴으로 추가:
+        
+        /*
+        // Example: Page 모듈 추가
+        try {
+            if (Schema::hasColumn('pages', 'content')) {
+                $pagesWithImage = \SiteManager\Models\Page::where('content', 'LIKE', '%' . $image->filename . '%')
+                    ->orWhere('content', 'LIKE', '%' . $image->original_name . '%')
+                    ->select('id', 'title', 'created_at')
+                    ->get();
+                    
+                if ($pagesWithImage->count() > 0) {
+                    $foundInModules[] = [
+                        'type' => 'page',
+                        'title' => 'Pages',
+                        'slug' => 'page',
+                        'posts_count' => $pagesWithImage->count(),
+                        'posts' => $pagesWithImage->map(function($page) {
+                            return [
+                                'id' => $page->id,
+                                'title' => $page->title,
+                                'created_at' => $page->created_at->format('Y-m-d'),
+                                'url' => "/sitemanager/pages/{$page->id}/edit"
+                            ];
+                        })->toArray()
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            // 모듈이 없거나 오류 발생시 무시
+        }
+        */
+        
+        /*
+        // Example: Notice 모듈 추가
+        try {
+            $noticesWithImage = \SiteManager\Models\Notice::where('content', 'LIKE', '%' . $image->filename . '%')
+                ->orWhere('content', 'LIKE', '%' . $image->original_name . '%')
+                ->select('id', 'title', 'created_at')
+                ->get();
+                
+            if ($noticesWithImage->count() > 0) {
+                $foundInModules[] = [
+                    'type' => 'notice',
+                    'title' => 'Notices',
+                    'slug' => 'notice',
+                    'posts_count' => $noticesWithImage->count(),
+                    'posts' => $noticesWithImage->map(function($notice) {
+                        return [
+                            'id' => $notice->id,
+                            'title' => $notice->title,
+                            'created_at' => $notice->created_at->format('Y-m-d'),
+                            'url' => "/sitemanager/notices/{$notice->id}/edit"
+                        ];
+                    })->toArray()
+                ];
+            }
+        } catch (\Exception $e) {
+            // 모듈이 없거나 오류 발생시 무시
+        }
+        */
+        
+        return $foundInModules;
     }
 
     /**
@@ -153,9 +234,9 @@ class SiteManagerFileController extends Controller
             if ($request->is_used === true) {
                 $correctReference = $this->findCorrectReference($image);
                 if ($correctReference) {
-                    $updateData['reference_type'] = 'board';
-                    $updateData['reference_slug'] = $correctReference['board_slug'];
-                    $updateData['reference_id'] = $correctReference['post_id'];
+                    $updateData['reference_type'] = $correctReference['reference_type'];
+                    $updateData['reference_slug'] = $correctReference['reference_slug'];
+                    $updateData['reference_id'] = $correctReference['reference_id'];
                 }
             }
 
@@ -184,6 +265,7 @@ class SiteManagerFileController extends Controller
      */
     private function findCorrectReference(EditorImage $image): ?array
     {
+        // 1. 게시판에서 검색
         $boards = Board::where('status', 'active')->get();
         
         foreach ($boards as $board) {
@@ -192,15 +274,60 @@ class SiteManagerFileController extends Controller
             $postsWithImage = $postModelClass::where('content', 'LIKE', '%' . $image->filename . '%')
                 ->orWhere('content', 'LIKE', '%' . $image->original_name . '%')
                 ->select('id')
-                ->first(); // 첫 번째로 찾은 게시물 사용
+                ->first();
             
             if ($postsWithImage) {
                 return [
-                    'board_slug' => $board->slug,
-                    'post_id' => $postsWithImage->id
+                    'reference_type' => 'board',
+                    'reference_slug' => $board->slug,
+                    'reference_id' => $postsWithImage->id
                 ];
             }
         }
+        
+        // 2. 다른 모듈에서 검색 (향후 모듈 추가 시 아래 패턴으로 추가)
+        
+        /*
+        // Example: Page 모듈에서 검색
+        try {
+            if (Schema::hasColumn('pages', 'content')) {
+                $pageWithImage = \SiteManager\Models\Page::where('content', 'LIKE', '%' . $image->filename . '%')
+                    ->orWhere('content', 'LIKE', '%' . $image->original_name . '%')
+                    ->select('id')
+                    ->first();
+                    
+                if ($pageWithImage) {
+                    return [
+                        'reference_type' => 'page',
+                        'reference_slug' => 'page',
+                        'reference_id' => $pageWithImage->id
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            // 모듈이 없는 경우 무시
+        }
+        */
+        
+        /*
+        // Example: Notice 모듈에서 검색
+        try {
+            $noticeWithImage = \SiteManager\Models\Notice::where('content', 'LIKE', '%' . $image->filename . '%')
+                ->orWhere('content', 'LIKE', '%' . $image->original_name . '%')
+                ->select('id')
+                ->first();
+                
+            if ($noticeWithImage) {
+                return [
+                    'reference_type' => 'notice',
+                    'reference_slug' => 'notice', 
+                    'reference_id' => $noticeWithImage->id
+                ];
+            }
+        } catch (\Exception $e) {
+            // 모듈이 없는 경우 무시
+        }
+        */
         
         return null;
     }
