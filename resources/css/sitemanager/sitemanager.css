@@ -102,8 +102,8 @@ body > header {
                 rgba(255, 255, 255, 0.8), 
                 rgba(255, 255, 255, 0.1), 
                 rgba(255, 255, 255, 0.8)) border-box;
-    -webkit-backdrop-filter: blur(20px); 
-    backdrop-filter: blur(20px); 
+    -webkit-backdrop-filter: blur(5px); 
+    backdrop-filter: blur(5px); 
     box-shadow: 0 4px 32px rgba(0, 0, 0, 0.1), 
                 inset 0 1px 0 rgba(255, 255, 255, 0.7),
                 inset 0 -1px 0 rgba(255, 255, 255, 0.2); 
@@ -179,3 +179,7 @@ main { padding: 2rem 0; }
 
 .default-form .groups { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
 .default-form .card-body h5 { border-top: dashed 1px var(--bs-gray-500); padding-top: 1.5rem; margin-top: 1.5rem; }
+
+
+.pagination .page-link, .pagination-nav select { font-size: 0.8rem; font-weight: 600; }
+.active>.page-link, .page-link.active { background-color: var(--red-dark); border-color: var(--red-dark); }

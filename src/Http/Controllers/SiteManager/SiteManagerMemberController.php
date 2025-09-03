@@ -65,7 +65,11 @@ class SiteManagerMemberController extends Controller
             $query->where('level', $request->get('level'));
         }
 
-        $members = $query->paginate(20)->appends($request->query());
+        // 동적 pagination 개수 설정
+        $perPage = $request->get('per_page', config('sitemanager.ui.pagination_per_page', 20));
+        $perPage = min(max((int)$perPage, 1), 100); // 1-100 범위로 제한
+        
+        $members = $query->paginate($perPage)->appends($request->query());
         $groups = Group::orderBy('name')->get();
         $levels = config('member.levels');
 

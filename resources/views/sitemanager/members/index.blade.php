@@ -183,7 +183,7 @@
     </table>
 </div>
 
-{{ $members->links() }}
+{{ $members->links('sitemanager::pagination.default') }}
 
 @endsection
 
