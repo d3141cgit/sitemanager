@@ -1,6 +1,6 @@
 @extends('sitemanager::layouts.sitemanager')
 
-@section('title', 'Board Attachments Management')
+@section('title', t('Board Attachments Management'))
 
 @section('content')
 <div class="container board-attachments">
@@ -11,7 +11,7 @@
         <div class="d-none d-md-flex justify-content-between align-items-center mb-3">
             <h1 class="mb-0">
                 <a href="{{ route('sitemanager.files.board-attachments') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-paperclip opacity-75"></i> Board Attachments Management
+                    <i class="bi bi-paperclip opacity-75"></i> {{ t('Board Attachments Management') }}
                 </a>
             </h1>
         </div>
@@ -20,7 +20,7 @@
         <div class="d-md-none">
             <h4 class="mb-3">
                 <a href="{{ route('sitemanager.files.board-attachments') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-paperclip opacity-75"></i> Board Attachments Management
+                    <i class="bi bi-paperclip opacity-75"></i> {{ t('Board Attachments Management') }}
                 </a>
             </h4>
         </div>
@@ -43,9 +43,9 @@
     <!-- 필터 -->
     <form method="GET" class="row g-3 mb-4">
         <div class="col-md-4">
-            <label for="board_slug" class="form-label">Board</label>
+            <label for="board_slug" class="form-label">{{ t('Board') }}</label>
             <select name="board_slug" id="board_slug" class="form-select">
-                <option value="">All Boards</option>
+                <option value="">{{ t('All Boards') }}</option>
                 @foreach($boards as $board)
                     <option value="{{ $board->slug }}" 
                         {{ request('board_slug') === $board->slug ? 'selected' : '' }}>
@@ -56,16 +56,16 @@
         </div>
         
         <div class="col-md-6">
-            <label for="search" class="form-label">Search</label>
+            <label for="search" class="form-label">{{ t('Search') }}</label>
             <input type="text" name="search" id="search" class="form-control" 
-                   placeholder="Search by filename..." value="{{ request('search') }}">
+                   placeholder="{{ t('Search by filename...') }}" value="{{ request('search') }}">
         </div>
         
         <div class="col-md-2">
             <label class="form-label">&nbsp;</label>
             <div class="d-grid">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-search"></i> Filter
+                    <i class="bi bi-search"></i> {{ t('Filter') }}
                 </button>
             </div>
         </div>
@@ -76,13 +76,13 @@
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th width="50">Type</th>
-                    <th>Filename</th>
-                    <th>Board</th>
-                    <th>Post</th>
-                    <th>Size</th>
-                    <th>Upload Date</th>
-                    <th width="200">Actions</th>
+                    <th width="50">{{ t('Type') }}</th>
+                    <th>{{ t('Filename') }}</th>
+                    <th>{{ t('Board') }}</th>
+                    <th>{{ t('Post') }}</th>
+                    <th>{{ t('Size') }}</th>
+                    <th>{{ t('Upload Date') }}</th>
+                    <th width="200">{{ t('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -114,7 +114,7 @@
                             @if($attachment->board)
                                 <span class="badge bg-info">{{ $attachment->board->name }}</span>
                             @else
-                                <span class="badge bg-secondary">Unknown</span>
+                                <span class="badge bg-secondary">{{ t('Unknown') }}</span>
                             @endif
                         </td>
                         <td>
@@ -125,7 +125,7 @@
                                     <i class="bi bi-box-arrow-up-right" style="font-size: 0.75rem;"></i>
                                 </a>
                             @else
-                                <span class="text-muted">Unknown Post</span>
+                                <span class="text-muted">{{ t('Unknown Post') }}</span>
                             @endif
                         </td>
                         <td>{{ $attachment->human_size }}</td>
@@ -150,7 +150,7 @@
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-outline-danger" 
-                                            onclick="return confirm('Are you sure you want to delete this attachment?')">
+                                            onclick="return confirm('{{ t('Are you sure you want to delete this attachment?') }}')">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
@@ -161,7 +161,7 @@
                     <tr>
                         <td colspan="7" class="text-center py-4">
                             <i class="bi bi-paperclip" style="font-size: 3rem; color: #6c757d;"></i>
-                            <p class="text-muted mt-3">No board attachments found.</p>
+                            <p class="text-muted mt-3">{{ t('No board attachments found.') }}</p>
                     </tr>
                 @endforelse
             </tbody>
@@ -179,23 +179,23 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Replace Attachment</h5>
+                <h5 class="modal-title">{{ t('Replace Attachment') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="replaceForm" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
-                    <p>Replace file: <strong id="replaceFileName"></strong></p>
+                    <p>{{ t('Replace file') }}: <strong id="replaceFileName"></strong></p>
                     <div class="mb-3">
-                        <label for="replacement_file" class="form-label">Choose new file</label>
+                        <label for="replacement_file" class="form-label">{{ t('Choose new file') }}</label>
                         <input type="file" name="replacement_file" id="replacement_file" 
                                class="form-control" required>
-                        <div class="form-text">Max file size: 50MB</div>
+                        <div class="form-text">{{ t('Max file size: 50MB') }}</div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">Replace File</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('Cancel') }}</button>
+                    <button type="submit" class="btn btn-warning">{{ t('Replace File') }}</button>
                 </div>
             </form>
         </div>

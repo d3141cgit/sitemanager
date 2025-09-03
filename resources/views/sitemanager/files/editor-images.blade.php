@@ -1,6 +1,6 @@
 @extends('sitemanager::layouts.sitemanager')
 
-@section('title', 'Editor Images Management')
+@section('title', t('Editor Images Management'))
 
 @push('styles')
 <style>
@@ -24,17 +24,17 @@
         <div class="d-none d-md-flex align-items-center mb-3">
             <h1 class="mb-0">
                 <a href="{{ route('sitemanager.files.editor-images') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-images opacity-75"></i> Editor Images Management
+                    <i class="bi bi-images opacity-75"></i> {{ t('Editor Images Management') }}
                 </a>
             </h1>
-            <div class="ms-2">({{ $images->total() }} images)</div>
+            <div class="ms-2">({{ $images->total() }} {{ t('images') }})</div>
         </div>
 
         <!-- Mobile Header -->
         <div class="d-md-none">
             <h4 class="mb-3">
                 <a href="{{ route('sitemanager.files.editor-images') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-images opacity-75"></i> Editor Images Management
+                    <i class="bi bi-images opacity-75"></i> {{ t('Editor Images Management') }}
                 </a>
             </h4>
         </div>
@@ -57,9 +57,9 @@
     <!-- 필터 -->
     <form method="GET" class="row g-3 mb-4">
         <div class="col-md-3">
-            <label for="board_slug" class="form-label">Board</label>
+            <label for="board_slug" class="form-label">{{ t('Board') }}</label>
             <select name="board_slug" id="board_slug" class="form-select">
-                <option value="">All Boards</option>
+                <option value="">{{ t('All Boards') }}</option>
                 @foreach($boards as $board)
                     <option value="{{ $board->slug }}" 
                         {{ request('board_slug') === $board->slug ? 'selected' : '' }}>
@@ -70,25 +70,25 @@
         </div>
         
         <div class="col-md-3">
-            <label for="used_status" class="form-label">Usage Status</label>
+            <label for="used_status" class="form-label">{{ t('Usage Status') }}</label>
             <select name="used_status" id="used_status" class="form-select">
-                <option value="">All Status</option>
-                <option value="used" {{ request('used_status') === 'used' ? 'selected' : '' }}>Used</option>
-                <option value="unused" {{ request('used_status') === 'unused' ? 'selected' : '' }}>Unused</option>
+                <option value="">{{ t('All Status') }}</option>
+                <option value="used" {{ request('used_status') === 'used' ? 'selected' : '' }}>{{ t('Used') }}</option>
+                <option value="unused" {{ request('used_status') === 'unused' ? 'selected' : '' }}>{{ t('Unused') }}</option>
             </select>
         </div>
         
         <div class="col-md-4">
-            <label for="search" class="form-label">Search</label>
+            <label for="search" class="form-label">{{ t('Search') }}</label>
             <input type="text" name="search" id="search" class="form-control" 
-                   placeholder="Search by filename..." value="{{ request('search') }}">
+                   placeholder="{{ t('Search by filename...') }}" value="{{ request('search') }}">
         </div>
         
         <div class="col-md-2">
             <label class="form-label">&nbsp;</label>
             <div class="d-grid">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-search"></i> Filter
+                    <i class="bi bi-search"></i> {{ t('Filter') }}
                 </button>
             </div>
         </div>
@@ -99,13 +99,13 @@
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th width="80">Preview</th>
-                    <th>Filename</th>
-                    <th>Board</th>
-                    <th>Size</th>
-                    <th>Used</th>
-                    <th>Upload Date</th>
-                    <th>Actions</th>
+                    <th width="80">{{ t('Preview') }}</th>
+                    <th>{{ t('Filename') }}</th>
+                    <th>{{ t('Board') }}</th>
+                    <th>{{ t('Size') }}</th>
+                    <th>{{ t('Used') }}</th>
+                    <th>{{ t('Upload Date') }}</th>
+                    <th>{{ t('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -115,12 +115,12 @@
                             <img src="{{ $image->url }}" alt="{{ $image->filename }}" 
                                  class="img-thumbnail cursor-pointer" style="max-width: 60px; max-height: 60px;"
                                  onclick="showImagePreview('{{ $image->url }}', '{{ addslashes($image->original_name) }}')"
-                                 title="클릭해서 크게 보기">
+                                 title="{{ t('Click to view larger') }}">
                         </td>
                         <td>
                             <div class="fw-bold">
                                 <a href="{{ $image->url }}" download="{{ $image->original_name }}" 
-                                    class="text-decoration-none" title="클릭해서 다운로드">
+                                    class="text-decoration-none" title="{{ t('Click to download') }}">
                                     {{ $image->original_name }}
                                 </a>
                             </div>
@@ -135,31 +135,31 @@
                                         $post = $postModelClass::find($image->reference_id);
                                     @endphp
                                     @if($post)
-                                        <a href="javascript:void(0)" onclick="openPostInNewWindow('{{ $image->reference_slug }}', {{ $image->reference_id }})" class="text-decoration-none small" title="게시물 보기">
-                                            {{ $post->title ?? 'No Title' }}
+                                        <a href="javascript:void(0)" onclick="openPostInNewWindow('{{ $image->reference_slug }}', {{ $image->reference_id }})" class="text-decoration-none small" title="{{ t('View post') }}">
+                                            {{ $post->title ?? t('No Title') }}
                                         </a>
                                     @endif
                                 @elseif($image->reference_id && $image->reference_id < 0)
                                     <div class="mt-1">
                                         <span class="badge bg-warning text-dark">
-                                            <i class="bi bi-exclamation-triangle"></i> Temp ID: {{ $image->reference_id }}
+                                            <i class="bi bi-exclamation-triangle"></i> {{ t('Temp ID') }}: {{ $image->reference_id }}
                                         </span>
-                                        <br><small class="text-muted">Reference needs update</small>
+                                        <br><small class="text-muted">{{ t('Reference needs update') }}</small>
                                     </div>
                                 @endif
                             @else
-                                <span class="badge bg-secondary">No Board</span>
+                                <span class="badge bg-secondary">{{ t('No Board') }}</span>
                             @endif
                         </td>
                         <td nowrap>{{ $image->human_size }}</td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <span class="badge {{ $image->is_used ? 'bg-success' : 'bg-warning' }} me-2">
-                                    {{ $image->is_used ? 'Used' : 'Unused' }}
+                                    {{ $image->is_used ? t('Used') : t('Unused') }}
                                 </span>
                                 <button type="button" class="btn btn-sm btn-outline-info" 
                                         onclick="checkActualUsage({{ $image->id }}, '{{ addslashes($image->filename) }}', {{ $image->is_used ? 'true' : 'false' }})" 
-                                        title="실제 사용 상태 확인">
+                                        title="{{ t('Check actual usage status') }}">
                                     <i class="bi bi-search"></i>
                                 </button>
                             </div>
@@ -180,7 +180,7 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger" 
-                                                onclick="return confirm('Are you sure you want to delete this image?')">
+                                                onclick="return confirm('{{ t('Are you sure you want to delete this image?') }}')">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
@@ -192,7 +192,7 @@
                     <tr>
                         <td colspan="7" class="text-center py-4">
                             <i class="bi bi-images" style="font-size: 3rem; color: #6c757d;"></i>
-                            <p class="text-muted mt-3">No editor images found.</p>
+                            <p class="text-muted mt-3">{{ t('No editor images found.') }}</p>
                     </tr>
                 @endforelse
             </tbody>
@@ -212,23 +212,23 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Replace Image</h5>
+                <h5 class="modal-title">{{ t('Replace Image') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="replaceForm" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
-                    <p>Replace image: <strong id="replaceImageName"></strong></p>
+                    <p>{{ t('Replace image') }}: <strong id="replaceImageName"></strong></p>
                     <div class="mb-3">
-                        <label for="replacement_file" class="form-label">Choose new image</label>
+                        <label for="replacement_file" class="form-label">{{ t('Choose new image') }}</label>
                         <input type="file" name="replacement_file" id="replacement_file" 
                                class="form-control" accept="image/*" required>
-                        <div class="form-text">Max file size: 5MB. Allowed formats: JPG, PNG, GIF, WebP</div>
+                        <div class="form-text">{{ t('Max file size: 5MB. Allowed formats: JPG, PNG, GIF, WebP') }}</div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">Replace Image</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('Cancel') }}</button>
+                    <button type="submit" class="btn btn-warning">{{ t('Replace Image') }}</button>
                 </div>
             </form>
         </div>
@@ -240,26 +240,26 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Image Usage Check</h5>
+                <h5 class="modal-title">{{ t('Image Usage Check') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="usageModalBody">
                 <div class="text-center">
                     <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">{{ t('Loading...') }}</span>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <div id="updateButtons" style="display: none;">
                     <button type="button" class="btn btn-success me-2" onclick="updateUsageStatus(currentImageId, true)">
-                        <i class="bi bi-check-circle"></i> Mark as Used
+                        <i class="bi bi-check-circle"></i> {{ t('Mark as Used') }}
                     </button>
                     <button type="button" class="btn btn-danger me-2" onclick="updateUsageStatus(currentImageId, false)">
-                        <i class="bi bi-x-circle"></i> Mark as Unused
+                        <i class="bi bi-x-circle"></i> {{ t('Mark as Unused') }}
                     </button>
                 </div>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('Close') }}</button>
             </div>
         </div>
     </div>
@@ -270,7 +270,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="imagePreviewTitle">Image Preview</h5>
+                <h5 class="modal-title" id="imagePreviewTitle">{{ t('Image Preview') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center">
@@ -278,9 +278,9 @@
             </div>
             <div class="modal-footer">
                 <a id="imageDownloadLink" href="" download="" class="btn btn-primary">
-                    <i class="bi bi-download"></i> Download
+                    <i class="bi bi-download"></i> {{ t('Download') }}
                 </a>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('Close') }}</button>
             </div>
         </div>
     </div>
@@ -290,6 +290,35 @@
 
 @push('scripts')
 <script>
+// 번역 변수들
+const translations = {
+    used: '{{ t('Used') }}',
+    notUsed: '{{ t('Not Used') }}',
+    statusMismatch: '{{ t('Status Mismatch!') }}',
+    databaseShows: '{{ t('Database shows') }}',
+    actualContent: '{{ t('Actual content') }}',
+    image: '{{ t('Image') }}',
+    actualUsageStatus: '{{ t('Actual Usage Status') }}',
+    foundInPosts: '{{ t('Found in posts') }}',
+    dbStatus: '{{ t('DB Status') }}',
+    updateNeeded: '{{ t('Update needed?') }}',
+    errorCheckingUsage: '{{ t('Error checking usage') }}',
+    imageNotFound: '{{ t('Image not found') }}',
+    usageStatusUpdated: '{{ t('Usage status updated successfully') }}',
+    errorUpdatingStatus: '{{ t('Error updating usage status') }}',
+    confirm: '{{ t('Are you sure you want to delete this image?') }}',
+    checkingUsage: '{{ t('Checking usage...') }}',
+    checkingActualUsage: '{{ t('Checking actual usage in content...') }}',
+    databaseStatus: '{{ t('Database Status') }}',
+    actualUsage: '{{ t('Actual Usage') }}',
+    foundInBoards: '{{ t('Found in Boards') }}',
+    posts: '{{ t('posts') }}',
+    updated: '{{ t('Updated!') }}',
+    error: '{{ t('Error!') }}',
+    failedToUpdate: '{{ t('Failed to update usage status') }}',
+    updateError: '{{ t('An error occurred while updating usage status') }}'
+};
+
 function showReplaceModal(imageId, imageName) {
     document.getElementById('replaceImageName').textContent = imageName;
     document.getElementById('replaceForm').action = `/sitemanager/files/editor-images/${imageId}/replace`;
@@ -307,9 +336,9 @@ function checkActualUsage(imageId, filename, isUsed) {
     modalBody.innerHTML = `
         <div class="text-center">
             <div class="spinner-border" role="status">
-                <span class="visually-hidden">Checking usage...</span>
+                <span class="visually-hidden">${translations.checkingUsage}</span>
             </div>
-            <p class="mt-2">Checking actual usage in content...</p>
+            <p class="mt-2">${translations.checkingActualUsage}</p>
         </div>
     `;
     
@@ -325,11 +354,11 @@ function checkActualUsage(imageId, filename, isUsed) {
             
             if (data.found) {
                 statusIcon = '<i class="bi bi-check-circle-fill text-success"></i>';
-                statusText = 'Used';
+                statusText = translations.used;
                 statusClass = 'success';
             } else {
                 statusIcon = '<i class="bi bi-x-circle-fill text-danger"></i>';
-                statusText = 'Not Used';
+                statusText = translations.notUsed;
                 statusClass = 'danger';
             }
             
@@ -338,32 +367,32 @@ function checkActualUsage(imageId, filename, isUsed) {
             const mismatchAlert = mismatch ? `
                 <div class="alert alert-warning mt-3">
                     <i class="bi bi-exclamation-triangle-fill"></i>
-                    <strong>Status Mismatch!</strong><br>
-                    Database shows: <strong>${isUsed ? 'Used' : 'Not Used'}</strong><br>
-                    Actual content: <strong>${data.found ? 'Used' : 'Not Used'}</strong>
+                    <strong>${translations.statusMismatch}</strong><br>
+                    ${translations.databaseShows}: <strong>${isUsed ? translations.used : translations.notUsed}</strong><br>
+                    ${translations.actualContent}: <strong>${data.found ? translations.used : translations.notUsed}</strong>
                 </div>
             ` : '';
             
             modalBody.innerHTML = `
                 <div class="text-center mb-3">
-                    <h5>Image: ${filename}</h5>
+                    <h5>${translations.image}: ${filename}</h5>
                 </div>
                 
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="mb-0"><i class="bi bi-database"></i> Database Status</h6>
+                                <h6 class="mb-0"><i class="bi bi-database"></i> ${translations.databaseStatus}</h6>
                             </div>
                             <div class="card-body text-center">
-                                <span class="badge bg-${isUsed ? 'success' : 'danger'}">${isUsed ? 'Used' : 'Not Used'}</span>
+                                <span class="badge bg-${isUsed ? 'success' : 'danger'}">${isUsed ? translations.used : translations.notUsed}</span>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="mb-0"><i class="bi bi-search"></i> Actual Usage</h6>
+                                <h6 class="mb-0"><i class="bi bi-search"></i> ${translations.actualUsage}</h6>
                             </div>
                             <div class="card-body text-center">
                                 ${statusIcon}
@@ -377,13 +406,13 @@ function checkActualUsage(imageId, filename, isUsed) {
                 
                 ${data.boards && data.boards.length > 0 ? `
                     <div class="mt-3">
-                        <h6><i class="bi bi-list-ul"></i> Found in Boards:</h6>
+                        <h6><i class="bi bi-list-ul"></i> ${translations.foundInBoards}:</h6>
                         ${data.boards.map(board => `
                             <div class="card mb-2">
                                 <div class="card-header py-2">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <strong>${board.title}</strong>
-                                        <span class="badge bg-primary rounded-pill">${board.posts_count} posts</span>
+                                        <span class="badge bg-primary rounded-pill">${board.posts_count} ${translations.posts}</span>
                                     </div>
                                 </div>
                                 ${board.posts && board.posts.length > 0 ? `
@@ -420,7 +449,7 @@ function checkActualUsage(imageId, filename, isUsed) {
             modalBody.innerHTML = `
                 <div class="alert alert-danger">
                     <i class="bi bi-exclamation-triangle"></i>
-                    Error checking usage: ${error.message}
+                    ${translations.errorCheckingUsage}: ${error.message}
                 </div>
             `;
         });
@@ -451,7 +480,7 @@ function updateUsageStatus(imageId, isUsed) {
             
             Swal.fire({
                 icon: 'success',
-                title: 'Updated!',
+                title: translations.updated,
                 text: message,
                 timer: 3000,
                 showConfirmButton: false
@@ -464,16 +493,16 @@ function updateUsageStatus(imageId, isUsed) {
         } else {
             Swal.fire({
                 icon: 'error',
-                title: 'Error!',
-                text: 'Failed to update usage status'
+                title: translations.error,
+                text: translations.failedToUpdate
             });
         }
     })
     .catch(error => {
         Swal.fire({
             icon: 'error',
-            title: 'Error!',
-            text: 'An error occurred while updating usage status'
+            title: translations.error,
+            text: translations.updateError
         });
     });
 }

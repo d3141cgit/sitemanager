@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ isset($post) ? $post->title : 'Post Not Found' }}</title>
+    <title>{{ isset($post) ? $post->title : t('Post Not Found') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
@@ -28,7 +28,7 @@
     <div class="container my-4">
         @if(isset($error))
             <div class="alert alert-danger">
-                <h4><i class="bi bi-exclamation-triangle"></i> Error</h4>
+                <h4><i class="bi bi-exclamation-triangle"></i> {{ t('Error') }}</h4>
                 <p>{{ $error }}</p>
             </div>
         @elseif(isset($post))
@@ -37,12 +37,12 @@
                     <div>
                         <h3 class="mb-0">{{ $post->title }}</h3>
                         <small class="text-muted">
-                            Board: <span class="badge bg-info">{{ $boardSlug }}</span> | 
-                            Created: {{ $post->created_at->format('Y-m-d H:i') }}
+                            {{ t('Board') }}: <span class="badge bg-info">{{ $boardSlug }}</span> | 
+                            {{ t('Created') }}: {{ $post->created_at->format('Y-m-d H:i') }}
                         </small>
                     </div>
                     <button type="button" class="btn btn-outline-warning btn-sm" onclick="highlightImages()">
-                        <i class="bi bi-lightbulb"></i> Highlight Images
+                        <i class="bi bi-lightbulb"></i> {{ t('Highlight Images') }}
                     </button>
                 </div>
                 
@@ -56,10 +56,10 @@
                     <div class="card-footer text-muted">
                         <small>
                             @if($post->created_at)
-                                Created: {{ $post->created_at->format('Y-m-d H:i:s') }}
+                                {{ t('Created') }}: {{ $post->created_at->format('Y-m-d H:i:s') }}
                             @endif
                             @if($post->updated_at && $post->updated_at != $post->created_at)
-                                | Updated: {{ $post->updated_at->format('Y-m-d H:i:s') }}
+                                | {{ t('Updated') }}: {{ $post->updated_at->format('Y-m-d H:i:s') }}
                             @endif
                         </small>
                     </div>
@@ -70,6 +70,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // 번역 변수
+        const noImagesMessage = '{{ t('This post contains no images.') }}';
+        
         function highlightImages() {
             const images = document.querySelectorAll('.post-content img');
             
@@ -83,7 +86,7 @@
             });
             
             if (images.length === 0) {
-                alert('이 게시물에는 이미지가 없습니다.');
+                alert(noImagesMessage);
             } else {
                 // 첫 번째 이미지로 스크롤
                 images[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
