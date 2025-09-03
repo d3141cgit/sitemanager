@@ -89,8 +89,11 @@ a.btn-outline-info:hover { color: #000 !important; }
 a.btn-outline-light:hover { color: #000 !important; }
 a.btn-outline-dark:hover { color: #fff !important; }
 
-.btn-default { color: #000; background-color: var(--bs-gray-100); border: solid 1px transparent; padding: 0.175rem 0.75rem; border-radius: 2rem; }
-.btn-default:hover { color: #000; background-color: var(--bs-gray-200); border-color: var(--bs-gray-300); }
+.btn-default { color: #000; background-color: var(--bs-gray-100); border: solid 1px transparent; padding: 0.175rem 0.75rem; border-radius: 2rem; transition: all 0.3s ease; }
+.btn-default:hover { color: #000; background-color: var(--bs-gray-200); border-color: var(--bs-gray-300); transition: all 0.3s ease; }
+.btn-outline-default { color: #000; background-color: transparent; border: solid 1px var(--bs-gray-300); padding: 0.175rem 0.75rem; border-radius: 2rem; transition: all 0.3s ease; }
+.btn-outline-default:hover { color: #000; background-color: var(--bs-gray-200); border-color: var(--bs-gray-300); transition: all 0.3s ease; }
+.btn-default-sm { padding: 0.125rem 0.5rem; font-size: 0.875rem; }
 
 body > header { 
     padding: 1rem 0;
@@ -185,3 +188,181 @@ main { padding: 2rem 0; }
 
 .pagination .page-link, .pagination-nav select { font-size: 0.8rem; font-weight: 600; }
 .active>.page-link, .page-link.active { background-color: var(--red-dark); border-color: var(--red-dark); }
+
+/* Menu Management Styles */
+.menu-section-card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: box-shadow 0.2s ease; overflow: hidden; height: 100%; display: flex; flex-direction: column; }
+.menu-section-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+.menu-section-content { max-height: 50vh; overflow-y: auto; flex-grow: 1; }
+
+.menu-item-card { transition: all 0.2s ease; margin-bottom: 0.25rem; border-radius: 0.375rem; border: 1px solid #f0f0f0; background: white; }
+.menu-item-card:hover { background-color: #f8f9fa; border-color: #dee2e6; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.menu-item-card.section-root-item { background-color: #f8f9fa; border-left: 4px solid #28a745; font-weight: 600; }
+.menu-item-card .card-body { padding: 0.25rem 1rem; }
+.menu-item-card .target { color: var(--bs-gray-600); font-size: 0.7rem; }
+
+.menu-thumbnail { width: 40px; height: 30px; object-fit: cover; border-radius: 4px; }
+.menu-thumbnail { transition: transform 0.2s ease; border: 1px solid #dee2e6; }
+.menu-thumbnail:hover { transform: scale(1.1); border-color: #007bff; z-index: 10; position: relative; }
+
+.img-thumbnail { max-width: 150px; max-height: 100px; }
+
+.menu-title-link { color: #495057; text-decoration: none; font-weight: 500; transition: color 0.2s ease; }
+.menu-title-link:hover { color: #007bff; text-decoration: underline; }
+
+.menu-delete-form { display: inline; }
+
+.menu-delete-btn { background: none; border: none; color: #dc3545; padding: 0.25rem; border-radius: 0.25rem; transition: all 0.2s ease; cursor: pointer; }
+.menu-delete-btn:hover { background-color: #dc3545; color: white; }
+.menu-delete-btn:disabled { color: #6c757d; cursor: not-allowed; }
+.menu-delete-btn:disabled:hover { background: none; color: #6c757d; }
+
+/* Custom scrollbar for menu section content */
+.menu-section-content::-webkit-scrollbar { width: 6px; }
+.menu-section-content::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+.menu-section-content::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+.menu-section-content::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+/* Equal height cards */
+.menu-grid-row > [class*="col-"] { display: flex; flex-direction: column; }
+
+/* Responsive Design for Menu Management */
+@media (max-width: 768px) {
+    .menu-section-content { max-height: 300px; }
+    .menu-item-card { padding: 0.75rem 0.5rem !important; font-size: 0.9rem; }
+    
+    .badge { font-size: 0.6rem; }
+}
+
+@media (max-width: 576px) {
+    .menu-item-card { padding: 0.5rem !important; font-size: 0.85rem; }
+    
+    .d-flex.gap-1 { gap: 0.25rem !important; }
+}
+
+/* Select2 Custom Styles - Bootstrap 5 Form Control Match */
+.select2-container {
+    width: 100% !important;
+}
+
+/* Default styling (standard Bootstrap) */
+.select2-container--bootstrap-5 .select2-selection--single,
+.select2-container--bootstrap-5 .select2-selection--multiple {
+    min-height: calc(1.5em + 0.75rem + 2px) !important;
+    padding: 0.375rem 2rem 0.375rem 0.75rem !important;
+    font-size: 1rem !important;
+    font-weight: 400 !important;
+    line-height: 1.5 !important;
+    color: #212529 !important;
+    background-color: #fff !important;
+    background-image: none !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 0.375rem !important;
+    box-shadow: none !important;
+    transition: border-color 0.15s ease-in-out !important;
+}
+
+/* Default form styling (gray background) */
+.default-form .select2-container--bootstrap-5 .select2-selection--single,
+.default-form .select2-container--bootstrap-5 .select2-selection--multiple {
+    background-color: var(--bs-gray-100) !important;
+    border-color: var(--bs-gray-100) !important;
+    color: #000 !important;
+    font-weight: 500 !important;
+}
+
+.default-form .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    color: #000 !important;
+    font-weight: 500 !important;
+}
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection--single,
+.select2-container--bootstrap-5.select2-container--focus .select2-selection--multiple {
+    border-color: var(--bs-red) !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    line-height: 1.5 !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+    height: calc(1.5em + 0.75rem) !important;
+    position: absolute !important;
+    top: 1px !important;
+    right: 0.5rem !important;
+    width: 20px !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow b {
+    border: none !important;
+    height: 8px !important;
+    width: 8px !important;
+    border-right: 2px solid #6c757d !important;
+    border-bottom: 2px solid #6c757d !important;
+    transform: rotate(45deg) !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    margin-top: -6px !important;
+    margin-left: -4px !important;
+    transition: transform 0.2s ease !important;
+}
+
+.select2-container--bootstrap-5.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    transform: rotate(-135deg) !important;
+    margin-top: -2px !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+    background-color: #e9ecef !important;
+    border: 1px solid #adb5bd !important;
+    border-radius: 0.25rem !important;
+    color: #495057 !important;
+    font-size: 0.875rem !important;
+    margin: 0.125rem 0.25rem 0.125rem 0 !important;
+    padding: 0.125rem 0.5rem !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+    color: #6c757d !important;
+    cursor: pointer !important;
+    display: inline-block !important;
+    font-weight: bold !important;
+    margin-right: 0.25rem !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove:hover {
+    color: #495057 !important;
+}
+
+.select2-dropdown {
+    border: 1px solid #ced4da !important;
+    border-radius: 0.375rem !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted[aria-selected] {
+    background-color: #0d6efd !important;
+    color: #fff !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option[aria-selected="true"] {
+    background-color: #e9ecef !important;
+    color: #495057 !important;
+}
+
+/* Clear button removal */
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__clear,
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear {
+    display: none !important;
+}
+
+
+.permission-group, .image-item { border: dashed 1px var(--bs-gray-500) !important; }
+
+.permission-list .form-check { margin-right: 1rem; margin-bottom: 0.5rem; min-width: 120px; font-size: 0.85rem; }
+.permission-list { display: grid; grid-template-columns: repeat(4, 1fr); }

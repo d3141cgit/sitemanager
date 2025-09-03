@@ -27,6 +27,7 @@ class MenuController extends Controller
         }
         
         $menus = $this->menuService->getAllMenusOrdered();
+        $totalCount = $menus->count();
         
         // 메뉴 데이터의 이미지 URL을 FileUploadService를 통해 처리
         $menusWithUrls = $menus->map(function ($menu) {
@@ -51,7 +52,7 @@ class MenuController extends Controller
             ]);
         }
         
-        return view('sitemanager::sitemanager.menus.index', compact('menusWithUrls', 'invalidRouteMenus'));
+        return view('sitemanager::sitemanager.menus.index', compact('menusWithUrls', 'invalidRouteMenus', 'totalCount'));
     }
     
     /**

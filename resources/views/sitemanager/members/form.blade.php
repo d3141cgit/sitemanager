@@ -3,7 +3,6 @@
 @section('title', isset($member) ? t('Edit Member') . ' - ' . $member->name : t('Add New Member'))
 
 @section('content')
-
 <div class="card default-form default-form-md">
     <div class="card-header bg-dark text-white">
         <h4>

@@ -3,452 +3,414 @@
 @section('title', isset($menu) ? t('Edit Menu') . ' - ' . $menu->title : t('Add New Menu'))
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-12">
-            <h1>
-                @if(isset($menu))
-                    <i class="bi bi-pencil"></i> {{ t('Edit Menu') }} - {{ $menu->title }}
-                @else
-                    <i class="bi bi-plus"></i> {{ t('Add New Menu') }}
-                @endif
-            </h1>
+<div class="card default-form default-form">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <h4>
+            @if(isset($menu))
+                <i class="bi bi-pencil"></i> {{ t('Edit Menu') }}
+            @else
+                <i class="bi bi-plus"></i> {{ t('Add New Menu') }}
+            @endif
+        </h4>
+        <a href="{{ route('sitemanager.menus.index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> {{ t('Back to List') }}
+        </a>
+    </div>
 
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        @if(isset($menu))
-                            <i class="bi bi-pencil me-2"></i>{{ t('Edit Menu') }}
-                        @else
-                            <i class="bi bi-plus me-2"></i>{{ t('Add New Menu') }}
-                        @endif
-                    </h5>
-                    <a href="{{ route('sitemanager.menus.index') }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-arrow-left"></i> {{ t('Back to List') }}
-                    </a>
-                </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ isset($menu) ? route('sitemanager.menus.update', $menu) : route('sitemanager.menus.store') }}" enctype="multipart/form-data">
-                        @csrf
-                        @if(isset($menu))
-                            @method('PUT')
-                        @endif
-                        
-                        <div class="row main-form-columns">
-                            <!-- Left Column: Menu Information -->
-                            <div class="col-md-6">
-                                <h5 class="mb-3 text-primary section-header">
-                                    <i class="bi bi-info-circle me-2"></i>{{ t('Menu Information') }}
-                                </h5>
-                                
-                                <div class="mb-3">
-                                    <label for="title" class="form-label">{{ t('Menu Title') }} *</label>
-                                    <input type="text" 
-                                           class="form-control @error('title') is-invalid @enderror" 
-                                           id="title" 
-                                           name="title" 
-                                           value="{{ old('title', isset($menu) ? $menu->title : '') }}" 
-                                           required>
-                                    @error('title')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+    <form method="POST" action="{{ isset($menu) ? route('sitemanager.menus.update', $menu) : route('sitemanager.menus.store') }}" enctype="multipart/form-data">
+        @csrf
+        @if(isset($menu))
+            @method('PUT')
+        @endif
+        
+        <div class="card-body">
+            <div class="row">
+                <!-- Left Column: Menu Information -->
+                <div class="col">
+                    <h6 class="mb-3 text-primary">
+                        <i class="bi bi-info-circle me-2"></i>{{ t('Menu Information') }}
+                    </h6>
+                    
+                    <div class="form-group">
+                        <label for="title" class="col-form-label">{{ t('Menu Title') }} *</label>
+                        <input type="text" class="form-control @error('title') is-invalid @enderror" id="title" name="title" value="{{ old('title', isset($menu) ? $menu->title : '') }}" required>
+                        @error('title')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
 
-                                <div class="mb-3">
-                                    <label for="description" class="form-label">{{ t('Description') }}</label>
-                                    <textarea class="form-control @error('description') is-invalid @enderror"
-                                              id="description"
-                                              name="description"
-                                              rows="3"
-                                              placeholder="{{ t('Enter a short description') }}">{{ old('description', isset($menu) ? $menu->description : '') }}</textarea>
-                                    @error('description')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                    <div class="form-text">
-                                        {{ t('Optional. This description helps identify the menu\'s purpose and may be used as the SEO description.') }}
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="type" class="form-label">{{ t('Menu Type') }} *</label>
-                                    <select class="form-select @error('type') is-invalid @enderror" 
-                                            id="type" 
-                                            name="type" 
-                                            required>
-                                        <option value="">{{ t('Select menu type') }}</option>
-                                        @foreach(\SiteManager\Models\Menu::getAvailableTypes() as $typeValue => $typeLabel)
-                                            <option value="{{ $typeValue }}" {{ old('type', isset($menu) ? $menu->type : '') == $typeValue ? 'selected' : '' }}>{{ $typeLabel }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('type')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <!-- Route Selection (for route type) -->
-                                <div class="mb-3" id="route-select-container" style="display: none;">
-                                    <label for="route-select" class="form-label">{{ t('Available Routes') }}</label>
-                                    <select class="form-select" id="route-select">
-                                        <option value="">{{ t('Select a route') }}</option>
-                                        @if(isset($availableRoutes) && count($availableRoutes) > 0)
-                                            @foreach($availableRoutes as $route)
-                                                <option value="{{ $route['name'] }}" 
-                                                        data-uri="{{ $route['uri'] }}"
-                                                        {{ old('target', isset($menu) ? $menu->target : '') == $route['name'] ? 'selected' : '' }}>
-                                                    {{ $route['description'] }} ({{ $route['name'] }})
-                                                </option>
-                                            @endforeach
-                                        @else
-                                            <option value="" disabled>{{ t('No routes available') }}</option>
-                                        @endif
-                                    </select>
-                                    <div class="form-text">
-                                        {{ t('Choose from available Laravel routes above.') }}
-                                        @if(isset($availableRoutes))
-                                            <small class="text-muted">({{ count($availableRoutes) }} {{ t('routes found') }})</small>
-                                        @endif
-                                    </div>
-                                    
-                                    @if(isset($menu) && $menu->type === 'route' && $menu->target)
-                                        @php
-                                            $currentRouteExists = false;
-                                            if(isset($availableRoutes)) {
-                                                foreach($availableRoutes as $route) {
-                                                    if($route['name'] === $menu->target) {
-                                                        $currentRouteExists = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        @endphp
-                                        
-                                        @if(!$currentRouteExists)
-                                            <div class="alert alert-warning mt-2" id="invalid-route-warning">
-                                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                                <strong>{{ t('Warning') }}:</strong> {{ t('The current route') }} "<code>{{ $menu->target }}</code>" {{ t('no longer exists in the application.') }}
-                                                <br>
-                                                <small class="text-muted">
-                                                    {{ t('This route may have been removed or renamed. Please select a new route from the list above.') }}
-                                                </small>
-                                            </div>
-                                        @endif
-                                    @endif
-                                </div>
-
-                                <div class="mb-3" id="target-container">
-                                    <label for="target" class="form-label">{{ t('Target') }}</label>
-                                    <input type="text" 
-                                           class="form-control @error('target') is-invalid @enderror" 
-                                           id="target" 
-                                           name="target" 
-                                           value="{{ old('target', isset($menu) ? $menu->target : '') }}" 
-                                           placeholder="">
-                                    @error('target')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                    <div class="form-text" id="target-help">{{ t('Please select menu type first.') }}</div>
-                                    
-                                    @if(isset($menu) && $menu->type === 'route' && $menu->target)
-                                        @php
-                                            $currentRouteExists = false;
-                                            if(isset($availableRoutes)) {
-                                                foreach($availableRoutes as $route) {
-                                                    if($route['name'] === $menu->target) {
-                                                        $currentRouteExists = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        @endphp
-                                        
-                                        @if(!$currentRouteExists)
-                                            <div class="alert alert-danger mt-2" id="target-invalid-route-warning">
-                                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                                <strong>{{ t('Invalid Route') }}:</strong> "<code>{{ $menu->target }}</code>" {{ t('does not exist.') }}
-                                                <br>
-                                                <small>
-                                                    {{ t('This menu will not function properly. Please switch to route type and select a valid route, or change the menu type to URL and provide a full URL.') }}
-                                                </small>
-                                            </div>
-                                        @endif
-                                    @endif
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="parent_id" class="form-label">{{ t('Parent Menu') }}</label>
-                                    <select class="form-select @error('parent_id') is-invalid @enderror" 
-                                            id="parent_id" 
-                                            name="parent_id">
-                                        <option value="">{{ t('Root Menu (Creates New Section)') }}</option>
-                                        @php
-                                            $allMenus = \SiteManager\Models\Menu::orderBy('section')->orderBy('_lft')->get();
-                                            $currentMenuId = isset($menu) ? $menu->id : null;
-                                        @endphp
-                                        @foreach($allMenus as $parentMenu)
-                                            @if($currentMenuId != $parentMenu->id)
-                                                <option value="{{ $parentMenu->id }}" 
-                                                        data-section="{{ $parentMenu->section }}"
-                                                        {{ old('parent_id', isset($menu) ? $menu->parent_id : '') == $parentMenu->id ? 'selected' : '' }}>
-                                                    {!! str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', $parentMenu->depth) !!}{{ $parentMenu->title }}
-                                                </option>
-                                            @endif
-                                        @endforeach
-                                    </select>
-                                    @error('parent_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                    <div class="form-text">
-                                        {{ t('Select a parent menu to inherit its section, or leave empty to create a new section.') }}
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <div class="form-check form-switch">
-                                        <!-- Hidden field to ensure unchecked checkbox sends 0 value -->
-                                        <input type="hidden" name="hidden" value="0">
-                                        <input class="form-check-input" 
-                                               type="checkbox" 
-                                               role="switch" 
-                                               id="hidden" 
-                                               name="hidden" 
-                                               value="1" 
-                                               {{ old('hidden', isset($menu) ? $menu->hidden : false) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="hidden">
-                                            {{ t('Hidden') }}
-                                        </label>
-                                    </div>
-                                    <div class="form-text">{{ t('Hidden menus will not be displayed in navigation.') }}</div>
-                                </div>
-
-                                <!-- Images Section -->
-                                <div class="mb-3">
-                                    <label class="form-label">{{ t('Menu Images') }}</label>
-                                    <div id="images-container">
-                                        @php
-                                            $imageCategories = \SiteManager\Models\Menu::getImageCategories();
-                                            $existingImages = old('images', isset($menu) ? $menu->images : []);
-                                        @endphp
-                                        @if($existingImages)
-                                            @foreach($existingImages as $category => $imageData)
-                                                <div class="image-item mb-3 border p-2 rounded bg-light">
-                                                    <div class="input-group input-group-sm">
-                                                        <select class="form-select form-select-sm" name="images[{{ $loop->index }}][category]">
-                                                            @foreach($imageCategories as $catKey => $catLabel)
-                                                                <option value="{{ $catKey }}" {{ $category == $catKey ? 'selected' : '' }}>{{ $catLabel }}</option>
-                                                            @endforeach
-                                                        </select>
-
-                                                        <input type="file" class="form-control form-control-sm image-upload" 
-                                                                name="images[{{ $loop->index }}][file]" 
-                                                                accept="image/*">
-                                                   
-                                                        <button type="button" class="btn btn-danger btn-sm remove-image">
-                                                            <i class="bi bi-trash"></i> Remove
-                                                        </button>
-                                                    </div>
-
-                                                    @if(!empty($imageData['url']))
-                                                        <input type="hidden" name="images[{{ $loop->index }}][existing_url]" value="{{ $imageData['url'] }}">
-                                                        <div class="mt-2">
-                                                            @php
-                                                                // FileUploadService를 사용하여 S3/로컬을 자동으로 구분
-                                                                $imageUrl = \SiteManager\Services\FileUploadService::url($imageData['url']);
-                                                            @endphp
-                                                            <img src="{{ $imageUrl }}" alt="{{ $category }}" class="img-thumbnail existing-preview">
-
-                                                            <small class="text-muted ms-2">{{ basename($imageData['url']) }}</small>
-                                                        </div>
-                                                    @endif
-
-                                                    <div class="image-preview mt-2" style="display: none;">
-                                                        <img class="img-thumbnail">
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        @endif
-                                    </div>
-                                    <button type="button" class="btn btn-outline-primary btn-sm" id="add-image">
-                                        <i class="bi bi-plus"></i> {{ t('Add Image') }}
-                                    </button>
-                                    <div class="form-text">{{ t('Upload images for different purposes (thumbnail, header, SEO, etc.)') }}</div>
-                                </div>
-                            </div>
-
-                            <!-- Right Column: Permissions -->
-                            <div class="col-md-6">
-                                @if(isset($menu))
-                                <h5 class="mb-3 text-primary section-header">
-                                    <i class="bi bi-shield-lock me-2"></i>{{ t('Permissions') }}
-                                </h5>
-                                
-                                <div class="permission-section">
-                                <!-- Basic Permission -->
-                                <div class="mb-4">
-                                    <label class="form-label">{{ t('Basic Permission') }}</label>
-                                    <div class="permission-list">
-                                        @php
-                                            $basicPermissions = config('permissions.menu');
-                                            $currentPermission = isset($menu) ? $menu->permission : 0;
-                                        @endphp
-                                        @foreach($basicPermissions as $value => $label)
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="checkbox" 
-                                                       name="permission[]" value="{{ $value }}"
-                                                       {{ ($currentPermission & $value) ? 'checked' : '' }}>
-                                                <label class="form-check-label">{{ $label }}</label>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-
-                                <!-- Level Permission -->
-                                <div class="mb-4">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label class="form-label mb-0">{{ t('Level Permission') }}</label>
-                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addPermLevel()">
-                                            + {{ t('Add Level') }}
-                                        </button>
-                                    </div>
-                                    <div id="level-wrap">
-                                        @if(isset($menuPermissions['levels']))
-                                            @foreach($menuPermissions['levels'] as $index => $levelData)
-                                                <div id="level-perm-{{ $index }}" class="permission-group mb-3 p-3 border rounded">
-                                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                                        <strong>{{ t('Level') }} {{ $levelData['level'] }}</strong>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                                onclick="removePermLevel({{ $index }})">
-                                                            - {{ t('Delete') }}
-                                                        </button>
-                                                    </div>
-                                                    <input type="hidden" name="level_permissions[{{ $index }}][level]" value="{{ $levelData['level'] }}">
-                                                    <div class="permission-list">
-                                                        @foreach($basicPermissions as $value => $label)
-                                                            <div class="form-check form-check-inline">
-                                                                <input class="form-check-input" type="checkbox" 
-                                                                       name="level_permissions[{{ $index }}][permissions][]" value="{{ $value }}"
-                                                                       {{ ($levelData['permission'] & $value) ? 'checked' : '' }}>
-                                                                <label class="form-check-label">{{ $label }}</label>
-                                                            </div>
-                                                        @endforeach
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <!-- Group Permission -->
-                                @if(\SiteManager\Models\Group::count() > 0)
-                                <div class="mb-4">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label class="form-label mb-0">{{ t('Group Permission') }}</label>
-                                        <button type="button" class="btn btn-sm btn-outline-success" onclick="addPermGroup()">
-                                            + {{ t('Add Group') }}
-                                        </button>
-                                    </div>
-                                    <div id="group-wrap">
-                                        @if(isset($menuPermissions['groups']))
-                                            @foreach($menuPermissions['groups'] as $index => $groupData)
-                                                <div id="group-perm-{{ $index }}" class="permission-group mb-3 p-3 border rounded">
-                                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                                        <strong>{{ $groupData['name'] }}</strong>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                                onclick="removePermGroup({{ $index }})">
-                                                            - {{ t('Delete') }}
-                                                        </button>
-                                                    </div>
-                                                    <input type="hidden" name="group_permissions[{{ $index }}][group_id]" value="{{ $groupData['group_id'] }}">
-                                                    <div class="permission-list">
-                                                        @foreach($basicPermissions as $value => $label)
-                                                            <div class="form-check form-check-inline">
-                                                                <input class="form-check-input" type="checkbox" 
-                                                                       name="group_permissions[{{ $index }}][permissions][]" value="{{ $value }}"
-                                                                       {{ ($groupData['permission'] & $value) ? 'checked' : '' }}>
-                                                                <label class="form-check-label">{{ $label }}</label>
-                                                            </div>
-                                                        @endforeach
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        @endif
-                                    </div>
-                                </div>
-                                @endif
-
-                                <!-- Administrator Permission -->
-                                <div class="mb-4">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label class="form-label mb-0">{{ t('Administrator Permission') }}</label>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPermAdmin()">
-                                            + {{ t('Add Administrator') }}
-                                        </button>
-                                    </div>
-                                    <div id="admin-wrap">
-                                        @if(isset($menuPermissions['admins']))
-                                            @foreach($menuPermissions['admins'] as $index => $adminData)
-                                                <div id="admin-perm-{{ $index }}" class="permission-group mb-3 p-3 border rounded">
-                                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                                        <div>
-                                                            <strong>{{ $adminData['name'] }} ({{ $adminData['username'] }})</strong>
-                                                            <small class="text-muted d-block">{{ t('All permissions') }} ({{ implode(', ', config('permissions.menu')) }})</small>
-                                                        </div>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                                onclick="removePermAdmin({{ $index }})">
-                                                            - {{ t('Delete') }}
-                                                        </button>
-                                                    </div>
-                                                    <input type="hidden" name="admin_permissions[{{ $index }}][member_id]" value="{{ $adminData['member_id'] }}">
-                                                    <input type="hidden" name="admin_permissions[{{ $index }}][permissions][]" value="255">
-                                                </div>
-                                            @endforeach
-                                        @endif
-                                    </div>
-                                </div>
-                                </div>
-                                @else
-                                <div class="alert alert-info">
-                                    <i class="bi bi-info-circle me-2"></i>
-                                    {{ t('Permissions can only be set for existing menus. Save the menu first to configure permissions.') }}
-                                </div>
-                                @endif
-                            </div>
+                    <div class="form-group">
+                        <label for="description" class="col-form-label">{{ t('Description') }}</label>
+                        <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="3" placeholder="{{ t('Enter a short description') }}">{{ old('description', isset($menu) ? $menu->description : '') }}</textarea>
+                        @error('description')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="form-text">
+                            {{ t('Optional. This description helps identify the menu\'s purpose and may be used as the SEO description.') }}
                         </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="type" class="col-form-label">{{ t('Menu Type') }} *</label>
+                        <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
+                            <option value="">{{ t('Select menu type') }}</option>
+                            @foreach(\SiteManager\Models\Menu::getAvailableTypes() as $typeValue => $typeLabel)
+                                <option value="{{ $typeValue }}" {{ old('type', isset($menu) ? $menu->type : '') == $typeValue ? 'selected' : '' }}>{{ $typeLabel }}</option>
+                            @endforeach
+                        </select>
+                        @error('type')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{{ route('sitemanager.menus.index') }}" class="btn btn-secondary">
-                                <i class="bi bi-x-circle"></i> {{ t('Cancel') }}
-                            </a>
-
-                            @if(isset($menu))
-                                @php
-                                    $hasChildren = $menu->children()->count() > 0;
-                                @endphp
-                                
-                                @if(!$hasChildren)
-                                    <button type="button" 
-                                            class="btn btn-danger"
-                                            id="menu-delete-btn" 
-                                            data-delete-url="{{ route('sitemanager.menus.destroy', $menu->id) }}"
-                                            title="{{ t('Delete Menu') }}">
-                                        <i class="bi bi-trash"></i> {{ t('Delete') }}
-                                    </button>
-                                @endif
+                    <!-- Route Selection (for route type) -->
+                    <div class="form-group" id="route-select-container" style="display: none;">
+                        <label for="route-select" class="col-form-label">{{ t('Available Routes') }}</label>
+                        <select class="form-select" id="route-select">
+                            <option value="">{{ t('Select a route') }}</option>
+                            @if(isset($availableRoutes) && count($availableRoutes) > 0)
+                                @foreach($availableRoutes as $route)
+                                    <option value="{{ $route['name'] }}" 
+                                            data-uri="{{ $route['uri'] }}"
+                                            {{ old('target', isset($menu) ? $menu->target : '') == $route['name'] ? 'selected' : '' }}>
+                                        {{ $route['description'] }} ({{ $route['name'] }})
+                                    </option>
+                                @endforeach
+                            @else
+                                <option value="" disabled>{{ t('No routes available') }}</option>
                             @endif
+                        </select>
+                        <div class="form-text">
+                            {{ t('Choose from available Laravel routes above.') }}
+                            @if(isset($availableRoutes))
+                                <small class="text-muted">({{ count($availableRoutes) }} {{ t('routes found') }})</small>
+                            @endif
+                        </div>
+                        
+                        @if(isset($menu) && $menu->type === 'route' && $menu->target)
+                            @php
+                                $currentRouteExists = false;
+                                if(isset($availableRoutes)) {
+                                    foreach($availableRoutes as $route) {
+                                        if($route['name'] === $menu->target) {
+                                            $currentRouteExists = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            @endphp
+                            
+                            @if(!$currentRouteExists)
+                                <div class="alert alert-warning mt-2" id="invalid-route-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>{{ t('Warning') }}:</strong> {{ t('The current route') }} "<code>{{ $menu->target }}</code>" {{ t('no longer exists in the application.') }}
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ t('This route may have been removed or renamed. Please select a new route from the list above.') }}
+                                    </small>
+                                </div>
+                            @endif
+                        @endif
+                    </div>
 
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> 
-                                @if(isset($menu))
-                                    {{ t('Update') }}
-                                @else
-                                    {{ t('Create') }}
+                    <div class="form-group" id="target-container">
+                        <label for="target" class="col-form-label">{{ t('Target') }}</label>
+                        <input type="text" class="form-control @error('target') is-invalid @enderror" id="target" name="target" value="{{ old('target', isset($menu) ? $menu->target : '') }}" placeholder="">
+                        @error('target')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="form-text" id="target-help">{{ t('Please select menu type first.') }}</div>
+                        
+                        @if(isset($menu) && $menu->type === 'route' && $menu->target)
+                            @php
+                                $currentRouteExists = false;
+                                if(isset($availableRoutes)) {
+                                    foreach($availableRoutes as $route) {
+                                        if($route['name'] === $menu->target) {
+                                            $currentRouteExists = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            @endphp
+                            
+                            @if(!$currentRouteExists)
+                                <div class="alert alert-danger mt-2" id="target-invalid-route-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>{{ t('Invalid Route') }}:</strong> "<code>{{ $menu->target }}</code>" {{ t('does not exist.') }}
+                                    <br>
+                                    <small>
+                                        {{ t('This menu will not function properly. Please switch to route type and select a valid route, or change the menu type to URL and provide a full URL.') }}
+                                    </small>
+                                </div>
+                            @endif
+                        @endif
+                    </div>
+
+                    <div class="form-group">
+                        <label for="parent_id" class="col-form-label">{{ t('Parent Menu') }}</label>
+                        <select class="form-select @error('parent_id') is-invalid @enderror" id="parent_id" name="parent_id">
+                            <option value="">{{ t('Root Menu (Creates New Section)') }}</option>
+                            @php
+                                $allMenus = \SiteManager\Models\Menu::orderBy('section')->orderBy('_lft')->get();
+                                $currentMenuId = isset($menu) ? $menu->id : null;
+                            @endphp
+                            @foreach($allMenus as $parentMenu)
+                                @if($currentMenuId != $parentMenu->id)
+                                    <option value="{{ $parentMenu->id }}" 
+                                            data-section="{{ $parentMenu->section }}"
+                                            {{ old('parent_id', isset($menu) ? $menu->parent_id : '') == $parentMenu->id ? 'selected' : '' }}>
+                                        {!! str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', $parentMenu->depth) !!}{{ $parentMenu->title }}
+                                    </option>
                                 @endif
+                            @endforeach
+                        </select>
+                        @error('parent_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="form-text">
+                            {{ t('Select a parent menu to inherit its section, or leave empty to create a new section.') }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hidden" class="col-form-label">{{ t('Hidden Menu') }}</label>
+                        <div class="form-check form-switch">
+                            <!-- Hidden field to ensure unchecked checkbox sends 0 value -->
+                            <input type="hidden" name="hidden" value="0">
+                            <input class="form-check-input" type="checkbox" role="switch" id="hidden" name="hidden" value="1" {{ old('hidden', isset($menu) ? $menu->hidden : false) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="hidden">
+                                {{ t('Hidden') }}
+                            </label>
+                        </div>
+                        <div class="form-text">{{ t('Hidden menus will not be displayed in navigation.') }}</div>
+                    </div>
+
+                    <!-- Images Section -->
+                    <div class="form-group">
+                        <label class="col-form-label">{{ t('Menu Images') }}</label>
+                        <div id="images-container">
+                            @php
+                                $imageCategories = \SiteManager\Models\Menu::getImageCategories();
+                                $existingImages = old('images', isset($menu) ? $menu->images : []);
+                            @endphp
+                            @if($existingImages)
+                                @foreach($existingImages as $category => $imageData)
+                                    <div class="image-item mb-3 border p-2 rounded">
+                                        <div class="input-group input-group-sm">
+                                            <select class="form-select form-select-sm" name="images[{{ $loop->index }}][category]">
+                                                @foreach($imageCategories as $catKey => $catLabel)
+                                                    <option value="{{ $catKey }}" {{ $category == $catKey ? 'selected' : '' }}>{{ $catLabel }}</option>
+                                                @endforeach
+                                            </select>
+
+                                            <input type="file" class="form-control form-control-sm image-upload" 
+                                                    name="images[{{ $loop->index }}][file]" 
+                                                    accept="image/*">
+                                        
+                                            <button type="button" class="btn btn-light btn-sm text-danger remove-image">
+                                                <i class="bi bi-trash"></i> Remove
+                                            </button>
+                                        </div>
+
+                                        @if(!empty($imageData['url']))
+                                            <input type="hidden" name="images[{{ $loop->index }}][existing_url]" value="{{ $imageData['url'] }}">
+                                            <div class="mt-2">
+                                                @php
+                                                    // FileUploadService를 사용하여 S3/로컬을 자동으로 구분
+                                                    $imageUrl = \SiteManager\Services\FileUploadService::url($imageData['url']);
+                                                @endphp
+                                                <img src="{{ $imageUrl }}" alt="{{ $category }}" class="img-thumbnail existing-preview">
+
+                                                <small class="text-muted ms-2">{{ basename($imageData['url']) }}</small>
+                                            </div>
+                                        @endif
+
+                                        <div class="image-preview mt-2" style="display: none;">
+                                            <img class="img-thumbnail">
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                        <button type="button" class="btn-default btn-default-sm" id="add-image">
+                            <i class="bi bi-plus"></i> {{ t('Add Image') }}
+                        </button>
+                        <div class="form-text">{{ t('Upload images for different purposes (thumbnail, header, SEO, etc.)') }}</div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Permissions -->
+                <div class="col">
+                    @if(isset($menu))
+                    <h6 class="mb-3 text-primary">
+                        <i class="bi bi-shield-lock me-2"></i>{{ t('Permissions') }}
+                    </h6>
+                    
+                    <!-- Basic Permission -->
+                    <div class="form-group">
+                        <label class="col-form-label">{{ t('Basic Permission') }}</label>
+                        <div class="permission-list">
+                            @php
+                                $basicPermissions = config('permissions.menu');
+                                $currentPermission = isset($menu) ? $menu->permission : 0;
+                            @endphp
+                            @foreach($basicPermissions as $value => $label)
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                            name="permission[]" value="{{ $value }}"
+                                            {{ ($currentPermission & $value) ? 'checked' : '' }}>
+                                    <label class="form-check-label">{{ $label }}</label>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Level Permission -->
+                    <div class="form-group">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="col-form-label">{{ t('Level Permission') }}</label>
+                            <button type="button" class="btn-default btn-default-sm" onclick="addPermLevel()">
+                                + {{ t('Add Level') }}
                             </button>
                         </div>
-                    </form>
+                        <div id="level-wrap">
+                            @if(isset($menuPermissions['levels']))
+                                @foreach($menuPermissions['levels'] as $index => $levelData)
+                                    <div id="level-perm-{{ $index }}" class="permission-group mb-3 p-3 border rounded">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <strong>{{ t('Level') }} {{ $levelData['level'] }}</strong>
+                                            <button type="button" class="btn-outline-default btn-default-sm" 
+                                                    onclick="removePermLevel({{ $index }})">
+                                                - {{ t('Delete') }}
+                                            </button>
+                                        </div>
+                                        <input type="hidden" name="level_permissions[{{ $index }}][level]" value="{{ $levelData['level'] }}">
+                                        <div class="permission-list">
+                                            @foreach($basicPermissions as $value => $label)
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="checkbox" 
+                                                            name="level_permissions[{{ $index }}][permissions][]" value="{{ $value }}"
+                                                            {{ ($levelData['permission'] & $value) ? 'checked' : '' }}>
+                                                    <label class="form-check-label">{{ $label }}</label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Group Permission -->
+                    @if(\SiteManager\Models\Group::count() > 0)
+                    <div class="form-group">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="col-form-label mb-0">{{ t('Group Permission') }}</label>
+                            <button type="button" class="btn-default btn-default-sm" onclick="addPermGroup()">
+                                + {{ t('Add Group') }}
+                            </button>
+                        </div>
+                        <div id="group-wrap">
+                            @if(isset($menuPermissions['groups']))
+                                @foreach($menuPermissions['groups'] as $index => $groupData)
+                                    <div id="group-perm-{{ $index }}" class="permission-group mb-3 p-3 border rounded">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <strong>{{ $groupData['name'] }}</strong>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="removePermGroup({{ $index }})">
+                                                - {{ t('Delete') }}
+                                            </button>
+                                        </div>
+                                        <input type="hidden" name="group_permissions[{{ $index }}][group_id]" value="{{ $groupData['group_id'] }}">
+                                        <div class="permission-list">
+                                            @foreach($basicPermissions as $value => $label)
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="checkbox" 
+                                                            name="group_permissions[{{ $index }}][permissions][]" value="{{ $value }}"
+                                                            {{ ($groupData['permission'] & $value) ? 'checked' : '' }}>
+                                                    <label class="form-check-label">{{ $label }}</label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Administrator Permission -->
+                    <div class="form-group">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="col-form-label mb-0">{{ t('Administrator Permission') }}</label>
+                            <button type="button" class="btn-default btn-default-sm" onclick="addPermAdmin()">
+                                + {{ t('Add Administrator') }}
+                            </button>
+                        </div>
+                        <div id="admin-wrap">
+                            @if(isset($menuPermissions['admins']))
+                                @foreach($menuPermissions['admins'] as $index => $adminData)
+                                    <div id="admin-perm-{{ $index }}" class="permission-group mb-3 p-3 border rounded">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div>
+                                                <strong>{{ $adminData['name'] }} ({{ $adminData['username'] }})</strong>
+                                                <small class="text-muted d-block">{{ t('All permissions') }} ({{ implode(', ', config('permissions.menu')) }})</small>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="removePermAdmin({{ $index }})">
+                                                - {{ t('Delete') }}
+                                            </button>
+                                        </div>
+                                        <input type="hidden" name="admin_permissions[{{ $index }}][member_id]" value="{{ $adminData['member_id'] }}">
+                                        <input type="hidden" name="admin_permissions[{{ $index }}][permissions][]" value="255">
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+
+                    @else
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        {{ t('Permissions can only be set for existing menus. Save the menu first to configure permissions.') }}
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
-    </div>
+
+        <div class="card-footer">
+            <a href="{{ route('sitemanager.menus.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> {{ t('Cancel') }}
+            </a>
+
+            @if(isset($menu))
+                @php
+                    $hasChildren = $menu->children()->count() > 0;
+                @endphp
+                
+                @if(!$hasChildren)
+                    <button type="button" 
+                            class="btn btn-outline-danger"
+                            id="menu-delete-btn" 
+                            data-delete-url="{{ route('sitemanager.menus.destroy', $menu->id) }}"
+                            title="{{ t('Delete Menu') }}">
+                        <i class="bi bi-trash"></i> {{ t('Delete') }}
+                    </button>
+                @endif
+            @endif
+
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-check-circle"></i> 
+                @if(isset($menu))
+                    {{ t('Update') }}
+                @else
+                    {{ t('Create') }}
+                @endif
+            </button>
+        </div>
+    </form>
 </div>
 
 <!-- Member Selector Modal -->
@@ -460,7 +422,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
+                <div class="form-group">
                     <input type="text" id="memberSearch" class="form-control" 
                            placeholder="{{ t('Search by name or ID...') }}" 
                            onkeyup="searchMembers()">
@@ -812,12 +774,12 @@ function addPermLevel() {
         <div id="level-perm-${levelPermIndex}" class="permission-group mb-3 p-3 border rounded">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
-                    <label class="form-label mb-0">{{ t("Level") }}:</label>
+                    <label class="col-form-label mb-0">{{ t("Level") }}:</label>
                     <select name="level_permissions[${levelPermIndex}][level]" class="form-select form-select-sm d-inline-block w-auto ms-2" onchange="checkLevelDuplicate(this)" required>
                         ${levelOptions}
                     </select>
                 </div>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePermLevel(${levelPermIndex})">
+                <button type="button" class="btn-outline-default btn-default-sm" onclick="removePermLevel(${levelPermIndex})">
                     - {{ t("Delete") }}
                 </button>
             </div>
@@ -887,12 +849,12 @@ function addPermGroup() {
         <div id="group-perm-${groupPermIndex}" class="permission-group mb-3 p-3 border rounded">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
-                    <label class="form-label mb-0">{{ t("Group") }}:</label>
+                    <label class="col-form-label mb-0">{{ t("Group") }}:</label>
                     <select name="group_permissions[${groupPermIndex}][group_id]" class="form-select form-select-sm d-inline-block w-auto ms-2" onchange="checkGroupDuplicate(this)" required>
                         ${groupOptions}
                     </select>
                 </div>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePermGroup(${groupPermIndex})">
+                <button type="button" class="btn-outline-default btn-default-sm" onclick="removePermGroup(${groupPermIndex})">
                     - {{ t("Delete") }}
                 </button>
             </div>
@@ -1068,7 +1030,7 @@ document.getElementById('add-image').addEventListener('click', function() {
     });
     
     const newImageHtml = `
-        <div class="image-item mb-3 border p-2 rounded bg-light">
+        <div class="image-item mb-3 border p-2 rounded">
             <div class="input-group input-group-sm">
                 <select class="form-select form-select-sm" name="images[${imageIndex}][category]">
                     ${optionsHtml}
@@ -1078,7 +1040,7 @@ document.getElementById('add-image').addEventListener('click', function() {
                        name="images[${imageIndex}][file]" 
                        accept="image/*">
                
-                <button type="button" class="btn btn-danger btn-sm remove-image">
+                <button type="button" class="btn btn-light btn-sm text-danger remove-image">
                     <i class="bi bi-trash"></i> {{ t("Remove") }}
                 </button>
             </div>

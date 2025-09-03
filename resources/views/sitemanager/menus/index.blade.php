@@ -11,102 +11,86 @@
 @endpush
 
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-12">
-            <!-- Header Section - Responsive -->
-            <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-3 d-none d-md-flex">
-                    <h1 class="mb-0">
-                        <i class="bi bi-list me-2"></i>{{ t('Menu Management') }}
-                    </h1>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="rebuild-tree-btn">
-                            <i class="bi bi-arrow-clockwise me-1"></i>{{ t('Rebuild Tree') }}
-                        </button>
-                        <a href="{{ route('sitemanager.menus.create') }}" class="btn btn-primary btn-sm">
-                            <i class="bi bi-plus me-1"></i>{{ t('Add New Menu') }}
-                        </a>
+<div class="content-header">
+    <h1>
+        <a href="{{ route('sitemanager.menus.index') }}">
+            <i class="bi bi-list opacity-75"></i> {{ t('Menu Management') }}
+        </a>
+
+        @if ($totalCount > 0)
+        <span class="count">{{ number_format($totalCount) }}</span>
+        @endif
+    </h1>
+
+    <div class="d-flex gap-1">
+        <button type="button" class="btn-outline-default" id="rebuild-tree-btn">
+            <i class="bi bi-arrow-clockwise me-1"></i>{{ t('Rebuild Tree') }}
+        </button>
+        <a href="{{ route('sitemanager.menus.create') }}" class="btn-default">
+            <i class="bi bi-plus me-1"></i>{{ t('Add New Menu') }}
+        </a>
+    </div>
+</div>
+
+<!-- Bootstrap Grid Layout for Sections -->
+@if($menusWithUrls->count() > 0)                
+    <!-- Legend Section - Responsive -->
+    <div class="alert alert-sm alert-light mb-3">
+        <!-- Desktop Legend -->
+        <div class="d-none d-md-block">
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                <span class="text-muted small">{{ t('Drag to reorder. Hold Command (Mac) or Ctrl (Win) while dragging to create a sub-menu.') }}</span>
+
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle text-warning me-1"></i>
+                        <small class="text-muted">{{ t('Invalid Route') }}</small>
                     </div>
-                </div>
-                
-                <!-- Mobile Header -->
-                <div class="d-md-none">
-                    <h4 class="mb-3">
-                        <i class="bi bi-list me-2"></i>{{ t('Menu Management') }}
-                    </h4>
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('sitemanager.menus.create') }}" class="btn btn-primary">
-                            <i class="bi bi-plus me-2"></i>{{ t('Add New Menu') }}
-                        </a>
-                        <button type="button" class="btn btn-outline-secondary" id="rebuild-tree-btn-mobile">
-                            <i class="bi bi-arrow-clockwise me-2"></i>{{ t('Rebuild Tree') }}
-                        </button>
+                    <div class="d-flex align-items-center menu-legend-hidden">
+                        <span class="legend-sample me-1">{{ t('HIDDEN') }}</span>
+                        <small class="text-muted">{{ t('Hidden Menu') }}</small>
+                    </div>
+                    <div class="d-flex align-items-center menu-legend-no-access">
+                        <span class="legend-sample me-1">{{ t('NO ACCESS') }}</span>
+                        <small class="text-muted">{{ t('No Access Permission') }}</small>
                     </div>
                 </div>
             </div>
-
-            <!-- Bootstrap Grid Layout for Sections -->
-            @if($menusWithUrls->count() > 0)                
-                <!-- Legend Section - Responsive -->
-                <div class="alert alert-sm alert-light mb-3">
-                    <!-- Desktop Legend -->
-                    <div class="d-none d-md-block">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between">
-                            <span class="text-muted small">{{ t('Drag to reorder. Hold Command (Mac) or Ctrl (Win) while dragging to create a sub-menu.') }}</span>
-
-                            <div class="d-flex flex-wrap gap-3 align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <i class="bi bi-exclamation-triangle text-warning me-1"></i>
-                                    <small class="text-muted">{{ t('Invalid Route') }}</small>
-                                </div>
-                                <div class="d-flex align-items-center menu-legend-hidden">
-                                    <span class="legend-sample me-1">{{ t('HIDDEN') }}</span>
-                                    <small class="text-muted">{{ t('Hidden Menu') }}</small>
-                                </div>
-                                <div class="d-flex align-items-center menu-legend-no-access">
-                                    <span class="legend-sample me-1">{{ t('NO ACCESS') }}</span>
-                                    <small class="text-muted">{{ t('No Access Permission') }}</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Mobile Legend -->
-                    <div class="d-md-none">
-                        <div class="text-center mb-2">
-                            <small class="text-muted">{{ t('Drag to reorder menus') }}</small>
-                        </div>
-                        <div class="d-flex justify-content-center flex-wrap gap-2">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-exclamation-triangle text-warning me-1"></i>
-                                <small class="text-muted">{{ t('Invalid') }}</small>
-                            </div>
-                            <div class="d-flex align-items-center menu-legend-hidden">
-                                <span class="legend-sample me-1" style="font-size: 0.7rem;">{{ t('HIDDEN') }}</span>
-                                <small class="text-muted">{{ t('Hidden') }}</small>
-                            </div>
-                            <div class="d-flex align-items-center menu-legend-no-access">
-                                <span class="legend-sample me-1" style="font-size: 0.7rem;">{{ t('NO ACCESS') }}</span>
-                                <small class="text-muted">{{ t('No Access') }}</small>
-                            </div>
-                        </div>
-                    </div>
+        </div>
+        
+        <!-- Mobile Legend -->
+        <div class="d-md-none">
+            <div class="text-center mb-2">
+                <small class="text-muted">{{ t('Drag to reorder menus') }}</small>
+            </div>
+            <div class="d-flex justify-content-center flex-wrap gap-2">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle text-warning me-1"></i>
+                    <small class="text-muted">{{ t('Invalid') }}</small>
                 </div>
-
-                <div id="menu-tree" class="sortable-tree"></div>
-            @else
-                <div class="text-center py-5">
-                    <i class="bi bi-list" style="font-size: 3rem;" class="text-muted mb-3"></i>
-                    <p class="text-muted">{{ t('No menus registered.') }}</p>
-                    <a href="{{ route('sitemanager.menus.create') }}" class="btn btn-primary">
-                        {{ t('Add Your First Menu') }}
-                    </a>
+                <div class="d-flex align-items-center menu-legend-hidden">
+                    <span class="legend-sample me-1" style="font-size: 0.7rem;">{{ t('HIDDEN') }}</span>
+                    <small class="text-muted">{{ t('Hidden') }}</small>
                 </div>
-            @endif
+                <div class="d-flex align-items-center menu-legend-no-access">
+                    <span class="legend-sample me-1" style="font-size: 0.7rem;">{{ t('NO ACCESS') }}</span>
+                    <small class="text-muted">{{ t('No Access') }}</small>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+
+    <div id="menu-tree" class="sortable-tree"></div>
+@else
+    <div class="text-center py-5">
+        <i class="bi bi-list" style="font-size: 3rem;" class="text-muted mb-3"></i>
+        <p class="text-muted">{{ t('No menus registered.') }}</p>
+        <a href="{{ route('sitemanager.menus.create') }}" class="btn btn-primary">
+            {{ t('Add Your First Menu') }}
+        </a>
+    </div>
+@endif
+
 @endsection
 
 @push('scripts')
