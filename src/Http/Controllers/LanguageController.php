@@ -5,6 +5,7 @@ namespace SiteManager\Http\Controllers;
 use Illuminate\Http\Request;
 use SiteManager\Models\Language;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class LanguageController extends Controller
 {
@@ -59,14 +60,41 @@ class LanguageController extends Controller
      */
     public function update(Request $request, Language $language)
     {
-        $request->validate([
-            'ko' => 'nullable|string|max:500',
-            'tw' => 'nullable|string|max:500',
-        ]);
+        try {
+            $request->validate([
+                'ko' => 'nullable|string|max:500',
+                'tw' => 'nullable|string|max:500',
+            ]);
 
-        $language->update($request->only(['ko', 'tw']));
+            $language->update($request->only(['ko', 'tw']));
 
-        return redirect()->back()->with('success', t('Language updated successfully'));
+            // AJAX 요청인 경우 JSON 응답 반환
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => t('Translation saved successfully')
+                ]);
+            }
+
+            return redirect()->back()->with('success', t('Language updated successfully'));
+        } catch (\Exception $e) {
+            // 에러 로깅
+            Log::error('Language update error: ' . $e->getMessage(), [
+                'language_id' => $language->id,
+                'request_data' => $request->all(),
+                'exception' => $e
+            ]);
+
+            // AJAX 요청인 경우 JSON 에러 응답 반환
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => t('Error saving translation') . ': ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', t('Error saving translation') . ': ' . $e->getMessage());
+        }
     }
 
     /**

@@ -1,6 +1,6 @@
 @extends('sitemanager::layouts.sitemanager')
 
-@section('title', isset($menu) ? 'Edit Menu - ' . $menu->title : 'Add New Menu')
+@section('title', isset($menu) ? t('Edit Menu') . ' - ' . $menu->title : t('Add New Menu'))
 
 @section('content')
 <div class="container">
@@ -8,9 +8,9 @@
         <div class="col-md-12">
             <h1>
                 @if(isset($menu))
-                    <i class="bi bi-pencil"></i> Edit Menu - {{ $menu->title }}
+                    <i class="bi bi-pencil"></i> {{ t('Edit Menu') }} - {{ $menu->title }}
                 @else
-                    <i class="bi bi-plus"></i> Add New Menu
+                    <i class="bi bi-plus"></i> {{ t('Add New Menu') }}
                 @endif
             </h1>
 
@@ -18,13 +18,13 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         @if(isset($menu))
-                            <i class="bi bi-pencil me-2"></i>Edit Menu
+                            <i class="bi bi-pencil me-2"></i>{{ t('Edit Menu') }}
                         @else
-                            <i class="bi bi-plus me-2"></i>Add New Menu
+                            <i class="bi bi-plus me-2"></i>{{ t('Add New Menu') }}
                         @endif
                     </h5>
                     <a href="{{ route('sitemanager.menus.index') }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-arrow-left"></i> Back to List
+                        <i class="bi bi-arrow-left"></i> {{ t('Back to List') }}
                     </a>
                 </div>
                 <div class="card-body">
@@ -38,11 +38,11 @@
                             <!-- Left Column: Menu Information -->
                             <div class="col-md-6">
                                 <h5 class="mb-3 text-primary section-header">
-                                    <i class="bi bi-info-circle me-2"></i>Menu Information
+                                    <i class="bi bi-info-circle me-2"></i>{{ t('Menu Information') }}
                                 </h5>
                                 
                                 <div class="mb-3">
-                                    <label for="title" class="form-label">Menu Title *</label>
+                                    <label for="title" class="form-label">{{ t('Menu Title') }} *</label>
                                     <input type="text" 
                                            class="form-control @error('title') is-invalid @enderror" 
                                            id="title" 
@@ -55,27 +55,27 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="description" class="form-label">Description</label>
+                                    <label for="description" class="form-label">{{ t('Description') }}</label>
                                     <textarea class="form-control @error('description') is-invalid @enderror"
                                               id="description"
                                               name="description"
                                               rows="3"
-                                              placeholder="Enter a short description">{{ old('description', isset($menu) ? $menu->description : '') }}</textarea>
+                                              placeholder="{{ t('Enter a short description') }}">{{ old('description', isset($menu) ? $menu->description : '') }}</textarea>
                                     @error('description')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                     <div class="form-text">
-                                        Optional. This description helps identify the menu's purpose and may be used as the SEO description.
+                                        {{ t('Optional. This description helps identify the menu\'s purpose and may be used as the SEO description.') }}
                                     </div>
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <label for="type" class="form-label">Menu Type *</label>
+                                    <label for="type" class="form-label">{{ t('Menu Type') }} *</label>
                                     <select class="form-select @error('type') is-invalid @enderror" 
                                             id="type" 
                                             name="type" 
                                             required>
-                                        <option value="">Select menu type</option>
+                                        <option value="">{{ t('Select menu type') }}</option>
                                         @foreach(\SiteManager\Models\Menu::getAvailableTypes() as $typeValue => $typeLabel)
                                             <option value="{{ $typeValue }}" {{ old('type', isset($menu) ? $menu->type : '') == $typeValue ? 'selected' : '' }}>{{ $typeLabel }}</option>
                                         @endforeach
@@ -87,9 +87,9 @@
 
                                 <!-- Route Selection (for route type) -->
                                 <div class="mb-3" id="route-select-container" style="display: none;">
-                                    <label for="route-select" class="form-label">Available Routes</label>
+                                    <label for="route-select" class="form-label">{{ t('Available Routes') }}</label>
                                     <select class="form-select" id="route-select">
-                                        <option value="">Select a route</option>
+                                        <option value="">{{ t('Select a route') }}</option>
                                         @if(isset($availableRoutes) && count($availableRoutes) > 0)
                                             @foreach($availableRoutes as $route)
                                                 <option value="{{ $route['name'] }}" 
@@ -99,13 +99,13 @@
                                                 </option>
                                             @endforeach
                                         @else
-                                            <option value="" disabled>No routes available</option>
+                                            <option value="" disabled>{{ t('No routes available') }}</option>
                                         @endif
                                     </select>
                                     <div class="form-text">
-                                        Choose from available Laravel routes above. 
+                                        {{ t('Choose from available Laravel routes above.') }}
                                         @if(isset($availableRoutes))
-                                            <small class="text-muted">({{ count($availableRoutes) }} routes found)</small>
+                                            <small class="text-muted">({{ count($availableRoutes) }} {{ t('routes found') }})</small>
                                         @endif
                                     </div>
                                     
@@ -125,10 +125,10 @@
                                         @if(!$currentRouteExists)
                                             <div class="alert alert-warning mt-2" id="invalid-route-warning">
                                                 <i class="bi bi-exclamation-triangle me-2"></i>
-                                                <strong>Warning:</strong> The current route "<code>{{ $menu->target }}</code>" no longer exists in the application.
+                                                <strong>{{ t('Warning') }}:</strong> {{ t('The current route') }} "<code>{{ $menu->target }}</code>" {{ t('no longer exists in the application.') }}
                                                 <br>
                                                 <small class="text-muted">
-                                                    This route may have been removed or renamed. Please select a new route from the list above.
+                                                    {{ t('This route may have been removed or renamed. Please select a new route from the list above.') }}
                                                 </small>
                                             </div>
                                         @endif
@@ -136,7 +136,7 @@
                                 </div>
 
                                 <div class="mb-3" id="target-container">
-                                    <label for="target" class="form-label">Target</label>
+                                    <label for="target" class="form-label">{{ t('Target') }}</label>
                                     <input type="text" 
                                            class="form-control @error('target') is-invalid @enderror" 
                                            id="target" 
@@ -146,7 +146,7 @@
                                     @error('target')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <div class="form-text" id="target-help">Please select menu type first.</div>
+                                    <div class="form-text" id="target-help">{{ t('Please select menu type first.') }}</div>
                                     
                                     @if(isset($menu) && $menu->type === 'route' && $menu->target)
                                         @php
@@ -164,11 +164,10 @@
                                         @if(!$currentRouteExists)
                                             <div class="alert alert-danger mt-2" id="target-invalid-route-warning">
                                                 <i class="bi bi-exclamation-triangle me-2"></i>
-                                                <strong>Invalid Route:</strong> "<code>{{ $menu->target }}</code>" does not exist.
+                                                <strong>{{ t('Invalid Route') }}:</strong> "<code>{{ $menu->target }}</code>" {{ t('does not exist.') }}
                                                 <br>
                                                 <small>
-                                                    This menu will not function properly. Please switch to route type and select a valid route, 
-                                                    or change the menu type to URL and provide a full URL.
+                                                    {{ t('This menu will not function properly. Please switch to route type and select a valid route, or change the menu type to URL and provide a full URL.') }}
                                                 </small>
                                             </div>
                                         @endif
@@ -176,11 +175,11 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="parent_id" class="form-label">Parent Menu</label>
+                                    <label for="parent_id" class="form-label">{{ t('Parent Menu') }}</label>
                                     <select class="form-select @error('parent_id') is-invalid @enderror" 
                                             id="parent_id" 
                                             name="parent_id">
-                                        <option value="">Root Menu (Creates New Section)</option>
+                                        <option value="">{{ t('Root Menu (Creates New Section)') }}</option>
                                         @php
                                             $allMenus = \SiteManager\Models\Menu::orderBy('section')->orderBy('_lft')->get();
                                             $currentMenuId = isset($menu) ? $menu->id : null;
@@ -199,7 +198,7 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                     <div class="form-text">
-                                        Select a parent menu to inherit its section, or leave empty to create a new section.
+                                        {{ t('Select a parent menu to inherit its section, or leave empty to create a new section.') }}
                                     </div>
                                 </div>
 
@@ -215,15 +214,15 @@
                                                value="1" 
                                                {{ old('hidden', isset($menu) ? $menu->hidden : false) ? 'checked' : '' }}>
                                         <label class="form-check-label" for="hidden">
-                                            Hidden
+                                            {{ t('Hidden') }}
                                         </label>
                                     </div>
-                                    <div class="form-text">Hidden menus will not be displayed in navigation.</div>
+                                    <div class="form-text">{{ t('Hidden menus will not be displayed in navigation.') }}</div>
                                 </div>
 
                                 <!-- Images Section -->
                                 <div class="mb-3">
-                                    <label class="form-label">Menu Images</label>
+                                    <label class="form-label">{{ t('Menu Images') }}</label>
                                     <div id="images-container">
                                         @php
                                             $imageCategories = \SiteManager\Models\Menu::getImageCategories();
@@ -269,9 +268,9 @@
                                         @endif
                                     </div>
                                     <button type="button" class="btn btn-outline-primary btn-sm" id="add-image">
-                                        <i class="bi bi-plus"></i> Add Image
+                                        <i class="bi bi-plus"></i> {{ t('Add Image') }}
                                     </button>
-                                    <div class="form-text">Upload images for different purposes (thumbnail, header, SEO, etc.)</div>
+                                    <div class="form-text">{{ t('Upload images for different purposes (thumbnail, header, SEO, etc.)') }}</div>
                                 </div>
                             </div>
 
@@ -279,13 +278,13 @@
                             <div class="col-md-6">
                                 @if(isset($menu))
                                 <h5 class="mb-3 text-primary section-header">
-                                    <i class="bi bi-shield-lock me-2"></i>Permissions
+                                    <i class="bi bi-shield-lock me-2"></i>{{ t('Permissions') }}
                                 </h5>
                                 
                                 <div class="permission-section">
                                 <!-- Basic Permission -->
                                 <div class="mb-4">
-                                    <label class="form-label">Basic Permission</label>
+                                    <label class="form-label">{{ t('Basic Permission') }}</label>
                                     <div class="permission-list">
                                         @php
                                             $basicPermissions = config('permissions.menu');
@@ -305,9 +304,9 @@
                                 <!-- Level Permission -->
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label class="form-label mb-0">Level Permission</label>
+                                        <label class="form-label mb-0">{{ t('Level Permission') }}</label>
                                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="addPermLevel()">
-                                            + Add Level
+                                            + {{ t('Add Level') }}
                                         </button>
                                     </div>
                                     <div id="level-wrap">
@@ -315,10 +314,10 @@
                                             @foreach($menuPermissions['levels'] as $index => $levelData)
                                                 <div id="level-perm-{{ $index }}" class="permission-group mb-3 p-3 border rounded">
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                                        <strong>Level {{ $levelData['level'] }}</strong>
+                                                        <strong>{{ t('Level') }} {{ $levelData['level'] }}</strong>
                                                         <button type="button" class="btn btn-sm btn-outline-danger" 
                                                                 onclick="removePermLevel({{ $index }})">
-                                                            - Delete
+                                                            - {{ t('Delete') }}
                                                         </button>
                                                     </div>
                                                     <input type="hidden" name="level_permissions[{{ $index }}][level]" value="{{ $levelData['level'] }}">
@@ -342,9 +341,9 @@
                                 @if(\SiteManager\Models\Group::count() > 0)
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label class="form-label mb-0">Group Permission</label>
+                                        <label class="form-label mb-0">{{ t('Group Permission') }}</label>
                                         <button type="button" class="btn btn-sm btn-outline-success" onclick="addPermGroup()">
-                                            + Add Group
+                                            + {{ t('Add Group') }}
                                         </button>
                                     </div>
                                     <div id="group-wrap">
@@ -355,7 +354,7 @@
                                                         <strong>{{ $groupData['name'] }}</strong>
                                                         <button type="button" class="btn btn-sm btn-outline-danger" 
                                                                 onclick="removePermGroup({{ $index }})">
-                                                            - Delete
+                                                            - {{ t('Delete') }}
                                                         </button>
                                                     </div>
                                                     <input type="hidden" name="group_permissions[{{ $index }}][group_id]" value="{{ $groupData['group_id'] }}">
@@ -379,9 +378,9 @@
                                 <!-- Administrator Permission -->
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label class="form-label mb-0">Administrator Permission</label>
+                                        <label class="form-label mb-0">{{ t('Administrator Permission') }}</label>
                                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPermAdmin()">
-                                            + Add Administrator
+                                            + {{ t('Add Administrator') }}
                                         </button>
                                     </div>
                                     <div id="admin-wrap">
@@ -391,11 +390,11 @@
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                                         <div>
                                                             <strong>{{ $adminData['name'] }} ({{ $adminData['username'] }})</strong>
-                                                            <small class="text-muted d-block">모든 권한 ({{ implode(', ', config('permissions.menu')) }})</small>
+                                                            <small class="text-muted d-block">{{ t('All permissions') }} ({{ implode(', ', config('permissions.menu')) }})</small>
                                                         </div>
                                                         <button type="button" class="btn btn-sm btn-outline-danger" 
                                                                 onclick="removePermAdmin({{ $index }})">
-                                                            - Delete
+                                                            - {{ t('Delete') }}
                                                         </button>
                                                     </div>
                                                     <input type="hidden" name="admin_permissions[{{ $index }}][member_id]" value="{{ $adminData['member_id'] }}">
@@ -409,7 +408,7 @@
                                 @else
                                 <div class="alert alert-info">
                                     <i class="bi bi-info-circle me-2"></i>
-                                    Permissions can only be set for existing menus. Save the menu first to configure permissions.
+                                    {{ t('Permissions can only be set for existing menus. Save the menu first to configure permissions.') }}
                                 </div>
                                 @endif
                             </div>
@@ -417,7 +416,7 @@
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             <a href="{{ route('sitemanager.menus.index') }}" class="btn btn-secondary">
-                                <i class="bi bi-x-circle"></i> Cancel
+                                <i class="bi bi-x-circle"></i> {{ t('Cancel') }}
                             </a>
 
                             @if(isset($menu))
@@ -430,8 +429,8 @@
                                             class="btn btn-danger"
                                             id="menu-delete-btn" 
                                             data-delete-url="{{ route('sitemanager.menus.destroy', $menu->id) }}"
-                                            title="Delete Menu">
-                                        <i class="bi bi-trash"></i> Delete
+                                            title="{{ t('Delete Menu') }}">
+                                        <i class="bi bi-trash"></i> {{ t('Delete') }}
                                     </button>
                                 @endif
                             @endif
@@ -439,9 +438,9 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-check-circle"></i> 
                                 @if(isset($menu))
-                                    Update
+                                    {{ t('Update') }}
                                 @else
-                                    Create
+                                    {{ t('Create') }}
                                 @endif
                             </button>
                         </div>
@@ -457,21 +456,21 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">관리자 선택</h5>
+                <h5 class="modal-title">{{ t('Select Administrator') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
                     <input type="text" id="memberSearch" class="form-control" 
-                           placeholder="이름 또는 아이디로 검색..." 
+                           placeholder="{{ t('Search by name or ID...') }}" 
                            onkeyup="searchMembers()">
                 </div>
                 <div id="memberList" class="member-list" style="max-height: 300px; overflow-y: auto;">
-                    <div class="text-muted">검색어를 입력하세요.</div>
+                    <div class="text-muted">{{ t('Please enter search terms.') }}</div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('Cancel') }}</button>
             </div>
         </div>
     </div>
@@ -493,14 +492,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (deleteBtn) {
         deleteBtn.addEventListener('click', function () {
             Swal.fire({
-                title: '메뉴 삭제 확인',
-                text: '이 메뉴를 삭제하시겠습니까?',
+                title: '{{ t("Menu Delete Confirmation") }}',
+                text: '{{ t("Are you sure you want to delete this menu?") }}',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: '삭제',
-                cancelButtonText: '취소'
+                confirmButtonText: '{{ t("Delete") }}',
+                cancelButtonText: '{{ t("Cancel") }}'
             }).then((result) => {
                 if (result.isConfirmed) {
                     const url = this.dataset.deleteUrl;
@@ -534,14 +533,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Select2 for route and parent menu selects
     $('#route-select').select2({
         theme: 'bootstrap-5',
-        placeholder: 'Search for a route...',
+        placeholder: '{{ t("Search for a route...") }}',
         allowClear: true,
         width: '100%'
     });
     
     $('#parent_id').select2({
         theme: 'bootstrap-5',
-        placeholder: 'Search for parent menu or leave empty for new section...',
+        placeholder: '{{ t("Search for parent menu or leave empty for new section...") }}',
         allowClear: true,
         width: '100%',
         templateResult: function(option) {
@@ -594,7 +593,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     targetField.required = true;
                 }
                 if (targetHelp) {
-                    targetHelp.textContent = 'Enter full URL (e.g., https://example.com)';
+                    targetHelp.textContent = '{{ t("Enter full URL (e.g., https://example.com)") }}';
                 }
                 if (routeWarning) routeWarning.style.display = 'none';
                 if (targetWarning) targetWarning.style.display = 'none';
@@ -607,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     targetField.required = false;
                 }
                 if (targetHelp) {
-                    targetHelp.textContent = 'Text menus do not require a target.';
+                    targetHelp.textContent = '{{ t("Text menus do not require a target.") }}';
                 }
                 if (routeWarning) routeWarning.style.display = 'none';
                 if (targetWarning) targetWarning.style.display = 'none';
@@ -620,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     targetField.required = false;
                 }
                 if (targetHelp) {
-                    targetHelp.textContent = 'Please select menu type first.';
+                    targetHelp.textContent = '{{ t("Please select menu type first.") }}';
                 }
                 if (routeWarning) routeWarning.style.display = 'none';
                 if (targetWarning) targetWarning.style.display = 'block';
@@ -656,7 +655,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (uri) {
                 const routeInfo = routeContainer.querySelector('.route-info') || document.createElement('div');
                 routeInfo.className = 'route-info form-text mt-2 text-success';
-                routeInfo.innerHTML = `<i class="bi bi-check-circle me-1"></i>Selected: <code>${selectedData.id}</code> → <code>/${uri}</code>`;
+                routeInfo.innerHTML = `<i class="bi bi-check-circle me-1"></i>{{ t("Selected") }}: <code>${selectedData.id}</code> → <code>/${uri}</code>`;
                 if (!routeContainer.querySelector('.route-info')) {
                     routeContainer.appendChild(routeInfo);
                 }
@@ -700,13 +699,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 warningDiv.className = 'board-warning alert alert-warning mt-2';
                 warningDiv.innerHTML = `
                     <i class="bi bi-exclamation-triangle me-2"></i>
-                    <strong>No Board Connected:</strong> The board.index route requires a board to be connected to this menu.
+                    <strong>{{ t("No Board Connected") }}:</strong> {{ t("The board.index route requires a board to be connected to this menu.") }}
                     <br>
                     <small class="text-muted">
-                        Please create a board and connect it to this menu, or this menu will not function properly.
+                        {{ t("Please create a board and connect it to this menu, or this menu will not function properly.") }}
                         <br>
                         <a href="{{ route('sitemanager.boards.create') }}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">
-                            <i class="bi bi-plus"></i> Create New Board
+                            <i class="bi bi-plus"></i> {{ t("Create New Board") }}
                         </a>
                     </small>
                 `;
@@ -717,13 +716,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 successDiv.className = 'board-warning alert alert-success mt-2';
                 successDiv.innerHTML = `
                     <i class="bi bi-check-circle me-2"></i>
-                    <strong>Board Connected:</strong> Board "${data.boardName}" is connected to this menu.
+                    <strong>{{ t("Board Connected") }}:</strong> {{ t("Board") }} "${data.boardName}" {{ t("is connected to this menu.") }}
                     <br>
                     <small class="text-muted">
-                        This menu will redirect to the board index page when clicked.
+                        {{ t("This menu will redirect to the board index page when clicked.") }}
                         <br>
                         <a href="{{ route('sitemanager.boards.index') }}" target="_blank" class="btn btn-sm btn-outline-info mt-1">
-                            <i class="bi bi-list"></i> Manage Boards
+                            <i class="bi bi-list"></i> {{ t("Manage Boards") }}
                         </a>
                     </small>
                 `;
@@ -799,12 +798,12 @@ function addPermLevel() {
     const availableLevels = Object.entries(levels).filter(([value, label]) => !existingLevels.includes(value));
     
     if (availableLevels.length === 0) {
-        alert('모든 레벨이 이미 추가되었습니다.');
+        alert('{{ t("All levels have already been added.") }}');
         return;
     }
     
     // Create level select options (사용 가능한 레벨만)
-    let levelOptions = '<option value="">레벨을 선택하세요</option>';
+    let levelOptions = '<option value="">{{ t("Please select a level") }}</option>';
     availableLevels.forEach(([value, label]) => {
         levelOptions += `<option value="${value}">${label} (${value})</option>`;
     });
@@ -813,13 +812,13 @@ function addPermLevel() {
         <div id="level-perm-${levelPermIndex}" class="permission-group mb-3 p-3 border rounded">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
-                    <label class="form-label mb-0">Level:</label>
+                    <label class="form-label mb-0">{{ t("Level") }}:</label>
                     <select name="level_permissions[${levelPermIndex}][level]" class="form-select form-select-sm d-inline-block w-auto ms-2" onchange="checkLevelDuplicate(this)" required>
                         ${levelOptions}
                     </select>
                 </div>
                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePermLevel(${levelPermIndex})">
-                    - Delete
+                    - {{ t("Delete") }}
                 </button>
             </div>
             <div class="permission-list">
@@ -849,7 +848,7 @@ function addPermGroup() {
     
     // 그룹이 하나도 없으면 경고 메시지 표시
     if (groups.length === 0) {
-        alert('등록된 그룹이 없습니다. 먼저 그룹을 생성해주세요.');
+        alert('{{ t("No groups are registered. Please create a group first.") }}');
         return;
     }
     
@@ -874,12 +873,12 @@ function addPermGroup() {
     const availableGroups = groups.filter(group => !existingGroups.includes(group.id.toString()));
     
     if (availableGroups.length === 0) {
-        alert('모든 그룹이 이미 추가되었습니다.');
+        alert('{{ t("All groups have already been added.") }}');
         return;
     }
     
     // Create group select options (사용 가능한 그룹만)
-    let groupOptions = '<option value="">그룹을 선택하세요</option>';
+    let groupOptions = '<option value="">{{ t("Please select a group") }}</option>';
     availableGroups.forEach(group => {
         groupOptions += `<option value="${group.id}">${group.name}</option>`;
     });
@@ -888,13 +887,13 @@ function addPermGroup() {
         <div id="group-perm-${groupPermIndex}" class="permission-group mb-3 p-3 border rounded">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
-                    <label class="form-label mb-0">Group:</label>
+                    <label class="form-label mb-0">{{ t("Group") }}:</label>
                     <select name="group_permissions[${groupPermIndex}][group_id]" class="form-select form-select-sm d-inline-block w-auto ms-2" onchange="checkGroupDuplicate(this)" required>
                         ${groupOptions}
                     </select>
                 </div>
                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePermGroup(${groupPermIndex})">
-                    - Delete
+                    - {{ t("Delete") }}
                 </button>
             </div>
             <div class="permission-list">
@@ -933,7 +932,7 @@ function checkLevelDuplicate(selectElement) {
     });
     
     if (duplicateCount > 1) {
-        alert('이미 선택된 레벨입니다. 다른 레벨을 선택해주세요.');
+        alert('{{ t("This level has already been selected. Please select a different level.") }}');
         selectElement.selectedIndex = 0; // 첫 번째 옵션으로 리셋
     }
 }
@@ -957,7 +956,7 @@ function checkGroupDuplicate(selectElement) {
     });
     
     if (duplicateSelects.length > 0 || existingHiddenInputs.length > 0) {
-        alert('이미 선택된 그룹입니다.');
+        alert('{{ t("This group has already been selected.") }}');
         selectElement.value = '';
         return;
     }
@@ -983,7 +982,7 @@ function selectMember(memberId, memberName, memberUsername) {
     });
     
     if (existingAdmins.includes(memberId.toString())) {
-        alert('이미 추가된 관리자입니다.');
+        alert('{{ t("This administrator has already been added.") }}');
         $('#memberSelectorModal').modal('hide');
         return;
     }
@@ -993,10 +992,10 @@ function selectMember(memberId, memberName, memberUsername) {
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
                     <strong>${memberName} (${memberUsername})</strong>
-                    <small class="text-muted d-block">모든 권한 (${Object.values(permissions).join(', ')})</small>
+                    <small class="text-muted d-block">{{ t("All permissions") }} (${Object.values(permissions).join(', ')})</small>
                 </div>
                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePermAdmin(${adminPermIndex})">
-                    - Delete
+                    - {{ t("Delete") }}
                 </button>
             </div>
             <input type="hidden" name="admin_permissions[${adminPermIndex}][member_id]" value="${memberId}">
@@ -1021,7 +1020,7 @@ function removePermAdmin(index) {
 function searchMembers() {
     const query = document.getElementById('memberSearch').value;
     if (query.length < 2) {
-        document.getElementById('memberList').innerHTML = '<div class="text-muted">최소 2글자 이상 입력하세요.</div>';
+        document.getElementById('memberList').innerHTML = '<div class="text-muted">{{ t("Please enter at least 2 characters.") }}</div>';
         return;
     }
     
@@ -1036,7 +1035,7 @@ function searchMembers() {
         .then(data => {
             let html = '';
             if (data.length === 0) {
-                html = '<div class="text-muted">검색 결과가 없습니다.</div>';
+                html = '<div class="text-muted">{{ t("No search results found.") }}</div>';
             } else {
                 data.forEach(member => {
                     html += `
@@ -1052,7 +1051,7 @@ function searchMembers() {
         })
         .catch(error => {
             console.error('Error:', error);
-            document.getElementById('memberList').innerHTML = '<div class="text-danger">검색 중 오류가 발생했습니다.</div>';
+            document.getElementById('memberList').innerHTML = '<div class="text-danger">{{ t("An error occurred during search.") }}</div>';
         });
 }
 
@@ -1080,7 +1079,7 @@ document.getElementById('add-image').addEventListener('click', function() {
                        accept="image/*">
                
                 <button type="button" class="btn btn-danger btn-sm remove-image">
-                    <i class="bi bi-trash"></i> Remove
+                    <i class="bi bi-trash"></i> {{ t("Remove") }}
                 </button>
             </div>
 

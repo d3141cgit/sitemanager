@@ -250,10 +250,12 @@ function showErrorToast(message) {
 
 function saveTranslation(languageId) {
     const inputs = document.querySelectorAll(`[data-language-id="${languageId}"]`);
-    const data = { _token: '{{ csrf_token() }}', _method: 'PUT' };
+    const formData = new FormData();
+    formData.append('_token', '{{ csrf_token() }}');
+    formData.append('_method', 'PUT');
     
     inputs.forEach(input => {
-        data[input.dataset.field] = input.value;
+        formData.append(input.dataset.field, input.value);
     });
     
     // Show loading state
@@ -265,20 +267,35 @@ function saveTranslation(languageId) {
     fetch(`{{ url('/sitemanager/languages') }}/${languageId}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
             'X-CSRF-TOKEN': '{{ csrf_token() }}'
         },
-        body: JSON.stringify(data)
+        body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                // If response is not JSON, check if it's a redirect (success)
+                if (response.status === 200 || response.redirected) {
+                    return { success: true };
+                }
+                throw new Error('Invalid response format');
+            }
+        });
+    })
     .then(data => {
-        if (data.success) {
+        if (data.success !== false) {
             showSuccessToast('{{ t("Translation saved successfully") }}');
         } else {
             showErrorToast(data.message || '{{ t("Error saving translation") }}');
         }
     })
     .catch(error => {
+        console.error('Error:', error);
         showErrorToast('{{ t("Error saving translation") }}');
     })
     .finally(() => {

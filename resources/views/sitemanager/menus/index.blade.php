@@ -1,6 +1,6 @@
 @extends('sitemanager::layouts.sitemanager')
 
-@section('title', 'Menu Management')
+@section('title', t('Menu Management'))
 
 @push('styles')
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -18,14 +18,14 @@
             <div class="mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-3 d-none d-md-flex">
                     <h1 class="mb-0">
-                        <i class="bi bi-list me-2"></i>Menu Management
+                        <i class="bi bi-list me-2"></i>{{ t('Menu Management') }}
                     </h1>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-outline-secondary btn-sm" id="rebuild-tree-btn">
-                            <i class="bi bi-arrow-clockwise me-1"></i>Rebuild Tree
+                            <i class="bi bi-arrow-clockwise me-1"></i>{{ t('Rebuild Tree') }}
                         </button>
                         <a href="{{ route('sitemanager.menus.create') }}" class="btn btn-primary btn-sm">
-                            <i class="bi bi-plus me-1"></i>Add New Menu
+                            <i class="bi bi-plus me-1"></i>{{ t('Add New Menu') }}
                         </a>
                     </div>
                 </div>
@@ -33,14 +33,14 @@
                 <!-- Mobile Header -->
                 <div class="d-md-none">
                     <h4 class="mb-3">
-                        <i class="bi bi-list me-2"></i>Menu Management
+                        <i class="bi bi-list me-2"></i>{{ t('Menu Management') }}
                     </h4>
                     <div class="d-grid gap-2">
                         <a href="{{ route('sitemanager.menus.create') }}" class="btn btn-primary">
-                            <i class="bi bi-plus me-2"></i>Add New Menu
+                            <i class="bi bi-plus me-2"></i>{{ t('Add New Menu') }}
                         </a>
                         <button type="button" class="btn btn-outline-secondary" id="rebuild-tree-btn-mobile">
-                            <i class="bi bi-arrow-clockwise me-2"></i>Rebuild Tree
+                            <i class="bi bi-arrow-clockwise me-2"></i>{{ t('Rebuild Tree') }}
                         </button>
                     </div>
                 </div>
@@ -53,20 +53,20 @@
                     <!-- Desktop Legend -->
                     <div class="d-none d-md-block">
                         <div class="d-flex flex-wrap align-items-center justify-content-between">
-                            <span class="text-muted small">Drag to reorder. Hold Command (Mac) or Ctrl (Win) while dragging to create a sub-menu.</span>
+                            <span class="text-muted small">{{ t('Drag to reorder. Hold Command (Mac) or Ctrl (Win) while dragging to create a sub-menu.') }}</span>
 
                             <div class="d-flex flex-wrap gap-3 align-items-center">
                                 <div class="d-flex align-items-center">
                                     <i class="bi bi-exclamation-triangle text-warning me-1"></i>
-                                    <small class="text-muted">Invalid Route</small>
+                                    <small class="text-muted">{{ t('Invalid Route') }}</small>
                                 </div>
                                 <div class="d-flex align-items-center menu-legend-hidden">
-                                    <span class="legend-sample me-1">HIDDEN</span>
-                                    <small class="text-muted">Hidden Menu</small>
+                                    <span class="legend-sample me-1">{{ t('HIDDEN') }}</span>
+                                    <small class="text-muted">{{ t('Hidden Menu') }}</small>
                                 </div>
                                 <div class="d-flex align-items-center menu-legend-no-access">
-                                    <span class="legend-sample me-1">NO ACCESS</span>
-                                    <small class="text-muted">No Access Permission</small>
+                                    <span class="legend-sample me-1">{{ t('NO ACCESS') }}</span>
+                                    <small class="text-muted">{{ t('No Access Permission') }}</small>
                                 </div>
                             </div>
                         </div>
@@ -75,20 +75,20 @@
                     <!-- Mobile Legend -->
                     <div class="d-md-none">
                         <div class="text-center mb-2">
-                            <small class="text-muted">Drag to reorder menus</small>
+                            <small class="text-muted">{{ t('Drag to reorder menus') }}</small>
                         </div>
                         <div class="d-flex justify-content-center flex-wrap gap-2">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-exclamation-triangle text-warning me-1"></i>
-                                <small class="text-muted">Invalid</small>
+                                <small class="text-muted">{{ t('Invalid') }}</small>
                             </div>
                             <div class="d-flex align-items-center menu-legend-hidden">
-                                <span class="legend-sample me-1" style="font-size: 0.7rem;">HIDDEN</span>
-                                <small class="text-muted">Hidden</small>
+                                <span class="legend-sample me-1" style="font-size: 0.7rem;">{{ t('HIDDEN') }}</span>
+                                <small class="text-muted">{{ t('Hidden') }}</small>
                             </div>
                             <div class="d-flex align-items-center menu-legend-no-access">
-                                <span class="legend-sample me-1" style="font-size: 0.7rem;">NO ACCESS</span>
-                                <small class="text-muted">No Access</small>
+                                <span class="legend-sample me-1" style="font-size: 0.7rem;">{{ t('NO ACCESS') }}</span>
+                                <small class="text-muted">{{ t('No Access') }}</small>
                             </div>
                         </div>
                     </div>
@@ -98,9 +98,9 @@
             @else
                 <div class="text-center py-5">
                     <i class="bi bi-list" style="font-size: 3rem;" class="text-muted mb-3"></i>
-                    <p class="text-muted">No menus registered.</p>
+                    <p class="text-muted">{{ t('No menus registered.') }}</p>
                     <a href="{{ route('sitemanager.menus.create') }}" class="btn btn-primary">
-                        Add Your First Menu
+                        {{ t('Add Your First Menu') }}
                     </a>
                 </div>
             @endif
@@ -136,14 +136,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showRebuildConfirmation() {
         Swal.fire({
-            title: '트리 구조 재구성',
-            text: '정말로 트리 구조를 재구성하시겠습니까?',
+            title: '{{ t("Tree Structure Rebuild") }}',
+            text: '{{ t("Are you sure you want to rebuild the tree structure?") }}',
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#0d6efd',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: '재구성',
-            cancelButtonText: '취소'
+            confirmButtonText: '{{ t("Rebuild") }}',
+            cancelButtonText: '{{ t("Cancel") }}'
         }).then((result) => {
             if (result.isConfirmed) {
                 rebuildTree();
@@ -154,8 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Rebuild tree function
     function rebuildTree() {
         Swal.fire({
-            title: '처리 중...',
-            text: '트리 구조를 재구성하고 있습니다.',
+            title: '{{ t("Processing...") }}',
+            text: '{{ t("Rebuilding tree structure.") }}',
             allowOutsideClick: false,
             showConfirmButton: false,
             willOpen: () => {
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
-                    title: '완료!',
+                    title: '{{ t("Complete!") }}',
                     text: data.message,
                     timer: 500,
                     timerProgressBar: true,
@@ -186,8 +186,8 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 Swal.fire({
                     icon: 'error',
-                    title: '오류!',
-                    text: data.message || 'Rebuild operation failed.'
+                    title: '{{ t("Error!") }}',
+                    text: data.message || '{{ t("Rebuild operation failed.") }}'
                 });
             }
         })
@@ -195,8 +195,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error:', error);
             Swal.fire({
                 icon: 'error',
-                title: '오류!',
-                text: 'An error occurred during rebuild.'
+                title: '{{ t("Error!") }}',
+                text: '{{ t("An error occurred during rebuild.") }}'
             });
         });
     }
