@@ -144,9 +144,38 @@ main { padding: 2rem 0; }
 .table .member-status button { border: solid 1px var(--bs-success); border-radius: 2rem; background-color: #fff; }
 .table .member-status { font-size: 0.8em; }
 .table .member-level { font-size: 0.8em; }
+.table .member-groups { display: flex; flex-wrap: wrap; }
+.table .member-groups span:not(:first-child)::before { content: ', '; display: inline-block; color: var(--bs-gray-500); }
 .table .actions .btn { border-radius: 2rem; display: inline-flex; align-items: center; justify-content: center; }
 
 /* Member Index Profile Photos */
 .member-profile-photo { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
 .member-profile-photo:hover { transform: scale(5); transition: transform 0.3s ease-in-out; }
 .member-profile-placeholder { width: 30px; height: 30px; border-radius: 50%; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 1.2rem; }
+
+/* Profile Photo Management */
+.profile-photo-preview { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; transition: opacity 0.3s ease; }
+.profile-photo-preview:hover { opacity: 0.8; }
+
+.profile-photo-manager { display: flex; align-items: center; gap: 1rem; margin-top: 1.5rem; position: relative; }
+.current-photo { text-align: center; }
+.new-photo-preview { text-align: center; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6; }
+
+#remove-photo { position: absolute; top: 5px; left: 90px; padding: 5px; line-height: 1; }
+#modalPhoto { max-width: 100%; max-height: 80vh; object-fit: contain; }
+
+/* Form Styles */
+.default-form-sm { max-width: 576px; margin: 0 auto; }
+.default-form-md { max-width: 768px; margin: 0 auto; }
+.default-form.card .card-header h4 { margin: 0; font-family: var(--font-gothic); font-weight: 500; }
+
+.default-form .col-form-label { font-weight: 500; font-size: 0.7rem; color: var(--bs-gray-500); line-height: 1; margin-bottom: 0; }
+.default-form .form-control, .default-form .form-select { background-color: var(--bs-gray-100); border-color: var(--bs-gray-100); color: #000; font-weight: 500; }
+.default-form .form-control::placeholder { color: var(--bs-info); }
+.form-control:focus, .form-select:focus { box-shadow: none; border-color: var(--bs-red); }
+
+.default-form .form-group { margin-bottom: 1.5rem; }
+.default-form .form-text { font-size: 0.8rem; color: var(--bs-gray-600); }
+
+.default-form .groups { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.default-form .card-body h5 { border-top: dashed 1px var(--bs-gray-500); padding-top: 1.5rem; margin-top: 1.5rem; }

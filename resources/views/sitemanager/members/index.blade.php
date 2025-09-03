@@ -103,9 +103,11 @@
                     <td class="number">{{ $member->email ?? 'N/A' }}</td>
                     <td>
                         @if($member->groups->count() > 0)
+                            <div class="member-groups">
                             @foreach($member->groups as $group)
-                                <span class="badge bg-info text-dark me-1 mb-1">{{ $group->name }}</span>
+                                <span>{{ $group->name }}</span>
                             @endforeach
+                            </div>
                         @endif
                     </td>
                     <td>
