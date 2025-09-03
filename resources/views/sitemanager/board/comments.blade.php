@@ -1,10 +1,10 @@
 @extends('sitemanager::layouts.sitemanager')
 
-@section('title', 'Comment Management')
+@section('title', t('Comment Management'))
 
 @section('content')
 <div class="container">
-    <h1>{{ Str::ucfirst($status) }} Comments ({{ $pendingComments->total() }})</h1>
+    <h1>{{ t(Str::ucfirst($status) . ' Comments') }} ({{ $pendingComments->count() }})</h1>
 
     <form method="GET" action="{{ route('sitemanager.comments.index') }}" class="my-4" id="filterForm">
         <div class="input-group">
@@ -20,7 +20,7 @@
             <input type="radio" class="btn-check" name="status" id="status_pending" value="pending" 
                     {{ $status === 'pending' ? 'checked' : '' }} onchange="document.getElementById('filterForm').submit();">
             <label class="btn btn-outline-warning" for="status_pending">
-                <i class="bi bi-clock"></i> Pending
+                <i class="bi bi-clock"></i> {{ t('Pending') }}
                 @if($selectedBoardId && isset($statusCounts['pending']))
                     <span class="badge bg-warning text-dark ms-1">{{ $statusCounts['pending'] }}</span>
                 @endif
@@ -29,7 +29,7 @@
             <input type="radio" class="btn-check" name="status" id="status_approved" value="approved" 
                     {{ $status === 'approved' ? 'checked' : '' }} onchange="document.getElementById('filterForm').submit();">
             <label class="btn btn-outline-success" for="status_approved">
-                <i class="bi bi-check-circle"></i> Approved
+                <i class="bi bi-check-circle"></i> {{ t('Approved') }}
                 @if($selectedBoardId && isset($statusCounts['approved']))
                     <span class="badge bg-success ms-1">{{ $statusCounts['approved'] }}</span>
                 @endif
@@ -38,7 +38,7 @@
             <input type="radio" class="btn-check" name="status" id="status_deleted" value="deleted" 
                     {{ $status === 'deleted' ? 'checked' : '' }} onchange="document.getElementById('filterForm').submit();">
             <label class="btn btn-outline-danger" for="status_deleted">
-                <i class="bi bi-trash"></i> Deleted
+                <i class="bi bi-trash"></i> {{ t('Deleted') }}
                 @if($selectedBoardId && isset($statusCounts['deleted']))
                     <span class="badge bg-danger ms-1">{{ $statusCounts['deleted'] }}</span>
                 @endif
@@ -53,24 +53,24 @@
             @if($status === 'pending')
             <div class="btn-group">
                 <button type="button" class="btn btn-sm btn-success" onclick="bulkAction('approve')">
-                    Approve Selected
+                    {{ t('Approve Selected') }}
                 </button>
                 <button type="button" class="btn btn-sm btn-danger" onclick="bulkAction('delete')">
-                    Delete Selected
+                    {{ t('Delete Selected') }}
                 </button>
             </div>
             @elseif($status === 'deleted')
             <div class="btn-group">
                 <button type="button" class="btn btn-sm btn-warning" onclick="bulkAction('restore')">
-                    Restore Selected
+                    {{ t('Restore Selected') }}
                 </button>
                 <button type="button" class="btn btn-sm btn-danger" onclick="bulkAction('force_delete')">
-                    Force Delete Selected
+                    {{ t('Force Delete Selected') }}
                 </button>
             </div>
             @else
             <button type="button" class="btn btn-sm btn-danger" onclick="bulkAction('delete')">
-                Delete Selected
+                {{ t('Delete Selected') }}
             </button>
             @endif
         </div>
@@ -82,11 +82,11 @@
                         <th width="30">
                             <input type="checkbox" id="checkAll">
                         </th>
-                        <th>Author</th>
-                        <th>Post</th>
-                        <th>Comment Content</th>
-                        <th>Created At</th>
-                        <th width="120">Actions</th>
+                        <th>{{ t('Author') }}</th>
+                        <th>{{ t('Post') }}</th>
+                        <th>{{ t('Comment Content') }}</th>
+                        <th>{{ t('Created At') }}</th>
+                        <th width="120">{{ t('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -107,7 +107,7 @@
                                     {{ Str::limit($comment->post->title, 30) }}
                                 </a>
                             @else
-                                <span class="text-muted">Deleted Post</span>
+                                <span class="text-muted">{{ t('Deleted Post') }}</span>
                             @endif
                         </td>
 
@@ -122,18 +122,18 @@
                             {{-- 부모 상태 경고 (자식 댓글의 경우) --}}
                             @if($comment->parent_id && $comment->parent && $comment->parent->status !== 'approved')
                                 <small class="text-warning">
-                                    <i class="bi bi-exclamation-triangle"></i> Parent: {{ $comment->parent->status }}
+                                    <i class="bi bi-exclamation-triangle"></i> {{ t('Parent') }}: {{ $comment->parent->status }}
                                 </small>
                             @elseif($comment->parent_id && !$comment->parent)
                                 <small class="text-danger">
-                                    <i class="bi bi-exclamation-triangle"></i> Parent deleted
+                                    <i class="bi bi-exclamation-triangle"></i> {{ t('Parent deleted') }}
                                 </small>
                             @endif
                             
                             {{-- 자식 댓글 정보 (부모 댓글의 경우) --}}
                             @if(!$comment->parent_id && $comment->children_count > 0)
                                 <small class="text-info">
-                                    <i class="bi bi-chat-dots"></i> {{ $comment->children_count }} replies
+                                    <i class="bi bi-chat-dots"></i> {{ $comment->children_count }} {{ t('replies') }}
                                 </small>
                             @endif
                         </td>
@@ -154,7 +154,7 @@
                                             disabled 
                                             title="{{ $comment->actions['restore']['reason'] }}"
                                         @endif>
-                                        Restore
+                                        {{ t('Restore') }}
                                     </button>
                                     {{-- Force Delete 버튼 --}}
                                     <button type="button" 
@@ -164,7 +164,7 @@
                                             disabled 
                                             title="{{ $comment->actions['force_delete']['reason'] }}"
                                         @endif>
-                                        Force Delete
+                                        {{ t('Force Delete') }}
                                     </button>
                                 @elseif($comment->status === 'pending')
                                     {{-- Approve 버튼 --}}
@@ -175,7 +175,7 @@
                                             disabled 
                                             title="{{ $comment->actions['approve']['reason'] }}"
                                         @endif>
-                                        Approve
+                                        {{ t('Approve') }}
                                     </button>
                                     {{-- Delete 버튼 --}}
                                     <button type="button" 
@@ -185,7 +185,7 @@
                                             disabled 
                                             title="{{ $comment->actions['delete']['reason'] }}"
                                         @endif>
-                                        Delete
+                                        {{ t('Delete') }}
                                     </button>
                                 @else
                                     {{-- Delete 버튼 (approved 상태) --}}
@@ -196,7 +196,7 @@
                                             disabled 
                                             title="{{ $comment->actions['delete']['reason'] }}"
                                         @endif>
-                                        Delete
+                                        {{ t('Delete') }}
                                     </button>
                                 @endif
                             </div>
@@ -209,14 +209,30 @@
 
         {{ $pendingComments->appends(request()->query())->links() }}
     @elseif($selectedBoardId)
-        <p class="text-muted">No comments found matching the criteria.</p>        
+        <p class="text-muted">{{ t('No comments found matching the criteria.') }}</p>        
     @else
-        <p class="text-muted">Please select a board.</p>    
+        <p class="text-muted">{{ t('Please select a board.') }}</p>    
     @endif
 </div>
 
 @push('scripts')
 <script>
+// Translation strings for JavaScript
+const commentTranslations = {
+    confirmApprove: @json(t('Are you sure you want to approve this comment?')),
+    confirmDelete: @json(t('Are you sure you want to permanently delete this comment?')),
+    confirmRestore: @json(t('Are you sure you want to restore this comment?')),
+    confirmForceDelete: @json(t('Are you sure you want to permanently delete this comment? This action cannot be undone.')),
+    anErrorOccurred: @json(t('An error occurred.')),
+    networkError: @json(t('A network error occurred.')),
+    pleaseSelectComments: @json(t('Please select comments to process.')),
+    approve: @json(t('approve')),
+    delete: @json(t('delete')),
+    restore: @json(t('restore')),
+    permanentlyDelete: @json(t('permanently delete')),
+    confirmBulkAction: @json(t('Are you sure you want to {action} {count} selected comment(s)?'))
+};
+
 // 전체 체크박스 토글
 document.getElementById('checkAll')?.addEventListener('change', function() {
     const checkboxes = document.querySelectorAll('.comment-checkbox');
@@ -227,7 +243,7 @@ document.getElementById('checkAll')?.addEventListener('change', function() {
 
 // Individual comment approval
 function approveComment(commentId, boardSlug) {
-    if (!confirm('Are you sure you want to approve this comment?')) return;
+    if (!confirm(commentTranslations.confirmApprove)) return;
     
     fetch('{{ route("sitemanager.comments.approve") }}', {
         method: 'POST',
@@ -246,18 +262,18 @@ function approveComment(commentId, boardSlug) {
             alert(data.message);
             location.reload();
         } else {
-            alert(data.message || 'An error occurred.');
+            alert(data.message || commentTranslations.anErrorOccurred);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('A network error occurred.');
+        alert(commentTranslations.networkError);
     });
 }
 
 // Individual comment deletion
 function deleteComment(commentId, boardSlug) {
-    if (!confirm('Are you sure you want to permanently delete this comment?')) return;
+    if (!confirm(commentTranslations.confirmDelete)) return;
     
     fetch('{{ route("sitemanager.comments.delete") }}', {
         method: 'POST',
@@ -276,18 +292,18 @@ function deleteComment(commentId, boardSlug) {
             alert(data.message);
             location.reload();
         } else {
-            alert(data.message || 'An error occurred.');
+            alert(data.message || commentTranslations.anErrorOccurred);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('A network error occurred.');
+        alert(commentTranslations.networkError);
     });
 }
 
 // Restore comment
 function restoreComment(commentId, boardSlug) {
-    if (!confirm('Are you sure you want to restore this comment?')) return;
+    if (!confirm(commentTranslations.confirmRestore)) return;
     
     fetch('{{ route("sitemanager.comments.restore") }}', {
         method: 'POST',
@@ -306,18 +322,18 @@ function restoreComment(commentId, boardSlug) {
             alert(data.message);
             location.reload();
         } else {
-            alert(data.message || 'An error occurred.');
+            alert(data.message || commentTranslations.anErrorOccurred);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('A network error occurred.');
+        alert(commentTranslations.networkError);
     });
 }
 
 // Force delete comment
 function forceDeleteComment(commentId, boardSlug) {
-    if (!confirm('Are you sure you want to permanently delete this comment? This action cannot be undone.')) return;
+    if (!confirm(commentTranslations.confirmForceDelete)) return;
     
     fetch('{{ route("sitemanager.comments.force-delete") }}', {
         method: 'POST',
@@ -336,12 +352,12 @@ function forceDeleteComment(commentId, boardSlug) {
             alert(data.message);
             location.reload();
         } else {
-            alert(data.message || 'An error occurred.');
+            alert(data.message || commentTranslations.anErrorOccurred);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('A network error occurred.');
+        alert(commentTranslations.networkError);
     });
 }
 
@@ -351,18 +367,22 @@ function bulkAction(action) {
         .map(checkbox => checkbox.value);
     
     if (selectedComments.length === 0) {
-        alert('Please select comments to process.');
+        alert(commentTranslations.pleaseSelectComments);
         return;
     }
     
     const actionText = {
-        'approve': 'approve',
-        'delete': 'delete',
-        'restore': 'restore',
-        'force_delete': 'permanently delete'
+        'approve': commentTranslations.approve,
+        'delete': commentTranslations.delete,
+        'restore': commentTranslations.restore,
+        'force_delete': commentTranslations.permanentlyDelete
     }[action];
     
-    if (!confirm(`Are you sure you want to ${actionText} ${selectedComments.length} selected comment(s)?`)) return;
+    const confirmMessage = commentTranslations.confirmBulkAction
+        .replace('{action}', actionText)
+        .replace('{count}', selectedComments.length);
+    
+    if (!confirm(confirmMessage)) return;
     
     const boardSlug = '{{ $selectedBoard?->slug }}';
     
@@ -384,12 +404,12 @@ function bulkAction(action) {
             alert(data.message);
             location.reload();
         } else {
-            alert(data.message || 'An error occurred.');
+            alert(data.message || commentTranslations.anErrorOccurred);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('A network error occurred.');
+        alert(commentTranslations.networkError);
     });
 }
 </script>

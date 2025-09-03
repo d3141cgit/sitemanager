@@ -1,27 +1,27 @@
 @extends('sitemanager::layouts.sitemanager')
 
-@section('title', isset($board) ? 'Edit Board - ' . $board->name : 'Create New Board')
+@section('title', isset($board) ? t('Edit Board') . ' - ' . $board->name : t('Create New Board'))
 
 @section('content')
 <div class="container">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">
             @if(isset($board))
-                <i class="bi bi-pencil"></i> Edit Board - {{ $board->name }}
+                <i class="bi bi-pencil"></i> {{ t('Edit Board') }} - {{ $board->name }}
             @else
-                <i class="bi bi-plus-lg"></i> Create New Board
+                <i class="bi bi-plus-lg"></i> {{ t('Create New Board') }}
             @endif
         </h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <a href="{{ route('sitemanager.boards.index') }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Back to List
+                <i class="bi bi-arrow-left"></i> {{ t('Back to List') }}
             </a>
         </div>
     </div>
 
     @if($errors->any())
         <div class="alert alert-danger">
-            <h6>Please correct the following errors:</h6>
+            <h6>{{ t('Please correct the following errors:') }}</h6>
             <ul class="mb-0">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -41,11 +41,11 @@
             <div class="col-lg-4 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Basic Information</h5>
+                        <h5 class="card-title mb-0">{{ t('Basic Information') }}</h5>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label for="name" class="form-label">Board Name <span class="text-danger">*</span></label>
+                            <label for="name" class="form-label">{{ t('Board Name') }} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" 
                                     id="name" name="name" value="{{ old('name', isset($board) ? $board->name : '') }}" required maxlength="100">
                             @error('name')
@@ -54,11 +54,11 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="slug" class="form-label">Slug <span class="text-danger">*</span></label>
+                            <label for="slug" class="form-label">{{ t('Slug') }} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('slug') is-invalid @enderror" 
                                     id="slug" name="slug" value="{{ old('slug', isset($board) ? $board->slug : '') }}" required maxlength="50"
-                                    pattern="[a-z0-9_]+" title="Only lowercase letters, numbers, and underscores are allowed">
-                            <div class="form-text">Used in URLs and database table names. Only lowercase letters, numbers, and underscores are allowed.</div>
+                                    pattern="[a-z0-9_]+" title="{{ t('Only lowercase letters, numbers, and underscores are allowed') }}">
+                            <div class="form-text">{{ t('Used in URLs and database table names. Only lowercase letters, numbers, and underscores are allowed.') }}</div>
                             <div id="slug-feedback" class="mt-1" style="display: none;"></div>
                             @error('slug')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -66,9 +66,9 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="menu_id" class="form-label">Connect to Menu</label>
+                            <label for="menu_id" class="form-label">{{ t('Connect to Menu') }}</label>
                             <select class="form-select @error('menu_id') is-invalid @enderror" id="menu_id" name="menu_id">
-                                <option value="">Select Menu (Optional)</option>
+                                <option value="">{{ t('Select Menu (Optional)') }}</option>
                                 @if(isset($menus))
                                     @foreach($menus as $menu)
                                         <option value="{{ $menu->id }}" 
@@ -84,10 +84,10 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="status" class="form-label">Status</label>
+                            <label for="status" class="form-label">{{ t('Status') }}</label>
                             <select class="form-select @error('status') is-invalid @enderror" id="status" name="status">
-                                <option value="active" {{ old('status', isset($board) ? $board->status : 'active') === 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="inactive" {{ old('status', isset($board) ? $board->status : '') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                <option value="active" {{ old('status', isset($board) ? $board->status : 'active') === 'active' ? 'selected' : '' }}>{{ t('Active') }}</option>
+                                <option value="inactive" {{ old('status', isset($board) ? $board->status : '') === 'inactive' ? 'selected' : '' }}>{{ t('Inactive') }}</option>
                             </select>
                             @error('status')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -95,7 +95,7 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="skin" class="form-label">Theme/Skin</label>
+                            <label for="skin" class="form-label">{{ t('Theme/Skin') }}</label>
                             <select class="form-select @error('skin') is-invalid @enderror" id="skin" name="skin">
                                 @if(isset($availableSkins))
                                     @foreach($availableSkins as $skinKey => $skinName)
@@ -105,10 +105,10 @@
                                         </option>
                                     @endforeach
                                 @else
-                                    <option value="default" selected>Default</option>
+                                    <option value="default" selected>{{ t('Default') }}</option>
                                 @endif
                             </select>
-                            <div class="form-text">Choose the theme/skin for this board's appearance.</div>
+                            <div class="form-text">{{ t('Choose the theme/skin for this board\'s appearance.') }}</div>
                             @error('skin')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -120,11 +120,11 @@
             <div class="col-lg-4 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Settings</h5>
+                        <h5 class="card-title mb-0">{{ t('Settings') }}</h5>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label for="posts_per_page" class="form-label">Posts per Page</label>
+                            <label for="posts_per_page" class="form-label">{{ t('Posts per Page') }}</label>
                             <input type="number" class="form-control @error('posts_per_page') is-invalid @enderror" 
                                    id="posts_per_page" name="posts_per_page" 
                                    value="{{ old('posts_per_page', isset($board) ? $board->posts_per_page : 20) }}" 
@@ -184,9 +184,9 @@
                     </div>
                     <div class="card-footer">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6>Custom Settings</h6>
+                            <h6>{{ t('Custom Settings') }}</h6>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="add-custom-setting">
-                                <i class="bi bi-plus"></i> Add Setting
+                                <i class="bi bi-plus"></i> {{ t('Add Setting') }}
                             </button>
                         </div>
 
@@ -199,13 +199,13 @@
                                                 <input type="text" class="form-control form-control-sm" 
                                                        name="custom_settings[{{ $loop->index }}][key]" 
                                                        value="{{ $key }}" 
-                                                       placeholder="Setting key">
+                                                       placeholder="{{ t('Setting key') }}">
                                             </div>
                                             <div class="col-6">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        name="custom_settings[{{ $loop->index }}][value]" 
                                                        value="{{ is_array($value) ? json_encode($value) : $value }}" 
-                                                       placeholder="Setting value">
+                                                       placeholder="{{ t('Setting value') }}">
                                             </div>
                                             <div class="col-1">
                                                 <button type="button" class="btn btn-outline-danger btn-sm remove-setting">
@@ -224,13 +224,13 @@
                                                     <input type="text" class="form-control form-control-sm" 
                                                            name="custom_settings[{{ $loop->index }}][key]" 
                                                            value="{{ $key }}" 
-                                                           placeholder="Setting key">
+                                                           placeholder="{{ t('Setting key') }}">
                                                 </div>
                                                 <div class="col-6">
                                                     <input type="text" class="form-control form-control-sm" 
                                                            name="custom_settings[{{ $loop->index }}][value]" 
                                                            value="{{ is_array($value) ? json_encode($value) : $value }}" 
-                                                           placeholder="Setting value">
+                                                           placeholder="{{ t('Setting value') }}">
                                                 </div>
                                                 <div class="col-1">
                                                     <button type="button" class="btn btn-outline-danger btn-sm remove-setting">
@@ -244,7 +244,7 @@
                             @endif
                         </div>
                         <div class="form-text">
-                            <small>Add custom settings that can be accessed in templates using <code>$board->getSetting('key')</code></small>
+                            <small>{{ t('Add custom settings that can be accessed in templates using') }} <code>$board->getSetting('key')</code></small>
                         </div>
                     </div>
                 </div>
@@ -347,12 +347,12 @@
         <div class="row mt-4">
             <div class="col-12">
                 <div class="d-flex justify-content-end gap-2">
-                    <a href="{{ route('sitemanager.boards.index') }}" class="btn btn-secondary">Cancel</a>
+                    <a href="{{ route('sitemanager.boards.index') }}" class="btn btn-secondary">{{ t('Cancel') }}</a>
                     <button type="submit" class="btn btn-primary">
                         @if(isset($board))
-                            <i class="bi bi-check-lg"></i> Update
+                            <i class="bi bi-check-lg"></i> {{ t('Update') }}
                         @else
-                            <i class="bi bi-plus-lg"></i> Create
+                            <i class="bi bi-plus-lg"></i> {{ t('Create') }}
                         @endif
                     </button>
                 </div>
@@ -364,6 +364,23 @@
 
 @push('scripts')
 <script>
+// Translation strings for JavaScript
+const translations = {
+    invalidCharactersFound: @json(t('Invalid characters found')),
+    suggested: @json(t('Suggested')),
+    uppercaseNotAllowed: @json(t('Uppercase letters are not allowed')),
+    tryThis: @json(t('Try')),
+    spacesNotAllowed: @json(t('Spaces are not allowed')),
+    hyphensNotAllowed: @json(t('Hyphens are not allowed (use underscores instead)')),
+    slugTooLong: @json(t('Slug is too long (maximum 50 characters)')),
+    slugShouldNotStartEnd: @json(t('Slug should not start or end with underscores')),
+    multipleUnderscores: @json(t('Multiple consecutive underscores are not recommended')),
+    validSlugFormat: @json(t('Valid slug format!')),
+    clickToUseThisSuggestion: @json(t('Click to use this suggestion')),
+    settingKeyPlaceholder: @json(t('Setting key (e.g., show_name)')),
+    settingValuePlaceholder: @json(t('Setting value (e.g., true, hello world)'))
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     // Auto slug generation
     const nameInput = document.getElementById('name');
@@ -419,55 +436,55 @@ document.addEventListener('DOMContentLoaded', function() {
         if (invalidChars) {
             isValid = false;
             const uniqueInvalidChars = [...new Set(invalidChars)];
-            messages.push(`Invalid characters found: <code>${uniqueInvalidChars.join(', ')}</code>`);
+            messages.push(`${translations.invalidCharactersFound}: <code>${uniqueInvalidChars.join(', ')}</code>`);
             
             // Generate suggestion
             const suggestion = slug.replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
             if (suggestion !== slug) {
-                suggestions.push(`Suggested: <code>${suggestion}</code>`);
+                suggestions.push(`${translations.suggested}: <code>${suggestion}</code>`);
             }
         }
         
         // Check for uppercase letters
         if (/[A-Z]/.test(slug)) {
             isValid = false;
-            messages.push('Uppercase letters are not allowed');
-            suggestions.push(`Try: <code>${slug.toLowerCase()}</code>`);
+            messages.push(translations.uppercaseNotAllowed);
+            suggestions.push(`${translations.tryThis}: <code>${slug.toLowerCase()}</code>`);
         }
         
         // Check for spaces
         if (/\s/.test(slug)) {
             isValid = false;
-            messages.push('Spaces are not allowed');
-            suggestions.push(`Try: <code>${slug.replace(/\s+/g, '_')}</code>`);
+            messages.push(translations.spacesNotAllowed);
+            suggestions.push(`${translations.tryThis}: <code>${slug.replace(/\s+/g, '_')}</code>`);
         }
         
         // Check for hyphens (old format)
         if (/-/.test(slug)) {
             isValid = false;
-            messages.push('Hyphens are not allowed (use underscores instead)');
-            suggestions.push(`Try: <code>${slug.replace(/-/g, '_')}</code>`);
+            messages.push(translations.hyphensNotAllowed);
+            suggestions.push(`${translations.tryThis}: <code>${slug.replace(/-/g, '_')}</code>`);
         }
         
         // Check length
         if (slug.length > 50) {
             isValid = false;
-            messages.push('Slug is too long (maximum 50 characters)');
-            suggestions.push(`Try: <code>${slug.substring(0, 50)}</code>`);
+            messages.push(translations.slugTooLong);
+            suggestions.push(`${translations.tryThis}: <code>${slug.substring(0, 50)}</code>`);
         }
         
         // Check if starts or ends with underscore
         if (slug.startsWith('_') || slug.endsWith('_')) {
             isValid = false;
-            messages.push('Slug should not start or end with underscores');
-            suggestions.push(`Try: <code>${slug.replace(/^_+|_+$/g, '')}</code>`);
+            messages.push(translations.slugShouldNotStartEnd);
+            suggestions.push(`${translations.tryThis}: <code>${slug.replace(/^_+|_+$/g, '')}</code>`);
         }
         
         // Check for multiple consecutive underscores
         if (/__/.test(slug)) {
             isValid = false;
-            messages.push('Multiple consecutive underscores are not recommended');
-            suggestions.push(`Try: <code>${slug.replace(/_+/g, '_')}</code>`);
+            messages.push(translations.multipleUnderscores);
+            suggestions.push(`${translations.tryThis}: <code>${slug.replace(/_+/g, '_')}</code>`);
         }
         
         // Display feedback
@@ -476,7 +493,7 @@ document.addEventListener('DOMContentLoaded', function() {
             feedbackDiv.innerHTML = `
                 <div class="text-success">
                     <i class="bi bi-check-circle me-1"></i>
-                    Valid slug format!
+                    ${translations.validSlugFormat}
                 </div>
             `;
             feedbackDiv.style.display = 'block';
@@ -503,7 +520,7 @@ document.addEventListener('DOMContentLoaded', function() {
         suggestions_codes.forEach(code => {
             code.style.cursor = 'pointer';
             code.style.textDecoration = 'underline';
-            code.title = 'Click to use this suggestion';
+            code.title = translations.clickToUseThisSuggestion;
             code.addEventListener('click', function() {
                 slugInput.value = this.textContent;
                 slugInput.dataset.manual = 'true';
@@ -552,13 +569,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="text" class="form-control form-control-sm" 
                                name="custom_settings[${customSettingIndex}][key]" 
                                value="${key}" 
-                               placeholder="Setting key (e.g., show_name)">
+                               placeholder="${translations.settingKeyPlaceholder}">
                     </div>
                     <div class="col-6">
                         <input type="text" class="form-control form-control-sm" 
                                name="custom_settings[${customSettingIndex}][value]" 
                                value="${value}" 
-                               placeholder="Setting value (e.g., true, hello world)">
+                               placeholder="${translations.settingValuePlaceholder}">
                     </div>
                     <div class="col-1">
                         <button type="button" class="btn btn-outline-danger btn-sm remove-setting">

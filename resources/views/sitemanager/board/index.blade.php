@@ -1,6 +1,6 @@
 @extends('sitemanager::layouts.sitemanager')
 
-@section('title', 'Board Management')
+@section('title', t('Board Management'))
 
 @section('content')
 <div class="container board">
@@ -11,11 +11,11 @@
         <div class="d-none d-md-flex justify-content-between align-items-center mb-3">
             <h1 class="mb-0">
                 <a href="{{ route('sitemanager.boards.index') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-list-ul opacity-75"></i> Board Management
+                    <i class="bi bi-list-ul opacity-75"></i> {{ t('Board Management') }}
                 </a>
             </h1>
             <a href="{{ route('sitemanager.boards.create') }}" class="btn btn-primary text-white">
-                <i class="bi bi-plus-circle"></i> Add New Board
+                <i class="bi bi-plus-circle"></i> {{ t('Add New Board') }}
             </a>
         </div>
 
@@ -23,12 +23,12 @@
         <div class="d-md-none">
             <h4 class="mb-3">
                 <a href="{{ route('sitemanager.boards.index') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-list-ul opacity-75"></i> Board Management
+                    <i class="bi bi-list-ul opacity-75"></i> {{ t('Board Management') }}
                 </a>
             </h4>
             <div class="d-grid mb-3">
                 <a href="{{ route('sitemanager.boards.create') }}" class="btn btn-primary text-white">
-                    <i class="bi bi-plus-circle me-2"></i>Add New Board
+                    <i class="bi bi-plus-circle me-2"></i>{{ t('Add New Board') }}
                 </a>
             </div>
         </div>
@@ -52,18 +52,18 @@
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Board Name</th>
-                    <th>Slug</th>
-                    <th>Skin</th>
-                    <th>Connected Menu</th>
-                    <th class="text-center">Posts</th>
-                    <th class="text-center">Comments</th>
-                    <th class="text-center">Files</th>
-                    <th class="text-center">Pending Comments</th>
-                    <th>Status</th>
-                    <th>Created Date</th>
-                    <th class="text-end">Actions</th>
+                    <th>{{ t('ID') }}</th>
+                    <th>{{ t('Board Name') }}</th>
+                    <th>{{ t('Slug') }}</th>
+                    <th>{{ t('Skin') }}</th>
+                    <th>{{ t('Connected Menu') }}</th>
+                    <th class="text-center">{{ t('Posts') }}</th>
+                    <th class="text-center">{{ t('Comments') }}</th>
+                    <th class="text-center">{{ t('Files') }}</th>
+                    <th class="text-center">{{ t('Pending Comments') }}</th>
+                    <th>{{ t('Status') }}</th>
+                    <th>{{ t('Created Date') }}</th>
+                    <th class="text-end">{{ t('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -134,7 +134,7 @@
                     <td class="text-center">
                         @if($board->pending_comments_count > 0)
                             <a href="{{ route('sitemanager.comments.index', ['board_id' => $board->id, 'status' => 'pending']) }}" 
-                               class="badge bg-warning text-decoration-none" title="Manage pending comments">
+                               class="badge bg-warning text-decoration-none" title="{{ t('Manage pending comments') }}">
                                 {{ $board->pending_comments_count }}
                             </a>
                         @else
@@ -143,30 +143,30 @@
                     </td>
                     <td>
                         @if($board->status === 'active')
-                            <span class="badge bg-success">Active</span>
+                            <span class="badge bg-success">{{ t('Active') }}</span>
                         @else
-                            <span class="badge bg-secondary">Inactive</span>
+                            <span class="badge bg-secondary">{{ t('Inactive') }}</span>
                         @endif
                     </td>
                     <td>{{ $board->created_at->format('Y-m-d') }}</td>
                     <td class="text-end">
-                        <a href="{{ route('sitemanager.boards.edit', $board) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                        <a href="{{ route('sitemanager.boards.edit', $board) }}" class="btn btn-sm btn-outline-primary" title="{{ t('Edit') }}">
                             <i class="bi bi-pencil"></i>
                         </a>
                         <form method="POST" action="{{ route('sitemanager.boards.toggle-status', $board) }}" class="d-inline">
                             @csrf
                             @method('PATCH')
                             <button type="submit" class="btn btn-sm btn-outline-{{ $board->status === 'active' ? 'warning' : 'success' }}" 
-                                    title="{{ $board->status === 'active' ? 'Deactivate' : 'Activate' }}"
-                                    onclick="return confirm('Change status?')">
+                                    title="{{ $board->status === 'active' ? t('Deactivate') : t('Activate') }}"
+                                    onclick="return confirm('{{ t('Change status?') }}')">
                                 <i class="bi bi-{{ $board->status === 'active' ? 'pause' : 'play' }}"></i>
                             </button>
                         </form>
                         <form method="POST" action="{{ route('sitemanager.boards.destroy', $board) }}" class="d-inline">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"
-                                    onclick="return confirm('Delete this board?\\n\\n⚠️ Warning: All posts and comments will be deleted!')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('Delete') }}"
+                                    onclick="return confirm('{{ t('Delete this board?') }}\\n\\n⚠️ {{ t('Warning: All posts and comments will be deleted!') }}')">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
@@ -176,10 +176,10 @@
                 <tr>
                     <td colspan="11" class="text-center py-5">
                         <i class="bi bi-list-ul display-1 text-muted mb-3"></i>
-                        <h5 class="text-muted">No boards found</h5>
-                        <p class="text-muted">Please create a new board.</p>
+                        <h5 class="text-muted">{{ t('No boards found') }}</h5>
+                        <p class="text-muted">{{ t('Please create a new board.') }}</p>
                         <a href="{{ route('sitemanager.boards.create') }}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle"></i> Create Board
+                            <i class="bi bi-plus-circle"></i> {{ t('Create Board') }}
                         </a>
                     </td>
                 </tr>
