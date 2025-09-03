@@ -23,146 +23,140 @@
     <header class="sticky-top">
         <div class="container">
             <nav>
-                <a href="{{ route('sitemanager.dashboard') }}">
-                    <img src="/images/sitemanager.svg" alt="Site Manager Logo" class="logo">
-                </a>
-                    
-                <ul>
-                    <li>
-                        <a @class(['active' => request()->routeIs('sitemanager.dashboard')]) 
-                            href="{{ route('sitemanager.dashboard') }}">
-                            <i class="bi bi-speedometer2"></i>
-                            {{ t('Dashboard') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a @class(['active' => request()->routeIs('sitemanager.members.*')]) 
-                            href="{{ route('sitemanager.members.index') }}">
-                            <i class="bi bi-people"></i>
-                            {{ t('Members') }}
-                        </a>
-                    </li>
-                    
-                    <li>
-                        <a @class(['active' => request()->routeIs('sitemanager.groups.*')]) 
-                            href="{{ route('sitemanager.groups.index') }}">
-                            <i class="bi bi-collection"></i>
-                            {{ t('Groups') }}
-                        </a>
-                    </li>
-                    
-                    <li>
-                        <a @class(['active' => request()->routeIs('sitemanager.menus.*')]) 
-                            href="{{ route('sitemanager.menus.index') }}">
-                            <i class="bi bi-list"></i>
-                            {{ t('Menus') }}
-                        </a>
-                    </li>
-                    
-                    <li>
-                        <a @class(['active' => request()->routeIs('sitemanager.boards.*') || request()->routeIs('sitemanager.comments.*')]) 
-                            href="{{ route('sitemanager.boards.index') }}">
-                            <i class="bi bi-journal-text"></i>
-                            {{ t('Boards') }}
-                        </a>
-                    </li>
-                    
-                    <li class="dropdown">
-                        <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.files.*')]) 
-                            href="#" id="filesDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-files"></i>
-                            {{ t('Files') }}
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.files.editor-images')]) 
-                                    href="{{ route('sitemanager.files.editor-images') }}">
-                                    <i class="bi bi-image"></i>
-                                    {{ t('Editor Images') }}
-                                </a>
-                            </li>
-                            <li>
-                                <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.files.board-attachments')]) 
-                                    href="{{ route('sitemanager.files.board-attachments') }}">
-                                    <i class="bi bi-paperclip"></i>
-                                    {{ t('Board Attachments') }}
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    
-                    <li class="dropdown">
-                        <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.settings.*') || request()->routeIs('sitemanager.languages.*')]) 
-                            href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-gear"></i>
-                            {{ t('Settings') }}
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.languages.*')]) 
-                                    href="{{ route('sitemanager.languages.index') }}">
-                                    <i class="bi bi-translate"></i>
-                                    {{ t('Languages') }}
-                                </a>
-                            </li>
-                            <li>
-                                <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.settings.*')]) 
-                                    href="{{ route('sitemanager.settings') }}">
-                                    <i class="bi bi-gear"></i>
-                                    {{ t('System Settings') }}
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
+                <div class="nav-section">
+                    <a href="{{ route('sitemanager.dashboard') }}">
+                        <img src="/images/sitemanager.svg" alt="Site Manager Logo" class="logo">
+                    </a>
+                        
+                    <ul>
+                        <li>
+                            <a @class(['active' => request()->routeIs('sitemanager.dashboard')]) 
+                                href="{{ route('sitemanager.dashboard') }}">
+                                <i class="bi bi-speedometer2"></i>
+                                {{ t('Dashboard') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a @class(['active' => request()->routeIs('sitemanager.members.*')]) 
+                                href="{{ route('sitemanager.members.index') }}">
+                                <i class="bi bi-people"></i>
+                                {{ t('Members') }}
+                            </a>
+                        </li>
+                        
+                        <li>
+                            <a @class(['active' => request()->routeIs('sitemanager.groups.*')]) 
+                                href="{{ route('sitemanager.groups.index') }}">
+                                <i class="bi bi-collection"></i>
+                                {{ t('Groups') }}
+                            </a>
+                        </li>
+                        
+                        <li>
+                            <a @class(['active' => request()->routeIs('sitemanager.menus.*')]) 
+                                href="{{ route('sitemanager.menus.index') }}">
+                                <i class="bi bi-list"></i>
+                                {{ t('Menus') }}
+                            </a>
+                        </li>
+                        
+                        <li>
+                            <a @class(['active' => request()->routeIs('sitemanager.boards.*') || request()->routeIs('sitemanager.comments.*')]) 
+                                href="{{ route('sitemanager.boards.index') }}">
+                                <i class="bi bi-journal-text"></i>
+                                {{ t('Boards') }}
+                            </a>
+                        </li>
+                        
+                        <li class="dropdown">
+                            <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.files.*')]) 
+                                href="#" id="filesDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-files"></i>
+                                {{ t('Files') }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.files.editor-images')]) 
+                                        href="{{ route('sitemanager.files.editor-images') }}">
+                                        <i class="bi bi-image"></i>
+                                        {{ t('Editor Images') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.files.board-attachments')]) 
+                                        href="{{ route('sitemanager.files.board-attachments') }}">
+                                        <i class="bi bi-paperclip"></i>
+                                        {{ t('Board Attachments') }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                        <li class="dropdown">
+                            <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.settings.*') || request()->routeIs('sitemanager.languages.*')]) 
+                                href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-gear"></i>
+                                {{ t('Settings') }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.languages.*')]) 
+                                        href="{{ route('sitemanager.languages.index') }}">
+                                        <i class="bi bi-translate"></i>
+                                        {{ t('Languages') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.settings.*')]) 
+                                        href="{{ route('sitemanager.settings') }}">
+                                        <i class="bi bi-gear"></i>
+                                        {{ t('System Settings') }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
 
-                    <li class="dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            @if(auth()->user()->profile_photo)
-                                <img src="{{ auth()->user()->profile_photo_url }}" 
-                                        alt="{{ auth()->user()->name }}'s profile photo" 
-                                        class="admin-profile-photo">
-                            @else
-                                <i class="bi bi-person-circle"></i>
-                            @endif
-                            {{ auth()->user()->name }}
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
-                            <li>
-                                <a class="dropdown-item" href="{{ route('sitemanager.members.edit', auth()->user()->id) }}">
-                                    <i class="bi bi-person"></i>{{ t('Profile') }}
-                                </a>
-                            </li>
-                            <li>
-                                <form action="{{ route('logout') }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="dropdown-item">
-                                        <i class="bi bi-box-arrow-right"></i>{{ t('Logout') }}
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
+                        <li class="dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                @if(auth()->user()->profile_photo)
+                                    <img src="{{ auth()->user()->profile_photo_url }}" 
+                                            alt="{{ auth()->user()->name }}'s profile photo" 
+                                            class="admin-profile-photo">
+                                @else
+                                    <i class="bi bi-person-circle"></i>
+                                @endif
+                                {{ auth()->user()->name }}
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('sitemanager.members.edit', auth()->user()->id) }}">
+                                        <i class="bi bi-person"></i>{{ t('Profile') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="bi bi-box-arrow-right"></i>{{ t('Logout') }}
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
 
-                    <li>
-                        <a href="/">
-                            <i class="bi bi-house-door"></i>
-                        </a>
-                    </li>
+                        <li>
+                            <a href="/">
+                                <i class="bi bi-house-door"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
 
-                    @if(auth()->check() && auth()->user()->level === 255 && config('sitemanager.language.trace_enabled', false))
-                    <li>
-                        <button type="button" 
-                                class="btn btn-sm btn-outline-danger" 
-                                id="clear-current-page-btn"
-                                onclick="clearCurrentPageLocations()"
-                                title="{{ t('Clear current page location information') }}"
-                                style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                            <i class="bi bi-geo-alt"></i>
-                            <i class="bi bi-x"></i>
-                        </button>
-                    </li>
-                    @endif
-                </ul>
+                @if(auth()->check() && auth()->user()->level === 255 && config('sitemanager.language.trace_enabled', false))
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="clear-current-page-btn" onclick="clearCurrentPageLocations()" title="{{ t('Clear current page location information') }}">
+                        <i class="bi bi-geo-alt"></i> <i class="bi bi-x"></i>
+                    </button>
+                @endif
             </nav>
         </div>
     </header>
