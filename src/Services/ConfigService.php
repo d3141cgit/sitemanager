@@ -280,6 +280,7 @@ class ConfigService
             }
             
             $str = file_get_contents($envFile);
+            $envChanged = false;
 
             $configs = Setting::where('type', 'like', 'cfg.%')->get();
             foreach ($configs as $config) {
@@ -287,14 +288,17 @@ class ConfigService
                     if ($config->value == false) {
                         self::setEnv($str, "APP_ENV", "production");
                         self::setEnv($str, "APP_DEBUG", "false");
+                        $envChanged = true;
                     } else {
                         self::setEnv($str, "APP_ENV", "local");
                         self::setEnv($str, "APP_DEBUG", "true");
+                        $envChanged = true;
                     }
                 } else {
                     if (!empty($config->value)) {
                         $envValue = "'" . $config->value . "'";
                         self::setEnv($str, $config->key, $envValue);
+                        $envChanged = true;
                     } else {
                         $envValue = env($config->key);
                         if ($envValue !== null) {
@@ -305,6 +309,11 @@ class ConfigService
             }
 
             file_put_contents($envFile, $str);
+            
+            // .env 파일이 변경되었으면 config 캐시 클리어
+            if ($envChanged) {
+                self::clearConfigCache();
+            }
         } catch (\Exception $e) {
             // .env 파일 업데이트 실패 시 로그만 남기고 계속 진행
             // Log::error('Failed to update .env file: ' . $e->getMessage());
@@ -376,6 +385,29 @@ class ConfigService
         } catch (\Exception $e) {
             // Log::error('Failed to clean duplicate .env keys: ' . $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Config 캐시 클리어
+     */
+    private static function clearConfigCache()
+    {
+        try {
+            // Laravel의 config 캐시 클리어
+            \Illuminate\Support\Facades\Artisan::call('config:clear');
+            
+            // APP_LOCALE이 변경된 경우 현재 세션에도 즉시 적용
+            $newLocale = env('APP_LOCALE');
+            if ($newLocale && app()->getLocale() !== $newLocale) {
+                app()->setLocale($newLocale);
+                // 언어 캐시도 클리어
+                \SiteManager\Models\Language::clearCache();
+            }
+            
+        } catch (\Exception $e) {
+            // 캐시 클리어 실패 시 로그만 남기고 계속 진행
+            // Log::error('Failed to clear config cache: ' . $e->getMessage());
         }
     }
 }

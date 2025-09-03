@@ -21,8 +21,11 @@ class Language extends Model
     /**
      * 언어 키로 번역된 텍스트 가져오기
      */
-    public static function translate(string $key, string $locale = 'en'): string
+    public static function translate(string $key, string $locale = null): string
     {
+        // locale이 null이면 현재 앱 로케일 사용
+        $locale = $locale ?: app()->getLocale();
+        
         // 캐시 키 생성
         $cacheKey = "lang.{$locale}.{$key}";
         
@@ -37,8 +40,19 @@ class Language extends Model
                 ]);
             }
             
-            // 요청된 언어의 번역이 있으면 반환, 없으면 키 자체 반환 (en 기본값)
-            return $language->{$locale} ?: $language->key;
+            // 요청된 언어의 번역이 있으면 반환
+            if ($language->{$locale}) {
+                return $language->{$locale};
+            }
+            
+            // fallback: 앱의 fallback locale 확인
+            $fallbackLocale = config('app.fallback_locale', 'en');
+            if ($locale !== $fallbackLocale && $language->{$fallbackLocale}) {
+                return $language->{$fallbackLocale};
+            }
+            
+            // 마지막으로 키 자체 반환 (영어 기본값)
+            return $language->key;
         });
         
         return $translation;
