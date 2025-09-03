@@ -638,9 +638,6 @@ class BoardService
                 $comment->delete();
             }
 
-            // 게시글의 댓글 수 업데이트
-            $post->updateCommentCount();
-
             DB::commit();
 
             return [
@@ -678,7 +675,7 @@ class BoardService
                 // 테이블이 존재하는지 확인
                 $tableName = "board_comments_{$board->slug}";
                 if (Schema::hasTable($tableName)) {
-                    $count = DB::table($tableName)->where('status', 'pending')->count();
+                    $count = DB::table($tableName)->where('status', 'pending')->whereNull('deleted_at')->count();
                     $pendingCounts[$board->id] = $count;
                 } else {
                     $pendingCounts[$board->id] = 0;

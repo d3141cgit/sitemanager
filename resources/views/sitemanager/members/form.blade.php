@@ -23,7 +23,7 @@
         <div class="card-body">
             <div class="row">
                 <div class="col form-group">
-                    <label for="username" class="col-form-label">{{ t('Username') }}</label>
+                    <label for="username" class="form-label">{{ t('Username') }}</label>
                     <input type="text" class="form-control @error('username') is-invalid @enderror" id="username" name="username" value="{{ old('username', isset($member) ? $member->username : '') }}" @if(isset($member) && $member->id == 1) readonly @endif required>
                     @error('username')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -36,7 +36,7 @@
                 </div>
 
                 <div class="col form-group">
-                    <label for="email" class="col-form-label">{{ t('Email') }}</label>
+                    <label for="email" class="form-label">{{ t('Email') }}</label>
                     <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email', isset($member) ? $member->email : '') }}" required>
                     @error('email')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -46,7 +46,7 @@
 
             <div class="row">
                 <div class="col form-group">
-                    <label for="name" class="col-form-label">{{ t('Name') }}</label>
+                    <label for="name" class="form-label">{{ t('Name') }}</label>
                     <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', isset($member) ? $member->name : '') }}" required>
                     @error('name')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -54,7 +54,7 @@
                 </div>
 
                 <div class="col form-group">
-                    <label for="title" class="col-form-label">{{ t('Title') }}</label>
+                    <label for="title" class="form-label">{{ t('Title') }}</label>
                     <input type="text" class="form-control @error('title') is-invalid @enderror" id="title" name="title" value="{{ old('title', isset($member) ? $member->title : '') }}" placeholder="{{ t('Title or honorific (e.g., Mr., Mrs., etc.)') }}">
                     @error('title')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -64,7 +64,7 @@
 
             <div class="row">
                 <div class="col form-group">
-                    <label for="phone" class="col-form-label">{{ t('Phone') }}</label>
+                    <label for="phone" class="form-label">{{ t('Phone') }}</label>
                     <input type="text" class="form-control @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone', isset($member) ? $member->phone : '') }}">
                     @error('phone')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -73,7 +73,7 @@
 
                 <!-- Profile Photo Section -->
                 <div class="col form-group">
-                    <label for="profile_photo" class="col-form-label">{{ t('Profile Photo') }}</label>
+                    <label for="profile_photo" class="form-label">{{ t('Profile Photo') }}</label>
                     <div class="photo-upload">
                         <input type="file" class="form-control @error('profile_photo') is-invalid @enderror" id="profile_photo" name="profile_photo" accept="image/*">
                         <div class="form-text">{{ t('Upload a new profile photo (JPEG, PNG, GIF). Max size: 2MB') }}</div>
@@ -107,7 +107,7 @@
             @if(Auth::user()->isAdmin())
             <div class="row">
                 <div class="col form-group">
-                    <label class="col-form-label">{{ t('Account Status') }}</label>
+                    <label class="form-label">{{ t('Account Status') }}</label>
                     <div class="form-check">
                         <input type="checkbox" class="form-check-input @error('active') is-invalid @enderror" id="active" name="active" value="1" {{ old('active', isset($member) ? $member->active : true) ? 'checked' : '' }}>
                         <label class="form-check-label" for="active">
@@ -123,7 +123,7 @@
                 </div>
 
                 <div class="col form-group">
-                    <label for="level" class="col-form-label">{{ t('Member Level') }}</label>
+                    <label for="level" class="form-label">{{ t('Member Level') }}</label>
 
                     <select class="form-select @error('level') is-invalid @enderror" id="level" name="level">
                         @php
@@ -158,7 +158,7 @@
 
             <!-- Groups Selection -->
             <div class="form-group">
-                <label class="col-form-label">{{ t('Groups') }}</label>
+                <label class="form-label">{{ t('Groups') }}</label>
                 @if($groups->count() > 0)
                 <div class="groups">
                     @foreach($groups as $group)
@@ -186,7 +186,7 @@
 
             <div class="row">
                 <div class="col form-group">
-                    <label for="password" class="col-form-label">
+                    <label for="password" class="form-label">
                         @if(isset($member))
                             {{ t('New Password') }}
                         @else
@@ -201,7 +201,7 @@
                 </div>
 
                 <div class="col form-group">
-                    <label for="password_confirmation" class="col-form-label">{{ t('Confirm Password') }}</label>
+                    <label for="password_confirmation" class="form-label">{{ t('Confirm Password') }}</label>
                     <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" @if(!isset($member)) required @endif>
                 </div>
             </div>

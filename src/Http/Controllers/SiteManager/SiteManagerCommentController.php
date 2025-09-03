@@ -27,7 +27,7 @@ class SiteManagerCommentController extends Controller
     {
         $boards = Board::orderBy('name')->get();
         $selectedBoardId = $request->get('board_id');
-        $status = $request->get('status', 'pending');
+        $status = $request->get('status', 'approved');
         
         $pendingComments = collect();
         $selectedBoard = null;
@@ -199,6 +199,9 @@ class SiteManagerCommentController extends Controller
             $board = Board::where('slug', $boardSlug)->firstOrFail();
             $commentModelClass = BoardComment::forBoard($board->slug);
             $comment = $commentModelClass::withTrashed()->findOrFail($commentId);
+            
+            // 게시글 참조를 먼저 저장 (forceDelete 후에는 접근 불가)
+            $post = $comment->post;
             
             $comment->forceDelete();
             

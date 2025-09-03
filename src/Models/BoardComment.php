@@ -33,6 +33,59 @@ abstract class BoardComment extends Model
     ];
 
     /**
+     * Boot the model
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // 댓글 생성 시
+        static::created(function ($comment) {
+            if ($comment->post && $comment->status === 'approved') {
+                $comment->post->updateCommentCount();
+            }
+        });
+
+        // 댓글 업데이트 시 (상태 변경 등)
+        static::updated(function ($comment) {
+            if ($comment->post && $comment->wasChanged('status')) {
+                $comment->post->updateCommentCount();
+            }
+        });
+
+        // 댓글 소프트 삭제 시
+        static::deleted(function ($comment) {
+            if ($comment->post) {
+                $comment->post->updateCommentCount();
+            }
+        });
+
+        // 댓글 복원 시
+        static::restored(function ($comment) {
+            if ($comment->post) {
+                $comment->post->updateCommentCount();
+            }
+        });
+
+        // 댓글 완전 삭제 시
+        static::forceDeleted(function ($comment) {
+            // forceDeleted 이벤트에서는 post 관계가 이미 끊어져 있을 수 있으므로
+            // post_id를 직접 사용해서 게시글을 찾아 업데이트
+            if ($comment->post_id) {
+                $postModelClass = 'BoardPost' . \Illuminate\Support\Str::studly(
+                    substr(static::class, strlen('BoardComment'))
+                );
+                if (class_exists($postModelClass)) {
+                    $post = $postModelClass::find($comment->post_id);
+                    if ($post) {
+                        $post->updateCommentCount();
+                    }
+                }
+            }
+        });
+    }
+
+    /**
      * 동적 모델 생성
      */
     public static function forBoard(string $slug): string

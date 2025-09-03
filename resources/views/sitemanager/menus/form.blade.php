@@ -32,7 +32,7 @@
                     </h6>
                     
                     <div class="form-group">
-                        <label for="title" class="col-form-label">{{ t('Menu Title') }} *</label>
+                        <label for="title" class="form-label">{{ t('Menu Title') }} *</label>
                         <input type="text" class="form-control @error('title') is-invalid @enderror" id="title" name="title" value="{{ old('title', isset($menu) ? $menu->title : '') }}" required>
                         @error('title')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -40,7 +40,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="description" class="col-form-label">{{ t('Description') }}</label>
+                        <label for="description" class="form-label">{{ t('Description') }}</label>
                         <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="3" placeholder="{{ t('Enter a short description') }}">{{ old('description', isset($menu) ? $menu->description : '') }}</textarea>
                         @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -51,7 +51,7 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="type" class="col-form-label">{{ t('Menu Type') }} *</label>
+                        <label for="type" class="form-label">{{ t('Menu Type') }} *</label>
                         <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
                             <option value="">{{ t('Select menu type') }}</option>
                             @foreach(\SiteManager\Models\Menu::getAvailableTypes() as $typeValue => $typeLabel)
@@ -65,7 +65,7 @@
 
                     <!-- Route Selection (for route type) -->
                     <div class="form-group" id="route-select-container" style="display: none;">
-                        <label for="route-select" class="col-form-label">{{ t('Available Routes') }}</label>
+                        <label for="route-select" class="form-label">{{ t('Available Routes') }}</label>
                         <select class="form-select" id="route-select">
                             <option value="">{{ t('Select a route') }}</option>
                             @if(isset($availableRoutes) && count($availableRoutes) > 0)
@@ -114,7 +114,7 @@
                     </div>
 
                     <div class="form-group" id="target-container">
-                        <label for="target" class="col-form-label">{{ t('Target') }}</label>
+                        <label for="target" class="form-label">{{ t('Target') }}</label>
                         <input type="text" class="form-control @error('target') is-invalid @enderror" id="target" name="target" value="{{ old('target', isset($menu) ? $menu->target : '') }}" placeholder="">
                         @error('target')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -148,7 +148,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="parent_id" class="col-form-label">{{ t('Parent Menu') }}</label>
+                        <label for="parent_id" class="form-label">{{ t('Parent Menu') }}</label>
                         <select class="form-select @error('parent_id') is-invalid @enderror" id="parent_id" name="parent_id">
                             <option value="">{{ t('Root Menu (Creates New Section)') }}</option>
                             @php
@@ -174,7 +174,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="hidden" class="col-form-label">{{ t('Hidden Menu') }}</label>
+                        <label for="hidden" class="form-label">{{ t('Hidden Menu') }}</label>
                         <div class="form-check form-switch">
                             <!-- Hidden field to ensure unchecked checkbox sends 0 value -->
                             <input type="hidden" name="hidden" value="0">
@@ -188,7 +188,7 @@
 
                     <!-- Images Section -->
                     <div class="form-group">
-                        <label class="col-form-label">{{ t('Menu Images') }}</label>
+                        <label class="form-label">{{ t('Menu Images') }}</label>
                         <div id="images-container">
                             @php
                                 $imageCategories = \SiteManager\Models\Menu::getImageCategories();
@@ -249,7 +249,7 @@
                     
                     <!-- Basic Permission -->
                     <div class="form-group">
-                        <label class="col-form-label">{{ t('Basic Permission') }}</label>
+                        <label class="form-label">{{ t('Basic Permission') }}</label>
                         <div class="permission-list">
                             @php
                                 $basicPermissions = config('permissions.menu');
@@ -269,7 +269,7 @@
                     <!-- Level Permission -->
                     <div class="form-group">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="col-form-label">{{ t('Level Permission') }}</label>
+                            <label class="form-label">{{ t('Level Permission') }}</label>
                             <button type="button" class="btn-default btn-default-sm" onclick="addPermLevel()">
                                 + {{ t('Add Level') }}
                             </button>
@@ -306,7 +306,7 @@
                     @if(\SiteManager\Models\Group::count() > 0)
                     <div class="form-group">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="col-form-label mb-0">{{ t('Group Permission') }}</label>
+                            <label class="form-label mb-0">{{ t('Group Permission') }}</label>
                             <button type="button" class="btn-default btn-default-sm" onclick="addPermGroup()">
                                 + {{ t('Add Group') }}
                             </button>
@@ -343,7 +343,7 @@
                     <!-- Administrator Permission -->
                     <div class="form-group">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="col-form-label mb-0">{{ t('Administrator Permission') }}</label>
+                            <label class="form-label mb-0">{{ t('Administrator Permission') }}</label>
                             <button type="button" class="btn-default btn-default-sm" onclick="addPermAdmin()">
                                 + {{ t('Add Administrator') }}
                             </button>
@@ -774,7 +774,7 @@ function addPermLevel() {
         <div id="level-perm-${levelPermIndex}" class="permission-group mb-3 p-3 border rounded">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
-                    <label class="col-form-label mb-0">{{ t("Level") }}:</label>
+                    <label class="form-label mb-0">{{ t("Level") }}:</label>
                     <select name="level_permissions[${levelPermIndex}][level]" class="form-select form-select-sm d-inline-block w-auto ms-2" onchange="checkLevelDuplicate(this)" required>
                         ${levelOptions}
                     </select>
@@ -849,7 +849,7 @@ function addPermGroup() {
         <div id="group-perm-${groupPermIndex}" class="permission-group mb-3 p-3 border rounded">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
-                    <label class="col-form-label mb-0">{{ t("Group") }}:</label>
+                    <label class="form-label mb-0">{{ t("Group") }}:</label>
                     <select name="group_permissions[${groupPermIndex}][group_id]" class="form-select form-select-sm d-inline-block w-auto ms-2" onchange="checkGroupDuplicate(this)" required>
                         ${groupOptions}
                     </select>

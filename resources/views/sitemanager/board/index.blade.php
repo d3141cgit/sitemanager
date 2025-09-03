@@ -3,196 +3,159 @@
 @section('title', t('Board Management'))
 
 @section('content')
-<div class="container board">
+<div class="content-header">
+    <h1>
+        <a href="{{ route('sitemanager.boards.index') }}">
+            <i class="bi bi-list-ul opacity-75"></i> {{ t('Board Management') }}
+        </a>
 
-    <!-- Header Section - Responsive -->
-    <div class="mb-4">
-        <!-- Desktop Header -->
-        <div class="d-none d-md-flex justify-content-between align-items-center mb-3">
-            <h1 class="mb-0">
-                <a href="{{ route('sitemanager.boards.index') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-list-ul opacity-75"></i> {{ t('Board Management') }}
-                </a>
-            </h1>
-            <a href="{{ route('sitemanager.boards.create') }}" class="btn btn-primary text-white">
-                <i class="bi bi-plus-circle"></i> {{ t('Add New Board') }}
-            </a>
-        </div>
+        <span class="count">{{ number_format($boards->total()) }}</span>
+    </h1>
 
-        <!-- Mobile Header -->
-        <div class="d-md-none">
-            <h4 class="mb-3">
-                <a href="{{ route('sitemanager.boards.index') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-list-ul opacity-75"></i> {{ t('Board Management') }}
-                </a>
-            </h4>
-            <div class="d-grid mb-3">
-                <a href="{{ route('sitemanager.boards.create') }}" class="btn btn-primary text-white">
-                    <i class="bi bi-plus-circle me-2"></i>{{ t('Add New Board') }}
-                </a>
-            </div>
-        </div>
-    </div>
-
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>{{ t('ID') }}</th>
-                    <th>{{ t('Board Name') }}</th>
-                    <th>{{ t('Slug') }}</th>
-                    <th>{{ t('Skin') }}</th>
-                    <th>{{ t('Connected Menu') }}</th>
-                    <th class="text-center">{{ t('Posts') }}</th>
-                    <th class="text-center">{{ t('Comments') }}</th>
-                    <th class="text-center">{{ t('Files') }}</th>
-                    <th class="text-center">{{ t('Pending Comments') }}</th>
-                    <th>{{ t('Status') }}</th>
-                    <th>{{ t('Created Date') }}</th>
-                    <th class="text-end">{{ t('Actions') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($boards as $board)
-                <tr>
-                    <td>{{ $board->id }}</td>
-                    <td>
-                        <a href="{{ route('sitemanager.boards.show', $board) }}" class="text-decoration-none">
-                            <strong>{{ $board->name }}</strong>
-                        </a>
-                    </td>
-                    <td>
-                        <code>{{ $board->slug }}</code>
-                    </td>
-                    <td>
-                        <span class="badge bg-{{ $board->skin === 'default' ? 'secondary' : 'primary' }}">
-                            {{ $board->skin ?? 'default' }}
-                        </span>
-                    </td>
-                    <td>
-                        @if($board->menu)
-                            <span class="badge bg-info">{{ $board->menu->title }}</span>
-                        @else
-                            <span class="text-muted">-</span>
-                        @endif
-                    </td>
-                    <td class="text-center">
-                        @php
-                            $postsCount = $board->posts_count ?? $board->getPostsCount();
-                            $deletedPostsCount = $board->deleted_posts_count ?? $board->getDeletedPostsCount();
-                        @endphp
-                        
-                        @if($postsCount == 0 && $deletedPostsCount == 0)
-                            <span class="text-muted">-</span>
-                        @else
-                            <span class="text-primary fw-bold">{{ $postsCount }}</span>
-                            @if($deletedPostsCount > 0)
-                                <span class="text-danger"> / {{ $deletedPostsCount }}</span>
-                            @endif
-                        @endif
-                    </td>
-                    <td class="text-center">
-                        @php
-                            $commentsCount = $board->comments_count ?? $board->getCommentsCount();
-                            $deletedCommentsCount = $board->deleted_comments_count ?? $board->getDeletedCommentsCount();
-                        @endphp
-                        
-                        @if($commentsCount == 0 && $deletedCommentsCount == 0)
-                            <span class="text-muted">-</span>
-                        @else
-                            <span class="text-success fw-bold">{{ $commentsCount }}</span>
-                            @if($deletedCommentsCount > 0)
-                                <span class="text-danger"> / {{ $deletedCommentsCount }}</span>
-                            @endif
-                        @endif
-                    </td>
-                    <td class="text-center">
-                        @php
-                            $attachmentsCount = $board->attachments_count ?? $board->getAttachmentsCount();
-                        @endphp
-                        
-                        @if($attachmentsCount == 0)
-                            <span class="text-muted">-</span>
-                        @else
-                            <span class="text-info fw-bold">{{ $attachmentsCount }}</span>
-                        @endif
-                    </td>
-                    <td class="text-center">
-                        @if($board->pending_comments_count > 0)
-                            <a href="{{ route('sitemanager.comments.index', ['board_id' => $board->id, 'status' => 'pending']) }}" 
-                               class="badge bg-warning text-decoration-none" title="{{ t('Manage pending comments') }}">
-                                {{ $board->pending_comments_count }}
-                            </a>
-                        @else
-                            <small class="text-muted">-</small>
-                        @endif
-                    </td>
-                    <td>
-                        @if($board->status === 'active')
-                            <span class="badge bg-success">{{ t('Active') }}</span>
-                        @else
-                            <span class="badge bg-secondary">{{ t('Inactive') }}</span>
-                        @endif
-                    </td>
-                    <td>{{ $board->created_at->format('Y-m-d') }}</td>
-                    <td class="text-end">
-                        <a href="{{ route('sitemanager.boards.edit', $board) }}" class="btn btn-sm btn-outline-primary" title="{{ t('Edit') }}">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <form method="POST" action="{{ route('sitemanager.boards.toggle-status', $board) }}" class="d-inline">
-                            @csrf
-                            @method('PATCH')
-                            <button type="submit" class="btn btn-sm btn-outline-{{ $board->status === 'active' ? 'warning' : 'success' }}" 
-                                    title="{{ $board->status === 'active' ? t('Deactivate') : t('Activate') }}"
-                                    onclick="return confirm('{{ t('Change status?') }}')">
-                                <i class="bi bi-{{ $board->status === 'active' ? 'pause' : 'play' }}"></i>
-                            </button>
-                        </form>
-                        <form method="POST" action="{{ route('sitemanager.boards.destroy', $board) }}" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('Delete') }}"
-                                    onclick="return confirm('{{ t('Delete this board?') }}\\n\\n⚠️ {{ t('Warning: All posts and comments will be deleted!') }}')">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="11" class="text-center py-5">
-                        <i class="bi bi-list-ul display-1 text-muted mb-3"></i>
-                        <h5 class="text-muted">{{ t('No boards found') }}</h5>
-                        <p class="text-muted">{{ t('Please create a new board.') }}</p>
-                        <a href="{{ route('sitemanager.boards.create') }}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle"></i> {{ t('Create Board') }}
-                        </a>
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    @if($boards->hasPages())
-        <div class="d-flex justify-content-center mt-4">
-            {{ $boards->links() }}
-        </div>
-    @endif
+    <a href="{{ route('sitemanager.boards.create') }}" class="btn-default">
+        <i class="bi bi-plus-circle"></i> {{ t('Add New Board') }}
+    </a>
 </div>
+
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th class="right">{{ t('ID') }}</th>
+                <th>{{ t('Board Name') }}</th>
+                <th>{{ t('Slug') }}</th>
+                <th>{{ t('Skin') }}</th>
+                <th>{{ t('Connected Menu') }}</th>
+                <th class="text-center">{{ t('Posts') }}</th>
+                <th class="text-center">{{ t('Comments') }}</th>
+                <th class="text-center">{{ t('Files') }}</th>
+                <th>{{ t('Status') }}</th>
+                <th>{{ t('Created Date') }}</th>
+                <th class="text-end">{{ t('Actions') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($boards as $board)
+            <tr>
+                <td class="number right">{{ $board->id }}</td>
+                <td>
+                    <a href="{{ route('sitemanager.boards.show', $board) }}">
+                        {{ $board->name }}
+                    </a>
+                </td>
+                <td>
+                    <code>{{ $board->slug }}</code>
+                </td>
+                <td>
+                    {{ $board->skin ?? 'default' }}
+                </td>
+                <td>
+                    @if($board->menu)
+                        <span class="text-info">{{ $board->menu->title }}</span>
+                    @else
+                        -
+                    @endif
+                </td>
+                <td class="text-center number">
+                    @php
+                        $postsCount = $board->posts_count ?? $board->getPostsCount();
+                        $deletedPostsCount = $board->deleted_posts_count ?? $board->getDeletedPostsCount();
+                    @endphp
+                    
+                    @if($postsCount == 0 && $deletedPostsCount == 0)
+                        -
+                    @else
+                        {{ $postsCount }}
+                        @if($deletedPostsCount > 0)
+                            <span class="text-muted"> / {{ $deletedPostsCount }}</span>
+                        @endif
+                    @endif
+                </td>
+                <td class="text-center number comments">
+                    @php
+                        $commentsCount = $board->comments_count ?? $board->getCommentsCount();
+                        $deletedCommentsCount = $board->deleted_comments_count ?? $board->getDeletedCommentsCount();
+                    @endphp
+                    
+                    @if($commentsCount == 0 && $deletedCommentsCount == 0)
+                        -
+                    @else
+                        <a href="{{ route('sitemanager.comments.index', ['board_id' => $board->id]) }}" class="btn btn-sm btn-outline-success" title="{{ t('Manage comments') }}">
+                            {{ $commentsCount }}
+                        </a>
+                        @if($board->pending_comments_count > 0)
+                        <a href="{{ route('sitemanager.comments.index', ['board_id' => $board->id, 'status' => 'pending']) }}" 
+                            class="btn btn-sm btn-outline-warning" title="{{ t('Manage pending comments') }}">
+                            {{ $board->pending_comments_count }}
+                        </a>
+                        @endif
+                        @if($deletedCommentsCount > 0)
+                            <a href="{{ route('sitemanager.comments.index', ['board_id' => $board->id, 'status' =>'deleted']) }}" class="btn btn-sm btn-outline-danger" title="{{ t('Manage comments') }}">{{ $deletedCommentsCount }}</a></span>
+                        @endif
+                    @endif
+                </td>
+                <td class="text-center number">
+                    @php
+                        $attachmentsCount = $board->attachments_count ?? $board->getAttachmentsCount();
+                    @endphp
+                    
+                    @if($attachmentsCount == 0)
+                        -
+                    @else
+                        {{ $attachmentsCount }}
+                    @endif
+                </td>
+                <td>
+                    @if($board->status === 'active')
+                        <span class="badge bg-success">{{ t('Active') }}</span>
+                    @else
+                        <span class="badge bg-secondary">{{ t('Inactive') }}</span>
+                    @endif
+                </td>
+                <td class="number">{{ $board->created_at->format('Y-m-d') }}</td>
+                <td class="text-end actions">
+                    <a href="{{ route('sitemanager.boards.edit', $board) }}" class="btn btn-sm btn-outline-primary" title="{{ t('Edit') }}">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form method="POST" action="{{ route('sitemanager.boards.toggle-status', $board) }}" class="d-inline">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="btn btn-sm btn-outline-{{ $board->status === 'active' ? 'warning' : 'success' }}" 
+                                title="{{ $board->status === 'active' ? t('Deactivate') : t('Activate') }}"
+                                onclick="return confirm('{{ t('Change status?') }}')">
+                            <i class="bi bi-{{ $board->status === 'active' ? 'pause' : 'play' }}"></i>
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('sitemanager.boards.destroy', $board) }}" class="d-inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('Delete') }}"
+                                onclick="return confirm('{{ t('Delete this board?') }}\\n\\n⚠️ {{ t('Warning: All posts and comments will be deleted!') }}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            @empty
+            <tr>
+                <td colspan="11" class="text-center py-5">
+                    <i class="bi bi-list-ul display-1 text-muted mb-3"></i>
+                    <h5 class="text-muted">{{ t('No boards found') }}</h5>
+                    <p class="text-muted">{{ t('Please create a new board.') }}</p>
+                    <a href="{{ route('sitemanager.boards.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> {{ t('Create Board') }}
+                    </a>
+                </td>
+            </tr>
+            @endforelse
+        </tbody>
+    </table>
+</div>
+
+@if($boards->hasPages())
+    {{ $boards->links('sitemanager::pagination.default') }}
+@endif
+
 @endsection
 

@@ -138,7 +138,10 @@ abstract class BoardPost extends Model
      */
     public function updateCommentCount(): void
     {
-        $count = $this->comments()->count();
+        $count = $this->comments()
+            ->where('status', 'approved')
+            ->whereNull('deleted_at')
+            ->count();
         $this->update(['comment_count' => $count]);
     }
 

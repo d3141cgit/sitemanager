@@ -170,9 +170,10 @@ main { padding: 2rem 0; }
 /* Form Styles */
 .default-form-sm { max-width: 576px; margin: 0 auto; }
 .default-form-md { max-width: 768px; margin: 0 auto; }
+.default-form.card .card-header { outline: solid 1px var(--bs-dark); }
 .default-form.card .card-header h4 { margin: 0; font-family: var(--font-gothic); font-weight: 500; }
 
-.default-form .col-form-label { font-weight: 500; font-size: 0.7rem; color: var(--bs-gray-500); line-height: 1; margin-bottom: 0; }
+.default-form .form-label { font-weight: 500; font-size: 0.7rem; color: var(--bs-gray-500); line-height: 1; margin-bottom: 0; }
 .default-form .form-control, .default-form .form-select { background-color: var(--bs-gray-100); border-color: var(--bs-gray-100); color: #000; font-weight: 500; }
 .default-form .form-control::placeholder { color: var(--bs-info); }
 .form-control:focus, .form-select:focus { box-shadow: none; border-color: var(--bs-red); }
@@ -366,3 +367,5 @@ main { padding: 2rem 0; }
 
 .permission-list .form-check { margin-right: 1rem; margin-bottom: 0.5rem; min-width: 120px; font-size: 0.85rem; }
 .permission-list { display: grid; grid-template-columns: repeat(4, 1fr); }
+
+td.comments .btn { width: 2rem; height: 2rem; border-radius: 50%; padding: 0; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }

@@ -24,7 +24,7 @@
             <div class="row">
                 <!-- Group Name -->
                 <div class="col form-group">
-                    <label for="name" class="col-form-label">{{ t('Group Name') }}</label>
+                    <label for="name" class="form-label">{{ t('Group Name') }}</label>
                     <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name', isset($group) ? $group->name : '') }}" required autofocus>
                     @error('name')
                         <span class="invalid-feedback" role="alert">
@@ -35,7 +35,7 @@
 
                 <!-- Active Status -->
                 <div class="col form-group">
-                    <label for="active" class="col-form-label">{{ t('Status') }}</label>
+                    <label for="active" class="form-label">{{ t('Status') }}</label>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="active" name="active" value="1" {{ old('active', isset($group) ? $group->active : true) ? 'checked' : '' }}>
                         <label class="form-check-label" for="active">
@@ -47,7 +47,7 @@
 
             <!-- Description -->
             <div class="form-group">
-                <label for="description" class="col-form-label">{{ t('Description') }}</label>
+                <label for="description" class="form-label">{{ t('Description') }}</label>
                 <textarea id="description" class="form-control @error('description') is-invalid @enderror" name="description" rows="3">{{ old('description', isset($group) ? $group->description : '') }}</textarea>
                 @error('description')
                     <span class="invalid-feedback" role="alert">
@@ -61,7 +61,7 @@
                 <div class="row group-members">
                     <!-- Current Members -->
                     <div class="col form-group">
-                        <label class="col-form-label">{{ t('Current Members') }}</label>
+                        <label class="form-label">{{ t('Current Members') }}</label>
                         <div class="border rounded p-3" style="height: 300px; overflow-y: auto;">
                             @forelse($group->members as $member)
                                 <div class="form-check">
@@ -78,7 +78,7 @@
                     
                     <!-- Available Members -->
                     <div class="col form-group">
-                        <label class="col-form-label">{{ t('Available Members') }}</label>
+                        <label class="form-label">{{ t('Available Members') }}</label>
                         <div class="border rounded p-3" style="height: 300px; overflow-y: auto;">
                             @forelse($availableMembers as $member)
                                 <div class="form-check">

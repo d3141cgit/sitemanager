@@ -204,9 +204,6 @@ class CommentController extends Controller
             // 댓글에 권한 정보 추가
             $comment->permissions = $this->calculateCommentPermissions($board, $comment);
 
-            // 게시글의 댓글 수 업데이트
-            $post->updateCommentCount();
-
             DB::commit();
 
             // 댓글 HTML 렌더링
@@ -395,11 +392,6 @@ class CommentController extends Controller
             $comment = $commentModelClass::findOrFail($commentId);
             
             $comment->update(['status' => 'approved']);
-            
-            // 게시글의 댓글 수 업데이트
-            if ($comment->post) {
-                $comment->post->updateCommentCount();
-            }
             
             return response()->json([
                 'success' => true,
