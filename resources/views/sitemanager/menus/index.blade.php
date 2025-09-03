@@ -17,9 +17,9 @@
             <!-- Header Section - Responsive -->
             <div class="mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-3 d-none d-md-flex">
-                    <h2 class="mb-0">
+                    <h1 class="mb-0">
                         <i class="bi bi-list me-2"></i>Menu Management
-                    </h2>
+                    </h1>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-outline-secondary btn-sm" id="rebuild-tree-btn">
                             <i class="bi bi-arrow-clockwise me-1"></i>Rebuild Tree
