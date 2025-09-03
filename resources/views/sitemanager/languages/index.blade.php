@@ -38,6 +38,44 @@
         </div>
     </div>
 
+    <!-- Search Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <form method="GET" action="{{ route('sitemanager.languages.index') }}" class="search-form">
+                <div class="row">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="{{ t('Search by key or translation text...') }}" 
+                                   value="{{ request('search') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3 mb-md-0">
+                        <select name="status" class="form-select">
+                            <option value="">{{ t('All Keys') }}</option>
+                            <option value="translated" {{ request('status') == 'translated' ? 'selected' : '' }}>{{ t('Fully Translated') }}</option>
+                            <option value="partial" {{ request('status') == 'partial' ? 'selected' : '' }}>{{ t('Partially Translated') }}</option>
+                            <option value="untranslated" {{ request('status') == 'untranslated' ? 'selected' : '' }}>{{ t('Untranslated') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-fill">
+                                <i class="bi bi-search me-2"></i>{{ t('Search') }}
+                            </button>
+                            @if(request()->hasAny(['search', 'status']))
+                                <a href="{{ route('sitemanager.languages.index') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Success Alert -->
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -168,7 +206,7 @@
             @if($languages->hasPages())
                 <div class="card-footer bg-white border-0">
                     <div class="d-flex justify-content-center">
-                        {{ $languages->links('pagination::bootstrap-4') }}
+                        {{ $languages->appends(request()->query())->links('pagination::bootstrap-4') }}
                     </div>
                 </div>
             @endif
@@ -307,5 +345,33 @@ document.head.insertAdjacentHTML('beforeend', `
 }
 </style>
 `);
+
+// Search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.querySelector('.search-form');
+    const statusSelect = searchForm.querySelector('select[name="status"]');
+    const searchInput = searchForm.querySelector('input[name="search"]');
+    
+    // Auto-submit when status filter changes
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            searchForm.submit();
+        });
+    }
+    
+    // Debounced search for input field
+    if (searchInput) {
+        let searchTimeout;
+        
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                if (searchInput.value.length >= 2 || searchInput.value.length === 0) {
+                    searchForm.submit();
+                }
+            }, 500); // 500ms delay
+        });
+    }
+});
 </script>
 @endsection

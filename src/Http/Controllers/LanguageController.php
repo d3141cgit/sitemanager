@@ -11,9 +11,44 @@ class LanguageController extends Controller
     /**
      * 언어 목록 페이지
      */
-    public function index()
+    public function index(Request $request)
     {
-        $languages = Language::orderBy('key')->paginate(50);
+        $query = Language::query();
+        
+        // 검색어 필터링
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('key', 'LIKE', "%{$search}%")
+                  ->orWhere('ko', 'LIKE', "%{$search}%")
+                  ->orWhere('tw', 'LIKE', "%{$search}%");
+            });
+        }
+        
+        // 번역 상태 필터링
+        if ($status = $request->get('status')) {
+            switch ($status) {
+                case 'translated':
+                    // 모든 언어가 번역된 키들
+                    $query->whereNotNull('ko')->whereNotNull('tw');
+                    break;
+                case 'partial':
+                    // 일부만 번역된 키들
+                    $query->where(function ($q) {
+                        $q->where(function ($sq) {
+                            $sq->whereNotNull('ko')->whereNull('tw');
+                        })->orWhere(function ($sq) {
+                            $sq->whereNull('ko')->whereNotNull('tw');
+                        });
+                    });
+                    break;
+                case 'untranslated':
+                    // 번역되지 않은 키들
+                    $query->whereNull('ko')->whereNull('tw');
+                    break;
+            }
+        }
+        
+        $languages = $query->orderBy('key')->paginate(50);
         $availableLanguages = Language::getAvailableLanguages();
         
         return view('sitemanager::sitemanager.languages.index', compact('languages', 'availableLanguages'));

@@ -1,6 +1,6 @@
 @extends('sitemanager::layouts.sitemanager')
 
-@section('title', isset($member) ? 'Edit Member - ' . $member->name : 'Add New Member')
+@section('title', isset($member) ? t('Edit Member') . ' - ' . $member->name : t('Add New Member'))
 
 @section('content')
 <div class="container">
@@ -8,9 +8,9 @@
         <div class="col-md-8">
             <h1>
                 @if(isset($member))
-                    <i class="bi bi-pencil"></i> Edit Member - {{ $member->name }}
+                    <i class="bi bi-pencil"></i> {{ t('Edit Member') }} - {{ $member->name }}
                 @else
-                    <i class="bi bi-person-plus"></i> Add New Member
+                    <i class="bi bi-person-plus"></i> {{ t('Add New Member') }}
                 @endif
             </h1>
 
@@ -23,7 +23,7 @@
                         @endif
 
                         <div class="row mb-3 align-items-center">
-                            <label for="username" class="col-md-3 col-form-label text-md-end">Username</label>
+                            <label for="username" class="col-md-3 col-form-label text-md-end">{{ t('Username') }}</label>
                             <div class="col-md-9">
                                 <input type="text" 
                                        class="form-control @error('username') is-invalid @enderror" 
@@ -36,15 +36,15 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                                 @if(isset($member) && $member->id == 1)
-                                    <div class="form-text text-warning">Root user's username cannot be changed.</div>
+                                    <div class="form-text text-warning">{{ t("Root user's username cannot be changed.") }}</div>
                                 @else
-                                    <div class="form-text">Username must be unique.</div>
+                                    <div class="form-text">{{ t('Username must be unique.') }}</div>
                                 @endif
                             </div>
                         </div>
 
                         <div class="row mb-3 align-items-center">
-                            <label for="name" class="col-md-3 col-form-label text-md-end">Name</label>
+                            <label for="name" class="col-md-3 col-form-label text-md-end">{{ t('Name') }}</label>
                             <div class="col-md-9">
                                 <input type="text" 
                                        class="form-control @error('name') is-invalid @enderror" 
@@ -59,14 +59,14 @@
                         </div>
 
                         <div class="row mb-3 align-items-center">
-                            <label for="title" class="col-md-3 col-form-label text-md-end">Title</label>
+                            <label for="title" class="col-md-3 col-form-label text-md-end">{{ t('Title') }}</label>
                             <div class="col-md-9">
                                 <input type="text" 
                                        class="form-control @error('title') is-invalid @enderror" 
                                        id="title" 
                                        name="title" 
                                        value="{{ old('title', isset($member) ? $member->title : '') }}" 
-                                       placeholder="Title or honorific (e.g., Mr., Mrs., etc.)">
+                                       placeholder="{{ t('Title or honorific (e.g., Mr., Mrs., etc.)') }}">
                                 @error('title')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -74,7 +74,7 @@
                         </div>
 
                         <div class="row mb-3 align-items-center">
-                            <label for="email" class="col-md-3 col-form-label text-md-end">Email</label>
+                            <label for="email" class="col-md-3 col-form-label text-md-end">{{ t('Email') }}</label>
                             <div class="col-md-9">
                                 <input type="email" 
                                        class="form-control @error('email') is-invalid @enderror" 
@@ -89,7 +89,7 @@
                         </div>
 
                         <div class="row mb-3 align-items-center">
-                            <label for="phone" class="col-md-3 col-form-label text-md-end">Phone</label>
+                            <label for="phone" class="col-md-3 col-form-label text-md-end">{{ t('Phone') }}</label>
                             <div class="col-md-9">
                                 <input type="text" 
                                        class="form-control @error('phone') is-invalid @enderror" 
@@ -104,7 +104,7 @@
 
                         <!-- Profile Photo Section -->
                         <div class="row mb-3 align-items-center">
-                            <label for="profile_photo" class="col-md-3 col-form-label text-md-end">Profile Photo</label>
+                            <label for="profile_photo" class="col-md-3 col-form-label text-md-end">{{ t('Profile Photo') }}</label>
                             <div class="col-md-9">
                                 <div class="profile-photo-manager">
                                     @if(isset($member) && $member->profile_photo)
@@ -126,7 +126,7 @@
                                                id="profile_photo" 
                                                name="profile_photo" 
                                                accept="image/*">
-                                        <div class="form-text">Upload a new profile photo (JPEG, PNG, GIF). Max size: 2MB</div>
+                                        <div class="form-text">{{ t('Upload a new profile photo (JPEG, PNG, GIF). Max size: 2MB') }}</div>
                                         @error('profile_photo')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -145,7 +145,7 @@
 
                         @if(Auth::user()->isAdmin())
                             <div class="row mb-3 align-items-center">
-                                <label for="level" class="col-md-3 col-form-label text-md-end">Member Level</label>
+                                <label for="level" class="col-md-3 col-form-label text-md-end">{{ t('Member Level') }}</label>
                                 <div class="col-md-9">
                                     <select class="form-select @error('level') is-invalid @enderror" 
                                             id="level" 
@@ -163,7 +163,7 @@
                             </div>
 
                             <div class="row mb-3 align-items-center">
-                                <label class="col-md-3 col-form-label text-md-end">Account Status</label>
+                                <label class="col-md-3 col-form-label text-md-end">{{ t('Account Status') }}</label>
                                 <div class="col-md-9">
                                     <div class="form-check">
                                         <input type="checkbox" 
@@ -173,13 +173,13 @@
                                                value="1"
                                                {{ old('active', isset($member) ? $member->active : true) ? 'checked' : '' }}>
                                         <label class="form-check-label" for="active">
-                                            Active Account
+                                            {{ t('Active Account') }}
                                         </label>
                                         @error('active')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                         <div class="form-text">
-                                            When deactivated, the member cannot log in.
+                                            {{ t('When deactivated, the member cannot log in.') }}
                                         </div>
                                     </div>
                                 </div>
@@ -188,7 +188,7 @@
 
                         <!-- Groups Selection -->
                         <div class="row mb-3 align-items-center">
-                            <label class="col-md-3 col-form-label text-md-end">Groups</label>
+                            <label class="col-md-3 col-form-label text-md-end">{{ t('Groups') }}</label>
                             <div class="col-md-9">
                                 @if($groups->count() > 0)
                                     @foreach($groups as $group)
@@ -205,7 +205,7 @@
                                         </div>
                                     @endforeach
                                 @else
-                                    <p class="text-muted">No groups available.</p>
+                                    <p class="text-muted">{{ t('No groups available.') }}</p>
                                 @endif
                             </div>
                         </div>
@@ -214,21 +214,21 @@
 
                         <h5 class="mb-3">
                             @if(isset($member))
-                                Change Password (Optional)
+                                {{ t('Change Password (Optional)') }}
                             @else
-                                Password
+                                {{ t('Password') }}
                             @endif
                         </h5>
                         @if(isset($member))
-                            <p class="text-muted small">Leave the password fields empty if you don't want to change the password.</p>
+                            <p class="text-muted small">{{ t('Leave the password fields empty if you don\'t want to change the password.') }}</p>
                         @endif
 
                         <div class="row mb-3 align-items-center">
                             <label for="password" class="col-md-3 col-form-label text-md-end">
                                 @if(isset($member))
-                                    New Password
+                                    {{ t('New Password') }}
                                 @else
-                                    Password
+                                    {{ t('Password') }}
                                 @endif
                             </label>
                             <div class="col-md-9">
@@ -244,7 +244,7 @@
                         </div>
 
                         <div class="row mb-3 align-items-center">
-                            <label for="password_confirmation" class="col-md-3 col-form-label text-md-end">Confirm Password</label>
+                            <label for="password_confirmation" class="col-md-3 col-form-label text-md-end">{{ t('Confirm Password') }}</label>
                             <div class="col-md-9">
                                 <input type="password" 
                                        class="form-control" 
@@ -258,12 +258,12 @@
                             <div class="col-md-9 offset-md-3">
                                 <button type="submit" class="btn btn-primary">
                                     @if(isset($member))
-                                        Update Member
+                                        {{ t('Update Member') }}
                                     @else
-                                        Create Member
+                                        {{ t('Create Member') }}
                                     @endif
                                 </button>
-                                <a href="{{ route('sitemanager.members.index') }}" class="btn btn-secondary ms-2">Cancel</a>
+                                <a href="{{ route('sitemanager.members.index') }}" class="btn btn-secondary ms-2">{{ t('Cancel') }}</a>
                             </div>
                         </div>
                     </form>
@@ -291,14 +291,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (file) {
                 // Validate file type
                 if (!file.type.startsWith('image/')) {
-                    alert('Please select a valid image file.');
+                    alert('{{ t('Please select a valid image file.') }}');
                     this.value = '';
                     return;
                 }
 
                 // Validate file size (2MB)
                 if (file.size > 2 * 1024 * 1024) {
-                    alert('File size must be less than 2MB.');
+                    alert('{{ t('File size must be less than 2MB.') }}');
                     this.value = '';
                     return;
                 }
@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Remove photo button handler
     if (removePhotoBtn) {
         removePhotoBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to remove the current profile photo?')) {
+            if (confirm('{{ t('Are you sure you want to remove the current profile photo?') }}')) {
                 // Hide current photo
                 if (currentPhoto) {
                     currentPhoto.style.display = 'none';

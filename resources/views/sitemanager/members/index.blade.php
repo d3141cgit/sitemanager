@@ -1,6 +1,6 @@
 @extends('sitemanager::layouts.sitemanager')
 
-@section('title', 'Members List')
+@section('title', t('Members List'))
 
 @section('content')
 <div class="container">
@@ -11,12 +11,12 @@
         <div class="d-none d-md-flex justify-content-between align-items-center mb-3">
             <h1 class="mb-0">
                 <a href="{{ route('sitemanager.members.index') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-people opacity-75"></i> Members List
+                    <i class="bi bi-people opacity-75"></i> {{ t('Members List') }}
                     <span class="ms-2">({{ number_format($members->total()) }})</span>
                 </a>
             </h1>
             <a href="{{ route('sitemanager.members.create') }}" class="btn btn-primary text-white">
-                <i class="bi bi-person-plus"></i> Add New Member
+                <i class="bi bi-person-plus"></i> {{ t('Add New Member') }}
             </a>
         </div>
 
@@ -24,13 +24,13 @@
         <div class="d-md-none">
             <h4 class="mb-3">
                 <a href="{{ route('sitemanager.members.index') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-people opacity-75"></i> Members List
+                    <i class="bi bi-people opacity-75"></i> {{ t('Members List') }}
                     <span class="ms-2">({{ number_format($members->total()) }})</span>
                 </a>
             </h4>
             <div class="d-grid mb-3">
                 <a href="{{ route('sitemanager.members.create') }}" class="btn btn-primary text-white">
-                    <i class="bi bi-person-plus me-2"></i>Add New Member
+                    <i class="bi bi-person-plus me-2"></i>{{ t('Add New Member') }}
                 </a>
             </div>
         </div>
@@ -46,7 +46,7 @@
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-search"></i></span>
                             <input type="text" name="search" class="form-control" 
-                                   placeholder="Search by name, username, or email..." 
+                                   placeholder="{{ t('Search by name, username, or email...') }}" 
                                    value="{{ request('search') }}">
                         </div>
                     </div>
@@ -56,7 +56,7 @@
                 <div class="row mb-3">
                     <div class="col-md-3 col-6 mb-2 mb-md-0">
                         <select name="level" class="form-select">
-                            <option value="">All Levels</option>
+                            <option value="">{{ t('All Levels') }}</option>
                             @foreach($levels as $levelValue => $levelName)
                                 <option value="{{ $levelValue }}" {{ request('level') == $levelValue ? 'selected' : '' }}>
                                     {{ $levelValue }} - {{ $levelName }}
@@ -66,7 +66,7 @@
                     </div>
                     <div class="col-md-3 col-6 mb-2 mb-md-0">
                         <select name="group_id" class="form-select">
-                            <option value="">All Groups</option>
+                            <option value="">{{ t('All Groups') }}</option>
                             @foreach($groups as $group)
                                 <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>
                                     {{ $group->name }}
@@ -76,16 +76,16 @@
                     </div>
                     <div class="col-md-3 col-12 mb-2 mb-md-0">
                         <select name="status" class="form-select">
-                            <option value="active" {{ (request('status', 'active') == 'active') ? 'selected' : '' }}>Active</option>
-                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>All Status</option>
-                            <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>Deleted</option>
+                            <option value="active" {{ (request('status', 'active') == 'active') ? 'selected' : '' }}>{{ t('Active') }}</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>{{ t('Inactive') }}</option>
+                            <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>{{ t('All Status') }}</option>
+                            <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>{{ t('Deleted') }}</option>
                         </select>
                     </div>
                     <div class="col-md-3 col-12">
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary flex-fill">
-                                <i class="bi bi-search me-2"></i>Search
+                                <i class="bi bi-search me-2"></i>{{ t('Search') }}
                             </button>
                             @if(request()->hasAny(['search', 'level', 'group_id', 'status']))
                                 <a href="{{ route('sitemanager.members.index') }}" class="btn btn-outline-secondary">
@@ -103,16 +103,16 @@
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Photo</th>
-                    <th>Name</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Groups</th>
-                    <th>Level</th>
-                    <th>Status</th>
-                    <th>Join Date</th>
-                    <th class="text-end">Actions</th>
+                    <th>{{ t('ID') }}</th>
+                    <th>{{ t('Photo') }}</th>
+                    <th>{{ t('Name') }}</th>
+                    <th>{{ t('Username') }}</th>
+                    <th>{{ t('Email') }}</th>
+                    <th>{{ t('Groups') }}</th>
+                    <th>{{ t('Level') }}</th>
+                    <th>{{ t('Status') }}</th>
+                    <th>{{ t('Join Date') }}</th>
+                    <th class="text-end">{{ t('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -134,10 +134,10 @@
                             <strong>{{ $member->name }}</strong>
                             <span class="text-muted">{{ $member->title }}</span>
                             @if($member->isAdmin())
-                                <span class="badge bg-danger ms-1">Admin</span>
+                                <span class="badge bg-danger ms-1">{{ t('Admin') }}</span>
                             @endif
                             @if($member->trashed())
-                                <span class="badge bg-secondary ms-1">Deleted</span>
+                                <span class="badge bg-secondary ms-1">{{ t('Deleted') }}</span>
                             @endif
                         </td>
                         <td>{{ $member->username }}</td>
@@ -156,17 +156,17 @@
                         </td>
                         <td>
                             @if($member->trashed())
-                                <span class="badge bg-secondary">Deleted</span>
+                                <span class="badge bg-secondary">{{ t('Deleted') }}</span>
                             @elseif(Auth::user()->isAdmin() && Auth::user()->id !== $member->id)
                                 <button class="badge bg-{{ $member->active ? 'success' : 'danger' }} border-0 member-status-toggle" 
                                         data-member-id="{{ $member->id }}" 
                                         data-current-status="{{ $member->active ? 'true' : 'false' }}"
-                                        title="Click to {{ $member->active ? 'deactivate' : 'activate' }}">
-                                    {{ $member->active ? 'Active' : 'Inactive' }}
+                                        title="{{ t('Click to') }} {{ $member->active ? t('deactivate') : t('activate') }}">
+                                    {{ $member->active ? t('Active') : t('Inactive') }}
                                 </button>
                             @else
                                 <span class="badge bg-{{ $member->active ? 'success' : 'danger' }}">
-                                    {{ $member->active ? 'Active' : 'Inactive' }}
+                                    {{ $member->active ? t('Active') : t('Inactive') }}
                                 </span>
                             @endif
                         </td>
@@ -177,7 +177,7 @@
                                     <form method="POST" action="{{ route('sitemanager.members.restore', $member->id) }}" 
                                             class="d-inline">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Restore Member">
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="{{ t('Restore Member') }}">
                                             <i class="bi bi-arrow-clockwise"></i>
                                         </button>
                                     </form>
@@ -186,7 +186,7 @@
                                             data-type="force">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Force Delete">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('Force Delete') }}">
                                             <i class="bi bi-trash3"></i>
                                         </button>
                                     </form>
@@ -194,7 +194,7 @@
                             @else
                                 @if(Auth::user()->id === $member->id || Auth::user()->isAdmin())
                                     <a href="{{ route('sitemanager.members.edit', $member) }}" 
-                                        class="btn btn-sm btn-outline-primary" title="Edit Member">
+                                        class="btn btn-sm btn-outline-primary" title="{{ t('Edit Member') }}">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                 @endif
@@ -205,7 +205,7 @@
                                             data-type="soft">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Member">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('Delete Member') }}">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
@@ -215,7 +215,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="10" class="text-center">No members found.</td>
+                        <td colspan="10" class="text-center">{{ t('No members found.') }}</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -239,13 +239,13 @@ document.addEventListener('DOMContentLoaded', function() {
             let title, text, confirmText;
             
             if (deleteType === 'force') {
-                title = '영구 삭제 확인';
-                text = '정말로 이 회원을 영구적으로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.';
-                confirmText = '영구 삭제';
+                title = '{{ t("Permanent Delete Confirmation") }}';
+                text = '{{ t("Are you sure you want to permanently delete this member? This action cannot be undone.") }}';
+                confirmText = '{{ t("Permanent Delete") }}';
             } else {
-                title = '회원 삭제 확인';
-                text = '이 회원을 삭제하시겠습니까?';
-                confirmText = '삭제';
+                title = '{{ t("Member Delete Confirmation") }}';
+                text = '{{ t("Are you sure you want to delete this member?") }}';
+                confirmText = '{{ t("Delete") }}';
             }
             
             Swal.fire({
@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#6c757d',
                 confirmButtonText: confirmText,
-                cancelButtonText: '취소'
+                cancelButtonText: '{{ t("Cancel") }}'
             }).then((result) => {
                 if (result.isConfirmed) {
                     this.submit();
@@ -273,17 +273,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const memberId = this.dataset.memberId;
             const currentStatus = this.dataset.currentStatus === 'true';
             const newStatus = !currentStatus;
-            const actionText = newStatus ? 'activate' : 'deactivate';
+            const actionText = newStatus ? '{{ t("activate") }}' : '{{ t("deactivate") }}';
             
             Swal.fire({
-                title: `Confirm ${actionText}`,
-                text: `Are you sure you want to ${actionText} this member?`,
+                title: `{{ t("Confirm") }} ${actionText}`,
+                text: `{{ t("Are you sure you want to") }} ${actionText} {{ t("this member?") }}`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: newStatus ? '#198754' : '#dc3545',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: `Yes, ${actionText}`,
-                cancelButtonText: 'Cancel'
+                confirmButtonText: `{{ t("Yes") }}, ${actionText}`,
+                cancelButtonText: '{{ t("Cancel") }}'
             }).then((result) => {
                 if (result.isConfirmed) {
                     // AJAX 요청으로 상태 변경
@@ -314,27 +314,27 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }, 300);
                             } else {
                                 // 상태 업데이트
-                                this.textContent = newStatus ? 'Active' : 'Inactive';
+                                this.textContent = newStatus ? '{{ t("Active") }}' : '{{ t("Inactive") }}';
                                 this.className = `badge bg-${newStatus ? 'success' : 'danger'} border-0 member-status-toggle`;
                                 this.dataset.currentStatus = newStatus.toString();
-                                this.title = `Click to ${newStatus ? 'deactivate' : 'activate'}`;
+                                this.title = `{{ t("Click to") }} ${newStatus ? '{{ t("deactivate") }}' : '{{ t("activate") }}'}`;
                             }
                             
                             // 성공 메시지
                             Swal.fire({
-                                title: 'Success!',
+                                title: '{{ t("Success!") }}',
                                 text: data.message,
                                 icon: 'success',
                                 timer: 2000,
                                 showConfirmButton: false
                             });
                         } else {
-                            Swal.fire('Error!', 'Failed to update member status.', 'error');
+                            Swal.fire('{{ t("Error!") }}', '{{ t("Failed to update member status.") }}', 'error');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        Swal.fire('Error!', 'Network error occurred.', 'error');
+                        Swal.fire('{{ t("Error!") }}', '{{ t("Network error occurred.") }}', 'error');
                     });
                 }
             });

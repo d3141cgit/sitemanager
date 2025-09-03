@@ -1,6 +1,6 @@
 @extends('sitemanager::layouts.sitemanager')
 
-@section('title', 'Groups List')
+@section('title', t('Groups List'))
 
 @section('content')
 <div class="container">
@@ -11,11 +11,11 @@
         <div class="d-none d-md-flex justify-content-between align-items-center mb-3">
             <h1 class="mb-0">
                 <a href="{{ route('sitemanager.groups.index') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-collection opacity-75"></i> Groups List
+                    <i class="bi bi-collection opacity-75"></i> {{ t('Groups List') }}
                 </a>
             </h1>
             <a href="{{ route('sitemanager.groups.create') }}" class="btn btn-primary text-white">
-                <i class="bi bi-plus-circle"></i> Add New Group
+                <i class="bi bi-plus-circle"></i> {{ t('Add New Group') }}
             </a>
         </div>
 
@@ -23,12 +23,12 @@
         <div class="d-md-none">
             <h4 class="mb-3">
                 <a href="{{ route('sitemanager.groups.index') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-collection opacity-75"></i> Groups List
+                    <i class="bi bi-collection opacity-75"></i> {{ t('Groups List') }}
                 </a>
             </h4>
             <div class="d-grid mb-3">
                 <a href="{{ route('sitemanager.groups.create') }}" class="btn btn-primary text-white">
-                    <i class="bi bi-plus-circle me-2"></i>Add New Group
+                    <i class="bi bi-plus-circle me-2"></i>{{ t('Add New Group') }}
                 </a>
             </div>
         </div>
@@ -43,20 +43,20 @@
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" name="search" class="form-control" 
-                               placeholder="Search by name or description..." 
+                               placeholder="{{ t('Search by name or description...') }}" 
                                value="{{ request('search') }}">
                         <select name="status" class="form-select" style="max-width: 120px;">
-                            <option value="">All Status</option>
-                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>Deleted</option>
+                            <option value="">{{ t('All Status') }}</option>
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>{{ t('Active') }}</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>{{ t('Inactive') }}</option>
+                            <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>{{ t('Deleted') }}</option>
                         </select>
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search"></i> Search
+                            <i class="bi bi-search"></i> {{ t('Search') }}
                         </button>
                         @if(request()->hasAny(['search', 'status']))
                             <a href="{{ route('sitemanager.groups.index') }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-x-circle"></i> Clear
+                                <i class="bi bi-x-circle"></i> {{ t('Clear') }}
                             </a>
                         @endif
                     </div>
@@ -68,25 +68,25 @@
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-search"></i></span>
                             <input type="text" name="search" class="form-control" 
-                                   placeholder="Search by name or description..." 
+                                   placeholder="{{ t('Search by name or description...') }}" 
                                    value="{{ request('search') }}">
                         </div>
                     </div>
                     <div class="mb-3">
                         <select name="status" class="form-select">
-                            <option value="">All Status</option>
-                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>Deleted</option>
+                            <option value="">{{ t('All Status') }}</option>
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>{{ t('Active') }}</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>{{ t('Inactive') }}</option>
+                            <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>{{ t('Deleted') }}</option>
                         </select>
                     </div>
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search me-2"></i>Search
+                            <i class="bi bi-search me-2"></i>{{ t('Search') }}
                         </button>
                         @if(request()->hasAny(['search', 'status']))
                             <a href="{{ route('sitemanager.groups.index') }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-x-circle me-2"></i>Clear
+                                <i class="bi bi-x-circle me-2"></i>{{ t('Clear') }}
                             </a>
                         @endif
                     </div>
@@ -99,13 +99,13 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Members</th>
-                    <th>Status</th>
-                    <th>Created Date</th>
-                    <th class="text-end">Actions</th>
+                    <th>{{ t('ID') }}</th>
+                    <th>{{ t('Name') }}</th>
+                    <th>{{ t('Description') }}</th>
+                    <th>{{ t('Members') }}</th>
+                    <th>{{ t('Status') }}</th>
+                    <th>{{ t('Created Date') }}</th>
+                    <th class="text-end">{{ t('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -115,20 +115,20 @@
                         <td>
                             <strong>{{ $group->name }}</strong>
                             @if($group->trashed())
-                                <span class="badge bg-secondary ms-1">Deleted</span>
+                                <span class="badge bg-secondary ms-1">{{ t('Deleted') }}</span>
                             @endif
                         </td>
                         <td>{{ Str::limit($group->description, 50) ?: 'N/A' }}</td>
                         <td>
-                            <span class="badge bg-info">{{ $group->members_count }} members</span>
+                            <span class="badge bg-info">{{ $group->members_count }} {{ t('members') }}</span>
                         </td>
                         <td>
                             @if($group->trashed())
-                                <span class="badge bg-secondary">Deleted</span>
+                                <span class="badge bg-secondary">{{ t('Deleted') }}</span>
                             @elseif($group->active)
-                                <span class="badge bg-success">Active</span>
+                                <span class="badge bg-success">{{ t('Active') }}</span>
                             @else
-                                <span class="badge bg-danger">Inactive</span>
+                                <span class="badge bg-danger">{{ t('Inactive') }}</span>
                             @endif
                         </td>
                         <td>{{ $group->created_at->format('Y-m-d') }}</td>
@@ -138,7 +138,7 @@
                                     <form method="POST" action="{{ route('sitemanager.groups.restore', $group->id) }}" 
                                             class="d-inline">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Restore Group">
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="{{ t('Restore Group') }}">
                                             <i class="bi bi-arrow-clockwise"></i>
                                         </button>
                                     </form>
@@ -147,14 +147,14 @@
                                             data-type="force">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Force Delete">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('Force Delete') }}">
                                             <i class="bi bi-trash3"></i>
                                         </button>
                                     </form>
                                 @endif
                             @else
                                 <a href="{{ route('sitemanager.groups.edit', $group) }}" 
-                                    class="btn btn-sm btn-outline-primary" title="Edit Group">
+                                    class="btn btn-sm btn-outline-primary" title="{{ t('Edit Group') }}">
                                     <i class="bi bi-pencil"></i>
                                 </a>
 
@@ -164,7 +164,7 @@
                                             data-type="soft">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Group">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('Delete Group') }}">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
@@ -174,7 +174,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center">No groups found.</td>
+                        <td colspan="7" class="text-center">{{ t('No groups found.') }}</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -198,13 +198,13 @@ document.addEventListener('DOMContentLoaded', function() {
             let title, text, confirmText;
             
             if (deleteType === 'force') {
-                title = '영구 삭제 확인';
-                text = '정말로 이 그룹을 영구적으로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.';
-                confirmText = '영구 삭제';
+                title = '{{ t("Permanent Delete Confirmation") }}';
+                text = '{{ t("Are you sure you want to permanently delete this group? This action cannot be undone.") }}';
+                confirmText = '{{ t("Permanent Delete") }}';
             } else {
-                title = '그룹 삭제 확인';
-                text = '이 그룹을 삭제하시겠습니까?';
-                confirmText = '삭제';
+                title = '{{ t("Group Delete Confirmation") }}';
+                text = '{{ t("Are you sure you want to delete this group?") }}';
+                confirmText = '{{ t("Delete") }}';
             }
             
             Swal.fire({
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#6c757d',
                 confirmButtonText: confirmText,
-                cancelButtonText: '취소'
+                cancelButtonText: '{{ t("Cancel") }}'
             }).then((result) => {
                 if (result.isConfirmed) {
                     this.submit();
