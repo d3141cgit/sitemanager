@@ -153,8 +153,8 @@
                 </div>
 
                 @if(auth()->check() && auth()->user()->level === 255 && config('sitemanager.language.trace_enabled', false))
-                    <button type="button" class="btn btn-sm btn-outline-danger" id="clear-current-page-btn" onclick="clearCurrentPageLocations()" title="{{ t('Clear current page location information') }}">
-                        <i class="bi bi-geo-alt"></i> <i class="bi bi-x"></i>
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="clear-current-page-btn" onclick="clearCurrentPageLocations()" title="{{ t('Clear current page language location information') }}">
+                        <i class="bi bi-translate"></i> <i class="bi bi-geo-alt"></i> <i class="bi bi-x"></i>
                     </button>
                 @endif
             </nav>
