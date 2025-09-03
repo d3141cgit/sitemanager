@@ -148,6 +148,20 @@
                             <i class="bi bi-house-door"></i>
                         </a>
                     </li>
+
+                    @if(auth()->check() && auth()->user()->level === 255 && config('sitemanager.language.trace_enabled', false))
+                    <li>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-danger" 
+                                id="clear-current-page-btn"
+                                onclick="clearCurrentPageLocations()"
+                                title="{{ t('Clear current page location information') }}"
+                                style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                            <i class="bi bi-geo-alt"></i>
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </li>
+                    @endif
                 </ul>
             </nav>
         </div>
@@ -210,6 +224,125 @@
             });
         @endif
     </script>
+
+    @if(auth()->check() && auth()->user()->level === 255)
+    <script>
+        function clearCurrentPageLocations() {
+            // 현재 페이지 위치 정보 가져오기
+            let currentLocation = 'unknown';
+            
+            try {
+                // 1. 현재 라우트 이름 시도
+                const routeName = '{{ request()->route()?->getName() }}';
+                if (routeName) {
+                    currentLocation = routeName;
+                } else {
+                    // 2. URL 경로에서 추출
+                    const path = window.location.pathname;
+                    currentLocation = path.replace(/^\//, '').replace(/\//g, '.');
+                }
+            } catch (error) {
+                console.error('Error getting current location:', error);
+            }
+
+            if (!currentLocation || currentLocation === 'unknown') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '{{ t("Cannot determine current page location") }}',
+                    text: '{{ t("Unable to identify the current page location") }}',
+                    toast: true,
+                    position: 'top-end',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: '{{ t("Clear Current Page Location") }}',
+                text: `{{ t("Are you sure you want to clear location information for") }} "${currentLocation}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: '{{ t("Yes, clear it") }}',
+                cancelButtonText: '{{ t("Cancel") }}'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // 로딩 상태 표시
+                    const btn = document.getElementById('clear-current-page-btn');
+                    const originalContent = btn.innerHTML;
+                    btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation: spin 1s linear infinite;"></i>';
+                    btn.disabled = true;
+
+                    fetch('{{ route("sitemanager.languages.clear-current-page-locations") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            location: currentLocation
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '{{ t("Location Cleared") }}',
+                                text: data.message,
+                                toast: true,
+                                position: 'top-end',
+                                timer: 3000,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '{{ t("Error") }}',
+                                text: data.message || '{{ t("Failed to clear location") }}',
+                                toast: true,
+                                position: 'top-end',
+                                timer: 3000,
+                                showConfirmButton: false
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{ t("Error") }}',
+                            text: '{{ t("An error occurred while clearing location") }}',
+                            toast: true,
+                            position: 'top-end',
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    })
+                    .finally(() => {
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+                    });
+                }
+            });
+        }
+
+        // CSS for spin animation
+        if (!document.querySelector('#spin-style')) {
+            const style = document.createElement('style');
+            style.id = 'spin-style';
+            style.textContent = `
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    </script>
+    @endif
 
     @stack('scripts')
 </body>

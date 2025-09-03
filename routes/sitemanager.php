@@ -78,6 +78,12 @@ Route::middleware(['auth', 'sitemanager'])->prefix('sitemanager')->name('siteman
     Route::post('/languages/cleanup', [LanguageController::class, 'cleanup'])->name('languages.cleanup');
     Route::post('/set-locale', [LanguageController::class, 'setLocale'])->name('set-locale');
     
+    // 번역 추적 관리
+    Route::post('/languages/toggle-trace', [LanguageController::class, 'toggleTrace'])->name('languages.toggle-trace');
+    Route::post('/languages/clear-locations', [LanguageController::class, 'clearLocations'])->name('languages.clear-locations');
+    Route::post('/languages/clear-current-page-locations', [LanguageController::class, 'clearCurrentPageLocations'])->name('languages.clear-current-page-locations');
+    Route::get('/languages/trace-status', [LanguageController::class, 'getTraceStatus'])->name('languages.trace-status');
+    
     // 게시물 보기 (새 창용)
     Route::get('/board/{boardSlug}/posts/{postId}', [SiteManagerFileController::class, 'viewPost'])->name('files.view-post');
 });

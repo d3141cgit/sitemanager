@@ -67,6 +67,12 @@ return [
         'upload_path' => 'uploads',
         'image_path' => 'images',
     ],
+
+    'language' => [
+        'trace_enabled' => env('SITEMANAGER_LANGUAGE_TRACE', false),
+        'available_locales' => ['en', 'ko', 'tw'],
+        'default_locale' => 'en',
+    ],
     
     // 사이트별 커스터마이징
     'customizations' => [
