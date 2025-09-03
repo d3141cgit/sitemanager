@@ -68,8 +68,9 @@ class SiteManagerCommentController extends Controller
             ')->get();
             
             // 페이지네이션을 위한 수동 처리
+            $perPage = $request->get('per_page', config('sitemanager.ui.pagination_per_page', 20));
+            $perPage = min(max((int)$perPage, 1), 100); // 1-100 범위로 제한
             $currentPage = request()->get('page', 1);
-            $perPage = 20;
             $total = $allComments->count();
             
             $pendingComments = new \Illuminate\Pagination\LengthAwarePaginator(

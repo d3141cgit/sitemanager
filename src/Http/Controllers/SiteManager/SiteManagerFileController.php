@@ -50,7 +50,10 @@ class SiteManagerFileController extends Controller
             });
         }
 
-        $images = $query->paginate(20);
+        $perPage = $request->get('per_page', config('sitemanager.ui.pagination_per_page', 20));
+        $perPage = min(max((int)$perPage, 1), 100); // 1-100 범위로 제한
+
+        $images = $query->paginate($perPage);
         $boards = Board::orderBy('name')->get();
 
         return view('sitemanager::sitemanager.files.editor-images', compact('images', 'boards'));
@@ -77,7 +80,10 @@ class SiteManagerFileController extends Controller
             });
         }
 
-        $attachments = $query->paginate(20);
+        $perPage = $request->get('per_page', config('sitemanager.ui.pagination_per_page', 20));
+        $perPage = min(max((int)$perPage, 1), 100); // 1-100 범위로 제한
+
+        $attachments = $query->paginate($perPage);
         $boards = Board::orderBy('name')->get();
 
         return view('sitemanager::sitemanager.files.board-attachments', compact('attachments', 'boards'));

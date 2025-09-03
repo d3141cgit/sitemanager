@@ -358,11 +358,14 @@ class SiteManagerBoardController extends Controller
     /**
      * 게시판 목록
      */
-    public function index(): View
+    public function index(Request $request): View
     {
+        $perPage = $request->get('per_page', config('sitemanager.ui.pagination_per_page', 20));
+        $perPage = min(max((int)$perPage, 1), 100); // 1-100 범위로 제한
+
         $boards = Board::with('menu')
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate($perPage);
 
         // 각 게시판의 통계 정보를 미리 계산
         $pendingCommentsCount = $this->boardService->getAllBoardsPendingCommentsCount();

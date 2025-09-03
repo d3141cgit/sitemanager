@@ -38,7 +38,10 @@ class SiteManagerGroupController extends Controller
             $query->where('active', $request->get('status') === 'active');
         }
 
-        $groups = $query->paginate(20)->appends($request->query());
+        $perPage = $request->get('per_page', config('sitemanager.ui.pagination_per_page', 20));
+        $perPage = min(max((int)$perPage, 1), 100); // 1-100 범위로 제한
+
+        $groups = $query->paginate($perPage)->appends($request->query());
 
         return view('sitemanager::sitemanager.groups.index', compact('groups'));
     }

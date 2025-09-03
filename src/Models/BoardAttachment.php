@@ -210,11 +210,38 @@ class BoardAttachment extends Model
     }
 
     /**
-     * 관련 게시글 관계
+     * 관련 게시글 정보를 가져오는 메서드
+     */
+    public function getPost()
+    {
+        if (!$this->board_slug || !$this->post_id) {
+            return null;
+        }
+        
+        try {
+            $postModelClass = BoardPost::forBoard($this->board_slug);
+            return $postModelClass::find($this->post_id);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * 게시글 정보를 가져오는 attribute accessor
+     */
+    public function getPostAttribute()
+    {
+        return $this->getPost();
+    }
+
+    /**
+     * 관련 게시글 관계 (사용하지 않음 - 동적 모델 때문에 문제 발생)
+     * 대신 getPost() 메서드 사용
      */
     public function post()
     {
-        return $this->belongsTo(BoardPost::class, 'post_id');
+        // 이 메서드는 사용하지 않음 - getPost() 사용
+        return null;
     }
 
     /**
@@ -297,7 +324,7 @@ class BoardAttachment extends Model
      */
     public function board()
     {
-        return Board::where('slug', $this->board_slug)->first();
+        return $this->belongsTo(Board::class, 'board_slug', 'slug');
     }
 
     /**
