@@ -1,6 +1,6 @@
 @extends('sitemanager::layouts.sitemanager')
 
-@section('title', 'System Settings')
+@section('title', t('System Settings'))
 
 @push('styles')
 <style>
@@ -29,7 +29,7 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="mb-0">
-                    <i class="bi bi-gear me-2"></i>System Settings
+                    <i class="bi bi-gear me-2"></i>{{ t('System Settings') }}
                 </h1>
             </div>
 
@@ -38,7 +38,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
-                                <i class="bi bi-sliders me-2"></i>Configuration
+                                <i class="bi bi-sliders me-2"></i>{{ t('Configuration') }}
                             </h5>
                         </div>
                         <div class="card-body">
@@ -49,10 +49,10 @@
                                     <table class="table table-bordered">
                                         <thead class="table-light">
                                             <tr>
-                                                <th class="col-type">Type</th>
-                                                <th class="col-key">Key</th>
-                                                <th class="col-value">Value</th>
-                                                <th class="col-action">Action</th>
+                                                <th class="col-type">{{ t('Type') }}</th>
+                                                <th class="col-key">{{ t('Key') }}</th>
+                                                <th class="col-value">{{ t('Value') }}</th>
+                                                <th class="col-action">{{ t('Action') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -81,7 +81,7 @@
                                                             <input type="hidden" name="val[{{ $config->id }}]" value="false">
                                                             <input type="checkbox" class="form-check-input" name="val[{{ $config->id }}]" value="true" @checked($config->value == 'true' || $config->value == true)>
                                                             <label class="form-check-label text-muted small">
-                                                                {{ $config->value == 'true' || $config->value == true ? 'Enabled' : 'Disabled' }}
+                                                                {{ $config->value == 'true' || $config->value == true ? t('Enabled') : t('Disabled') }}
                                                             </label>
                                                         </div>
                                                     @else
@@ -91,7 +91,7 @@
                                                 <td>
                                                     @if($isSystemConfig)
                                                         <span class="badge bg-warning text-dark">
-                                                            <i class="bi bi-lock"></i> System
+                                                            <i class="bi bi-lock"></i> {{ t('System') }}
                                                         </span>
                                                     @else
                                                         <button type="button" class="btn btn-outline-danger btn-sm delete-config" data-id="{{ $config->id }}">
@@ -112,13 +112,13 @@
                                                     </select>
                                                 </td>
                                                 <td>
-                                                    <input type="text" name="new_key" class="form-control form-control-sm" placeholder="New Key" autocomplete="off">
+                                                    <input type="text" name="new_key" class="form-control form-control-sm" placeholder="{{ t('New Key') }}" autocomplete="off">
                                                 </td>
                                                 <td>
-                                                    <input type="text" name="new_val" class="form-control form-control-sm" placeholder="New Value" autocomplete="off">
+                                                    <input type="text" name="new_val" class="form-control form-control-sm" placeholder="{{ t('New Value') }}" autocomplete="off">
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-info">New</span>
+                                                    <span class="badge bg-info">{{ t('New') }}</span>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -127,7 +127,7 @@
 
                                 <div class="d-flex justify-content-end gap-2 mt-3">
                                     <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-check-lg me-1"></i>Save Changes
+                                        <i class="bi bi-check-lg me-1"></i>{{ t('Save Changes') }}
                                     </button>
                                 </div>
                             </form>
@@ -139,28 +139,28 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
-                                <i class="bi bi-info-circle me-2"></i>Information
+                                <i class="bi bi-info-circle me-2"></i>{{ t('Information') }}
                             </h5>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <h6>Configuration Types</h6>
+                                <h6>{{ t('Configuration Types') }}</h6>
                                 <ul class="list-unstyled small">
-                                    <li><strong>cfg.text:</strong> System environment variables (synced with .env)</li>
-                                    <li><strong>cfg.bool:</strong> System boolean settings (synced with .env)</li>
-                                    <li><strong>text:</strong> Application text settings</li>
-                                    <li><strong>bool:</strong> Application boolean settings</li>
+                                    <li><strong>cfg.text:</strong> {{ t('System environment variables (synced with .env)') }}</li>
+                                    <li><strong>cfg.bool:</strong> {{ t('System boolean settings (synced with .env)') }}</li>
+                                    <li><strong>text:</strong> {{ t('Application text settings') }}</li>
+                                    <li><strong>bool:</strong> {{ t('Application boolean settings') }}</li>
                                 </ul>
                             </div>
                             
                             <div class="mb-3">
-                                <h6>Usage Notes</h6>
+                                <h6>{{ t('Usage Notes') }}</h6>
                                 <ul class="list-unstyled small text-muted">
-                                    <li>• Settings with <code>cfg.</code> prefix will update your .env file</li>
-                                    <li>• <span class="badge bg-warning text-dark">System</span> settings are protected and cannot be deleted</li>
-                                    <li>• Key names should use alphanumeric characters, underscores, and hyphens only</li>
-                                    <li>• Boolean values are stored as 'true' or 'false' strings</li>
-                                    <li>• Changes take effect immediately after saving</li>
+                                    <li>• {{ t('Settings with') }} <code>cfg.</code> {{ t('prefix will update your .env file') }}</li>
+                                    <li>• <span class="badge bg-warning text-dark">{{ t('System') }}</span> {{ t('settings are protected and cannot be deleted') }}</li>
+                                    <li>• {{ t('Key names should use alphanumeric characters, underscores, and hyphens only') }}</li>
+                                    <li>• {{ t('Boolean values are stored as \'true\' or \'false\' strings') }}</li>
+                                    <li>• {{ t('Changes take effect immediately after saving') }}</li>
                                 </ul>
                             </div>
                         </div>
@@ -169,7 +169,7 @@
                     <div class="card mt-3">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
-                                <i class="bi bi-tools me-2"></i>Other Actions
+                                <i class="bi bi-tools me-2"></i>{{ t('Other Actions') }}
                             </h5>
                         </div>
                         <div class="card-body">
@@ -177,14 +177,14 @@
                                 <form method="POST" action="{{ route('sitemanager.settings.reset-config') }}" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-outline-danger btn-sm w-100 reset-config-btn">
-                                        <i class="bi bi-arrow-clockwise me-1"></i>Reset Configuration
+                                        <i class="bi bi-arrow-clockwise me-1"></i>{{ t('Reset Configuration') }}
                                     </button>
                                 </form>
                                 
                                 <form method="POST" action="{{ route('sitemanager.settings.reset-resources') }}" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-outline-warning btn-sm w-100 reset-resources-btn">
-                                        <i class="bi bi-files me-1"></i>Reset Resources
+                                        <i class="bi bi-files me-1"></i>{{ t('Reset Resources') }}
                                     </button>
                                 </form>
                             </div>
@@ -204,14 +204,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.delete-config').forEach(function(button) {
         button.addEventListener('click', function() {
             Swal.fire({
-                title: '설정 삭제',
-                text: '이 설정을 삭제하시겠습니까?',
+                title: '{{ t("Delete Setting") }}',
+                text: '{{ t("Are you sure you want to delete this setting?") }}',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: '삭제',
-                cancelButtonText: '취소'
+                confirmButtonText: '{{ t("Delete") }}',
+                cancelButtonText: '{{ t("Cancel") }}'
             }).then((result) => {
                 if (result.isConfirmed) {
                     const row = this.closest('tr');
@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
                         this.classList.remove('btn-outline-danger');
                         this.classList.add('btn-outline-success');
-                        this.title = 'Undo delete';
+                        this.title = '{{ t("Undo delete") }}';
                         
                         // Undo 기능
                         this.onclick = function() {
@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             this.innerHTML = '<i class="bi bi-trash"></i>';
                             this.classList.remove('btn-outline-success');
                             this.classList.add('btn-outline-danger');
-                            this.title = 'Delete';
+                            this.title = '{{ t("Delete") }}';
                         };
                     }
                 }
@@ -246,14 +246,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('.reset-config-btn').addEventListener('click', function(e) {
         e.preventDefault();
         Swal.fire({
-            title: '설정 초기화',
-            text: '모든 설정을 기본값으로 초기화하시겠습니까? 사용자가 추가한 설정은 삭제됩니다.',
+            title: '{{ t("Reset Configuration") }}',
+            text: '{{ t("Are you sure you want to reset all settings to default values? User-added settings will be deleted.") }}',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: '초기화',
-            cancelButtonText: '취소'
+            confirmButtonText: '{{ t("Reset") }}',
+            cancelButtonText: '{{ t("Cancel") }}'
         }).then((result) => {
             if (result.isConfirmed) {
                 this.closest('form').submit();
@@ -265,14 +265,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('.reset-resources-btn').addEventListener('click', function(e) {
         e.preventDefault();
         Swal.fire({
-            title: '리소스 초기화',
-            text: '모든 리소스 파일을 초기화하시겠습니까? CSS/JS 캐시가 삭제되고 다시 생성됩니다.',
+            title: '{{ t("Reset Resources") }}',
+            text: '{{ t("Are you sure you want to reset all resource files? CSS/JS cache will be deleted and regenerated.") }}',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ffc107',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: '초기화',
-            cancelButtonText: '취소'
+            confirmButtonText: '{{ t("Reset") }}',
+            cancelButtonText: '{{ t("Cancel") }}'
         }).then((result) => {
             if (result.isConfirmed) {
                 this.closest('form').submit();
@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
             checkbox.addEventListener('change', function() {
                 const label = this.nextElementSibling;
                 if (label) {
-                    label.textContent = this.checked ? 'Enabled' : 'Disabled';
+                    label.textContent = this.checked ? '{{ t("Enabled") }}' : '{{ t("Disabled") }}';
                 }
             });
         }

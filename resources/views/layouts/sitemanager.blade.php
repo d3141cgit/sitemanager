@@ -36,14 +36,14 @@
                         <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.dashboard')]) 
                             href="{{ route('sitemanager.dashboard') }}">
                             <i class="bi bi-speedometer2"></i>
-                            Dashboard
+                            {{ t('Dashboard') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.members.*')]) 
                            href="{{ route('sitemanager.members.index') }}">
                             <i class="bi bi-people"></i>
-                            Members
+                            {{ t('Members') }}
                         </a>
                     </li>
                     
@@ -51,7 +51,7 @@
                         <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.groups.*')]) 
                            href="{{ route('sitemanager.groups.index') }}">
                             <i class="bi bi-collection"></i>
-                            Groups
+                            {{ t('Groups') }}
                         </a>
                     </li>
                     
@@ -59,7 +59,7 @@
                         <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.menus.*')]) 
                            href="{{ route('sitemanager.menus.index') }}">
                             <i class="bi bi-list"></i>
-                            Menus
+                            {{ t('Menus') }}
                         </a>
                     </li>
                     
@@ -67,7 +67,7 @@
                         <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.boards.*') || request()->routeIs('sitemanager.comments.*')]) 
                            href="{{ route('sitemanager.boards.index') }}">
                             <i class="bi bi-journal-text"></i>
-                            Boards
+                            {{ t('Boards') }}
                         </a>
                     </li>
                     
@@ -75,30 +75,37 @@
                         <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.files.*')]) 
                            href="#" id="filesDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="bi bi-files"></i>
-                            Files
+                            {{ t('Files') }}
                         </a>
                         <ul class="dropdown-menu">
                             <li>
                                 <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.files.editor-images')]) 
                                    href="{{ route('sitemanager.files.editor-images') }}">
                                     <i class="bi bi-image"></i>
-                                    Editor Images
+                                    {{ t('Editor Images') }}
                                 </a>
                             </li>
                             <li>
                                 <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.files.board-attachments')]) 
                                    href="{{ route('sitemanager.files.board-attachments') }}">
                                     <i class="bi bi-paperclip"></i>
-                                    Board Attachments
+                                    {{ t('Board Attachments') }}
                                 </a>
                             </li>
                         </ul>
                     </li>
                     <li class="nav-item">
+                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.languages.*')]) 
+                           href="{{ route('sitemanager.languages.index') }}">
+                            <i class="bi bi-translate"></i>
+                            {{ t('Languages') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.settings.*')]) 
                            href="{{ route('sitemanager.settings') }}">
                             <i class="bi bi-gear"></i>
-                            Settings
+                            {{ t('Settings') }}
                         </a>
                     </li>
                 </ul>
@@ -120,7 +127,7 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li>
                                 <a class="dropdown-item" href="{{ route('sitemanager.members.edit', auth()->user()->id) }}">
-                                    <i class="bi bi-person me-2"></i>Profile
+                                    <i class="bi bi-person me-2"></i>{{ t('Profile') }}
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
@@ -128,7 +135,7 @@
                                 <form action="{{ route('logout') }}" method="POST" class="d-inline">
                                     @csrf
                                     <button type="submit" class="dropdown-item">
-                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                        <i class="bi bi-box-arrow-right me-2"></i>{{ t('Logout') }}
                                     </button>
                                 </form>
                             </li>
@@ -160,7 +167,7 @@
         @if(session('success'))
             Swal.fire({
                 icon: 'success',
-                title: '성공!',
+                title: '{{ t("Success") }}!',
                 html: {!! json_encode(session('success')) !!},
                 timer: 3000,
                 timerProgressBar: true,
@@ -173,7 +180,7 @@
         @if(session('error'))
             Swal.fire({
                 icon: 'error',
-                title: '오류!',
+                title: '{{ t("Error") }}!',
                 html: {!! json_encode(session('error')) !!},
                 timer: 5000,
                 timerProgressBar: true,
@@ -186,7 +193,7 @@
         @if($errors->any())
             Swal.fire({
                 icon: 'error',
-                title: '입력 오류!',
+                title: '{{ t("Input Error") }}!',
                 html: `
                     <ul style="text-align: left; margin: 0; padding-left: 20px;">
                         @foreach($errors->all() as $error)

@@ -23,6 +23,7 @@ class SiteManagerServiceProvider extends ServiceProvider
         require_once __DIR__.'/Helpers/navigation_helpers.php';
         require_once __DIR__.'/Helpers/PermissionHelper.php';
         require_once __DIR__.'/Helpers/ResourceHelper.php';
+        require_once __DIR__.'/Helpers/translation.php';
         
         // 설정 파일 로드
         $this->mergeConfigFrom(__DIR__.'/../config/sitemanager.php', 'sitemanager');

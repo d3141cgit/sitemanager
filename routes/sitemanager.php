@@ -8,6 +8,7 @@ use SiteManager\Http\Controllers\SiteManager\SiteManagerBoardController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerCommentController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerFileController;
 use SiteManager\Http\Controllers\MenuController;
+use SiteManager\Http\Controllers\LanguageController;
 
 // 사이트매니저 라우트
 Route::middleware(['auth', 'sitemanager'])->prefix('sitemanager')->name('sitemanager.')->group(function () {
@@ -69,6 +70,13 @@ Route::middleware(['auth', 'sitemanager'])->prefix('sitemanager')->name('siteman
         Route::delete('/board-attachments/{attachment}', [SiteManagerFileController::class, 'deleteBoardAttachment'])->name('board-attachments.delete');
         Route::post('/board-attachments/{attachment}/replace', [SiteManagerFileController::class, 'replaceBoardAttachment'])->name('board-attachments.replace');
     });
+    
+    // 언어 관리
+    Route::get('/languages', [LanguageController::class, 'index'])->name('languages.index');
+    Route::put('/languages/{language}', [LanguageController::class, 'update'])->name('languages.update');
+    Route::delete('/languages/{language}', [LanguageController::class, 'destroy'])->name('languages.destroy');
+    Route::post('/languages/cleanup', [LanguageController::class, 'cleanup'])->name('languages.cleanup');
+    Route::post('/set-locale', [LanguageController::class, 'setLocale'])->name('set-locale');
     
     // 게시물 보기 (새 창용)
     Route::get('/board/{boardSlug}/posts/{postId}', [SiteManagerFileController::class, 'viewPost'])->name('files.view-post');
