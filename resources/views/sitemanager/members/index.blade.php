@@ -78,9 +78,7 @@
                     <td class="number right">{{ $member->id }}</td>
                     <td width="50">
                         @if($member->profile_photo)
-                            <img src="{{ $member->profile_photo_url }}" 
-                                    alt="{{ $member->name }}'s profile photo" 
-                                    class="member-profile-photo">
+                            <img src="{{ $member->profile_photo_url }}" alt="{{ $member->name }}'s profile photo" class="member-profile-photo">
                         @else
                             <div class="member-profile-placeholder">
                                 <i class="bi bi-person"></i>

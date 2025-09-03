@@ -179,7 +179,9 @@ main { padding: 2rem 0; }
 
 .default-form .groups { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
 .default-form .card-body h5 { border-top: dashed 1px var(--bs-gray-500); padding-top: 1.5rem; margin-top: 1.5rem; }
+.default-form .form-switch { padding-top: 6px; }
 
+.default-form .group-members .form-check { font-size: 0.9em; }
 
 .pagination .page-link, .pagination-nav select { font-size: 0.8rem; font-weight: 600; }
 .active>.page-link, .page-link.active { background-color: var(--red-dark); border-color: var(--red-dark); }
