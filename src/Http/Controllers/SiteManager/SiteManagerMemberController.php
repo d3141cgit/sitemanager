@@ -27,6 +27,8 @@ class SiteManagerMemberController extends Controller
         // 삭제된 멤버 포함 여부
         if ($request->get('status') === 'deleted') {
             $query->onlyTrashed();
+        } elseif ($request->get('status') === 'inactive') {
+            $query->where('active', false);
         } elseif ($request->get('status') === 'all') {
             // 'all' 상태일 때만 모든 멤버 표시 (active + inactive, 삭제된 것 제외)
         } else {
@@ -276,6 +278,8 @@ class SiteManagerMemberController extends Controller
         $updateData = ['active' => $newStatus];
         if (!$newStatus) {
             $updateData['level'] = 0;
+        } else {
+            $updateData['level'] = 1; // 활성화 시 기본 레벨을 1로 설정
         }
         
         $member->update($updateData);

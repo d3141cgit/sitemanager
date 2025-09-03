@@ -20,122 +20,123 @@
         <span class="spinner"></span>
     </div>
     
-    <nav class="navbar navbar-expand-lg sticky-top">
+    <header class="sticky-top">
         <div class="container">
-            <a href="{{ route('sitemanager.dashboard') }}">
-                <img src="/images/sitemanager.svg" alt="Site Manager Logo" class="navbar-logo">
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <div id="nav-icon"><em aria-hidden="true"></em></div>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.dashboard')]) 
+            <nav>
+                <a href="{{ route('sitemanager.dashboard') }}">
+                    <img src="/images/sitemanager.svg" alt="Site Manager Logo" class="logo">
+                </a>
+                    
+                <ul>
+                    <li>
+                        <a @class(['active' => request()->routeIs('sitemanager.dashboard')]) 
                             href="{{ route('sitemanager.dashboard') }}">
                             <i class="bi bi-speedometer2"></i>
                             {{ t('Dashboard') }}
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.members.*')]) 
-                           href="{{ route('sitemanager.members.index') }}">
+                    <li>
+                        <a @class(['active' => request()->routeIs('sitemanager.members.*')]) 
+                            href="{{ route('sitemanager.members.index') }}">
                             <i class="bi bi-people"></i>
                             {{ t('Members') }}
                         </a>
                     </li>
                     
-                    <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.groups.*')]) 
-                           href="{{ route('sitemanager.groups.index') }}">
+                    <li>
+                        <a @class(['active' => request()->routeIs('sitemanager.groups.*')]) 
+                            href="{{ route('sitemanager.groups.index') }}">
                             <i class="bi bi-collection"></i>
                             {{ t('Groups') }}
                         </a>
                     </li>
                     
-                    <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.menus.*')]) 
-                           href="{{ route('sitemanager.menus.index') }}">
+                    <li>
+                        <a @class(['active' => request()->routeIs('sitemanager.menus.*')]) 
+                            href="{{ route('sitemanager.menus.index') }}">
                             <i class="bi bi-list"></i>
                             {{ t('Menus') }}
                         </a>
                     </li>
                     
-                    <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.boards.*') || request()->routeIs('sitemanager.comments.*')]) 
-                           href="{{ route('sitemanager.boards.index') }}">
+                    <li>
+                        <a @class(['active' => request()->routeIs('sitemanager.boards.*') || request()->routeIs('sitemanager.comments.*')]) 
+                            href="{{ route('sitemanager.boards.index') }}">
                             <i class="bi bi-journal-text"></i>
                             {{ t('Boards') }}
                         </a>
                     </li>
                     
-                    <li class="nav-item dropdown">
+                    <li class="dropdown">
                         <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.files.*')]) 
-                           href="#" id="filesDropdown" role="button" data-bs-toggle="dropdown">
+                            href="#" id="filesDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="bi bi-files"></i>
                             {{ t('Files') }}
                         </a>
                         <ul class="dropdown-menu">
                             <li>
                                 <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.files.editor-images')]) 
-                                   href="{{ route('sitemanager.files.editor-images') }}">
+                                    href="{{ route('sitemanager.files.editor-images') }}">
                                     <i class="bi bi-image"></i>
                                     {{ t('Editor Images') }}
                                 </a>
                             </li>
                             <li>
                                 <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.files.board-attachments')]) 
-                                   href="{{ route('sitemanager.files.board-attachments') }}">
+                                    href="{{ route('sitemanager.files.board-attachments') }}">
                                     <i class="bi bi-paperclip"></i>
                                     {{ t('Board Attachments') }}
                                 </a>
                             </li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.languages.*')]) 
-                           href="{{ route('sitemanager.languages.index') }}">
-                            <i class="bi bi-translate"></i>
-                            {{ t('Languages') }}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a @class(['nav-link', 'active' => request()->routeIs('sitemanager.settings.*')]) 
-                           href="{{ route('sitemanager.settings') }}">
+                    
+                    <li class="dropdown">
+                        <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.settings.*') || request()->routeIs('sitemanager.languages.*')]) 
+                            href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="bi bi-gear"></i>
                             {{ t('Settings') }}
                         </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.languages.*')]) 
+                                    href="{{ route('sitemanager.languages.index') }}">
+                                    <i class="bi bi-translate"></i>
+                                    {{ t('Languages') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.settings.*')]) 
+                                    href="{{ route('sitemanager.settings') }}">
+                                    <i class="bi bi-gear"></i>
+                                    {{ t('System Settings') }}
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                </ul>
-                
-                <ul class="navbar-user">                    
-                    <!-- User Profile -->
+
                     <li class="dropdown">
-                        <a class="d-flex align-items-center" href="#" id="userDropdown" 
-                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             @if(auth()->user()->profile_photo)
                                 <img src="{{ auth()->user()->profile_photo_url }}" 
-                                     alt="{{ auth()->user()->name }}'s profile photo" 
-                                     class="admin-profile-photo">
+                                        alt="{{ auth()->user()->name }}'s profile photo" 
+                                        class="admin-profile-photo">
                             @else
-                                <i class="bi bi-person-circle me-2"></i>
+                                <i class="bi bi-person-circle"></i>
                             @endif
                             {{ auth()->user()->name }}
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
                             <li>
                                 <a class="dropdown-item" href="{{ route('sitemanager.members.edit', auth()->user()->id) }}">
-                                    <i class="bi bi-person me-2"></i>{{ t('Profile') }}
+                                    <i class="bi bi-person"></i>{{ t('Profile') }}
                                 </a>
                             </li>
-                            <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form action="{{ route('logout') }}" method="POST" class="d-inline">
                                     @csrf
                                     <button type="submit" class="dropdown-item">
-                                        <i class="bi bi-box-arrow-right me-2"></i>{{ t('Logout') }}
+                                        <i class="bi bi-box-arrow-right"></i>{{ t('Logout') }}
                                     </button>
                                 </form>
                             </li>
@@ -148,12 +149,12 @@
                         </a>
                     </li>
                 </ul>
-            </div>
+            </nav>
         </div>
-    </nav>
+    </header>
     
-    <main class="content px-3 py-4">
-        <div class="container-fluid">
+    <main>
+        <div class="container">
             @yield('content')
         </div>
     </main>

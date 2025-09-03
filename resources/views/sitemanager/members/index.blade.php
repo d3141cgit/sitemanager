@@ -3,228 +3,186 @@
 @section('title', t('Members List'))
 
 @section('content')
-<div class="container">
+<div class="content-header">
+    <h1>
+        <a href="{{ route('sitemanager.members.index') }}">
+            <i class="bi bi-people opacity-75"></i> {{ t('Members List') }}
+        </a>
 
-    <!-- Header Section - Responsive -->
-    <div class="mb-4">
-        <!-- Desktop Header -->
-        <div class="d-none d-md-flex justify-content-between align-items-center mb-3">
-            <h1 class="mb-0">
-                <a href="{{ route('sitemanager.members.index') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-people opacity-75"></i> {{ t('Members List') }}
-                    <span class="ms-2">({{ number_format($members->total()) }})</span>
-                </a>
-            </h1>
-            <a href="{{ route('sitemanager.members.create') }}" class="btn btn-primary text-white">
-                <i class="bi bi-person-plus"></i> {{ t('Add New Member') }}
-            </a>
-        </div>
+        <span class="count">{{ number_format($members->total()) }}</span>
+    </h1>
 
-        <!-- Mobile Header -->
-        <div class="d-md-none">
-            <h4 class="mb-3">
-                <a href="{{ route('sitemanager.members.index') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-people opacity-75"></i> {{ t('Members List') }}
-                    <span class="ms-2">({{ number_format($members->total()) }})</span>
-                </a>
-            </h4>
-            <div class="d-grid mb-3">
-                <a href="{{ route('sitemanager.members.create') }}" class="btn btn-primary text-white">
-                    <i class="bi bi-person-plus me-2"></i>{{ t('Add New Member') }}
-                </a>
-            </div>
-        </div>
-    </div>
+    <a href="{{ route('sitemanager.members.create') }}" class="btn-default">
+        <i class="bi bi-person-plus"></i> {{ t('Add New Member') }}
+    </a>
+</div>
 
-    <!-- Search Form -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <form method="GET" action="{{ route('sitemanager.members.index') }}" class="search-form">
-                <!-- Search Input Row -->
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-search"></i></span>
-                            <input type="text" name="search" class="form-control" 
-                                   placeholder="{{ t('Search by name, username, or email...') }}" 
-                                   value="{{ request('search') }}">
-                        </div>
-                    </div>
-                </div>
+<form method="GET" action="{{ route('sitemanager.members.index') }}" class="search-form">  
+    <input type="text" name="search" class="form-control" placeholder="{{ t('Search by name, username, or email...') }}" value="{{ request('search') }}">
+    
+    <select name="level" class="form-select">
+        <option value="">{{ t('All Levels') }}</option>
+        @foreach($levels as $levelValue => $levelName)
+            <option value="{{ $levelValue }}" {{ request('level') == $levelValue ? 'selected' : '' }}>
+                {{ $levelValue }} - {{ $levelName }}
+            </option>
+        @endforeach
+    </select>
 
-                <!-- Filter Options Row -->
-                <div class="row mb-3">
-                    <div class="col-md-3 col-6 mb-2 mb-md-0">
-                        <select name="level" class="form-select">
-                            <option value="">{{ t('All Levels') }}</option>
-                            @foreach($levels as $levelValue => $levelName)
-                                <option value="{{ $levelValue }}" {{ request('level') == $levelValue ? 'selected' : '' }}>
-                                    {{ $levelValue }} - {{ $levelName }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3 col-6 mb-2 mb-md-0">
-                        <select name="group_id" class="form-select">
-                            <option value="">{{ t('All Groups') }}</option>
-                            @foreach($groups as $group)
-                                <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>
-                                    {{ $group->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3 col-12 mb-2 mb-md-0">
-                        <select name="status" class="form-select">
-                            <option value="active" {{ (request('status', 'active') == 'active') ? 'selected' : '' }}>{{ t('Active') }}</option>
-                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>{{ t('Inactive') }}</option>
-                            <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>{{ t('All Status') }}</option>
-                            <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>{{ t('Deleted') }}</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3 col-12">
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary flex-fill">
-                                <i class="bi bi-search me-2"></i>{{ t('Search') }}
-                            </button>
-                            @if(request()->hasAny(['search', 'level', 'group_id', 'status']))
-                                <a href="{{ route('sitemanager.members.index') }}" class="btn btn-outline-secondary">
-                                    <i class="bi bi-x-circle"></i>
-                                </a>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+    <select name="group_id" class="form-select">
+        <option value="">{{ t('All Groups') }}</option>
+        @foreach($groups as $group)
+            <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>
+                {{ $group->name }}
+            </option>
+        @endforeach
+    </select>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>{{ t('ID') }}</th>
-                    <th>{{ t('Photo') }}</th>
-                    <th>{{ t('Name') }}</th>
-                    <th>{{ t('Username') }}</th>
-                    <th>{{ t('Email') }}</th>
-                    <th>{{ t('Groups') }}</th>
-                    <th>{{ t('Level') }}</th>
-                    <th>{{ t('Status') }}</th>
-                    <th>{{ t('Join Date') }}</th>
-                    <th class="text-end">{{ t('Actions') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($members as $member)
-                    <tr class="{{ $member->trashed() ? 'table-secondary' : '' }}">
-                        <td>{{ $member->id }}</td>
-                        <td>
-                            @if($member->profile_photo)
-                                <img src="{{ $member->profile_photo_url }}" 
-                                     alt="{{ $member->name }}'s profile photo" 
-                                     class="member-profile-photo">
-                            @else
-                                <div class="member-profile-placeholder">
-                                    <i class="bi bi-person"></i>
-                                </div>
-                            @endif
-                        </td>
-                        <td nowrap>
-                            <strong>{{ $member->name }}</strong>
+    <select name="status" class="form-select">
+        <option value="active" {{ (request('status', 'active') == 'active') ? 'selected' : '' }}>{{ t('Active') }}</option>
+        <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>{{ t('Inactive') }}</option>
+        <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>{{ t('All Status') }}</option>
+        <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>{{ t('Deleted') }}</option>
+    </select>
+
+    <button type="submit" class="btn btn-outline-secondary">
+        <i class="bi bi-search me-2"></i>{{ t('Search') }}
+    </button>
+
+    @if(request()->hasAny(['search', 'level', 'group_id', 'status']))
+        <a href="{{ route('sitemanager.members.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle"></i>
+        </a>
+    @endif
+</form>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th class="right">{{ t('ID') }}</th>
+                <th>{{ t('Photo') }}</th>
+                <th>{{ t('Name') }}</th>
+                <th>{{ t('Username') }}</th>
+                <th>{{ t('Email') }}</th>
+                <th>{{ t('Groups') }}</th>
+                <th>{{ t('Level') }}</th>
+                <th class="text-center">{{ t('Status') }}</th>
+                <th>{{ t('Join Date') }}</th>
+                <th class="text-end">{{ t('Actions') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($members as $member)
+                <tr class="{{ $member->trashed() ? 'table-secondary' : '' }}">
+                    <td class="number right">{{ $member->id }}</td>
+                    <td width="50">
+                        @if($member->profile_photo)
+                            <img src="{{ $member->profile_photo_url }}" 
+                                    alt="{{ $member->name }}'s profile photo" 
+                                    class="member-profile-photo">
+                        @else
+                            <div class="member-profile-placeholder">
+                                <i class="bi bi-person"></i>
+                            </div>
+                        @endif
+                    </td>
+                    <td nowrap>
+                        <div class="member-info">
+                            <span class="name">{{ $member->name }}</span>
                             <span class="text-muted">{{ $member->title }}</span>
                             @if($member->isAdmin())
-                                <span class="badge bg-danger ms-1">{{ t('Admin') }}</span>
+                                <span class="badge rounded-pill bg-light text-danger">{{ t('Admin') }}</span>
                             @endif
                             @if($member->trashed())
-                                <span class="badge bg-secondary ms-1">{{ t('Deleted') }}</span>
+                                <span class="badge rounded-pill bg-light text-secondary">{{ t('Deleted') }}</span>
                             @endif
-                        </td>
-                        <td>{{ $member->username }}</td>
-                        <td>{{ $member->email ?? 'N/A' }}</td>
-                        <td>
-                            @if($member->groups->count() > 0)
-                                @foreach($member->groups as $group)
-                                    <span class="badge bg-info text-dark me-1 mb-1">{{ $group->name }}</span>
-                                @endforeach
-                            @endif
-                        </td>
-                        <td>
-                            <span class="badge bg-{{ $member->isAdmin() ? 'danger' : ($member->isStaff() ? 'warning' : 'secondary') }}">
-                                {{ $member->level_display }}
+                        </div>
+                    </td>
+                    <td class="number">{{ $member->username }}</td>
+                    <td class="number">{{ $member->email ?? 'N/A' }}</td>
+                    <td>
+                        @if($member->groups->count() > 0)
+                            @foreach($member->groups as $group)
+                                <span class="badge bg-info text-dark me-1 mb-1">{{ $group->name }}</span>
+                            @endforeach
+                        @endif
+                    </td>
+                    <td>
+                        <span class="member-level text-{{ $member->isAdmin() ? 'danger' : ($member->isStaff() ? 'warning' : 'secondary') }}">
+                            {{ $member->level_display }}
+                        </span>
+                    </td>
+                    <td class="member-status text-center">
+                        @if($member->trashed())
+                            <span class="text-secondary">{{ t('Deleted') }}</span>
+                        @elseif(Auth::user()->isAdmin() && Auth::user()->id !== $member->id)
+                            <button class="text-{{ $member->active ? 'success' : 'danger' }} member-status-toggle" 
+                                    data-member-id="{{ $member->id }}" 
+                                    data-current-status="{{ $member->active ? 'true' : 'false' }}"
+                                    title="{{ t('Click to') }} {{ $member->active ? t('deactivate') : t('activate') }}">
+                                {{ $member->active ? t('Active') : t('Inactive') }}
+                            </button>
+                        @else
+                            <span class="text-{{ $member->active ? 'success' : 'danger' }}">
+                                {{ $member->active ? t('Active') : t('Inactive') }}
                             </span>
-                        </td>
-                        <td>
-                            @if($member->trashed())
-                                <span class="badge bg-secondary">{{ t('Deleted') }}</span>
-                            @elseif(Auth::user()->isAdmin() && Auth::user()->id !== $member->id)
-                                <button class="badge bg-{{ $member->active ? 'success' : 'danger' }} border-0 member-status-toggle" 
-                                        data-member-id="{{ $member->id }}" 
-                                        data-current-status="{{ $member->active ? 'true' : 'false' }}"
-                                        title="{{ t('Click to') }} {{ $member->active ? t('deactivate') : t('activate') }}">
-                                    {{ $member->active ? t('Active') : t('Inactive') }}
-                                </button>
-                            @else
-                                <span class="badge bg-{{ $member->active ? 'success' : 'danger' }}">
-                                    {{ $member->active ? t('Active') : t('Inactive') }}
-                                </span>
+                        @endif
+                    </td>
+                    <td nowrap class="number">{{ $member->created_at->format('Y-m-d') }}</td>
+                    <td class="text-end actions" nowrap>
+                        @if($member->trashed())
+                            @if(Auth::user()->isAdmin())
+                                <form method="POST" action="{{ route('sitemanager.members.restore', $member->id) }}" 
+                                        class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-success" title="{{ t('Restore Member') }}">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('sitemanager.members.force-delete', $member->id) }}" 
+                                        class="d-inline delete-member-form"
+                                        data-type="force">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('Force Delete') }}">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
                             @endif
-                        </td>
-                        <td nowrap>{{ $member->created_at->format('Y-m-d') }}</td>
-                        <td class="text-end" nowrap>
-                            @if($member->trashed())
-                                @if(Auth::user()->isAdmin())
-                                    <form method="POST" action="{{ route('sitemanager.members.restore', $member->id) }}" 
-                                            class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-sm btn-outline-success" title="{{ t('Restore Member') }}">
-                                            <i class="bi bi-arrow-clockwise"></i>
-                                        </button>
-                                    </form>
-                                    <form method="POST" action="{{ route('sitemanager.members.force-delete', $member->id) }}" 
-                                            class="d-inline delete-member-form"
-                                            data-type="force">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('Force Delete') }}">
-                                            <i class="bi bi-trash3"></i>
-                                        </button>
-                                    </form>
-                                @endif
-                            @else
-                                @if(Auth::user()->id === $member->id || Auth::user()->isAdmin())
-                                    <a href="{{ route('sitemanager.members.edit', $member) }}" 
-                                        class="btn btn-sm btn-outline-primary" title="{{ t('Edit Member') }}">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                @endif
-
-                                @if(Auth::user()->isAdmin() && Auth::user()->id !== $member->id)
-                                    <form method="POST" action="{{ route('sitemanager.members.destroy', $member) }}" 
-                                            class="d-inline delete-member-form"
-                                            data-type="soft">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('Delete Member') }}">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                @endif
+                        @else
+                            @if(Auth::user()->id === $member->id || Auth::user()->isAdmin())
+                                <a href="{{ route('sitemanager.members.edit', $member) }}" 
+                                    class="btn btn-sm btn-outline-primary" title="{{ t('Edit Member') }}">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
                             @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="10" class="text-center">{{ t('No members found.') }}</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
 
-    {{ $members->links() }}
-
+                            @if(Auth::user()->isAdmin() && Auth::user()->id !== $member->id)
+                                <form method="POST" action="{{ route('sitemanager.members.destroy', $member) }}" 
+                                        class="d-inline delete-member-form"
+                                        data-type="soft">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('Delete Member') }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            @endif
+                        @endif
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="10" class="text-center">{{ t('No members found.') }}</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
 </div>
+
+{{ $members->links() }}
+
 @endsection
 
 @push('scripts')
@@ -315,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             } else {
                                 // 상태 업데이트
                                 this.textContent = newStatus ? '{{ t("Active") }}' : '{{ t("Inactive") }}';
-                                this.className = `badge bg-${newStatus ? 'success' : 'danger'} border-0 member-status-toggle`;
+                                this.className = `text-${newStatus ? 'success' : 'danger'} border-0 member-status-toggle`;
                                 this.dataset.currentStatus = newStatus.toString();
                                 this.title = `{{ t("Click to") }} ${newStatus ? '{{ t("deactivate") }}' : '{{ t("activate") }}'}`;
                             }
