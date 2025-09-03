@@ -3,251 +3,183 @@
 @section('title', t('Language Management'))
 
 @section('content')
-<div class="container">
+<div class="content-header">
+    <h1>
+        <a href="{{ route('sitemanager.languages.index') }}">
+            <i class="bi bi-translate opacity-75"></i> {{ t('Language Management') }}
+        </a>
 
-    <!-- Header Section - Responsive -->
-    <div class="mb-4">
-        <!-- Desktop Header -->
-        <div class="d-none d-md-flex justify-content-between align-items-center mb-3">
-            <h1 class="mb-0">
-                <a href="{{ route('sitemanager.languages.index') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-translate opacity-75"></i> {{ t('Language Management') }}
-                    <span class="ms-2">({{ number_format($languages->total()) }})</span>
-                </a>
-            </h1>
-            <div class="d-flex gap-2">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="traceToggle">
-                    <label class="form-check-label" for="traceToggle">
-                        {{ t('Trace Mode') }}
-                    </label>
-                </div>
-                @if(auth()->user()->level === 255)
-                <button class="btn btn-info btn-sm" onclick="clearLocations()">
-                    <i class="bi bi-geo"></i> {{ t('Clear Locations') }}
-                </button>
-                @endif
-                <button class="btn btn-warning text-white" onclick="cleanupLanguages()">
-                    <i class="bi bi-arrow-clockwise"></i> {{ t('Cleanup Unused') }}
-                </button>
-            </div>
-        </div>
+        <span class="count">{{ number_format($languages->total()) }}</span>
+    </h1>
 
-        <!-- Mobile Header -->
-        <div class="d-md-none">
-            <h4 class="mb-3">
-                <a href="{{ route('sitemanager.languages.index') }}" class="text-decoration-none text-dark">
-                    <i class="bi bi-translate opacity-75"></i> {{ t('Language Management') }}
-                    <span class="ms-2">({{ number_format($languages->total()) }})</span>
-                </a>
-            </h4>
-            <div class="d-grid mb-3">
-                <button class="btn btn-warning text-white" onclick="cleanupLanguages()">
-                    <i class="bi bi-arrow-clockwise me-2"></i>{{ t('Cleanup Unused') }}
-                </button>
-            </div>
+    <div class="d-flex gap-2">
+        <div class="form-check form-switch pt-1">
+            <input class="form-check-input" type="checkbox" id="traceToggle">
+            <label class="form-check-label" for="traceToggle">
+                {{ t('Trace Mode') }}
+            </label>
         </div>
-    </div>
-
-    <!-- Search Form -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <form method="GET" action="{{ route('sitemanager.languages.index') }}" class="search-form">
-                <div class="row">
-                    <div class="col-md-4 mb-3 mb-md-0">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-search"></i></span>
-                            <input type="text" name="search" class="form-control" 
-                                   placeholder="{{ t('Search by key, translation, or location...') }}" 
-                                   value="{{ request('search') }}"
-                                   title="{{ t('Press Enter to search') }}">
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3 mb-md-0">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                            <input type="text" name="location" class="form-control" 
-                                   placeholder="{{ t('Filter by location...') }}" 
-                                   value="{{ request('location') }}"
-                                   list="location-suggestions"
-                                   title="{{ t('Select from suggestions or press Enter to search') }}">
-                            <datalist id="location-suggestions">
-                                @foreach($existingLocations as $location)
-                                    <option value="{{ $location }}">
-                                @endforeach
-                            </datalist>
-                        </div>
-                    </div>
-                    <div class="col-md-2 mb-3 mb-md-0">
-                        <select name="status" class="form-select">
-                            <option value="">{{ t('All Keys') }}</option>
-                            <option value="translated" {{ request('status') == 'translated' ? 'selected' : '' }}>{{ t('Fully Translated') }}</option>
-                            <option value="partial" {{ request('status') == 'partial' ? 'selected' : '' }}>{{ t('Partially Translated') }}</option>
-                            <option value="untranslated" {{ request('status') == 'untranslated' ? 'selected' : '' }}>{{ t('Untranslated') }}</option>
-                            <option value="no_location" {{ request('status') == 'no_location' ? 'selected' : '' }}>{{ t('No Location') }}</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary flex-fill" title="{{ t('Search (Press Enter)') }}">
-                                <i class="bi bi-search me-2"></i>{{ t('Search') }}
-                            </button>
-                            @if(request()->hasAny(['search', 'location', 'status']))
-                                <a href="{{ route('sitemanager.languages.index') }}" class="btn btn-outline-secondary" title="{{ t('Clear all filters') }}">
-                                    <i class="bi bi-x-circle"></i>
-                                </a>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Success Alert -->
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    <!-- Main Content Card -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-bottom-0 py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0 text-primary">
-                    <i class="bi bi-list-ul me-2"></i>{{ t('Translation Keys') }}
-                    @if(request()->hasAny(['search', 'location', 'status']))
-                        <small class="text-muted ms-2">
-                            ({{ t('Filtered') }}: 
-                            @if(request('search'))
-                                {{ t('search') }}: "{{ request('search') }}"
-                            @endif
-                            @if(request('location'))
-                                @if(request('search')), @endif
-                                {{ t('location') }}: "{{ request('location') }}"
-                            @endif
-                            @if(request('status'))
-                                @if(request('search') || request('location')), @endif
-                                {{ t('status') }}: {{ request('status') }}
-                            @endif
-                            )
-                        </small>
-                    @endif
-                </h5>
-                <small class="text-muted">{{ t('Total') }}: {{ number_format($languages->total()) }}</small>
-            </div>
-        </div>
-        <div class="card-body p-0">
-            <!-- Responsive Table -->
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-4 border-0">{{ t('Key') }} (English)</th>
-                            @foreach(array_slice($availableLanguages, 1) as $code => $name)
-                                <th class="border-0">{{ $name }}</th>
-                            @endforeach
-                            <th class="border-0">{{ t('Location') }}</th>
-                            <th class="pe-4 border-0 text-center">{{ t('Actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($languages as $language)
-                            <tr>
-                                <td class="ps-4 align-middle">
-                                    <code class="bg-light px-2 py-1 rounded">{{ $language->key }}</code>
-                                </td>
-                                @foreach(array_slice($availableLanguages, 1) as $code => $name)
-                                    <td class="align-middle">
-                                        <input type="text" 
-                                               class="form-control form-control-sm translation-input border-0 bg-light" 
-                                               value="{{ $language->{$code} }}"
-                                               data-language-id="{{ $language->id }}"
-                                               data-field="{{ $code }}"
-                                               placeholder="{{ t('Enter translation') }}"
-                                               style="min-width: 150px;">
-                                    </td>
-                                @endforeach
-                                <td class="align-middle">
-                                    <div class="location-display" data-language-id="{{ $language->id }}">
-                                        @if($language->location)
-                                            <div class="location-badges mb-1">
-                                                @foreach($language->getLocationArray() as $loc)
-                                                    <span class="badge bg-info me-1 mb-1">{{ $loc }}</span>
-                                                @endforeach
-                                            </div>
-                                            <button class="btn btn-sm btn-outline-secondary location-edit-btn" 
-                                                    onclick="toggleLocationEdit({{ $language->id }})"
-                                                    title="{{ t('Edit location') }}">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                        @else
-                                            <button class="btn btn-sm btn-outline-primary location-add-btn" 
-                                                    onclick="toggleLocationEdit({{ $language->id }})"
-                                                    title="{{ t('Add location') }}">
-                                                <i class="bi bi-plus"></i> {{ t('Add location') }}
-                                            </button>
-                                        @endif
-                                        
-                                        <div class="location-edit-form" style="display: none;">
-                                            <div class="input-group input-group-sm">
-                                                <input type="text" 
-                                                       class="form-control location-input" 
-                                                       value="{{ $language->location }}"
-                                                       data-language-id="{{ $language->id }}"
-                                                       placeholder="{{ t('Enter location') }}"
-                                                       style="min-width: 200px;">
-                                                <button class="btn btn-success" onclick="saveLocation({{ $language->id }})" title="{{ t('Save') }}">
-                                                    <i class="bi bi-check"></i>
-                                                </button>
-                                                <button class="btn btn-secondary" onclick="cancelLocationEdit({{ $language->id }})" title="{{ t('Cancel') }}">
-                                                    <i class="bi bi-x"></i>
-                                                </button>
-                                            </div>
-                                            <div class="location-preview mt-1"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="pe-4 align-middle text-center">
-                                    <div class="d-flex justify-content-center gap-1">
-                                        <button class="btn btn-sm btn-outline-success" 
-                                                onclick="saveTranslation({{ $language->id }})"
-                                                title="{{ t('Save') }}">
-                                            <i class="bi bi-check"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" 
-                                                onclick="deleteLanguage({{ $language->id }})"
-                                                title="{{ t('Delete') }}">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="{{ count($availableLanguages) + 2 }}" class="text-center text-muted py-5">
-                                    <i class="bi bi-inbox display-1 text-muted opacity-25"></i>
-                                    <p class="mt-3 mb-0">{{ t('No language keys found') }}</p>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            @if($languages->hasPages())
-                <div class="card-footer bg-white border-0">
-                    <div class="d-flex justify-content-center">
-                        {{ $languages->appends(request()->query())->links('pagination::bootstrap-4') }}
-                    </div>
-                </div>
-            @endif
-        </div>
+        @if(auth()->user()->level === 255)
+        <button class="btn-default" onclick="clearLocations()">
+            <i class="bi bi-geo"></i> {{ t('Clear Locations') }}
+        </button>
+        @endif
+        <button class="btn-default" onclick="cleanupLanguages()">
+            <i class="bi bi-arrow-clockwise"></i> {{ t('Cleanup Unused') }}
+        </button>
     </div>
 </div>
+
+<!-- Search Form -->
+<form method="GET" action="{{ route('sitemanager.languages.index') }}" class="search-form">
+    <input type="text" name="search" class="form-control" 
+            placeholder="{{ t('Search by key, translation, or location...') }}" 
+            value="{{ request('search') }}"
+            title="{{ t('Press Enter to search') }}">
+
+    <input type="text" name="location" class="form-control" 
+            placeholder="{{ t('Filter by location...') }}" 
+            value="{{ request('location') }}"
+            list="location-suggestions"
+            title="{{ t('Select from suggestions or press Enter to search') }}">
+    <datalist id="location-suggestions">
+        @foreach($existingLocations as $location)
+            <option value="{{ $location }}">
+        @endforeach
+    </datalist>
+
+    <select name="status" class="form-select">
+        <option value="">{{ t('All Keys') }}</option>
+        <option value="translated" {{ request('status') == 'translated' ? 'selected' : '' }}>{{ t('Fully Translated') }}</option>
+        <option value="partial" {{ request('status') == 'partial' ? 'selected' : '' }}>{{ t('Partially Translated') }}</option>
+        <option value="untranslated" {{ request('status') == 'untranslated' ? 'selected' : '' }}>{{ t('Untranslated') }}</option>
+        <option value="no_location" {{ request('status') == 'no_location' ? 'selected' : '' }}>{{ t('No Location') }}</option>
+    </select>
+
+    <button type="submit" class="btn btn-primary flex-fill" title="{{ t('Search (Press Enter)') }}">
+        <i class="bi bi-search me-2"></i>{{ t('Search') }}
+    </button>
+    @if(request()->hasAny(['search', 'location', 'status']))
+        <a href="{{ route('sitemanager.languages.index') }}" class="btn btn-outline-secondary" title="{{ t('Clear all filters') }}">
+            <i class="bi bi-x-circle"></i>
+        </a>
+    @endif
+</form>
+
+@if(request()->hasAny(['search', 'location', 'status']))
+    <div class="alert alert-info mb-3">
+        {{ t('Filtered') }}: 
+        @if(request('search'))
+            {{ t('search') }}: "{{ request('search') }}"
+        @endif
+        @if(request('location'))
+            @if(request('search')), @endif
+            {{ t('location') }}: "{{ request('location') }}"
+        @endif
+        @if(request('status'))
+            @if(request('search') || request('location')), @endif
+            {{ t('status') }}: {{ request('status') }}
+        @endif
+    </div>
+@endif
+
+<div class="table-responsive">
+    <table class="table table-hover table-striped">
+        <thead>
+            <tr>
+                <th>{{ t('Key') }} (English)</th>
+                @foreach(array_slice($availableLanguages, 1) as $code => $name)
+                    <th>{{ $name }}</th>
+                @endforeach
+                <th>{{ t('Location') }}</th>
+                <th class="text-end">{{ t('Actions') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($languages as $language)
+                <tr>
+                    <td>
+                        <code>{{ $language->key }}</code>
+                    </td>
+                    @foreach(array_slice($availableLanguages, 1) as $code => $name)
+                        <td width="25%">
+                            <input type="text" 
+                                    class="form-control form-control-sm translation-input" 
+                                    value="{{ $language->{$code} }}"
+                                    data-language-id="{{ $language->id }}"
+                                    data-field="{{ $code }}"
+                                    placeholder="{{ t('Enter translation') }}"
+                                    style="min-width: 150px;">
+                        </td>
+                    @endforeach
+                    <td>
+                        <div class="location-display" data-language-id="{{ $language->id }}">
+                            @if($language->location)
+                                <div class="location-badges mb-1">
+                                    @foreach($language->getLocationArray() as $loc)
+                                        <span class="badge bg-info me-1 mb-1">{{ $loc }}</span>
+                                    @endforeach
+                                </div>
+                                <button class="btn btn-sm btn-outline-secondary rounded-circle location-edit-btn" 
+                                        onclick="toggleLocationEdit({{ $language->id }})"
+                                        title="{{ t('Edit location') }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            @else
+                                <button class="btn btn-sm btn-outline-primary location-add-btn" 
+                                        onclick="toggleLocationEdit({{ $language->id }})"
+                                        title="{{ t('Add location') }}">
+                                    <i class="bi bi-plus"></i> {{ t('Add location') }}
+                                </button>
+                            @endif
+                            
+                            <div class="location-edit-form" style="display: none;">
+                                <div class="input-group input-group-sm" nowrap>
+                                    <input type="text" 
+                                            class="form-control location-input" 
+                                            value="{{ $language->location }}"
+                                            data-language-id="{{ $language->id }}"
+                                            placeholder="{{ t('Enter location') }}">
+                                    <button class="btn btn-success" onclick="saveLocation({{ $language->id }})" title="{{ t('Save') }}">
+                                        <i class="bi bi-check"></i>
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="cancelLocationEdit({{ $language->id }})" title="{{ t('Cancel') }}">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                                <div class="location-preview mt-1"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-end actions" nowrap>
+                        <button class="btn btn-sm btn-outline-success" 
+                                onclick="saveTranslation({{ $language->id }})"
+                                title="{{ t('Save') }}">
+                            <i class="bi bi-check"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" 
+                                onclick="deleteLanguage({{ $language->id }})"
+                                title="{{ t('Delete') }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="{{ count($availableLanguages) + 2 }}" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox display-1 text-muted opacity-25"></i>
+                        <p class="mt-3 mb-0">{{ t('No language keys found') }}</p>
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+@if($languages->hasPages())
+    {{ $languages->appends(request()->query())->links('sitemanager::pagination.default') }}
+@endif
 
 <!-- Toast Notifications -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">

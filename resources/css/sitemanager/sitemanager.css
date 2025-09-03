@@ -369,3 +369,5 @@ main { padding: 2rem 0; }
 .permission-list { display: grid; grid-template-columns: repeat(4, 1fr); }
 
 td.comments .btn { width: 2rem; height: 2rem; border-radius: 50%; padding: 0; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+
+.location-badges { max-height: 100px; overflow-y: auto; }

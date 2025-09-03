@@ -63,7 +63,10 @@ class LanguageController extends Controller
             }
         }
         
-        $languages = $query->orderBy('key')->paginate(50);
+        $perPage = $request->get('per_page', config('sitemanager.ui.pagination_per_page', 20));
+        $perPage = min(max((int)$perPage, 1), 100); // 1-100 범위로 제한
+
+        $languages = $query->orderBy('key')->paginate($perPage);
         $availableLanguages = Language::getAvailableLanguages();
         
         // Location 자동완성을 위한 데이터
