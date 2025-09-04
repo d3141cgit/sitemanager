@@ -12,20 +12,25 @@ class FileUploadService
 {
     protected $disk;
     protected $useS3;
+    protected static $instance = null;
+    protected static $initialized = false;
     
     public function __construct()
     {
         $this->useS3 = $this->isS3Available();
         $this->disk = $this->useS3 ? 's3' : 'public';
         
-        // S3 사용 시 로그 남기기
-        if ($this->useS3) {
-            Log::info('FileUploadService initialized with S3 storage', [
-                'bucket' => config('filesystems.disks.s3.bucket'),
-                'region' => config('filesystems.disks.s3.region')
-            ]);
-        } else {
-            Log::info('FileUploadService initialized with local storage');
+        // 첫 번째 초기화에서만 로그 남기기
+        if (!static::$initialized) {
+            if ($this->useS3) {
+                Log::debug('FileUploadService initialized with S3 storage', [
+                    'bucket' => config('filesystems.disks.s3.bucket'),
+                    'region' => config('filesystems.disks.s3.region')
+                ]);
+            } else {
+                Log::debug('FileUploadService initialized with local storage');
+            }
+            static::$initialized = true;
         }
     }
     
@@ -690,12 +695,22 @@ class FileUploadService
      */
     
     /**
+     * Get singleton instance
+     */
+    protected static function getInstance(): self
+    {
+        if (static::$instance === null) {
+            static::$instance = new self();
+        }
+        return static::$instance;
+    }
+    
+    /**
      * Static method to get file URL
      */
     public static function url(string $path): string
     {
-        $service = new self();
-        return $service->getFileUrl($path);
+        return static::getInstance()->getFileUrl($path);
     }
     
     /**
@@ -703,8 +718,7 @@ class FileUploadService
      */
     public static function upload(UploadedFile $file, string $folder = 'uploads'): string
     {
-        $service = new self();
-        $result = $service->uploadImage($file, $folder);
+        $result = static::getInstance()->uploadImage($file, $folder);
         return $result['path'];
     }
     
@@ -713,8 +727,7 @@ class FileUploadService
      */
     public static function delete(string $path): bool
     {
-        $service = new self();
-        return $service->deleteFile($path);
+        return static::getInstance()->deleteFile($path);
     }
     
     /**
@@ -722,8 +735,7 @@ class FileUploadService
      */
     public static function isS3Configured(): bool
     {
-        $service = new self();
-        return $service->isUsingS3();
+        return static::getInstance()->isUsingS3();
     }
     
     /**

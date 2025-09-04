@@ -29,20 +29,17 @@ class NavigationComposer
         // 네비게이션 트리 구성
         $navigationTree = $this->buildNavigationTree($accessibleMenus);
         
-        // 현재 페이지 관련 메뉴 정보
-        $viewData = $view->getData();
-        
         // 뷰에서 명시적으로 전달된 currentMenuId나 currentMenu가 있으면 우선 사용
         $currentMenuId = null;
         if (isset($viewData['currentMenuId'])) {
             $currentMenuId = $viewData['currentMenuId'];
-            Log::info("NavigationComposer: currentMenuId from view", [
+            Log::debug("NavigationComposer: currentMenuId from view", [
                 'currentMenuId' => $currentMenuId
             ]);
         } elseif (isset($viewData['currentMenu'])) {
             $currentMenu = $viewData['currentMenu'];
             
-            Log::info("NavigationComposer: currentMenu from view", [
+            Log::debug("NavigationComposer: currentMenu from view", [
                 'currentMenu_value' => $currentMenu,
                 'is_numeric' => is_numeric($currentMenu)
             ]);
@@ -59,7 +56,7 @@ class NavigationComposer
             // 메뉴 ID로 실제 메뉴 객체 찾기
             $foundMenu = $accessibleMenus->find($currentMenuId);
             
-            Log::info("NavigationComposer: menu lookup result", [
+            Log::debug("NavigationComposer: menu lookup result", [
                 'menu_id' => $currentMenuId,
                 'found' => $foundMenu ? true : false,
                 'menu_title' => $foundMenu ? $foundMenu->title : null,
@@ -68,7 +65,7 @@ class NavigationComposer
             
             $currentMenu = $foundMenu;
         } else {
-            Log::info("NavigationComposer: no currentMenu in viewData, using auto-detection");
+            Log::debug("NavigationComposer: no currentMenu in viewData, using auto-detection");
             // 자동 감지 방식 사용 (라우트명, URL 패턴 매칭)
             $currentMenu = $this->findCurrentMenuByRoute($accessibleMenus);
         }
@@ -80,7 +77,7 @@ class NavigationComposer
         if (isset($viewData['additionalBreadcrumb'])) {
             $additionalBreadcrumb = $viewData['additionalBreadcrumb'];
             
-            Log::info("NavigationComposer: additionalBreadcrumb found", [
+            Log::debug("NavigationComposer: additionalBreadcrumb found", [
                 'additionalBreadcrumb' => $additionalBreadcrumb,
                 'current_breadcrumb_count' => count($breadcrumb)
             ]);
@@ -99,12 +96,12 @@ class NavigationComposer
                 'is_current' => true
             ];
             
-            Log::info("NavigationComposer: breadcrumb after adding additional", [
+            Log::debug("NavigationComposer: breadcrumb after adding additional", [
                 'final_breadcrumb_count' => count($breadcrumb),
                 'final_breadcrumb_titles' => array_map(function($item) { return $item['title']; }, $breadcrumb)
             ]);
         } else {
-            Log::info("NavigationComposer: no additionalBreadcrumb in viewData");
+            Log::debug("NavigationComposer: no additionalBreadcrumb in viewData");
         }
         
         $menuTabs = $this->buildMenuTabs($currentMenu, $accessibleMenus);
@@ -245,7 +242,7 @@ class NavigationComposer
      */
     private function buildBreadcrumb($currentMenu, $menus)
     {
-        Log::info("NavigationComposer buildBreadcrumb", [
+        Log::debug("NavigationComposer buildBreadcrumb", [
             'currentMenu' => $currentMenu ? [
                 'id' => $currentMenu->id,
                 'title' => $currentMenu->title,
@@ -270,7 +267,7 @@ class NavigationComposer
         $menuChain = [];
         while ($menu) {
             $menuChain[] = $menu;
-            Log::info("NavigationComposer: adding menu to chain", [
+            Log::debug("NavigationComposer: adding menu to chain", [
                 'menu_id' => $menu->id,
                 'menu_title' => $menu->title,
                 'parent_id' => $menu->parent_id
@@ -278,7 +275,7 @@ class NavigationComposer
             $menu = $menu->parent_id ? $menus->find($menu->parent_id) : null;
         }
         
-        Log::info("NavigationComposer: final menuChain", [
+        Log::debug("NavigationComposer: final menuChain", [
             'chain_count' => count($menuChain),
             'chain_titles' => array_map(function($m) { return $m->title; }, $menuChain)
         ]);
@@ -305,7 +302,7 @@ class NavigationComposer
             ];
         }
         
-        Log::info("NavigationComposer: final breadcrumb", [
+        Log::debug("NavigationComposer: final breadcrumb", [
             'breadcrumb_count' => count($breadcrumb),
             'breadcrumb_titles' => array_map(function($item) { return $item['title']; }, $breadcrumb)
         ]);
