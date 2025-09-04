@@ -18,12 +18,10 @@ class SiteManagerServiceProvider extends ServiceProvider
 {
     public function boot()
     {
-        // 헬퍼 함수 로드
-        require_once __DIR__.'/Helpers/functions.php';
-        require_once __DIR__.'/Helpers/navigation_helpers.php';
-        require_once __DIR__.'/Helpers/PermissionHelper.php';
-        require_once __DIR__.'/Helpers/ResourceHelper.php';
-        require_once __DIR__.'/Helpers/translation.php';
+        // 헬퍼 함수 자동 로드
+        foreach (glob(__DIR__.'/Helpers/*.php') as $file) {
+            require_once $file;
+        }
         
         // 설정 파일 로드
         $this->mergeConfigFrom(__DIR__.'/../config/sitemanager.php', 'sitemanager');
