@@ -22,8 +22,8 @@ class LanguageController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('key', 'LIKE', "%{$search}%")
                   ->orWhere('ko', 'LIKE', "%{$search}%")
-                  ->orWhere('tw', 'LIKE', "%{$search}%")
-                  ->orWhere('location', 'LIKE', "%{$search}%");
+                  ->orWhere('tw', 'LIKE', "%{$search}%");
+                //   ->orWhere('location', 'LIKE', "%{$search}%");
             });
         }
 

@@ -8,8 +8,6 @@
         <a href="{{ route('sitemanager.comments.index') }}">
             <i class="bi bi-chat opacity-75"></i> {{ t(Str::ucfirst($status) . ' Comments') }}
         </a>
-
-        <span class="count">{{ number_format($pendingComments->total()) }}</span>
     </h1>
 
     <a href="{{ route('sitemanager.boards.index') }}" class="btn-default">
@@ -19,6 +17,7 @@
 
 <form method="GET" action="{{ route('sitemanager.comments.index') }}" class="search-form" id="filterForm">
     <select name="board_id" id="board_id" class="form-select" style="min-width:180px;max-width:300px;" onchange="document.getElementById('filterForm').submit();">
+        <option value="">{{ t('Select Board') }}</option>
         @foreach($boards as $board)
             <option value="{{ $board->id }}" 
                 {{ $selectedBoardId == $board->id ? 'selected' : '' }}>

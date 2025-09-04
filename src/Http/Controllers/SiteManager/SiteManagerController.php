@@ -26,53 +26,171 @@ class SiteManagerController extends Controller
      */
     public function dashboard()
     {
+        // 기본 통계
         $stats = [
+            'total_boards' => \SiteManager\Models\Board::count(),
+            'total_posts' => $this->getTotalPosts(),
+            'total_comments' => $this->getTotalComments(),
+            'total_attachments' => \SiteManager\Models\BoardAttachment::count(),
+            'total_editor_images' => \SiteManager\Models\EditorImage::count(),
             'total_members' => Member::count(),
             'active_members' => Member::where('active', true)->count(),
-            'total_groups' => Group::count(),
             'total_menus' => Menu::count(),
         ];
 
-        $recent_members = Member::latest()
-            ->limit(10)
-            ->get(['id', 'name', 'email', 'active', 'created_at']);
+        // 최근 게시글 (모든 게시판에서)
+        $recent_posts = $this->getRecentPosts();
 
-        // 멤버 가입 동향 통계
-        $currentDate = now();
-        $thisMonth = Member::whereMonth('created_at', $currentDate->month)
-            ->whereYear('created_at', $currentDate->year)
-            ->count();
-        
-        $lastMonthDate = $currentDate->copy()->subMonth();
-        $lastMonth = Member::whereMonth('created_at', $lastMonthDate->month)
-            ->whereYear('created_at', $lastMonthDate->year)
-            ->count();
-        
-        $growth = $lastMonth > 0 ? round((($thisMonth - $lastMonth) / $lastMonth) * 100, 1) : ($thisMonth > 0 ? 100 : 0);
-        
-        $memberStats = [
-            'thisMonth' => $thisMonth,
-            'lastMonth' => $lastMonth,
-            'growth' => $growth
-        ];
+        // 최근 댓글
+        $recent_comments = $this->getRecentComments();
 
-        // 그룹별 멤버 분포 통계
-        $groupStats = Group::withCount('members')
-            ->where('active', true)
-            ->orderBy('members_count', 'desc')
+        // 게시판별 통계
+        $board_stats = $this->getBoardStats();
+
+        // 최근 파일 업로드
+        $recent_files = \SiteManager\Models\BoardAttachment::with(['board'])
+            ->latest()
             ->limit(5)
-            ->get()
-            ->map(function($group) {
-                return [
-                    'name' => $group->name,
-                    'count' => $group->members_count
-                ];
-            });
+            ->get(['id', 'board_slug', 'original_name', 'file_size', 'created_at']);
 
         // 존재하지 않는 route를 사용하는 메뉴들 확인
         $invalidRouteMenus = $this->menuService->findMenusWithInvalidRoutes();
 
-        return view('sitemanager::sitemanager.dashboard', compact('stats', 'recent_members', 'memberStats', 'groupStats', 'invalidRouteMenus'));
+        return view('sitemanager::sitemanager.dashboard', compact(
+            'stats', 
+            'recent_posts', 
+            'recent_comments', 
+            'board_stats', 
+            'recent_files', 
+            'invalidRouteMenus'
+        ));
+    }
+
+    /**
+     * 전체 게시글 수 계산
+     */
+    private function getTotalPosts()
+    {
+        $total = 0;
+        $boards = \SiteManager\Models\Board::all();
+        
+        foreach ($boards as $board) {
+            try {
+                $postModelClass = \SiteManager\Models\BoardPost::forBoard($board->slug);
+                $total += $postModelClass::count();
+            } catch (\Exception $e) {
+                // 테이블이 존재하지 않는 경우 무시
+            }
+        }
+        
+        return $total;
+    }
+
+    /**
+     * 전체 댓글 수 계산
+     */
+    private function getTotalComments()
+    {
+        $total = 0;
+        $boards = \SiteManager\Models\Board::all();
+        
+        foreach ($boards as $board) {
+            try {
+                $commentModelClass = \SiteManager\Models\BoardComment::forBoard($board->slug);
+                $total += $commentModelClass::count();
+            } catch (\Exception $e) {
+                // 테이블이 존재하지 않는 경우 무시
+            }
+        }
+        
+        return $total;
+    }
+
+    /**
+     * 최근 게시글 가져오기
+     */
+    private function getRecentPosts()
+    {
+        $posts = collect();
+        $boards = \SiteManager\Models\Board::all();
+        
+        foreach ($boards as $board) {
+            try {
+                $postModelClass = \SiteManager\Models\BoardPost::forBoard($board->slug);
+                $boardPosts = $postModelClass::latest()
+                    ->limit(3)
+                    ->get(['id', 'title', 'author_name', 'view_count', 'comment_count', 'created_at'])
+                    ->map(function($post) use ($board) {
+                        $post->board = $board;
+                        return $post;
+                    });
+                $posts = $posts->concat($boardPosts);
+            } catch (\Exception $e) {
+                // 테이블이 존재하지 않는 경우 무시
+            }
+        }
+        
+        return $posts->sortByDesc('created_at')->take(10);
+    }
+
+    /**
+     * 최근 댓글 가져오기
+     */
+    private function getRecentComments()
+    {
+        $comments = collect();
+        $boards = \SiteManager\Models\Board::all();
+        
+        foreach ($boards as $board) {
+            try {
+                $commentModelClass = \SiteManager\Models\BoardComment::forBoard($board->slug);
+                $boardComments = $commentModelClass::with('member')
+                    ->latest()
+                    ->limit(3)
+                    ->get(['id', 'post_id', 'member_id', 'author_name', 'content', 'status', 'created_at'])
+                    ->map(function($comment) use ($board) {
+                        $comment->board = $board;
+                        return $comment;
+                    });
+                $comments = $comments->concat($boardComments);
+            } catch (\Exception $e) {
+                // 테이블이 존재하지 않는 경우 무시
+            }
+        }
+        
+        return $comments->sortByDesc('created_at')->take(10);
+    }
+
+    /**
+     * 게시판별 통계
+     */
+    private function getBoardStats()
+    {
+        $boards = \SiteManager\Models\Board::all();
+        $stats = [];
+        
+        foreach ($boards as $board) {
+            try {
+                $postModelClass = \SiteManager\Models\BoardPost::forBoard($board->slug);
+                $commentModelClass = \SiteManager\Models\BoardComment::forBoard($board->slug);
+                
+                $stats[] = [
+                    'board' => $board,
+                    'posts_count' => $postModelClass::count(),
+                    'comments_count' => $commentModelClass::count(),
+                    'recent_post_date' => $postModelClass::latest()->first()?->created_at,
+                ];
+            } catch (\Exception $e) {
+                $stats[] = [
+                    'board' => $board,
+                    'posts_count' => 0,
+                    'comments_count' => 0,
+                    'recent_post_date' => null,
+                ];
+            }
+        }
+        
+        return collect($stats)->sortByDesc('posts_count')->take(6);
     }
 
     /**
