@@ -265,4 +265,20 @@ class SiteManagerController extends Controller
             return redirect()->route('sitemanager.settings')->with('error', '리소스 초기화 중 오류가 발생했습니다: ' . $e->getMessage());
         }
     }
+
+    /**
+     * SiteManager용 robots.txt 응답
+     */
+    public function robots()
+    {
+        $content = "User-agent: *\n";
+        $content .= "Disallow: /\n\n";
+        $content .= "# SiteManager Admin Area - Access Restricted\n";
+        $content .= "# This area is for authorized administrators only\n";
+        $content .= "# All crawling and indexing is prohibited\n";
+
+        return response($content, 200)
+            ->header('Content-Type', 'text/plain')
+            ->header('Cache-Control', 'public, max-age=3600'); // 1시간 캐시
+    }
 }

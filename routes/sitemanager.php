@@ -12,6 +12,9 @@ use SiteManager\Http\Controllers\LanguageController;
 
 // 사이트매니저 라우트
 Route::middleware(['auth', 'sitemanager'])->prefix('sitemanager')->name('sitemanager.')->group(function () {
+    // robots.txt for SiteManager area
+    Route::get('/robots.txt', [SiteManagerController::class, 'robots'])->name('robots');
+    
     // 사이트매니저 대시보드
     Route::get('/dashboard', [SiteManagerController::class, 'dashboard'])->name('dashboard');
     // Route::get('/statistics', [SiteManagerController::class, 'statistics'])->name('statistics');
