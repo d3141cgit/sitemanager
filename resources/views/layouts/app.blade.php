@@ -88,7 +88,7 @@
                                     </a>
                                 </li>
                                 
-                                @if(Auth::user()->level >= config('member.admin_level', 200))
+                                @if(auth()->user()?->isAdmin())
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <a class="dropdown-item admin-link" href="{{ route('sitemanager.dashboard') }}" target="admin">
@@ -195,7 +195,7 @@
                     </a>
                 </li>
                         
-                @if(Auth::user()->level >= config('member.admin_level', 200))
+                @if(auth()->user()?->isAdmin())
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <a href="{{ route('sitemanager.dashboard') }}" target="admin">

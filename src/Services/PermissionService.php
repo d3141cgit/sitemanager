@@ -114,7 +114,7 @@ class PermissionService
      */
     private function isAdmin($user): bool
     {
-        return $user->level >= config('member.admin_level', 200);
+        return $user && $user->isAdmin();
     }
 
     /**

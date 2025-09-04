@@ -549,7 +549,7 @@ class BoardService
         }
         
         // 시스템 관리자
-        if ($user->level >= config('member.admin_level', 200)) {
+        if ($user->isAdmin()) {
             return true;
         }
 

@@ -818,7 +818,7 @@ class MenuService
         }
         
         // 관리자는 모든 권한
-        if ($user->level >= config('member.admin_level', 200)) {
+        if ($user->isAdmin()) {
             return config('permissions.values.all', 255);
         }
         

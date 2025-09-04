@@ -894,7 +894,7 @@ class BoardController extends Controller
                 $canDelete = true;
             }
             // 시스템 관리자
-            elseif ($user->level >= config('member.admin_level', 200)) {
+            elseif ($user instanceof \SiteManager\Models\Member && $user->isAdmin()) {
                 $canDelete = true;
             }
         }
@@ -946,7 +946,7 @@ class BoardController extends Controller
                         $canUpdate = true;
                     }
                     // 시스템 관리자
-                    elseif ($user->level >= config('member.admin_level', 200)) {
+                    elseif ($user->isAdmin()) {
                         $canUpdate = true;
                     }
                 }

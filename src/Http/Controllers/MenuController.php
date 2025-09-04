@@ -22,7 +22,7 @@ class MenuController extends Controller
      */
     public function index()
     {
-        if (Auth::user()->level < config('member.admin_level')) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, '권한이 없습니다.');
         }
         
@@ -60,7 +60,7 @@ class MenuController extends Controller
      */
     public function create()
     {
-        if (Auth::user()->level < config('member.admin_level')) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, '권한이 없습니다.');
         }
         
@@ -75,7 +75,7 @@ class MenuController extends Controller
      */
     public function store(Request $request)
     {
-        if (Auth::user()->level < config('member.admin_level')) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, '권한이 없습니다.');
         }
         
@@ -132,7 +132,7 @@ class MenuController extends Controller
      */
     public function show(Menu $menu)
     {
-        if (Auth::user()->level < config('member.admin_level')) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, '권한이 없습니다.');
         }
         
@@ -144,7 +144,7 @@ class MenuController extends Controller
      */
     public function edit(Menu $menu)
     {
-        if (Auth::user()->level < config('member.admin_level')) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, '권한이 없습니다.');
         }
         
@@ -159,7 +159,7 @@ class MenuController extends Controller
      */
     public function update(Request $request, Menu $menu)
     {
-        if (Auth::user()->level < config('member.admin_level')) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, '권한이 없습니다.');
         }
         
@@ -225,7 +225,7 @@ class MenuController extends Controller
      */
     public function destroy(Menu $menu)
     {
-        if (Auth::user()->level < config('member.admin_level')) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, '권한이 없습니다.');
         }
         
@@ -255,7 +255,7 @@ class MenuController extends Controller
      */
     public function getRoutes()
     {
-        if (Auth::user()->level < config('member.admin_level')) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, '권한이 없습니다.');
         }
         
@@ -272,7 +272,7 @@ class MenuController extends Controller
      */
     public function getSectionParents($section, Request $request)
     {
-        if (Auth::user()->level < config('member.admin_level')) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, '권한이 없습니다.');
         }
         
@@ -304,7 +304,7 @@ class MenuController extends Controller
      */
     public function rebuildTree()
     {
-        if (Auth::user()->level < config('member.admin_level')) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, '권한이 없습니다.');
         }
         
@@ -328,7 +328,7 @@ class MenuController extends Controller
      */
     public function moveNode(Request $request)
     {
-        if (Auth::user()->level < config('member.admin_level')) {
+        if (!Auth::user()->isAdmin()) {
             return response()->json(['success' => false, 'message' => '권한이 없습니다.'], 403);
         }
 
@@ -383,7 +383,7 @@ class MenuController extends Controller
      */
     public function checkBoardConnection(Request $request)
     {
-        if (Auth::user()->level < config('member.admin_level')) {
+        if (!Auth::user()->isAdmin()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
         

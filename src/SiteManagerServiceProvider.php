@@ -144,7 +144,7 @@ class SiteManagerServiceProvider extends ServiceProvider
     private function defineGates()
     {
         Gate::define('admin', function ($user) {
-            return $user->level >= config('sitemanager.permissions.admin_level', 200);
+            return $user->isAdmin();
         });
         
         Gate::define('board.write', function ($user, $board) {

@@ -20,7 +20,8 @@ class LoginController extends Controller
      */
     private function selectView($viewName)
     {
-        $projectViewPath = resource_path("views/{$viewName}.blade.php");
+        $filePath = str_replace('.', '/', $viewName);
+        $projectViewPath = resource_path("views/{$filePath}.blade.php");
         
         if (file_exists($projectViewPath)) {
             return $viewName;

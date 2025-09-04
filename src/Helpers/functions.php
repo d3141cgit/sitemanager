@@ -91,7 +91,7 @@ if (!function_exists('can')) {
             // 게시판이 메뉴에 연결되지 않은 경우 관리자만 접근 가능
             if (!$model->menu_id) {
                 $user = auth()->user();
-                return $user && $user->level >= config('sitemanager.permissions.admin_level', 200);
+                return $user && $user->isAdmin();
             }
             
             // 메뉴에 연결된 경우 메뉴 권한을 통해 체크
