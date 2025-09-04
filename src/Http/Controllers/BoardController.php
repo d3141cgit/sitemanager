@@ -946,7 +946,7 @@ class BoardController extends Controller
                         $canUpdate = true;
                     }
                     // 시스템 관리자
-                    elseif ($user->isAdmin()) {
+                    elseif ($user instanceof \SiteManager\Models\Member && $user->isAdmin()) {
                         $canUpdate = true;
                     }
                 }

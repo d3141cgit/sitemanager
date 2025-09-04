@@ -18,13 +18,22 @@ class MenuController extends Controller
     }
     
     /**
+     * 관리자 권한 체크 헬퍼 메서드
+     */
+    private function checkAdminPermission()
+    {
+        $user = Auth::user();
+        if (!$user instanceof \SiteManager\Models\Member || !$user->isAdmin()) {
+            abort(403, '권한이 없습니다.');
+        }
+    }
+    
+    /**
      * 메뉴 목록 (관리자용)
      */
     public function index()
     {
-        if (!Auth::user()->isAdmin()) {
-            abort(403, '권한이 없습니다.');
-        }
+        $this->checkAdminPermission();
         
         $menus = $this->menuService->getAllMenusOrdered();
         $totalCount = $menus->count();
@@ -60,9 +69,7 @@ class MenuController extends Controller
      */
     public function create()
     {
-        if (!Auth::user()->isAdmin()) {
-            abort(403, '권한이 없습니다.');
-        }
+        $this->checkAdminPermission();
         
         $availableRoutes = $this->menuService->getAvailableRoutes();
         $menuPermissions = ['basic' => [], 'level' => [], 'group' => [], 'admins' => []];
@@ -75,9 +82,7 @@ class MenuController extends Controller
      */
     public function store(Request $request)
     {
-        if (!Auth::user()->isAdmin()) {
-            abort(403, '권한이 없습니다.');
-        }
+        $this->checkAdminPermission();
         
         $request->validate([
             'title' => 'required|string|max:100',
@@ -132,9 +137,7 @@ class MenuController extends Controller
      */
     public function show(Menu $menu)
     {
-        if (!Auth::user()->isAdmin()) {
-            abort(403, '권한이 없습니다.');
-        }
+        $this->checkAdminPermission();
         
         return view('sitemanager::sitemanager.menus.show', compact('menu'));
     }
@@ -144,9 +147,7 @@ class MenuController extends Controller
      */
     public function edit(Menu $menu)
     {
-        if (!Auth::user()->isAdmin()) {
-            abort(403, '권한이 없습니다.');
-        }
+        $this->checkAdminPermission();
         
         $availableRoutes = $this->menuService->getAvailableRoutes();
         $menuPermissions = $this->menuService->getMenuPermissions($menu->id);
@@ -159,9 +160,7 @@ class MenuController extends Controller
      */
     public function update(Request $request, Menu $menu)
     {
-        if (!Auth::user()->isAdmin()) {
-            abort(403, '권한이 없습니다.');
-        }
+        $this->checkAdminPermission();
         
         $request->validate([
             'title' => 'required|string|max:100',
@@ -225,9 +224,7 @@ class MenuController extends Controller
      */
     public function destroy(Menu $menu)
     {
-        if (!Auth::user()->isAdmin()) {
-            abort(403, '권한이 없습니다.');
-        }
+        $this->checkAdminPermission();
         
         // 자식 메뉴가 있는지 확인
         if ($menu->children()->count() > 0) {
@@ -255,9 +252,7 @@ class MenuController extends Controller
      */
     public function getRoutes()
     {
-        if (!Auth::user()->isAdmin()) {
-            abort(403, '권한이 없습니다.');
-        }
+        $this->checkAdminPermission();
         
         try {
             $routes = $this->menuService->getAvailableRoutes();
@@ -272,9 +267,7 @@ class MenuController extends Controller
      */
     public function getSectionParents($section, Request $request)
     {
-        if (!Auth::user()->isAdmin()) {
-            abort(403, '권한이 없습니다.');
-        }
+        $this->checkAdminPermission();
         
         try {
             $excludeId = $request->query('exclude');
@@ -304,9 +297,7 @@ class MenuController extends Controller
      */
     public function rebuildTree()
     {
-        if (!Auth::user()->isAdmin()) {
-            abort(403, '권한이 없습니다.');
-        }
+        $this->checkAdminPermission();
         
         try {
             Menu::fixAllTrees();
@@ -328,7 +319,8 @@ class MenuController extends Controller
      */
     public function moveNode(Request $request)
     {
-        if (!Auth::user()->isAdmin()) {
+        $user = Auth::user();
+        if (!$user instanceof \SiteManager\Models\Member || !$user->isAdmin()) {
             return response()->json(['success' => false, 'message' => '권한이 없습니다.'], 403);
         }
 
@@ -383,7 +375,8 @@ class MenuController extends Controller
      */
     public function checkBoardConnection(Request $request)
     {
-        if (!Auth::user()->isAdmin()) {
+        $user = Auth::user();
+        if (!$user instanceof \SiteManager\Models\Member || !$user->isAdmin()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
         

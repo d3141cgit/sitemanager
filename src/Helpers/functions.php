@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
+
 if (!function_exists('getSharedViewData')) {
     /**
      * 뷰에서 공유된 데이터를 가져오는 헬퍼 함수
@@ -90,8 +92,8 @@ if (!function_exists('can')) {
         if ($model instanceof \SiteManager\Models\Board) {
             // 게시판이 메뉴에 연결되지 않은 경우 관리자만 접근 가능
             if (!$model->menu_id) {
-                $user = auth()->user();
-                return $user && $user->isAdmin();
+                $user = Auth::user();
+                return $user instanceof \SiteManager\Models\Member && $user->isAdmin();
             }
             
             // 메뉴에 연결된 경우 메뉴 권한을 통해 체크
@@ -116,7 +118,13 @@ if (!function_exists('hasMenuPermission')) {
      */
     function hasMenuPermission(\SiteManager\Models\Menu $menu, int $requiredPermission): bool
     {
-        $user = auth()->user();
+        $user = Auth::user();
+        
+        // 로그인하지 않은 경우 false 반환
+        if (!$user) {
+            return false;
+        }
+        
         $permissionService = app(\SiteManager\Services\PermissionService::class);
         
         // 메뉴에 대한 사용자의 최종 권한 계산

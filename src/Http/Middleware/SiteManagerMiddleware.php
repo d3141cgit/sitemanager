@@ -24,7 +24,7 @@ class SiteManagerMiddleware
         $user = Auth::user();
         
         // 사이트매니저 권한 체크 (Member 모델의 isAdmin() 메서드 사용)
-        if (!$user->isAdmin()) {
+        if (!$user instanceof \SiteManager\Models\Member || !$user->isAdmin()) {
             return redirect('/')
                 ->with('error', '사이트매니저 권한이 필요합니다.');
         }
