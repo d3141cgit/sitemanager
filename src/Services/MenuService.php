@@ -98,10 +98,8 @@ class MenuService
         // 메뉴 기본 데이터 (권한 및 이미지 관련 필드 제외)
         $menuData = array_diff_key($data, array_merge($permissionData, ['images' => null]));
         
-        // 기본 권한 설정 (permission이 설정되지 않았거나 빈 배열인 경우 기본값 1)
-        if (empty($permissionData['permission'])) {
-            $menuData['permission'] = 1;
-        }
+        // 기본 권한 설정은 saveMenuPermissions에서 처리하므로 여기서는 제거
+        // saveMenuPermissions에서 permission 값을 올바르게 설정함
         
         // 이미지 처리
         if (!empty($imageData)) {
@@ -119,7 +117,7 @@ class MenuService
         $menu = $this->menuRepository->create($menuData);
         
         // 권한 저장 (permission 값이 0이어도 항상 호출)
-        $this->saveMenuPermissions($menu->id, $permissionData);
+        $this->saveMenuPermissions($menu->id, $permissionData, true);
             
         // 해당 섹션의 nested set 구조 재구성
         $this->rebuildSection($menu->section);
@@ -281,7 +279,7 @@ class MenuService
 
         if ($result) {
             // 권한 저장 (permission 값이 0이어도 항상 호출)
-            $this->saveMenuPermissions($id, $permissionData);
+            $this->saveMenuPermissions($id, $permissionData, false);
             
             // 원래 섹션과 새 섹션 모두 rebuild
             $this->rebuildSection($originalSection);
@@ -669,22 +667,24 @@ class MenuService
     /**
      * 메뉴 권한 저장
      */
-    private function saveMenuPermissions(int $menuId, array $data): void
+    private function saveMenuPermissions(int $menuId, array $data, bool $isCreate = false): void
     {
         // 기본 권한을 menus.permission 필드에 저장 (bitmask)
-        if (isset($data['permission']) && is_array($data['permission'])) {
+        if (isset($data['permission']) && is_array($data['permission']) && !empty($data['permission'])) {
             $basicPermission = 0;
             foreach ($data['permission'] as $perm) {
                 $basicPermission |= (int)$perm;
             }
-            // 권한이 0이면 기본값 1로 설정
-            if ($basicPermission === 0 && empty($data['permission'])) {
-                $basicPermission = 1;
-            }
             Menu::where('id', $menuId)->update(['permission' => $basicPermission]);
         } else {
-            // 권한이 설정되지 않았을 때 기본값 1로 설정
-            Menu::where('id', $menuId)->update(['permission' => 1]);
+            // 권한이 설정되지 않았거나 모든 체크박스가 해제된 경우
+            if ($isCreate) {
+                // 새로 생성할 때는 기본값 3 (index + read)
+                Menu::where('id', $menuId)->update(['permission' => 3]);
+            } else {
+                // 업데이트일 때는 0으로 설정 (모든 권한 해제)
+                Menu::where('id', $menuId)->update(['permission' => 0]);
+            }
         }
         
         // 기존 menu_permissions 삭제
