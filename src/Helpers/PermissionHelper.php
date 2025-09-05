@@ -120,14 +120,9 @@ if (!function_exists('hasMenuPermission')) {
     {
         $user = Auth::user();
         
-        // 타입 체크 - Member 모델이 아니면 권한 없음
-        if (!$user instanceof \SiteManager\Models\Member) {
-            return false;
-        }
-        
         $permissionService = app(\SiteManager\Services\PermissionService::class);
         
-        // 메뉴에 대한 사용자의 최종 권한 계산
+        // 메뉴에 대한 사용자의 최종 권한 계산 (게스트 포함)
         $userPermission = $permissionService->checkMenuPermission($menu, $user);
         
         // 비트마스크로 권한 체크
