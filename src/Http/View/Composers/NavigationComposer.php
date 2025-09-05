@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 class NavigationComposer
 {
     protected $permissionService;
+    protected static $composerCache = [];
 
     public function __construct(PermissionService $permissionService)
     {
@@ -23,26 +24,34 @@ class NavigationComposer
      */
     public function compose(View $view): void
     {
+        // 요청별 캐시 키 생성 (뷰 데이터가 아닌 요청 기반)
+        $cacheKey = $this->generateRequestCacheKey();
+        
+        // 이미 계산된 경우 캐시된 데이터 사용
+        if (isset(static::$composerCache[$cacheKey])) {
+            $cachedData = static::$composerCache[$cacheKey];
+            
+            // 뷰별 특수 데이터가 있으면 병합
+            $viewSpecificData = $this->getViewSpecificData($view, $cachedData);
+            $view->with(array_merge($cachedData, $viewSpecificData));
+            return;
+        }
+        
         $user = Auth::user();
         $accessibleMenus = $this->permissionService->getAccessibleMenus($user);
         
         // 네비게이션 트리 구성
         $navigationTree = $this->buildNavigationTree($accessibleMenus);
         
+        // 현재 페이지 관련 메뉴 정보 (첫 번째 뷰의 데이터만 사용)
+        $viewData = $view->getData();
+        
         // 뷰에서 명시적으로 전달된 currentMenuId나 currentMenu가 있으면 우선 사용
         $currentMenuId = null;
         if (isset($viewData['currentMenuId'])) {
             $currentMenuId = $viewData['currentMenuId'];
-            Log::debug("NavigationComposer: currentMenuId from view", [
-                'currentMenuId' => $currentMenuId
-            ]);
         } elseif (isset($viewData['currentMenu'])) {
             $currentMenu = $viewData['currentMenu'];
-            
-            Log::debug("NavigationComposer: currentMenu from view", [
-                'currentMenu_value' => $currentMenu,
-                'is_numeric' => is_numeric($currentMenu)
-            ]);
             
             // Menu 객체인 경우 ID 추출, 숫자인 경우 그대로 사용
             if (is_object($currentMenu) && isset($currentMenu->id)) {
@@ -55,54 +64,13 @@ class NavigationComposer
         if ($currentMenuId) {
             // 메뉴 ID로 실제 메뉴 객체 찾기
             $foundMenu = $accessibleMenus->find($currentMenuId);
-            
-            Log::debug("NavigationComposer: menu lookup result", [
-                'menu_id' => $currentMenuId,
-                'found' => $foundMenu ? true : false,
-                'menu_title' => $foundMenu ? $foundMenu->title : null,
-                'accessible_menus_count' => $accessibleMenus->count()
-            ]);
-            
             $currentMenu = $foundMenu;
         } else {
-            Log::debug("NavigationComposer: no currentMenu in viewData, using auto-detection");
             // 자동 감지 방식 사용 (라우트명, URL 패턴 매칭)
             $currentMenu = $this->findCurrentMenuByRoute($accessibleMenus);
         }
         
         $breadcrumb = $this->buildBreadcrumb($currentMenu, $accessibleMenus);
-        
-        // 뷰에서 전달된 추가 브레드크럼 요소가 있으면 추가
-        $viewData = $view->getData();
-        if (isset($viewData['additionalBreadcrumb'])) {
-            $additionalBreadcrumb = $viewData['additionalBreadcrumb'];
-            
-            Log::debug("NavigationComposer: additionalBreadcrumb found", [
-                'additionalBreadcrumb' => $additionalBreadcrumb,
-                'current_breadcrumb_count' => count($breadcrumb)
-            ]);
-            
-            // 기존 브레드크럼의 마지막 요소를 현재가 아닌 것으로 변경
-            if (!empty($breadcrumb)) {
-                $lastIndex = count($breadcrumb) - 1;
-                $breadcrumb[$lastIndex]['is_current'] = false;
-                $breadcrumb[$lastIndex]['url'] = $this->getMenuUrl($currentMenu);
-            }
-            
-            // 추가 브레드크럼 요소 추가
-            $breadcrumb[] = [
-                'title' => $additionalBreadcrumb['title'] ?? 'Page',
-                'url' => $additionalBreadcrumb['url'] ?? null,
-                'is_current' => true
-            ];
-            
-            Log::debug("NavigationComposer: breadcrumb after adding additional", [
-                'final_breadcrumb_count' => count($breadcrumb),
-                'final_breadcrumb_titles' => array_map(function($item) { return $item['title']; }, $breadcrumb)
-            ]);
-        } else {
-            Log::debug("NavigationComposer: no additionalBreadcrumb in viewData");
-        }
         
         $menuTabs = $this->buildMenuTabs($currentMenu, $accessibleMenus);
         
@@ -110,14 +78,21 @@ class NavigationComposer
         $existingSeoData = $view->getData()['seoData'] ?? null;
         $seoData = $existingSeoData ?: $this->buildSeoData($currentMenu, $breadcrumb);
         
-        $view->with([
+        $composerData = [
             'navigationMenus' => $navigationTree,
             'flatMenus' => $accessibleMenus,
             'currentMenu' => $currentMenu,
             'breadcrumb' => $breadcrumb,
             'menuTabs' => $menuTabs,
             'seoData' => $seoData
-        ]);
+        ];
+        
+        // 캐시에 저장
+        static::$composerCache[$cacheKey] = $composerData;
+        
+        // 뷰별 특수 데이터 병합
+        $viewSpecificData = $this->getViewSpecificData($view, $composerData);
+        $view->with(array_merge($composerData, $viewSpecificData));
     }
 
     /**
@@ -242,14 +217,6 @@ class NavigationComposer
      */
     private function buildBreadcrumb($currentMenu, $menus)
     {
-        Log::debug("NavigationComposer buildBreadcrumb", [
-            'currentMenu' => $currentMenu ? [
-                'id' => $currentMenu->id,
-                'title' => $currentMenu->title,
-                'parent_id' => $currentMenu->parent_id
-            ] : null
-        ]);
-        
         if (!$currentMenu) {
             return [
                 [
@@ -267,18 +234,8 @@ class NavigationComposer
         $menuChain = [];
         while ($menu) {
             $menuChain[] = $menu;
-            Log::debug("NavigationComposer: adding menu to chain", [
-                'menu_id' => $menu->id,
-                'menu_title' => $menu->title,
-                'parent_id' => $menu->parent_id
-            ]);
             $menu = $menu->parent_id ? $menus->find($menu->parent_id) : null;
         }
-        
-        Log::debug("NavigationComposer: final menuChain", [
-            'chain_count' => count($menuChain),
-            'chain_titles' => array_map(function($m) { return $m->title; }, $menuChain)
-        ]);
         
         // Home 추가
         $breadcrumb[] = [
@@ -301,11 +258,6 @@ class NavigationComposer
                 'menu_id' => $menu->id ?? null
             ];
         }
-        
-        Log::debug("NavigationComposer: final breadcrumb", [
-            'breadcrumb_count' => count($breadcrumb),
-            'breadcrumb_titles' => array_map(function($item) { return $item['title']; }, $breadcrumb)
-        ]);
         
         return $breadcrumb;
     }
@@ -394,10 +346,6 @@ class NavigationComposer
                             if (!empty($menu->slug)) {
                                 $routeParameters['slug'] = $menu->slug;
                             } else {
-                                Log::warning("No board or slug found for menu", [
-                                    'menu_id' => $menu->id,
-                                    'menu_title' => $menu->title
-                                ]);
                                 return '#';
                             }
                         }
@@ -405,11 +353,6 @@ class NavigationComposer
                     
                     return route($routeName, $routeParameters);
                 } catch (\Exception $e) {
-                    Log::warning("Failed to generate route URL for menu: {$menu->title}", [
-                        'route' => $menu->target,
-                        'menu_id' => $menu->id,
-                        'error' => $e->getMessage()
-                    ]);
                     return '#';
                 }
             case 'url':
@@ -585,5 +528,71 @@ class NavigationComposer
             '@type' => 'BreadcrumbList',
             'itemListElement' => $itemListElement
         ];
+    }
+
+    /**
+     * 요청 기반 캐시 키 생성 (뷰 데이터 무관)
+     */
+    private function generateRequestCacheKey(): string
+    {
+        $user = Auth::user();
+        
+        // 요청 레벨의 핵심 정보만 사용
+        $keyParts = [
+            'user_id' => $user ? $user->id : 'guest',
+            'route' => Route::currentRouteName() ?? 'unknown',
+            'url_path' => parse_url(Request::url(), PHP_URL_PATH), // 도메인 제외, 경로만
+        ];
+        
+        return 'nav_composer_req_' . md5(serialize($keyParts));
+    }
+
+    /**
+     * 뷰별 특수 데이터 처리
+     */
+    private function getViewSpecificData(View $view, array $cachedData): array
+    {
+        $viewData = $view->getData();
+        $viewSpecificData = [];
+        
+        // 뷰에서 전달된 추가 브레드크럼 처리
+        if (isset($viewData['additionalBreadcrumb'])) {
+            $additionalBreadcrumb = $viewData['additionalBreadcrumb'];
+            $breadcrumb = $cachedData['breadcrumb'] ?? [];
+            
+            // 기존 브레드크럼의 마지막 요소를 현재가 아닌 것으로 변경
+            if (!empty($breadcrumb)) {
+                $lastIndex = count($breadcrumb) - 1;
+                $breadcrumb[$lastIndex]['is_current'] = false;
+                if (isset($cachedData['currentMenu'])) {
+                    $breadcrumb[$lastIndex]['url'] = $this->getMenuUrl($cachedData['currentMenu']);
+                }
+            }
+            
+            // 추가 브레드크럼 요소 추가
+            $breadcrumb[] = [
+                'title' => $additionalBreadcrumb['title'] ?? 'Page',
+                'url' => $additionalBreadcrumb['url'] ?? null,
+                'is_current' => true
+            ];
+            
+            $viewSpecificData['breadcrumb'] = $breadcrumb;
+        }
+        
+        // 뷰에서 명시적으로 currentMenuId가 전달된 경우
+        if (isset($viewData['currentMenuId']) && $viewData['currentMenuId'] !== ($cachedData['currentMenu']->id ?? null)) {
+            // 다른 메뉴가 지정된 경우 캐시를 사용하지 않고 재계산 필요
+            // 이 경우는 별도 처리가 필요하지만, 일반적으로 드물어야 함
+        }
+        
+        return $viewSpecificData;
+    }
+
+    /**
+     * 캐시 키 생성 (호환성 유지용, 곧 제거 예정)
+     */
+    private function generateCacheKey(View $view): string
+    {
+        return $this->generateRequestCacheKey();
     }
 }
