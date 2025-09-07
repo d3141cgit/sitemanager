@@ -95,6 +95,8 @@ a.btn-outline-dark:hover { color: #fff !important; }
 .btn-outline-default:hover { color: #000; background-color: var(--bs-gray-200); border-color: var(--bs-gray-300); transition: all 0.3s ease; }
 .btn-default-sm { padding: 0.125rem 0.5rem; font-size: 0.875rem; }
 
+.note-toolbar button { border: none; }
+
 body > header { 
     padding: 1rem 0;
     background: linear-gradient(135deg, 
