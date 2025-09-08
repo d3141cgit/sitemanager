@@ -7,9 +7,9 @@
                         <img src="{{ $attachment->preview_url }}" 
                              alt="{{ $attachment->original_name }}" 
                              style="width: 24px; height: 24px; object-fit: cover; border-radius: 3px; cursor: pointer;"
-                             onclick="showImageModal('{{ $attachment->file_url }}', '{{ $attachment->original_name }}')">
+                             onclick="showImageModal('{{ $attachment->file_url }}', '{{ $attachment->original_name }}', '{{ $attachment->download_url }}')">
                     </div>
-                    <a href="javascript:void(0)" onclick="showImageModal('{{ $attachment->file_url }}', '{{ $attachment->original_name }}')">{{ $attachment->original_name }}</a>
+                    <a href="{{ $attachment->download_url }}" download>{{ $attachment->original_name }}</a>
                 @else
                     <i class="bi {{ $attachment->file_icon }} me-2"></i>
                     <a href="{{ $attachment->download_url }}" download>{{ $attachment->original_name }}</a>

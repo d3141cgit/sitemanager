@@ -56,6 +56,17 @@ class BoardAttachment extends Model
      */
     public function getDownloadUrlAttribute(): string
     {
+        // 댓글 첨부파일인 경우 댓글 전용 다운로드 라우트 사용
+        if ($this->attachment_type === 'comment' && $this->comment_id) {
+            return route('board.comments.attachment.download', [
+                'slug' => $this->board_slug,
+                'postId' => $this->post_id,
+                'commentId' => $this->comment_id,
+                'attachmentId' => $this->id
+            ]);
+        }
+        
+        // 게시글 첨부파일인 경우 기존 라우트 사용
         return route('board.attachment.download', [
             'slug' => $this->board_slug,
             'attachmentId' => $this->id

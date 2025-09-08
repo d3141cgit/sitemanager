@@ -613,4 +613,35 @@ class CommentController extends Controller
             }
         }
     }
+    
+    /**
+     * 댓글 첨부파일 다운로드
+     */
+    public function downloadAttachment(string $slug, $postId, $commentId, $attachmentId)
+    {
+        $board = Board::where('slug', $slug)->firstOrFail();
+        
+        // 권한 체크: 게시판을 볼 수 있어야 파일도 다운로드 가능
+        if ($board->menu_id && !can('read', $board)) {
+            abort(403, 'You do not have permission to access this file.');
+        }
+        
+        // 첨부파일 찾기 (댓글 첨부파일만)
+        $attachment = BoardAttachment::where('id', $attachmentId)
+            ->where('comment_id', $commentId)
+            ->where('attachment_type', 'comment')
+            ->where('board_slug', $board->slug)
+            ->firstOrFail();
+        
+        // 다운로드 카운트 증가
+        $attachment->increment('download_count');
+        
+        // 파일 다운로드 (강제 다운로드)
+        return $this->fileUploadService->downloadFile(
+            $attachment->file_path, 
+            $this->fileUploadService->getDisk(), 
+            $attachment->original_name,
+            true // 강제 다운로드 활성화
+        );
+    }
 }

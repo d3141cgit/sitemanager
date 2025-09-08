@@ -93,6 +93,7 @@ Route::prefix('board')->name('board.')->group(function () {
         Route::post('/{commentId}', [CommentController::class, 'update'])->name('update.post'); // FormData 지원
         Route::delete('/{commentId}', [CommentController::class, 'destroy'])->name('destroy');
         Route::patch('/{commentId}/approve', [CommentController::class, 'approve'])->name('approve');
+        Route::get('/{commentId}/attachments/{attachmentId}', [CommentController::class, 'downloadAttachment'])->name('attachment.download');
         Route::delete('/{commentId}/attachments/{attachmentId}', [CommentController::class, 'deleteAttachment'])->name('attachment.delete');
     });
 });

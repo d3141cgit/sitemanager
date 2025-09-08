@@ -898,12 +898,15 @@ function showAlert(message, type = 'info') {
 }
 
 // 이미지 모달 표시 함수
-function showImageModal(imageUrl, imageName) {
+function showImageModal(imageUrl, imageName, downloadUrl = null) {
     // 기존 모달이 있다면 제거
     const existingModal = document.getElementById('image-modal');
     if (existingModal) {
         existingModal.remove();
     }
+    
+    // downloadUrl이 없으면 imageUrl을 사용 (fallback)
+    const finalDownloadUrl = downloadUrl || imageUrl;
     
     // 모달 HTML 생성
     const modalHtml = `
@@ -918,7 +921,7 @@ function showImageModal(imageUrl, imageName) {
                         <img src="${imageUrl}" alt="${imageName || 'Image'}" class="img-fluid" style="max-width: 100%; max-height: 70vh;">
                     </div>
                     <div class="modal-footer">
-                        <a href="${imageUrl}" download="${imageName || 'image'}" class="btn btn-primary">
+                        <a href="${finalDownloadUrl}" class="btn btn-primary">
                             <i class="bi bi-download"></i> Download
                         </a>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

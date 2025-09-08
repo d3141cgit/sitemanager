@@ -85,7 +85,7 @@
                                      alt="{{ $attachment->original_name }}" 
                                      class="img-thumbnail" 
                                      style="max-width: 150px; max-height: 100px; cursor: pointer;"
-                                     onclick="showImageModal('{{ $attachment->file_url }}', '{{ $attachment->original_name }}')">
+                                     onclick="showImageModal('{{ $attachment->file_url }}', '{{ $attachment->original_name }}', '{{ $attachment->download_url }}')">
                             </div>
                         @else
                             <div class="attachment-file">
