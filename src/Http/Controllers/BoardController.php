@@ -705,8 +705,9 @@ class BoardController extends Controller
                     : $fileInfo['category'];
                 
                 $attachment = BoardAttachment::create([
-                    'post_id' => $post->id,
+                    'attachment_id' => $post->id,
                     'board_slug' => $board->slug,
+                    'attachment_type' => 'post',
                     'filename' => $fileInfo['filename'],
                     'original_name' => $customName, // 사용자 정의 파일명 사용
                     'file_path' => $fileInfo['path'],

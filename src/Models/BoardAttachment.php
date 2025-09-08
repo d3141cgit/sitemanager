@@ -12,9 +12,8 @@ class BoardAttachment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'post_id',
-        'comment_id',
         'board_slug',
+        'attachment_id',
         'attachment_type',
         'filename',
         'original_name',
@@ -57,11 +56,15 @@ class BoardAttachment extends Model
     public function getDownloadUrlAttribute(): string
     {
         // 댓글 첨부파일인 경우 댓글 전용 다운로드 라우트 사용
-        if ($this->attachment_type === 'comment' && $this->comment_id) {
+        if ($this->attachment_type === 'comment') {
+            // attachment_id가 comment_id인 경우 comment 테이블에서 post_id 조회
+            $comment = $this->getComment();
+            $postId = $comment ? $comment->post_id : null;
+            
             return route('board.comments.attachment.download', [
                 'slug' => $this->board_slug,
-                'postId' => $this->post_id,
-                'commentId' => $this->comment_id,
+                'postId' => $postId,
+                'commentId' => $this->attachment_id,
                 'attachmentId' => $this->id
             ]);
         }
@@ -227,13 +230,26 @@ class BoardAttachment extends Model
      */
     public function getPost()
     {
-        if (!$this->board_slug || !$this->post_id) {
+        if (!$this->board_slug || ($this->attachment_type === 'post' && !$this->attachment_id)) {
+            return null;
+        }
+        
+        // 게시글 첨부파일인 경우 attachment_id가 post_id
+        if ($this->attachment_type === 'post') {
+            $postId = $this->attachment_id;
+        } else {
+            // 댓글 첨부파일인 경우 댓글을 통해 post_id 조회
+            $comment = $this->getComment();
+            $postId = $comment ? $comment->post_id : null;
+        }
+        
+        if (!$postId) {
             return null;
         }
         
         try {
             $postModelClass = BoardPost::forBoard($this->board_slug);
-            return $postModelClass::find($this->post_id);
+            return $postModelClass::find($postId);
         } catch (\Exception $e) {
             return null;
         }
@@ -244,13 +260,13 @@ class BoardAttachment extends Model
      */
     public function getComment()
     {
-        if (!$this->board_slug || !$this->comment_id || $this->attachment_type !== 'comment') {
+        if (!$this->board_slug || $this->attachment_type !== 'comment' || !$this->attachment_id) {
             return null;
         }
         
         try {
             $commentModelClass = BoardComment::forBoard($this->board_slug);
-            return $commentModelClass::find($this->comment_id);
+            return $commentModelClass::find($this->attachment_id);
         } catch (\Exception $e) {
             return null;
         }
@@ -287,7 +303,7 @@ class BoardAttachment extends Model
      */
     public function isCommentAttachment(): bool
     {
-        return $this->attachment_type === 'comment' && !is_null($this->comment_id);
+        return $this->attachment_type === 'comment';
     }
 
     /**
@@ -295,7 +311,7 @@ class BoardAttachment extends Model
      */
     public function isPostAttachment(): bool
     {
-        return $this->attachment_type === 'post' && is_null($this->comment_id);
+        return $this->attachment_type === 'post';
     }
 
     /**
@@ -311,7 +327,7 @@ class BoardAttachment extends Model
      */
     public function scopeForPost($query, int $postId)
     {
-        return $query->where('post_id', $postId);
+        return $query->where('attachment_id', $postId)->where('attachment_type', 'post');
     }
 
     /**
@@ -327,7 +343,9 @@ class BoardAttachment extends Model
      */
     public function scopeByPost($query, int $postId, string $boardSlug)
     {
-        return $query->where('post_id', $postId)->where('board_slug', $boardSlug);
+        return $query->where('attachment_id', $postId)
+                    ->where('board_slug', $boardSlug)
+                    ->where('attachment_type', 'post');
     }
 
     /**
@@ -335,7 +353,7 @@ class BoardAttachment extends Model
      */
     public function scopeForComment($query, int $commentId)
     {
-        return $query->where('comment_id', $commentId)->where('attachment_type', 'comment');
+        return $query->where('attachment_id', $commentId)->where('attachment_type', 'comment');
     }
 
     /**
@@ -343,7 +361,7 @@ class BoardAttachment extends Model
      */
     public function scopeByComment($query, int $commentId, string $boardSlug)
     {
-        return $query->where('comment_id', $commentId)
+        return $query->where('attachment_id', $commentId)
                     ->where('board_slug', $boardSlug)
                     ->where('attachment_type', 'comment');
     }

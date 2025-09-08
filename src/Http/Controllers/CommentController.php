@@ -502,8 +502,7 @@ class CommentController extends Controller
                 
                 // DB에 첨부파일 정보 저장
                 BoardAttachment::create([
-                    'post_id' => $comment->post_id,
-                    'comment_id' => $comment->id,
+                    'attachment_id' => $comment->id,
                     'board_slug' => $board->slug,
                     'attachment_type' => 'comment',
                     'filename' => $uploadResult['filename'],
@@ -568,7 +567,7 @@ class CommentController extends Controller
 
         try {
             $attachment = BoardAttachment::where('id', $attachmentId)
-                ->where('comment_id', $commentId)
+                ->where('attachment_id', $commentId)
                 ->where('attachment_type', 'comment')
                 ->firstOrFail();
 
@@ -606,9 +605,9 @@ class CommentController extends Controller
             return;
         }
 
-        // 해당 댓글의 첨부파일들만 삭제 (보안을 위해 comment_id 확인)
+        // 해당 댓글의 첨부파일들만 삭제 (보안을 위해 attachment_id 확인)
         $attachments = BoardAttachment::whereIn('id', $deletedAttachmentIds)
-            ->where('comment_id', $comment->id)
+            ->where('attachment_id', $comment->id)
             ->where('attachment_type', 'comment')
             ->get();
 
@@ -651,7 +650,7 @@ class CommentController extends Controller
         
         // 첨부파일 찾기 (댓글 첨부파일만)
         $attachment = BoardAttachment::where('id', $attachmentId)
-            ->where('comment_id', $commentId)
+            ->where('attachment_id', $commentId)
             ->where('attachment_type', 'comment')
             ->where('board_slug', $board->slug)
             ->firstOrFail();

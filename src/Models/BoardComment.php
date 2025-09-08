@@ -149,7 +149,7 @@ abstract class BoardComment extends Model
      */
     public function attachments(): HasMany
     {
-        return $this->hasMany(BoardAttachment::class, 'comment_id')
+        return $this->hasMany(BoardAttachment::class, 'attachment_id')
                     ->where('attachment_type', 'comment');
     }
 

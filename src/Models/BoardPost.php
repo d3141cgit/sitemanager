@@ -98,7 +98,8 @@ abstract class BoardPost extends Model
      */
     public function attachments(): HasMany
     {
-        return $this->hasMany(BoardAttachment::class, 'post_id', 'id')
+        return $this->hasMany(BoardAttachment::class, 'attachment_id', 'id')
+                    ->where('attachment_type', 'post')
                     ->where('board_slug', $this->getBoardSlug())
                     ->ordered();
     }
