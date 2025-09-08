@@ -73,6 +73,37 @@
     <!-- Comment Content -->
     <div class="comment-content mb-2">{!! nl2br($comment->content) !!}</div>
     
+    <!-- Comment Attachments -->
+    @if($comment->attachments && $comment->attachments->count() > 0)
+        <div class="comment-attachments mb-3">
+            <div class="attachments-list">
+                @foreach($comment->attachments as $attachment)
+                    <div class="attachment-item d-inline-block me-2 mb-2">
+                        @if($attachment->is_image)
+                            <div class="attachment-image">
+                                <img src="{{ $attachment->preview_url }}" 
+                                     alt="{{ $attachment->original_name }}" 
+                                     class="img-thumbnail" 
+                                     style="max-width: 150px; max-height: 100px; cursor: pointer;"
+                                     onclick="showImageModal('{{ $attachment->file_url }}', '{{ $attachment->original_name }}')">
+                            </div>
+                        @else
+                            <div class="attachment-file">
+                                <a href="{{ $attachment->download_url }}" 
+                                   class="btn btn-sm btn-outline-secondary" 
+                                   title="{{ $attachment->original_name }} ({{ $attachment->file_size_human }})">
+                                    <i class="{{ $attachment->file_icon }}"></i>
+                                    {{ Str::limit($attachment->original_name, 20) }}
+                                    <small class="text-muted">({{ $attachment->file_size_human }})</small>
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+    
     <!-- Reply Form (Hidden by default) -->
     <div id="reply-form-{{ $comment->id }}" class="reply-form mt-3" style="display: none;">
         <form onsubmit="submitReply(event, {{ $comment->id }})">
@@ -97,13 +128,35 @@
     
     <!-- Edit Form (Hidden by default) -->
     <div id="edit-form-{{ $comment->id }}" class="edit-form mt-3" style="display: none;">
-        <form onsubmit="submitEdit(event, {{ $comment->id }})">
+        <form onsubmit="submitEdit(event, {{ $comment->id }})" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             <div class="mb-2">
                 <textarea name="content" class="form-control form-control-sm" 
                           rows="3" required>{{ $comment->content }}</textarea>
             </div>
+            
+            <!-- 기존 첨부파일 표시 -->
+            @if($comment->attachments && $comment->attachments->count() > 0)
+                <div class="mb-2">
+                    <label class="form-label small">현재 첨부파일:</label>
+                    <div class="existing-attachments">
+                        @include('sitemanager::board.partials.comment-attachments', ['comment' => $comment])
+                    </div>
+                </div>
+            @endif
+            
+            <!-- 새 파일 업로드 (파일 업로드 권한이 있는 경우만) -->
+            @if($comment->permissions['canFileUpload'] ?? false)
+                <div class="mb-2">
+                    <input type="file" name="files[]" id="file-input-{{ $comment->id }}" class="d-none" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('file-input-{{ $comment->id }}').click()">
+                        <i class="bi bi-paperclip"></i> Add Files
+                    </button>
+                    <div class="file-preview mt-2"></div>
+                </div>
+            @endif
+            
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-sm btn-primary">
                     <i class="bi bi-check"></i> Save

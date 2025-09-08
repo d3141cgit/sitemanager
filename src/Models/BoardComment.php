@@ -145,6 +145,15 @@ abstract class BoardComment extends Model
     }
 
     /**
+     * 댓글 첨부파일들
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(BoardAttachment::class, 'comment_id')
+                    ->where('attachment_type', 'comment');
+    }
+
+    /**
      * 승인된 댓글만
      */
     public function scopeApproved($query)
@@ -229,6 +238,14 @@ abstract class BoardComment extends Model
         }
         
         return $count;
+    }
+
+    /**
+     * 댓글 첨부파일 개수
+     */
+    public function getAttachmentCountAttribute(): int
+    {
+        return $this->attachments()->count();
     }
 
     /**

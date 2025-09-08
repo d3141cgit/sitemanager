@@ -76,18 +76,21 @@
                     @php
                         $commentsCount = $board->comments_count ?? $board->getCommentsCount();
                         $deletedCommentsCount = $board->deleted_comments_count ?? $board->getDeletedCommentsCount();
+                        $pendingCommentsCount = $board->pending_comments_count ?? $board->getPendingCommentsCount();
                     @endphp
                     
-                    @if($commentsCount == 0 && $deletedCommentsCount == 0)
+                    @if($commentsCount + $pendingCommentsCount + $deletedCommentsCount == 0)
                         -
                     @else
+                        @if($commentsCount > 0)
                         <a href="{{ route('sitemanager.comments.index', ['board_id' => $board->id]) }}" class="btn btn-sm btn-outline-success" title="{{ t('Manage comments') }}">
                             {{ $commentsCount }}
                         </a>
-                        @if($board->pending_comments_count > 0)
+                        @endif
+                        @if($pendingCommentsCount > 0)
                         <a href="{{ route('sitemanager.comments.index', ['board_id' => $board->id, 'status' => 'pending']) }}" 
                             class="btn btn-sm btn-outline-warning" title="{{ t('Manage pending comments') }}">
-                            {{ $board->pending_comments_count }}
+                            {{ $pendingCommentsCount }}
                         </a>
                         @endif
                         @if($deletedCommentsCount > 0)

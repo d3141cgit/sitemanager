@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('board_attachments', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('post_id');
+            $table->unsignedBigInteger('comment_id')->nullable(); // 댓글 첨부파일인 경우 댓글 ID
             $table->string('board_slug');
+            $table->enum('attachment_type', ['post', 'comment'])->default('post'); // 첨부파일 타입
             $table->string('filename');
             $table->string('original_name');
             $table->string('file_path');
@@ -28,9 +30,11 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['post_id', 'board_slug']);
+            $table->index(['comment_id', 'board_slug']); // 댓글 첨부파일 인덱스 추가
             $table->index('board_slug');
             $table->index('category');
             $table->index('sort_order');
+            $table->index('attachment_type'); // 첨부파일 타입 인덱스 추가
         });
     }
 

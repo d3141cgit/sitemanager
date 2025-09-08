@@ -196,7 +196,12 @@ class BoardController extends Controller
             ]));
         }
         
-        $comments = $this->boardService->getPostComments($board, $post->id);
+        // 댓글 조회 (readComments 권한이 있는 경우에만)
+        $comments = null;
+        if ($board->getSetting('allow_comments', true) && can('readComments', $board)) {
+            $comments = $this->boardService->getPostComments($board, $post->id);
+        }
+        
         $attachments = $this->boardService->getPostAttachments($board, $post->id, ['thumbnail']); // thumbnail 제외
         $prevNext = $this->boardService->getPrevNextPosts($board, $post);
         
@@ -240,6 +245,7 @@ class BoardController extends Controller
         $canDelete = false;
         $canWriteComments = false;
         $canUploadFiles = false;
+        $canUploadCommentFiles = false;
         
         if ($board->menu_id) {
             // 메뉴에서 가져온 최종 권한들 (이미 member, group, level, admin의 최대값으로 계산됨)
@@ -247,6 +253,7 @@ class BoardController extends Controller
             $canManage = can('manage', $board);
             $canWriteComments = can('writeComments', $board);
             $canUploadFiles = can('uploadFiles', $board);
+            $canUploadCommentFiles = can('uploadCommentFiles', $board);
             
             // 작성자 본인 여부 (로그인한 사용자이면서 member_id가 일치하는 경우만)
             $isAuthor = $user && $post->member_id && $post->member_id === $user->id;
@@ -277,44 +284,7 @@ class BoardController extends Controller
             'canDelete' => $canDelete,
             'canWriteComments' => $canWriteComments,
             'canUploadFiles' => $canUploadFiles,
-        ];
-    }
-
-    /**
-     * 댓글 권한 계산
-     */
-    private function calculateCommentPermissions(Board $board, $comment): array
-    {
-        $user = Auth::user();
-        
-        $canEdit = false;
-        $canDelete = false;
-        $canReply = false;
-        
-        if ($board->menu_id && $user) {
-            // 본인 댓글인 경우 수정/삭제 가능 (member_id가 존재하고 일치하는 경우만)
-            $isAuthor = $comment->member_id && $comment->member_id === $user->id;
-            
-            // 댓글 관리 권한
-            $canManageComments = can('manageComments', $board);
-            
-            // 댓글 작성 권한 (답글용)
-            $canWriteComments = can('writeComments', $board);
-            
-            // 수정 권한: 댓글 관리 권한 OR 작성자 본인
-            $canEdit = $canManageComments || $isAuthor;
-            
-            // 삭제 권한: 댓글 관리 권한 OR 작성자 본인
-            $canDelete = $canManageComments || $isAuthor;
-            
-            // 답글 권한: 댓글 작성 권한
-            $canReply = $canWriteComments;
-        }
-        
-        return [
-            'canEdit' => $canEdit,
-            'canDelete' => $canDelete,
-            'canReply' => $canReply,
+            'canUploadCommentFiles' => $canUploadCommentFiles,
         ];
     }
 

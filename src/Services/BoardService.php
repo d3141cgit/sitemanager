@@ -352,6 +352,7 @@ class BoardService
                 }
             })
             ->forPost($postId)
+            ->with('attachments') // 첨부파일도 함께 로드
             ->orderBy('created_at', 'desc')
             ->get();
             
@@ -373,7 +374,7 @@ class BoardService
     /**
      * 댓글 권한 계산
      */
-    private function calculateCommentPermissions(Board $board, $comment): array
+    public function calculateCommentPermissions(Board $board, $comment): array
     {
         $user = Auth::user();
         
@@ -381,6 +382,7 @@ class BoardService
         $canDelete = false;
         $canReply = false;
         $canManageComments = false;
+        $canUploadFiles = false;
         
         if ($board->menu_id && $user) {
             // 본인 댓글인 경우 수정/삭제 가능 (member_id가 존재하고 일치하는 경우만)
@@ -391,6 +393,9 @@ class BoardService
             
             // 댓글 작성 권한 (답글용)
             $canWriteComments = can('writeComments', $board);
+            
+            // 댓글 파일 업로드 권한
+            $canUploadFiles = can('uploadCommentFiles', $board);
             
             // 수정 권한: 댓글 관리 권한 OR 작성자 본인
             $canEdit = $canManageComments || $isAuthor;
@@ -407,6 +412,7 @@ class BoardService
             'canDelete' => $canDelete,
             'canReply' => $canReply,
             'canManage' => $canManageComments, // 댓글 관리 권한 추가
+            'canFileUpload' => $canUploadFiles, // 댓글 파일 업로드 권한 추가
         ];
     }
 
@@ -421,7 +427,8 @@ class BoardService
             return null;
         }
 
-        $query = BoardAttachment::byPost($postId, $board->slug);
+        $query = BoardAttachment::byPost($postId, $board->slug)
+            ->where('attachment_type', 'post'); // 게시글 첨부파일만 조회
         
         // include가 지정된 경우 include 우선 적용
         if (!empty($includeCategories)) {

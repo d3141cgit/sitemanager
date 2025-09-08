@@ -235,7 +235,7 @@
     @endif
 
     <!-- Comments Section -->
-    @if($board->getSetting('allow_comments', true))
+    @if($board->getSetting('allow_comments', true) && can('readComments', $board))
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card">
@@ -247,7 +247,7 @@
                     <div class="card-body">
                         <!-- Comment Form -->
                         @if(can('writeComments', $board))
-                            <form id="commentForm" action="{{ route('board.comments.store', [$board->slug, $post->id]) }}" method="POST" class="mb-4">
+                            <form id="commentForm" action="{{ route('board.comments.store', [$board->slug, $post->id]) }}" method="POST" enctype="multipart/form-data" class="mb-4">
                                 @csrf
                                 <input type="hidden" name="post_id" value="{{ $post->id }}">
                                 <div class="mb-3">
@@ -255,6 +255,20 @@
                                     <textarea id="comment-content" name="content" class="form-control" 
                                               rows="3" placeholder="Share your thoughts..." required></textarea>
                                 </div>
+                                
+                                @if(can('uploadCommentFiles', $board))
+                                    <div class="mb-3">
+                                        <label for="comment-files" class="form-label">
+                                            <i class="bi bi-paperclip"></i> Attach files (optional)
+                                        </label>
+                                        <input type="file" class="form-control" id="comment-files" name="files[]" multiple>
+                                        <div class="form-text">
+                                            You can attach multiple files. Maximum file size: {{ ini_get('upload_max_filesize') }}
+                                        </div>
+                                        <div id="comment-file-preview" class="mt-2"></div>
+                                    </div>
+                                @endif
+                                
                                 <div class="d-flex justify-content-between align-items-center">
                                     <small class="text-muted">
                                         @if($board->getSetting('moderate_comments', false))
@@ -290,6 +304,22 @@
                             @endif
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Comments Access Denied Message -->
+    @if($board->getSetting('allow_comments', true) && !can('readComments', $board))
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <i class="bi bi-lock"></i> 
+                    @if(!auth()->check())
+                        <a href="{{ route('login') }}">Login</a> to view comments.
+                    @else
+                        You don't have permission to view comments.
+                    @endif
                 </div>
             </div>
         </div>
@@ -362,7 +392,8 @@ window.commentRoutes = {
     store: "{{ route('board.comments.store', [$board->slug, $post->id]) }}",
     update: "{{ route('board.comments.update', [$board->slug, $post->id, ':id']) }}",
     destroy: "{{ route('board.comments.destroy', [$board->slug, $post->id, ':id']) }}",
-    approve: "{{ route('board.comments.approve', [$board->slug, $post->id, ':id']) }}"
+    approve: "{{ route('board.comments.approve', [$board->slug, $post->id, ':id']) }}",
+    deleteAttachment: "{{ route('board.comments.attachment.delete', [$board->slug, $post->id, ':commentId', ':attachmentId']) }}"
 };
 </script>
 @endpush

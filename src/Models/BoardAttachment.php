@@ -13,7 +13,9 @@ class BoardAttachment extends Model
 
     protected $fillable = [
         'post_id',
+        'comment_id',
         'board_slug',
+        'attachment_type',
         'filename',
         'original_name',
         'file_path',
@@ -227,6 +229,23 @@ class BoardAttachment extends Model
     }
 
     /**
+     * 관련 댓글 정보를 가져오는 메서드
+     */
+    public function getComment()
+    {
+        if (!$this->board_slug || !$this->comment_id || $this->attachment_type !== 'comment') {
+            return null;
+        }
+        
+        try {
+            $commentModelClass = BoardComment::forBoard($this->board_slug);
+            return $commentModelClass::find($this->comment_id);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
      * 게시글 정보를 가져오는 attribute accessor
      */
     public function getPostAttribute()
@@ -250,6 +269,22 @@ class BoardAttachment extends Model
     public function incrementDownloadCount(): void
     {
         $this->increment('download_count');
+    }
+
+    /**
+     * 댓글 첨부파일인지 확인
+     */
+    public function isCommentAttachment(): bool
+    {
+        return $this->attachment_type === 'comment' && !is_null($this->comment_id);
+    }
+
+    /**
+     * 게시글 첨부파일인지 확인
+     */
+    public function isPostAttachment(): bool
+    {
+        return $this->attachment_type === 'post' && is_null($this->comment_id);
     }
 
     /**
@@ -282,6 +317,32 @@ class BoardAttachment extends Model
     public function scopeByPost($query, int $postId, string $boardSlug)
     {
         return $query->where('post_id', $postId)->where('board_slug', $boardSlug);
+    }
+
+    /**
+     * 댓글별 첨부파일 조회
+     */
+    public function scopeForComment($query, int $commentId)
+    {
+        return $query->where('comment_id', $commentId)->where('attachment_type', 'comment');
+    }
+
+    /**
+     * 댓글별 첨부파일 조회 (보드 슬러그 포함)
+     */
+    public function scopeByComment($query, int $commentId, string $boardSlug)
+    {
+        return $query->where('comment_id', $commentId)
+                    ->where('board_slug', $boardSlug)
+                    ->where('attachment_type', 'comment');
+    }
+
+    /**
+     * 첨부파일 타입별 조회
+     */
+    public function scopeByType($query, string $type)
+    {
+        return $query->where('attachment_type', $type);
     }
 
     /**
