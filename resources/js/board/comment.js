@@ -2,7 +2,8 @@
 
 // 댓글 시스템 네임스페이스 (중복 방지)
 window.CommentManager = window.CommentManager || {
-    isSubmitting: false
+    isSubmitting: false,
+    selectedFiles: new Map() // 폼별로 선택된 파일들 관리 (formId -> FileList)
 };
 
 // Initialize comment form when DOM is loaded
@@ -45,17 +46,22 @@ function initializeCommentForm() {
         
         if (commentFileInput && commentFilePreview) {
             commentFileInput.addEventListener('change', function() {
-                displayFilePreview(this.files, commentFilePreview);
-                
-                // Add Files 버튼 텍스트 업데이트
-                const addFilesBtn = document.querySelector('button[onclick*="comment-files"]');
-                if (addFilesBtn) {
-                    if (this.files.length > 0) {
-                        addFilesBtn.innerHTML = `<i class="bi bi-paperclip"></i> ${this.files.length} file(s) selected`;
+                if (this.files.length > 0) {
+                    // 새로 선택된 파일들을 기존 선택에 추가
+                    const formId = 'main-comment-form';
+                    const allFiles = addFilesToSelection(formId, Array.from(this.files));
+                    
+                    // 원래 파일 input은 빈 상태로 리셋 (hidden input들이 실제 데이터를 관리)
+                    this.value = '';
+                    
+                    // 미리보기 업데이트 (hidden input들이 자동 생성됨)
+                    displayFilePreview(allFiles, commentFilePreview, formId);
+                    
+                    // Add Files 버튼 텍스트 업데이트
+                    const addFilesBtn = document.querySelector('button[onclick*="comment-files"]');
+                    if (addFilesBtn) {
+                        addFilesBtn.innerHTML = `<i class="bi bi-paperclip"></i> ${allFiles.length} file(s) selected`;
                         addFilesBtn.className = 'btn btn-sm btn-outline-primary';
-                    } else {
-                        addFilesBtn.innerHTML = '<i class="bi bi-paperclip"></i> Add Files';
-                        addFilesBtn.className = 'btn btn-sm btn-outline-secondary';
                     }
                 }
             });
@@ -72,6 +78,18 @@ function initializeCommentForm() {
             const formData = new FormData(this);
             const content = formData.get('content');
             const postId = formData.get('post_id');
+            
+            // 실제 파일 input 상태 확인
+            const fileInput = this.querySelector('input[type="file"]');
+            if (fileInput) {
+                console.log('DEBUG - Form submission - fileInput.files.length:', fileInput.files.length);
+                const fileNames = Array.from(fileInput.files).map(f => f.name);
+                console.log('DEBUG - Form submission - file names:', fileNames);
+                
+                // FormData에 포함된 파일들도 확인
+                const formDataFiles = formData.getAll('files[]');
+                console.log('DEBUG - Form submission - FormData files count:', formDataFiles.length);
+            }
             
             if (!content.trim()) {
                 alert('Please write a comment.');
@@ -116,6 +134,9 @@ function initializeCommentForm() {
                     if (commentFilePreview) {
                         commentFilePreview.innerHTML = '';
                     }
+                    
+                    // Clear file selection
+                    clearFileSelection('main-comment-form');
                     
                     // Reset Add Files button
                     const addFilesBtn = document.querySelector('button[onclick*="comment-files"]');
@@ -192,6 +213,62 @@ function initializeCommentForm() {
     }
 }
 
+// 선택된 파일들을 누적 관리하는 함수들
+function addFilesToSelection(formId, newFiles) {
+    if (!window.CommentManager.selectedFiles.has(formId)) {
+        window.CommentManager.selectedFiles.set(formId, []);
+    }
+    
+    const currentFiles = window.CommentManager.selectedFiles.get(formId);
+    
+    // 새로운 파일들을 기존 목록에 추가 (중복 파일명 체크)
+    for (const newFile of newFiles) {
+        const isDuplicate = currentFiles.some(existingFile => 
+            existingFile.name === newFile.name && existingFile.size === newFile.size
+        );
+        
+        if (!isDuplicate) {
+            currentFiles.push(newFile);
+        }
+    }
+    
+    window.CommentManager.selectedFiles.set(formId, currentFiles);
+    return currentFiles;
+}
+
+function removeFileFromSelection(formId, fileIndex) {
+    console.log('DEBUG - removeFileFromSelection:', { formId, fileIndex });
+    
+    if (!window.CommentManager.selectedFiles.has(formId)) {
+        console.log('DEBUG - no files found for formId:', formId);
+        return [];
+    }
+    
+    const currentFiles = window.CommentManager.selectedFiles.get(formId);
+    console.log('DEBUG - currentFiles before removal:', currentFiles.length);
+    
+    currentFiles.splice(fileIndex, 1);
+    window.CommentManager.selectedFiles.set(formId, currentFiles);
+    
+    console.log('DEBUG - currentFiles after removal:', currentFiles.length);
+    return currentFiles;
+}
+
+function clearFileSelection(formId) {
+    window.CommentManager.selectedFiles.delete(formId);
+}
+
+function getSelectedFiles(formId) {
+    return window.CommentManager.selectedFiles.get(formId) || [];
+}
+
+// 파일 배열을 FileList로 변환하는 함수
+function createFileList(filesArray) {
+    const dt = new DataTransfer();
+    filesArray.forEach(file => dt.items.add(file));
+    return dt.files;
+}
+
 // 새로 추가된 댓글에 이벤트 리스너 연결
 function initializeNewCommentEvents(commentId) {
     const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
@@ -205,7 +282,20 @@ function initializeNewCommentEvents(commentId) {
         
         if (fileInput && filePreview) {
             fileInput.addEventListener('change', function() {
-                displayFilePreview(this.files, filePreview);
+                if (this.files.length > 0) {
+                    // 새로 선택된 파일들을 기존 선택에 추가
+                    const formId = `edit-comment-${commentId}`;
+                    const allFiles = addFilesToSelection(formId, Array.from(this.files));
+                    
+                    // 파일 input을 업데이트된 파일 목록으로 설정
+                    this.files = createFileList(allFiles);
+                    
+                    // 미리보기 업데이트
+                    displayFilePreview(allFiles, filePreview, formId);
+                    
+                    // Add Files 버튼 텍스트 업데이트
+                    updateAddFilesButton(formId, allFiles.length);
+                }
             });
         }
         
@@ -213,6 +303,10 @@ function initializeNewCommentEvents(commentId) {
         if (!editForm.dataset.deletedAttachments) {
             editForm.dataset.deletedAttachments = JSON.stringify([]);
         }
+        
+        // 누적 파일 선택 초기화
+        const formId = `edit-comment-${commentId}`;
+        clearFileSelection(formId);
     }
 }
 
@@ -295,6 +389,11 @@ function editComment(commentId) {
         editForm.dataset.deletedAttachments = JSON.stringify([]);
         console.log('DEBUG - editComment: Initialized deleted attachments for comment', commentId);
         
+        // 누적 파일 선택 초기화
+        const formId = `edit-comment-${commentId}`;
+        clearFileSelection(formId);
+        updateAddFilesButton(formId, 0);
+        
         // 파일 업로드 기능 초기화
         initializeEditFormFileUpload(commentId);
     }
@@ -310,17 +409,22 @@ function initializeEditFormFileUpload(commentId) {
     
     if (fileInput && filePreview) {
         fileInput.addEventListener('change', function() {
-            displayFilePreview(this.files, filePreview);
-            
-            // Add Files 버튼 텍스트 업데이트
-            const addFilesBtn = editForm.querySelector(`button[onclick*="file-input-${commentId}"]`);
-            if (addFilesBtn) {
-                if (this.files.length > 0) {
-                    addFilesBtn.innerHTML = `<i class="bi bi-paperclip"></i> ${this.files.length} file(s) selected`;
+            if (this.files.length > 0) {
+                // 새로 선택된 파일들을 기존 선택에 추가
+                const formId = `edit-comment-${commentId}`;
+                const allFiles = addFilesToSelection(formId, Array.from(this.files));
+                
+                // 원래 파일 input은 빈 상태로 리셋 (hidden input들이 실제 데이터를 관리)
+                this.value = '';
+                
+                // 미리보기 업데이트 (hidden input들이 자동 생성됨)
+                displayFilePreview(allFiles, filePreview, formId);
+                
+                // Add Files 버튼 텍스트 업데이트
+                const addFilesBtn = editForm.querySelector(`button[onclick*="file-input-${commentId}"]`);
+                if (addFilesBtn) {
+                    addFilesBtn.innerHTML = `<i class="bi bi-paperclip"></i> ${allFiles.length} file(s) selected`;
                     addFilesBtn.className = 'btn btn-sm btn-outline-primary';
-                } else {
-                    addFilesBtn.innerHTML = '<i class="bi bi-paperclip"></i> Add Files';
-                    addFilesBtn.className = 'btn btn-sm btn-outline-secondary';
                 }
             }
         });
@@ -409,7 +513,7 @@ function restoreExistingAttachment(commentId, attachmentId) {
 }
 
 // 파일 미리보기 표시 (간소화 버전)
-function displayFilePreview(files, previewContainer) {
+function displayFilePreview(files, previewContainer, formId = null) {
     previewContainer.innerHTML = '';
     
     if (files.length === 0) {
@@ -422,6 +526,18 @@ function displayFilePreview(files, previewContainer) {
         fileItem.className = 'file-preview-item d-inline-flex align-items-center me-2 mb-1 px-2 py-1 bg-light border rounded';
         
         const fileIcon = getFileIcon(file.type);
+        
+        // 각 파일마다 개별 hidden input 생성
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'file';
+        hiddenInput.style.display = 'none';
+        hiddenInput.name = 'files[]';
+        hiddenInput.className = `file-input-${formId || 'default'}-${i}`;
+        
+        // DataTransfer를 사용해서 파일을 hidden input에 설정
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        hiddenInput.files = dataTransfer.files;
         
         // 간단한 이미지 미리보기 (작은 썸네일만)
         let imagePreview = '';
@@ -437,40 +553,134 @@ function displayFilePreview(files, previewContainer) {
         fileItem.innerHTML = `
             ${imagePreview}
             <span class="text-truncate" style="max-width: 120px;" title="${file.name}">${file.name}</span>
-            <button type="button" class="btn btn-sm ms-1" style="padding: 0 4px;" onclick="removeFilePreview(this, ${i})">
+            <button type="button" class="btn btn-sm ms-1" style="padding: 0 4px;" onclick="removeFilePreview(this, ${i}, ${formId ? `'${formId}'` : 'null'})">
                 <i class="bi bi-x" style="font-size: 12px;"></i>
             </button>
         `;
         
+        // 프리뷰 컨테이너에 hidden input과 파일 아이템 추가
+        previewContainer.appendChild(hiddenInput);
         previewContainer.appendChild(fileItem);
     }
 }
 
-// 파일 미리보기에서 파일 제거
-function removeFilePreview(button, fileIndex = null) {
-    const fileItem = button.closest('.file-preview-item');
-    const previewContainer = button.closest('.file-preview');
-    const fileInput = previewContainer.parentElement.querySelector('input[type="file"]');
+// 파일 미리보기에서 파일 제거 (간소화된 버전)
+function removeFilePreview(button, fileIndex, formId = null) {
+    console.log('DEBUG - removeFilePreview:', { fileIndex, formId, formIdType: typeof formId });
+    console.log('DEBUG - button element:', button);
+    console.log('DEBUG - button.className:', button?.className);
+    console.log('DEBUG - button.parentElement:', button?.parentElement);
     
-    if (fileItem) {
-        fileItem.remove();
+    // formId가 문자열 'null'인 경우 null로 변환
+    if (formId === 'null' || formId === '') {
+        formId = null;
     }
     
-    // 파일 input에서 해당 파일 제거 (DataTransfer를 사용하여 FileList 재구성)
-    if (fileInput && fileInput.files.length > 0) {
-        const dt = new DataTransfer();
-        const files = Array.from(fileInput.files);
+    console.log('DEBUG - after formId normalization:', { formId, formIdType: typeof formId });
+    
+    // 다양한 방법으로 fileItem 찾기
+    let fileItem = button.closest('.file-preview-item');
+    if (!fileItem) {
+        fileItem = button.closest('.file-item');
+    }
+    if (!fileItem) {
+        fileItem = button.parentElement;
+    }
+    
+    console.log('DEBUG - fileItem found:', !!fileItem);
+    console.log('DEBUG - fileItem className:', fileItem?.className);
+    
+    // 다양한 방법으로 previewContainer 찾기
+    let previewContainer = button.closest('.file-preview');
+    if (!previewContainer) {
+        previewContainer = button.closest('#comment-file-preview');
+    }
+    if (!previewContainer) {
+        previewContainer = document.getElementById('comment-file-preview');
+    }
+    
+    console.log('DEBUG - previewContainer found:', !!previewContainer);
+    console.log('DEBUG - previewContainer id:', previewContainer?.id);
+    console.log('DEBUG - previewContainer className:', previewContainer?.className);
+    
+    if (fileItem && previewContainer) {
+        // DOM 요소를 제거하기 전에 모든 작업을 먼저 수행
         
-        files.forEach((file, index) => {
-            if (fileIndex === null || index !== fileIndex) {
-                dt.items.add(file);
+        // 1. 해당 파일의 hidden input 찾아서 제거
+        const hiddenInputClass = `file-input-${formId || 'default'}-${fileIndex}`;
+        const hiddenInput = previewContainer.querySelector(`.${hiddenInputClass}`);
+        
+        console.log('DEBUG - hiddenInput found:', !!hiddenInput, 'class:', hiddenInputClass);
+        
+        if (hiddenInput) {
+            hiddenInput.remove();
+            console.log('DEBUG - hiddenInput removed successfully');
+        } else {
+            console.log('DEBUG - hiddenInput not found, trying fallback method');
+            // 기존 방식 (하위 호환성)
+            const fileInput = previewContainer.parentElement?.querySelector('input[type="file"]');
+            if (fileInput && fileInput.files.length > 0) {
+                const dt = new DataTransfer();
+                const files = Array.from(fileInput.files);
+                
+                files.forEach((file, index) => {
+                    if (index !== fileIndex) {
+                        dt.items.add(file);
+                    }
+                });
+                
+                fileInput.files = dt.files;
+                console.log('DEBUG - fallback method applied, remaining files:', fileInput.files.length);
             }
-        });
+        }
         
-        fileInput.files = dt.files;
+        // 2. selectedFiles Map에서도 제거
+        removeFileFromSelection(formId, fileIndex);
         
-        // 미리보기 다시 생성
-        displayFilePreview(fileInput.files, previewContainer);
+        // 3. Add Files 버튼 상태 업데이트
+        updateAddFilesButton(formId, window.CommentManager.selectedFiles.get(formId || 'default')?.length || 0);
+        
+        // 4. 마지막에 DOM 요소 제거
+        fileItem.remove();
+        console.log('DEBUG - fileItem removed successfully');
+        
+        // 5. 기존 방식인 경우 미리보기 다시 생성
+        if (!hiddenInput && previewContainer.parentElement) {
+            const fileInput = previewContainer.parentElement.querySelector('input[type="file"]');
+            if (fileInput) {
+                displayFilePreview(fileInput.files, previewContainer, null);
+            }
+        }
+        
+        console.log('DEBUG - removeFilePreview completed for:', { fileIndex, formId });
+    } else {
+        console.log('DEBUG - fileItem or previewContainer not found');
+        console.log('DEBUG - Available elements in DOM:');
+        console.log('DEBUG - .file-preview-item elements:', document.querySelectorAll('.file-preview-item').length);
+        console.log('DEBUG - .file-preview elements:', document.querySelectorAll('.file-preview').length);
+        console.log('DEBUG - #comment-file-preview:', !!document.getElementById('comment-file-preview'));
+    }
+}
+
+// Add Files 버튼 상태 업데이트 함수
+function updateAddFilesButton(formId, fileCount) {
+    let addFilesBtn = null;
+    
+    if (formId === 'main-comment-form') {
+        addFilesBtn = document.querySelector('button[onclick*="comment-files"]');
+    } else if (formId.startsWith('edit-comment-')) {
+        const commentId = formId.replace('edit-comment-', '');
+        addFilesBtn = document.querySelector(`button[onclick*="file-input-${commentId}"]`);
+    }
+    
+    if (addFilesBtn) {
+        if (fileCount > 0) {
+            addFilesBtn.innerHTML = `<i class="bi bi-paperclip"></i> ${fileCount} file(s) selected`;
+            addFilesBtn.className = 'btn btn-sm btn-outline-primary';
+        } else {
+            addFilesBtn.innerHTML = '<i class="bi bi-paperclip"></i> Add Files';
+            addFilesBtn.className = 'btn btn-sm btn-outline-secondary';
+        }
     }
 }
 
@@ -527,6 +737,11 @@ function cancelEdit(commentId) {
         const filePreview = editForm.querySelector('.file-preview');
         if (fileInput) fileInput.value = '';
         if (filePreview) filePreview.innerHTML = '';
+        
+        // 누적 파일 선택 초기화
+        const formId = `edit-comment-${commentId}`;
+        clearFileSelection(formId);
+        updateAddFilesButton(formId, 0);
     }
 }
 
@@ -545,10 +760,15 @@ function submitEdit(event, commentId) {
         return;
     }
     
+    // 원래 파일 input을 비워서 중복 업로드 방지
+    const originalFileInput = form.querySelector('input[type="file"]:not([style*="display: none"])');
+    if (originalFileInput) {
+        originalFileInput.value = '';
+        console.log('DEBUG - Original file input cleared to prevent duplicates');
+    }
+
     const formData = new FormData(form);
-    const content = formData.get('content');
-    
-    if (!content.trim()) {
+    const content = formData.get('content');    if (!content.trim()) {
         alert('Please write a comment.');
         return;
     }
@@ -562,6 +782,22 @@ function submitEdit(event, commentId) {
     
     // _method 필드 명시적 추가 (PUT 요청 시뮬레이션)
     formData.append('_method', 'PUT');
+    
+    // 파일 상태 디버깅
+    const fileInput = form.querySelector('input[type="file"]');
+    const hiddenFileInputs = form.querySelectorAll('input[type="file"][style*="display: none"]');
+    console.log('DEBUG - Edit form file status:', {
+        originalFileInput: {
+            found: !!fileInput,
+            filesCount: fileInput?.files.length || 0,
+            fileNames: fileInput ? Array.from(fileInput.files).map(f => f.name) : []
+        },
+        hiddenFileInputs: {
+            count: hiddenFileInputs.length,
+            totalFiles: Array.from(hiddenFileInputs).reduce((total, input) => total + input.files.length, 0)
+        },
+        formDataFiles: formData.getAll('files[]').length
+    });
     
     console.log('DEBUG - submitEdit (FIXED):', {
         commentId,
@@ -662,6 +898,11 @@ function submitEdit(event, commentId) {
             const filePreview = form.querySelector('.file-preview');
             if (fileInput) fileInput.value = '';
             if (filePreview) filePreview.innerHTML = '';
+            
+            // 누적 파일 선택 초기화
+            const formId = `edit-comment-${commentId}`;
+            clearFileSelection(formId);
+            updateAddFilesButton(formId, 0);
             
             cancelEdit(commentId);
             showAlert('Comment updated successfully!', 'success');

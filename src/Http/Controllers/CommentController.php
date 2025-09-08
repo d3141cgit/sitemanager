@@ -460,19 +460,42 @@ class CommentController extends Controller
     private function handleCommentFileUploads(Request $request, $comment, Board $board): void
     {
         if (!$request->hasFile('files')) {
+            Log::info('No files in request for comment', ['comment_id' => $comment->id]);
             return;
         }
+
+        $files = $request->file('files');
+        $fileCount = is_array($files) ? count($files) : 1;
+        
+        Log::info('Processing comment file uploads', [
+            'comment_id' => $comment->id,
+            'file_count' => $fileCount,
+            'files_info' => is_array($files) ? 
+                array_map(fn($f) => ['name' => $f->getClientOriginalName(), 'size' => $f->getSize()], $files) :
+                [['name' => $files->getClientOriginalName(), 'size' => $files->getSize()]]
+        ]);
 
         $folder = "attachments/board/{$board->slug}";
         
         foreach ($request->file('files') as $file) {
             if (!$file->isValid()) {
+                Log::warning('Invalid file skipped', [
+                    'comment_id' => $comment->id,
+                    'file_name' => $file->getClientOriginalName()
+                ]);
                 continue;
             }
 
             try {
                 // FileUploadService를 사용하여 파일 업로드
                 $uploadResult = $this->fileUploadService->uploadFile($file, $folder);
+                
+                Log::info('File uploaded successfully', [
+                    'comment_id' => $comment->id,
+                    'original_name' => $uploadResult['name'],
+                    'stored_filename' => $uploadResult['filename'],
+                    'file_size' => $uploadResult['size']
+                ]);
                 
                 // 파일 카테고리 결정
                 $category = $this->determineFileCategory($uploadResult['mime_type'], $uploadResult['extension']);
