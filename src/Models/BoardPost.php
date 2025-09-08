@@ -403,8 +403,16 @@ abstract class BoardPost extends Model
             ];
         }
         
-        // 2. header 카테고리가 없으면 첫 번째 이미지 첨부파일 사용
-        $firstImage = $this->first_image;
+        // 2. header 카테고리가 없으면 첫 번째 이미지 첨부파일 사용 - category <> thumbnail
+        $firstImage = $this->attachments()
+                            ->where('mime_type', 'like', 'image/%')
+                            ->where(function($query) {
+                                $query->whereNull('category')
+                                      ->orWhere('category', '<>', 'thumbnail');
+                            })
+                            ->orderBy('sort_order')
+                            ->first();
+        // $firstImage = $this->first_image;
         
         if ($firstImage) {
             return [

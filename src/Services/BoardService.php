@@ -413,7 +413,7 @@ class BoardService
     /**
      * 게시물 첨부파일 조회
      */
-    public function getPostAttachments(Board $board, $postId)
+    public function getPostAttachments(Board $board, $postId, $excludeCategories = null, $includeCategories = null)
     {
         // 첨부파일 보기는 게시판의 파일 업로드 설정이 활성화된 경우에만
         // (업로드 권한과 관계없이 이미 업로드된 파일은 볼 수 있어야 함)
@@ -421,9 +421,18 @@ class BoardService
             return null;
         }
 
-        return BoardAttachment::byPost($postId, $board->slug)
-            ->ordered()
-            ->get();
+        $query = BoardAttachment::byPost($postId, $board->slug);
+        
+        // include가 지정된 경우 include 우선 적용
+        if (!empty($includeCategories)) {
+            $query->whereIn('category', $includeCategories);
+        }
+        // include가 없고 exclude가 있으면 exclude 적용
+        elseif (!empty($excludeCategories)) {
+            $query->whereNotIn('category', $excludeCategories);
+        }
+        
+        return $query->ordered()->get();
     }
 
     /**

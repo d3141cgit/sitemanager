@@ -191,7 +191,7 @@ class BoardController extends Controller
         }
         
         $comments = $this->boardService->getPostComments($board, $post->id);
-        $attachments = $this->boardService->getPostAttachments($board, $post->id);
+        $attachments = $this->boardService->getPostAttachments($board, $post->id, ['thumbnail']); // thumbnail 제외
         $prevNext = $this->boardService->getPrevNextPosts($board, $post);
         
         // 조회수 증가

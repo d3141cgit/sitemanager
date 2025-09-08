@@ -408,6 +408,7 @@
                 <div class="col-md-4">
                     <label class="form-label small text-muted mb-1">Category</label>
                     <select class="form-select form-select-sm" name="file_categories[${index}]">
+                        <option value="">Select</option>
                         ${options}
                     </select>
                 </div>
