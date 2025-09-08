@@ -146,6 +146,12 @@ class BoardController extends Controller
         $posts = $this->boardService->getFilteredPosts($board, $request);
         $notices = $this->boardService->getNotices($board);
 
+        // 각 게시글의 like 상태 확인
+        foreach ($posts as $post) {
+            $sessionKey = "liked_post_{$board->slug}_{$post->id}";
+            $post->hasLiked = session()->has($sessionKey);
+        }
+
         // SEO 데이터 구성
         $seoData = $this->buildBoardSeoData($board, $request);
 

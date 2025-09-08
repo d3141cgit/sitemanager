@@ -130,9 +130,9 @@ function printPost() {
  * Initialize like button functionality
  */
 function initializeLikeButton() {
-    const likeBtn = document.querySelector('.like-btn');
+    const likeBtns = document.querySelectorAll('.like-btn');
     
-    if (likeBtn) {
+    likeBtns.forEach(likeBtn => {
         const hasLiked = likeBtn.dataset.hasLiked === 'true';
         
         // 이미 좋아요를 눌렀다면 툴팁 추가
@@ -200,7 +200,7 @@ function initializeLikeButton() {
                 this.disabled = false; // Re-enable on network error
             });
         });
-    }
+    });
 }
 
 /**

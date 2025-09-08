@@ -354,6 +354,7 @@
 </style>
 @endpush
 
+@if($board->getSetting('allow_comments', true))
 @push('scripts')
 <script>
 // Comment routes configuration for comment.js
@@ -365,3 +366,4 @@ window.commentRoutes = {
 };
 </script>
 @endpush
+@endif
