@@ -361,7 +361,34 @@ class BoardService
         $currentUserId = Auth::id();
         
         // 댓글 조회 조건: 승인된 댓글 OR 본인이 작성한 댓글
-        $comments = $commentModelClass::with('member', 'children.member')
+        $comments = $commentModelClass::with([
+                'member',
+                'attachments',
+                'children' => function($query) use ($currentUserId) {
+                    $query->where(function($subQuery) use ($currentUserId) {
+                        $subQuery->where('status', 'approved');
+                        
+                        // 로그인한 사용자의 경우 본인 댓글도 포함
+                        if ($currentUserId) {
+                            $subQuery->orWhere('member_id', $currentUserId);
+                        }
+                    });
+                },
+                'children.member',
+                'children.attachments',
+                'children.children' => function($query) use ($currentUserId) {
+                    $query->where(function($subQuery) use ($currentUserId) {
+                        $subQuery->where('status', 'approved');
+                        
+                        // 로그인한 사용자의 경우 본인 댓글도 포함
+                        if ($currentUserId) {
+                            $subQuery->orWhere('member_id', $currentUserId);
+                        }
+                    });
+                },
+                'children.children.member',
+                'children.children.attachments'
+            ])
             ->topLevel()
             ->where(function($query) use ($currentUserId) {
                 $query->where('status', 'approved');
@@ -372,25 +399,30 @@ class BoardService
                 }
             })
             ->forPost($postId)
-            ->with('attachments') // 첨부파일도 함께 로드
             ->orderBy('created_at', 'desc')
             ->get();
             
-        // 각 댓글에 권한 정보 추가
-        $comments->each(function ($comment) use ($board) {
-            $comment->permissions = $this->calculateCommentPermissions($board, $comment);
-            
-            // 자식 댓글들에도 권한 정보 추가
-            if ($comment->children) {
-                $comment->children->each(function ($child) use ($board) {
-                    $child->permissions = $this->calculateCommentPermissions($board, $child);
-                });
-            }
-        });
+        // 각 댓글에 권한 정보 추가 (재귀적으로 모든 레벨 처리)
+        $this->setCommentsPermissions($comments, $board);
         
         return $comments;
     }
     
+    /**
+     * 댓글들에 권한 정보를 재귀적으로 설정
+     */
+    private function setCommentsPermissions($comments, Board $board, $level = 0)
+    {
+        $comments->each(function ($comment) use ($board, $level) {
+            $comment->permissions = $this->calculateCommentPermissions($board, $comment);
+            
+            // 자식 댓글들에도 재귀적으로 권한 정보 추가
+            if ($comment->children && $comment->children->count() > 0) {
+                $this->setCommentsPermissions($comment->children, $board, $level + 1);
+            }
+        });
+    }
+
     /**
      * 댓글 권한 계산
      */

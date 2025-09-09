@@ -39,6 +39,32 @@ window.addEventListener('focus', function() {
 function initializeCommentForm() {
     const commentForm = document.getElementById('commentForm');
     
+    // 댓글 첨부파일 이미지 클릭 이벤트 (중복 방지)
+    if (!window.commentImageEventInitialized) {
+        window.commentImageEventInitialized = true;
+        
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('comment-attachment-image')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const imageUrl = e.target.dataset.imageUrl;
+                const imageName = e.target.dataset.imageName;
+                const downloadUrl = e.target.dataset.downloadUrl;
+                
+                if (window.SiteManager && window.SiteManager.modals) {
+                    SiteManager.modals.showImagePreview(imageUrl, imageName, downloadUrl);
+                } else if (window.showImageModal) {
+                    // 폴백: 기존 showImageModal 함수 사용
+                    showImageModal(imageUrl, imageName, downloadUrl);
+                } else {
+                    // 최종 폴백: 새 창으로 열기
+                    window.open(imageUrl, '_blank');
+                }
+            }
+        });
+    }
+    
     if (commentForm) {
         // 메인 댓글 폼의 파일 업로드 미리보기 이벤트 추가
         const commentFileInput = document.getElementById('comment-files');
@@ -369,24 +395,59 @@ function hidePageLoading() {
 }
 
 function editComment(commentId) {
-    // Hide content and show edit form
-    const contentElement = document.querySelector(`[data-comment-id="${commentId}"] .comment-content`);
-    const editForm = document.getElementById(`edit-form-${commentId}`);
+    // Hide other edit forms
+    document.querySelectorAll('.edit-form').forEach(form => {
+        form.remove();
+    });
     
+    // Hide other reply forms
+    document.querySelectorAll('.reply-form').forEach(form => {
+        form.remove();
+    });
+    
+    // Check if edit form already exists
+    const existingForm = document.getElementById(`edit-form-${commentId}`);
+    if (existingForm) {
+        // Show content and hide edit form
+        const contentElement = document.querySelector(`[data-comment-id="${commentId}"] .comment-content`);
+        if (contentElement) contentElement.style.display = 'block';
+        existingForm.remove();
+        return;
+    }
+    
+    // Hide content
+    const contentElement = document.querySelector(`[data-comment-id="${commentId}"] .comment-content`);
     if (contentElement) contentElement.style.display = 'none';
-    if (editForm) {
-        editForm.style.display = 'block';
+    
+    // Load edit form via AJAX
+    const container = document.getElementById(`edit-form-container-${commentId}`);
+    if (container) {
+        const url = window.commentRoutes.editForm.replace(':id', commentId);
         
-        // 삭제 예정 목록 초기화 (매번 편집 시작할 때마다)
-        editForm.dataset.deletedAttachments = JSON.stringify([]);
-        
-        // 누적 파일 선택 초기화
-        const formId = `edit-comment-${commentId}`;
-        clearFileSelection(formId);
-        updateAddFilesButton(formId, 0);
-        
-        // 파일 업로드 기능 초기화
-        initializeEditFormFileUpload(commentId);
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'text/html',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+            
+            // Initialize file upload functionality
+            initializeEditFormFileUpload(commentId);
+        })
+        .catch(error => {
+            console.error('Error loading edit form:', error);
+            // Show content back if error
+            if (contentElement) contentElement.style.display = 'block';
+            if (window.SiteManager && window.SiteManager.notifications) {
+                SiteManager.notifications.error('편집 폼을 불러오는 중 오류가 발생했습니다.');
+            } else {
+                alert('편집 폼을 불러오는 중 오류가 발생했습니다.');
+            }
+        });
     }
 }
 
@@ -972,34 +1033,82 @@ function hideReplyLoading(commentId) {
 function replyToComment(commentId) {
     // Hide other reply forms
     document.querySelectorAll('.reply-form').forEach(form => {
-        form.style.display = 'none';
+        form.remove();
     });
     
-    // Show this reply form
-    const replyForm = document.getElementById(`reply-form-${commentId}`);
-    if (replyForm) {
-        replyForm.style.display = 'block';
-        
-        // Focus on the textarea
-        const textarea = replyForm.querySelector('textarea');
-        if (textarea) {
-            textarea.focus();
-        }
-        
-        // 파일 업로드 기능 초기화
-        initializeReplyFormFileUpload(commentId);
+    // Hide other edit forms
+    document.querySelectorAll('.edit-form').forEach(form => {
+        form.remove();
+    });
+    
+    // Check if reply form already exists
+    const existingForm = document.getElementById(`reply-form-${commentId}`);
+    if (existingForm) {
+        existingForm.remove();
+        hideReplyLoading(commentId);
+        return;
     }
     
-    // Hide loading state
-    hideReplyLoading(commentId);
+    // Load reply form via AJAX
+    const container = document.getElementById(`reply-form-container-${commentId}`);
+    if (container) {
+        showReplyLoading(commentId);
+        
+        const url = window.commentRoutes.replyForm.replace(':id', commentId);
+        
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'text/html',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+            
+            // Focus on the textarea
+            const textarea = container.querySelector('textarea');
+            if (textarea) {
+                textarea.focus();
+            }
+            
+            // Initialize file upload functionality
+            initializeReplyFormFileUpload(commentId);
+            
+            hideReplyLoading(commentId);
+        })
+        .catch(error => {
+            console.error('Error loading reply form:', error);
+            hideReplyLoading(commentId);
+            if (window.SiteManager && window.SiteManager.notifications) {
+                SiteManager.notifications.error('댓글 폼을 불러오는 중 오류가 발생했습니다.');
+            } else {
+                alert('댓글 폼을 불러오는 중 오류가 발생했습니다.');
+            }
+        });
+    }
 }
 
 function cancelReply(commentId) {
     const replyForm = document.getElementById(`reply-form-${commentId}`);
     if (replyForm) {
-        replyForm.style.display = 'none';
+        replyForm.remove();
     }
     hideReplyLoading(commentId);
+}
+
+function cancelEdit(commentId) {
+    const editForm = document.getElementById(`edit-form-${commentId}`);
+    if (editForm) {
+        editForm.remove();
+    }
+    
+    // Show content back
+    const contentElement = document.querySelector(`[data-comment-id="${commentId}"] .comment-content`);
+    if (contentElement) {
+        contentElement.style.display = 'block';
+    }
 }
 
 function submitReply(event, parentId) {

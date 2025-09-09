@@ -296,7 +296,9 @@ window.commentRoutes = {
     update: "{{ route('board.comments.update', [$board->slug, $post->id, ':id']) }}",
     destroy: "{{ route('board.comments.destroy', [$board->slug, $post->id, ':id']) }}",
     approve: "{{ route('board.comments.approve', [$board->slug, $post->id, ':id']) }}",
-    deleteAttachment: "{{ route('board.comments.attachment.delete', [$board->slug, $post->id, ':commentId', ':attachmentId']) }}"
+    deleteAttachment: "{{ route('board.comments.attachment.delete', [$board->slug, $post->id, ':commentId', ':attachmentId']) }}",
+    replyForm: "{{ route('board.comments.reply-form', [$board->slug, $post->id, ':id']) }}",
+    editForm: "{{ route('board.comments.edit-form', [$board->slug, $post->id, ':id']) }}"
 };
 </script>
 @endpush

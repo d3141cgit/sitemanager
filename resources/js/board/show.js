@@ -8,17 +8,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Initialize image preview modal
+ * Initialize image preview for content images
  */
 function initializeImagePreview() {
-    // Create modal if it doesn't exist
-    let modal = document.getElementById('imagePreviewModal');
-    if (!modal) {
-        modal = createImagePreviewModal();
-    }
-
-    // Add click handlers to all images in content
-    const contentImages = document.querySelectorAll('.post-content img, .comment-content img');
+    // Add click handlers to all images in content (excluding comment attachment images)
+    const contentImages = document.querySelectorAll('.post-content img, .comment-content img:not(.comment-attachment-image)');
     contentImages.forEach(img => {
         img.style.cursor = 'pointer';
         img.addEventListener('click', function() {
@@ -28,37 +22,7 @@ function initializeImagePreview() {
 }
 
 /**
- * Create image preview modal
- */
-function createImagePreviewModal() {
-    const modal = document.createElement('div');
-    modal.id = 'imagePreviewModal';
-    modal.className = 'modal fade';
-    modal.innerHTML = `
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Image Preview</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <img id="previewImage" class="img-fluid" src="" alt="">
-                </div>
-                <div class="modal-footer">
-                    <a id="downloadImage" class="btn btn-primary" href="" download>
-                        <i class="bi bi-download"></i> Download
-                    </a>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    return modal;
-}
-
-/**
- * Show image in preview modal using new notification system
+ * Show image in preview modal using SiteManager notification system
  */
 function showImagePreview(src, alt) {
     SiteManager.modals.showImagePreview(src, alt || 'Image', src);
@@ -100,32 +64,16 @@ function printPost() {
 }
 
 /**
- * Helper function to show messages
+ * Helper function to show messages using SiteManager notification system
  */
 function showMessage(type, message) {
-    let alertClass = 'alert-info';
-    if (type === 'success') alertClass = 'alert-success';
-    else if (type === 'error') alertClass = 'alert-danger';
-    else if (type === 'info') alertClass = 'alert-info';
+    // Convert type to match SiteManager notification types
+    const notificationType = type === 'error' ? 'error' : 
+                            type === 'success' ? 'success' : 
+                            type === 'info' ? 'info' : 'info';
     
-    // Create alert element
-    const alert = document.createElement('div');
-    alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
-    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    alert.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    // Add to body
-    document.body.appendChild(alert);
-    
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        if (alert.parentNode) {
-            alert.remove();
-        }
-    }, 3000);
+    // Use SiteManager toast notifications
+    SiteManager.notifications.toast(message, notificationType);
 }
 
 // Global functions

@@ -90,6 +90,8 @@ Route::prefix('board')->name('board.')->group(function () {
     ], function () {
         Route::get('/', [CommentController::class, 'index'])->name('index');
         Route::post('/', [CommentController::class, 'store'])->name('store');
+        Route::get('/{commentId}/reply-form', [CommentController::class, 'getReplyForm'])->name('reply-form');
+        Route::get('/{commentId}/edit-form', [CommentController::class, 'getEditForm'])->name('edit-form');
         Route::put('/{commentId}', [CommentController::class, 'update'])->name('update');
         Route::post('/{commentId}', [CommentController::class, 'update'])->name('update.post'); // FormData 지원
         Route::delete('/{commentId}', [CommentController::class, 'destroy'])->name('destroy');

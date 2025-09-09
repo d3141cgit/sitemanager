@@ -439,10 +439,10 @@ class CommentController extends Controller
             // 첨부파일 정보도 함께 로드
             $comment->load('attachments');
 
-            // 업데이트된 첨부파일 HTML 렌더링
+            // 업데이트된 첨부파일 HTML 렌더링 (표시용)
             $attachmentsHtml = '';
             if ($comment->attachments && $comment->attachments->count() > 0) {
-                $attachmentsHtml = view('sitemanager::board.partials.comment-attachments', [
+                $attachmentsHtml = view($this->selectView('comment-attachments-display'), [
                     'comment' => $comment
                 ])->render();
             }
@@ -768,5 +768,55 @@ class CommentController extends Controller
             $attachment->original_name,
             true // 강제 다운로드 활성화
         );
+    }
+
+    /**
+     * 댓글 답글 폼을 AJAX로 반환
+     */
+    public function getReplyForm(string $slug, string $postId, int $commentId)
+    {
+        $board = Board::where('slug', $slug)->firstOrFail();
+        
+        // 동적 모델 클래스 생성
+        $postModelClass = BoardPost::forBoard($slug);
+        $commentModelClass = BoardComment::forBoard($slug);
+        
+        $post = $postModelClass::findOrFail($postId);
+        $comment = $commentModelClass::findOrFail($commentId);
+        
+        // 댓글 권한 계산
+        $comment->permissions = $this->boardService->calculateCommentPermissions($board, $comment);
+        
+        // 권한 검사 - 답글 작성 권한이 있는지 확인
+        if (!$comment->permissions['canReply']) {
+            abort(403);
+        }
+        
+        return view($this->selectView('comment-reply-form'), compact('comment'));
+    }
+
+    /**
+     * 댓글 편집 폼을 AJAX로 반환
+     */
+    public function getEditForm(string $slug, string $postId, int $commentId)
+    {
+        $board = Board::where('slug', $slug)->firstOrFail();
+        
+        // 동적 모델 클래스 생성
+        $postModelClass = BoardPost::forBoard($slug);
+        $commentModelClass = BoardComment::forBoard($slug);
+        
+        $post = $postModelClass::findOrFail($postId);
+        $comment = $commentModelClass::with('attachments')->findOrFail($commentId);
+        
+        // 댓글 권한 계산
+        $comment->permissions = $this->boardService->calculateCommentPermissions($board, $comment);
+        
+        // 권한 검사 - 편집 권한이 있는지 확인
+        if (!$comment->permissions['canEdit']) {
+            abort(403);
+        }
+        
+        return view($this->selectView('comment-edit-form'), compact('comment'));
     }
 }

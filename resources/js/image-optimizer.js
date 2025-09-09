@@ -193,6 +193,11 @@ class ImageOptimizer {
      * 이미지 미리보기 기능 추가
      */
     addImagePreview(img) {
+        // 댓글 첨부파일 이미지는 제외 (중복 이벤트 방지)
+        if (img.classList.contains('comment-attachment-image')) {
+            return;
+        }
+        
         img.style.cursor = 'pointer';
         img.title = 'Click to view full size';
         
