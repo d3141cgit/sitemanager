@@ -147,7 +147,7 @@ function validateSecretPasswordForm(form) {
         const password = passwordInput.value;
         
         if (password.length < 4) {
-            alert('Password must be at least 4 characters.');
+            SiteManager.notifications.warning('Password must be at least 4 characters.');
             passwordInput.focus();
             return false;
         }
@@ -157,7 +157,7 @@ function validateSecretPasswordForm(form) {
         if (isNewPost) {
             const confirmPassword = prompt('Please re-enter your password:');
             if (confirmPassword !== password) {
-                alert('Passwords do not match.');
+                SiteManager.notifications.warning('Passwords do not match.');
                 passwordInput.focus();
                 return false;
             }

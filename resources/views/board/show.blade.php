@@ -5,9 +5,7 @@
 @push('head')
     @if($post->isSecret())
         <meta name="robots" content="noindex,nofollow">
-    @endif
-
-    @if ($board->getSetting('enable_likes', false))
+    @endif    @if ($board->getSetting('enable_likes', false))
         {!! resource('sitemanager::js/board/like.js') !!}
     @endif
 
@@ -188,11 +186,10 @@
 
             @if($canDelete)
                 <form method="POST" action="{{ route('board.destroy', [$board->slug, $post->slug ?: $post->id]) }}" 
-                    class="d-inline">
+                    class="d-inline delete-form">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-outline-danger"
-                            onclick="return confirm('Are you sure you want to delete this post?')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger delete-post-btn">
                         <i class="bi bi-trash"></i> Delete
                     </button>
                 </form>

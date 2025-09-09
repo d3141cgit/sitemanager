@@ -23,7 +23,7 @@ class MenuTreeManager {
     init() {
         // SortableJS 라이브러리 확인
         if (typeof Sortable === 'undefined') {
-            alert('SortableJS 라이브러리를 로드할 수 없습니다. 인터넷 연결을 확인해주세요.');
+            SiteManager.notifications.error('SortableJS 라이브러리를 로드할 수 없습니다. 인터넷 연결을 확인해주세요.');
             return;
         }
         
@@ -447,12 +447,12 @@ class MenuTreeManager {
         }).then(response => {
             if (response.data && response.data.success) {
                 // 성공 알림
-                this.showToast('성공!', response.data.message, 'success');
+                SiteManager.notifications.toast(response.data.message, 'success');
                 
                 // 최신 메뉴 데이터를 서버에서 가져와서 UI 업데이트
                 this.refreshMenuTree();
             } else {
-                this.showToast('오류!', response.data.message || '이동에 실패했습니다.', 'error');
+                SiteManager.notifications.toast(response.data.message || '이동에 실패했습니다.', 'error');
                 window.location.reload(true);
             }
         }).catch(error => {
@@ -470,7 +470,7 @@ class MenuTreeManager {
             
             console.error('📡 Error config:', error.config);
             
-            this.showToast('오류!', '네트워크 오류가 발생했습니다.', 'error');
+            SiteManager.notifications.toast('네트워크 오류가 발생했습니다.', 'error');
             location.reload();
         });
     }

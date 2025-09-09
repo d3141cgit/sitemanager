@@ -15,6 +15,7 @@
     {!! setResources(['jquery', 'bootstrap', 'sweetalert']) !!}
     {!! resource('sitemanager::css/sitemanager/sitemanager.css') !!}
     {!! resource('sitemanager::js/sitemanager/sitemanager.js') !!}
+    {!! resource('sitemanager::js/notifications.js') !!}
     
     @stack('styles')
     @yield('head')

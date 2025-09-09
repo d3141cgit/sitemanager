@@ -58,33 +58,10 @@ function createImagePreviewModal() {
 }
 
 /**
- * Show image in preview modal
+ * Show image in preview modal using new notification system
  */
 function showImagePreview(src, alt) {
-    const modal = document.getElementById('imagePreviewModal');
-    const previewImage = document.getElementById('previewImage');
-    const downloadLink = document.getElementById('downloadImage');
-    
-    if (modal && previewImage) {
-        previewImage.src = src;
-        previewImage.alt = alt;
-        
-        if (downloadLink) {
-            downloadLink.href = src;
-            downloadLink.download = alt || 'image';
-        }
-        
-        // Show modal (Bootstrap 5)
-        if (typeof bootstrap !== 'undefined') {
-            const bsModal = new bootstrap.Modal(modal);
-            bsModal.show();
-        } else {
-            // Fallback for older Bootstrap or jQuery
-            if (typeof $ !== 'undefined') {
-                $(modal).modal('show');
-            }
-        }
-    }
+    SiteManager.modals.showImagePreview(src, alt || 'Image', src);
 }
 
 /**

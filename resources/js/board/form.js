@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const title = titleInput.value.trim();
         if (!title) {
-            alert('Please enter a title first');
+            SiteManager.notifications.warning('Please enter a title first');
             return;
         }
         
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error generating slug:', error);
-            alert('Error generating slug. Please try again.');
+            SiteManager.notifications.error('Error generating slug. Please try again.');
         })
         .finally(() => {
             if (generateSlugBtn) {
@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
         textContent = String(textContent || '');
         
         if (!textContent || textContent.trim() === '') {
-            alert('Please write some content first');
+            SiteManager.notifications.warning('Please write some content first');
             return;
         }
         
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error generating excerpt:', error);
-            alert('Error generating excerpt. Please try again.');
+            SiteManager.notifications.error('Error generating excerpt. Please try again.');
         })
         .finally(() => {
             if (generateExcerptBtn) {

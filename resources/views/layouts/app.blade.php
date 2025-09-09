@@ -38,8 +38,9 @@
     {{-- 페이지별 추가 메타태그 및 스크립트 --}}
     @stack('head')
 
-    {!! setResources(['bootstrap', 'jquery']) !!}
+    {!! setResources(['bootstrap', 'jquery', 'sweetalert']) !!}
     {!! resource('sitemanager::css/app.css') !!}
+    {!! resource('sitemanager::js/notifications.js') !!}
 </head>
 
 <body class="app-grid-layout">

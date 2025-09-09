@@ -173,7 +173,7 @@
             
             // Check max files limit
             if (dt.files.length > this.options.maxFiles) {
-                alert(`Maximum ${this.options.maxFiles} files allowed.`);
+                SiteManager.notifications.warning(`Maximum ${this.options.maxFiles} files allowed.`);
                 return;
             }
             
@@ -192,14 +192,14 @@
             
             // Check file size
             if (file.size > this.options.maxFileSize * 1024) {
-                alert(`File "${file.name}" is too large. Maximum size is ${this.options.maxFileSize}KB.`);
+                SiteManager.notifications.warning(`File "${file.name}" is too large. Maximum size is ${this.options.maxFileSize}KB.`);
                 return false;
             }
             
             // Check file type
             const extension = file.name.split('.').pop().toLowerCase();
             if (!this.options.allowedTypes.includes(extension)) {
-                alert(`File type "${extension}" is not allowed. Allowed types: ${this.options.allowedTypes.join(', ')}`);
+                SiteManager.notifications.warning(`File type "${extension}" is not allowed. Allowed types: ${this.options.allowedTypes.join(', ')}`);
                 return false;
             }
             
@@ -422,7 +422,9 @@
         
         // Existing attachment management methods
         removeAttachment(attachmentId) {
-            if (confirm('Are you sure you want to remove this attachment?')) {
+            SiteManager.notifications.confirmDelete('this attachment').then((confirmed) => {
+                if (!confirmed) return;
+                
                 const csrfToken = document.querySelector('meta[name="csrf-token"]');
                 
                 fetch(`/board/attachments/${attachmentId}`, {
@@ -442,14 +444,14 @@
                         }
                         this.dispatchEvent('attachmentRemoved', { attachmentId });
                     } else {
-                        alert('Failed to remove attachment. Please try again.');
+                        SiteManager.notifications.error('Failed to remove attachment. Please try again.');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An error occurred while removing the attachment.');
+                    SiteManager.notifications.error('An error occurred while removing the attachment.');
                 });
-            }
+            });
         }
         
         // Attachment sorting functionality

@@ -92,7 +92,7 @@ function initializeCommentForm() {
             }
             
             if (!content.trim()) {
-                alert('Please write a comment.');
+                SiteManager.notifications.warning('Please write a comment.');
                 return;
             }
             
@@ -109,7 +109,7 @@ function initializeCommentForm() {
             const storeUrl = window.commentRoutes?.store;
             if (!storeUrl) {
                 console.error('Comment store route not found');
-                alert('Configuration error. Please refresh the page.');
+                SiteManager.notifications.error('Configuration error. Please refresh the page.');
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
                 return;
@@ -146,7 +146,7 @@ function initializeCommentForm() {
                     }
                     
                     // Show success message
-                    showAlert(data.message, 'success');
+                    SiteManager.notifications.toast(data.message, 'success');
                     
                     // 페이지 새로고침 시 폼 재제출 방지를 위해 히스토리 상태 변경
                     if (window.history.replaceState) {
@@ -195,12 +195,12 @@ function initializeCommentForm() {
                         });
                     }
                 } else {
-                    alert(data.message || 'An error occurred while posting your comment.');
+                    SiteManager.notifications.error(data.message || 'An error occurred while posting your comment.');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while posting your comment.');
+                SiteManager.notifications.error('An error occurred while posting your comment.');
             })
             .finally(() => {
                 // 제출 상태 해제
@@ -438,48 +438,48 @@ function initializeEditFormFileUpload(commentId) {
 
 // 기존 첨부파일 삭제 (UI에서만 제거, 실제 삭제는 submit 시 처리)
 function removeExistingAttachment(commentId, attachmentId) {
-    if (!confirm('Are you sure you want to remove this attachment?')) {
-        return;
-    }
-    
-    const editForm = document.getElementById(`edit-form-${commentId}`);
-    if (!editForm) {
-        console.error('Edit form not found for comment:', commentId);
-        return;
-    }
-    
-    // 삭제 예정 목록에 추가
-    let deletedAttachments = JSON.parse(editForm.dataset.deletedAttachments || '[]');
-    // attachmentId를 정수로 변환하여 일관성 유지
-    const attachmentIdInt = parseInt(attachmentId);
-    if (!deletedAttachments.includes(attachmentIdInt)) {
-        deletedAttachments.push(attachmentIdInt);
-        editForm.dataset.deletedAttachments = JSON.stringify(deletedAttachments);
-    }
-    
-    console.log('DEBUG - removeExistingAttachment:', {
-        commentId,
-        attachmentId,
-        attachmentIdInt,
-        deletedAttachments,
-        formDataset: editForm.dataset.deletedAttachments
-    });
-    
-    // UI에서 첨부파일 제거 (시각적으로만)
-    const attachmentElement = document.querySelector(`[data-attachment-id="${attachmentId}"]`);
-    if (attachmentElement) {
-        attachmentElement.style.opacity = '0.5';
-        attachmentElement.style.textDecoration = 'line-through';
+    SiteManager.notifications.confirmDelete('this attachment').then((confirmed) => {
+        if (!confirmed) return;
         
-        // 삭제 버튼을 복원 버튼으로 변경
-        const deleteBtn = attachmentElement.querySelector('button');
-        if (deleteBtn) {
-            deleteBtn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i>';
-            deleteBtn.className = 'btn btn-sm btn-outline-success';
-            deleteBtn.onclick = () => restoreExistingAttachment(commentId, attachmentId);
-            deleteBtn.title = 'Restore attachment';
+        const editForm = document.getElementById(`edit-form-${commentId}`);
+        if (!editForm) {
+            console.error('Edit form not found for comment:', commentId);
+            return;
         }
-    }
+    
+        // 삭제 예정 목록에 추가
+        let deletedAttachments = JSON.parse(editForm.dataset.deletedAttachments || '[]');
+        // attachmentId를 정수로 변환하여 일관성 유지
+        const attachmentIdInt = parseInt(attachmentId);
+        if (!deletedAttachments.includes(attachmentIdInt)) {
+            deletedAttachments.push(attachmentIdInt);
+            editForm.dataset.deletedAttachments = JSON.stringify(deletedAttachments);
+        }
+        
+        console.log('DEBUG - removeExistingAttachment:', {
+            commentId,
+            attachmentId,
+            attachmentIdInt,
+            deletedAttachments,
+            formDataset: editForm.dataset.deletedAttachments
+        });
+        
+        // UI에서 첨부파일 제거 (시각적으로만)
+        const attachmentElement = document.querySelector(`[data-attachment-id="${attachmentId}"]`);
+        if (attachmentElement) {
+            attachmentElement.style.opacity = '0.5';
+            attachmentElement.style.textDecoration = 'line-through';
+            
+            // 삭제 버튼을 복원 버튼으로 변경
+            const deleteBtn = attachmentElement.querySelector('button');
+            if (deleteBtn) {
+                deleteBtn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i>';
+                deleteBtn.className = 'btn btn-sm btn-outline-success';
+                deleteBtn.onclick = () => restoreExistingAttachment(commentId, attachmentId);
+                deleteBtn.title = 'Restore attachment';
+            }
+        }
+    });
 }
 
 // 기존 첨부파일 복원 (삭제 예정에서 제거)
@@ -769,7 +769,7 @@ function submitEdit(event, commentId) {
 
     const formData = new FormData(form);
     const content = formData.get('content');    if (!content.trim()) {
-        alert('Please write a comment.');
+        SiteManager.notifications.warning('Please write a comment.');
         return;
     }
     
@@ -824,7 +824,7 @@ function submitEdit(event, commentId) {
     const updateUrl = window.commentRoutes?.update?.replace(':id', commentId);
     if (!updateUrl) {
         console.error('Comment update route not found');
-        alert('Configuration error. Please refresh the page.');
+        SiteManager.notifications.error('Configuration error. Please refresh the page.');
         return;
     }
     
@@ -905,7 +905,7 @@ function submitEdit(event, commentId) {
             updateAddFilesButton(formId, 0);
             
             cancelEdit(commentId);
-            showAlert('Comment updated successfully!', 'success');
+            SiteManager.notifications.toast('Comment updated successfully!', 'success');
             
             // 페이지 새로고침 시 폼 재제출 방지를 위해 히스토리 상태 변경
             if (window.history.replaceState) {
@@ -1019,7 +1019,7 @@ function submitReply(event, parentId) {
         if (data.success) {
             form.reset();
             cancelReply(parentId);
-            showAlert(data.message, 'success');
+            SiteManager.notifications.toast(data.message, 'success');
             
             // Show loading overlay before refresh
             showPageLoading();
@@ -1072,9 +1072,9 @@ function deleteComment(commentId) {
             if (commentElement) {
                 commentElement.remove();
             }
-            showAlert(data.message, 'success');
+            SiteManager.notifications.toast(data.message, 'success');
         } else {
-            alert(data.message || 'An error occurred while deleting the comment.');
+            SiteManager.notifications.error(data.message || 'An error occurred while deleting the comment.');
         }
     })
     .catch(error => {
@@ -1105,82 +1105,13 @@ function approveComment(commentId) {
             // Remove pending badge
             const badge = document.querySelector(`[data-comment-id="${commentId}"] .badge`);
             if (badge) badge.remove();
-            showAlert(data.message, 'success');
+            SiteManager.notifications.toast(data.message, 'success');
         } else {
-            alert(data.message || 'An error occurred while approving the comment.');
+            SiteManager.notifications.error(data.message || 'An error occurred while approving the comment.');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while approving the comment.');
-    });
-}
-
-function showAlert(message, type = 'info') {
-    // Remove existing alerts
-    document.querySelectorAll('.comment-alert').forEach(alert => alert.remove());
-    
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type} alert-dismissible fade show position-fixed comment-alert`;
-    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
-    alert.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.body.appendChild(alert);
-    
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        if (alert.parentNode) {
-            alert.remove();
-        }
-    }, 5000);
-}
-
-// 이미지 모달 표시 함수
-function showImageModal(imageUrl, imageName, downloadUrl = null) {
-    // 기존 모달이 있다면 제거
-    const existingModal = document.getElementById('image-modal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // downloadUrl이 없으면 imageUrl을 사용 (fallback)
-    const finalDownloadUrl = downloadUrl || imageUrl;
-    
-    // 모달 HTML 생성
-    const modalHtml = `
-        <div class="modal fade" id="image-modal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="imageModalLabel">${imageName || 'Image'}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body text-center">
-                        <img src="${imageUrl}" alt="${imageName || 'Image'}" class="img-fluid" style="max-width: 100%; max-height: 70vh;">
-                    </div>
-                    <div class="modal-footer">
-                        <a href="${finalDownloadUrl}" class="btn btn-primary">
-                            <i class="bi bi-download"></i> Download
-                        </a>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // 모달을 body에 추가
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
-    // Bootstrap 모달 표시
-    const modal = new bootstrap.Modal(document.getElementById('image-modal'));
-    modal.show();
-    
-    // 모달이 완전히 숨겨진 후 DOM에서 제거
-    document.getElementById('image-modal').addEventListener('hidden.bs.modal', function() {
-        this.remove();
+        SiteManager.notifications.error('An error occurred while approving the comment.');
     });
 }
