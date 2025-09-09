@@ -74,6 +74,54 @@ return [
         'default_locale' => 'en',
     ],
     
+    // 보안 설정
+    'security' => [
+        'email_verification' => [
+            'enabled' => env('SITEMANAGER_EMAIL_VERIFICATION_ENABLED', true),
+            'verification_token_expires' => 24, // 초기 인증 토큰 유효시간 (시간)
+            'edit_token_expires' => 1, // 수정/삭제 인증 토큰 유효시간 (시간)
+        ],
+        'recaptcha' => [
+            'enabled' => env('SITEMANAGER_RECAPTCHA_ENABLED', false),
+            'site_key' => env('RECAPTCHA_SITE_KEY'),
+            'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+            'version' => env('RECAPTCHA_VERSION', 'v2'), // v2 또는 v3
+            'score_threshold' => env('RECAPTCHA_SCORE_THRESHOLD', 0.5), // v3용 점수 임계값
+        ],
+        'blocked_email_domains' => [
+            '10minutemail.com',
+            'guerrillamail.com',
+            'mailinator.com',
+            'tempmail.org',
+            'temp-mail.org',
+            'yopmail.com',
+            'throwaway.email',
+            'dispostable.com',
+            '33mail.com',
+        ],
+        'rate_limiting' => [
+            'max_attempts' => env('SITEMANAGER_RATE_LIMIT_ATTEMPTS', 5), // IP당 최대 시도 횟수
+            'decay_minutes' => env('SITEMANAGER_RATE_LIMIT_DECAY', 60), // 제한 해제 시간 (분)
+        ],
+        'spam_keywords' => [
+            'casino', 'poker', 'viagra', 'cialis', 'loan', 'mortgage',
+            'bitcoin', 'crypto', 'investment', 'forex', 'trading',
+            'weight loss', 'diet pill', 'sex', 'adult', 'porn',
+            'dating', 'hookup', 'escort', 'pharmacy', 'drugs'
+        ],
+        'max_urls_per_post' => env('SITEMANAGER_MAX_URLS_PER_POST', 3),
+        'min_form_time' => env('SITEMANAGER_MIN_FORM_TIME', 3), // 최소 폼 작성 시간 (초)
+        'honeypot' => [
+            'enabled' => env('SITEMANAGER_HONEYPOT_ENABLED', true),
+            'fields' => ['website', 'url', 'homepage', 'phone_number']
+        ],
+        'guest_posting' => [
+            'enabled' => env('SITEMANAGER_GUEST_POSTING_ENABLED', true),
+            'require_email_verification' => env('SITEMANAGER_GUEST_EMAIL_VERIFICATION_REQUIRED', true),
+            'require_captcha' => env('SITEMANAGER_GUEST_CAPTCHA_REQUIRED', true),
+        ],
+    ],
+    
     // 사이트별 커스터마이징
     'customizations' => [
         'sitemanager_layout' => 'sitemanager::layouts.sitemanager',

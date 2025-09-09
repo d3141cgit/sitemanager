@@ -9,6 +9,7 @@ use SiteManager\Models\BoardAttachment;
 use SiteManager\Models\EditorImage;
 use SiteManager\Services\BoardService;
 use SiteManager\Services\FileUploadService;
+use SiteManager\Services\EmailVerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -23,7 +24,8 @@ class BoardController extends Controller
 {
     public function __construct(
         private BoardService $boardService,
-        private FileUploadService $fileUploadService
+        private FileUploadService $fileUploadService,
+        private EmailVerificationService $emailVerificationService
     ) {}
 
     /**
@@ -336,7 +338,85 @@ class BoardController extends Controller
             'files.*' => 'nullable|file|max:' . ($board->getSetting('max_file_size', 2048)),
             'file_names.*' => 'nullable|string|max:255',
             'file_descriptions.*' => 'nullable|string|max:500',
+            'author_name' => 'nullable|string|max:50',
+            'author_email' => 'nullable|email|max:100',
+            'g-recaptcha-response' => 'nullable|string',
+            'form_token' => 'nullable|string',
+            'user_behavior' => 'nullable|string',
         ]);
+
+        // 익명 사용자인 경우 추가 검증
+        if (!Auth::check()) {
+            // Rate Limiting 검사
+            if (!$this->emailVerificationService->checkRateLimit($request->ip(), 'post')) {
+                return back()
+                    ->withInput()
+                    ->with('error', '너무 많은 요청입니다. 잠시 후 다시 시도해주세요.');
+            }
+            
+            // 허니팟 검증
+            if (!$this->emailVerificationService->verifyHoneypot($request->all())) {
+                Log::warning('Honeypot triggered for post submission', [
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent()
+                ]);
+                return back()
+                    ->withInput()
+                    ->with('error', '잘못된 요청입니다.');
+            }
+            
+            // 폼 토큰 검증 (제출 시간)
+            if ($request->has('form_token')) {
+                if (!$this->emailVerificationService->verifySubmissionTime($validated['form_token'])) {
+                    return back()
+                        ->withInput()
+                        ->with('error', '폼 제출이 너무 빠릅니다. 다시 시도해주세요.');
+                }
+            }
+            
+            // reCAPTCHA 검증
+            if ($request->has('g-recaptcha-response')) {
+                if (!$this->emailVerificationService->verifyCaptcha(
+                    $validated['g-recaptcha-response'],
+                    $request->ip(),
+                    'post'
+                )) {
+                    return back()
+                        ->withInput()
+                        ->with('error', '보안 인증에 실패했습니다.');
+                }
+            }
+            
+            // 작성자 정보 필수 입력 검증
+            if (empty($validated['author_name']) || empty($validated['author_email'])) {
+                return back()
+                    ->withInput()
+                    ->with('error', '익명 게시글 작성 시 이름과 이메일은 필수입니다.');
+            }
+            
+            // 이메일 도메인 블랙리스트 검사
+            if ($this->emailVerificationService->isBlockedEmailDomain($validated['author_email'])) {
+                return back()
+                    ->withInput()
+                    ->with('error', '사용할 수 없는 이메일 도메인입니다.');
+            }
+            
+            // 스팸 내용 검사
+            if ($this->emailVerificationService->isSpamContent(
+                $validated['content'] ?? '',
+                $validated['title'],
+                $validated['author_email']
+            )) {
+                Log::warning('Spam content detected in post', [
+                    'ip' => $request->ip(),
+                    'email' => $validated['author_email'],
+                    'title' => $validated['title']
+                ]);
+                return back()
+                    ->withInput()
+                    ->with('error', '부적절한 내용이 감지되었습니다.');
+            }
+        }
 
         // categories 배열이 있으면 category 필드로 변환
         if (!empty($validated['categories'])) {
@@ -349,6 +429,19 @@ class BoardController extends Controller
         DB::beginTransaction();
         
         try {
+            // 익명 사용자의 경우 이메일 인증 토큰 생성
+            $emailToken = null;
+            if (!Auth::check()) {
+                $emailToken = $this->emailVerificationService->sendVerificationEmail(
+                    $validated['author_email'],
+                    'post',
+                    0, // 임시 ID, 게시글 생성 후 업데이트
+                    $slug
+                );
+                // validated 데이터에 토큰 추가
+                $validated['email_verification_token'] = $emailToken;
+            }
+
             // 서비스를 통해 게시물 생성
             $post = $this->boardService->createPost($board, $validated);
             
@@ -384,7 +477,24 @@ class BoardController extends Controller
                 }
             }
 
+            // 익명 사용자의 경우 이메일 인증 토큰을 실제 게시글 ID로 업데이트
+            if (!Auth::check() && $emailToken) {
+                $updatedToken = $this->emailVerificationService->sendVerificationEmail(
+                    $validated['author_email'],
+                    'post',
+                    $post->id,
+                    $slug
+                );
+            }
+
             DB::commit();
+
+            // 익명 사용자에게는 이메일 인증 안내 메시지
+            if (!Auth::check()) {
+                return redirect()
+                    ->route('board.index', $slug)
+                    ->with('success', '게시글이 등록되었습니다. 이메일 인증을 완료하시면 게시됩니다.');
+            }
 
             return redirect()
                 ->route('board.show', [$slug, $post->slug ?: $post->id])

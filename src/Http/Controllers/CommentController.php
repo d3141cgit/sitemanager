@@ -8,6 +8,7 @@ use SiteManager\Models\BoardComment;
 use SiteManager\Models\BoardAttachment;
 use SiteManager\Services\BoardService;
 use SiteManager\Services\FileUploadService;
+use SiteManager\Services\EmailVerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +21,8 @@ class CommentController extends Controller
 {
     public function __construct(
         private BoardService $boardService,
-        private FileUploadService $fileUploadService
+        private FileUploadService $fileUploadService,
+        private EmailVerificationService $emailVerificationService
     ) {}
 
     /**
@@ -171,7 +173,69 @@ class CommentController extends Controller
             'author_name' => 'nullable|string|max:50',
             'author_email' => 'nullable|email|max:100',
             'files.*' => 'nullable|file|max:10240', // 최대 10MB
+            'g-recaptcha-response' => 'nullable|string',
+            'form_token' => 'nullable|string',
+            'user_behavior' => 'nullable|string',
         ]);
+
+        // 익명 사용자인 경우 추가 검증
+        if (!Auth::check()) {
+            // Rate Limiting 검사
+            if (!$this->emailVerificationService->checkRateLimit($request->ip(), 'comment')) {
+                return response()->json(['error' => '너무 많은 요청입니다. 잠시 후 다시 시도해주세요.'], 429);
+            }
+            
+            // 허니팟 검증
+            if (!$this->emailVerificationService->verifyHoneypot($request->all())) {
+                Log::warning('Honeypot triggered for comment submission', [
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent()
+                ]);
+                return response()->json(['error' => '잘못된 요청입니다.'], 422);
+            }
+            
+            // 폼 토큰 검증 (제출 시간)
+            if ($request->has('form_token')) {
+                if (!$this->emailVerificationService->verifySubmissionTime($validated['form_token'])) {
+                    return response()->json(['error' => '폼 제출이 너무 빠릅니다. 다시 시도해주세요.'], 422);
+                }
+            }
+            
+            // reCAPTCHA 검증
+            if ($request->has('g-recaptcha-response')) {
+                if (!$this->emailVerificationService->verifyCaptcha(
+                    $validated['g-recaptcha-response'],
+                    $request->ip(),
+                    'comment'
+                )) {
+                    return response()->json(['error' => '보안 인증에 실패했습니다.'], 422);
+                }
+            }
+            
+            // 작성자 정보 필수 입력 검증
+            if (empty($validated['author_name']) || empty($validated['author_email'])) {
+                return response()->json(['error' => '익명 댓글 작성 시 이름과 이메일은 필수입니다.'], 422);
+            }
+            
+            // 이메일 도메인 블랙리스트 검사
+            if ($this->emailVerificationService->isBlockedEmailDomain($validated['author_email'])) {
+                return response()->json(['error' => '사용할 수 없는 이메일 도메인입니다.'], 422);
+            }
+            
+            // 스팸 내용 검사
+            if ($this->emailVerificationService->isSpamContent(
+                $validated['content'],
+                '',
+                $validated['author_email']
+            )) {
+                Log::warning('Spam content detected in comment', [
+                    'ip' => $request->ip(),
+                    'email' => $validated['author_email'],
+                    'content_preview' => substr($validated['content'], 0, 100)
+                ]);
+                return response()->json(['error' => '부적절한 내용이 감지되었습니다.'], 422);
+            }
+        }
 
         // 파일 업로드 권한 확인
         $hasFiles = $request->hasFile('files');
@@ -201,6 +265,17 @@ class CommentController extends Controller
         DB::beginTransaction();
         
         try {
+            // 익명 사용자의 경우 이메일 인증 토큰 생성
+            $emailToken = null;
+            if (!Auth::check()) {
+                $emailToken = $this->emailVerificationService->sendVerificationEmail(
+                    $validated['author_email'],
+                    'comment',
+                    0, // 임시 ID, 댓글 생성 후 업데이트
+                    $slug
+                );
+            }
+
             // 댓글 데이터 준비
             $commentData = [
                 'post_id' => $post->id,
@@ -212,14 +287,20 @@ class CommentController extends Controller
             if (Auth::check()) {
                 $commentData['member_id'] = Auth::id();
                 $commentData['author_name'] = Auth::user()->name;
+                $commentData['author_email'] = Auth::user()->email;
             } else {
                 // 비회원 댓글
-                $commentData['author_name'] = $request->input('author_name', '익명');
+                $commentData['author_name'] = $validated['author_name'];
+                $commentData['author_email'] = $validated['author_email'];
+                $commentData['ip_address'] = $request->ip();
+                $commentData['email_verification_token'] = $emailToken;
+                $commentData['email_verified_at'] = null; // 이메일 인증 필요
             }
 
             // 댓글 승인 여부 결정
             $requireModeration = $board->getSetting('moderate_comments', false);
-            $commentData['status'] = $requireModeration ? 'pending' : 'approved';
+            // 익명 사용자는 이메일 인증과 관계없이 pending 상태로 시작
+            $commentData['status'] = (!Auth::check() || $requireModeration) ? 'pending' : 'approved';
 
             // 댓글 생성
             $comment = $commentModelClass::create($commentData);
@@ -227,6 +308,17 @@ class CommentController extends Controller
             // 파일 업로드 처리
             if ($hasFiles) {
                 $this->handleCommentFileUploads($request, $comment, $board);
+            }
+
+            // 익명 사용자의 경우 이메일 인증 메일 발송
+            if (!Auth::check() && $emailToken) {
+                // 댓글 ID로 토큰 데이터 업데이트
+                $updatedToken = $this->emailVerificationService->sendVerificationEmail(
+                    $validated['author_email'],
+                    'comment',
+                    $comment->id,
+                    $slug
+                );
             }
 
             // 댓글에 권한 정보 추가
@@ -237,7 +329,18 @@ class CommentController extends Controller
 
             DB::commit();
 
-            // 댓글 HTML 렌더링
+            // 익명 사용자에게는 이메일 인증 필요 메시지 반환
+            if (!Auth::check()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => '댓글이 등록되었습니다. 이메일 인증을 완료하시면 게시됩니다.',
+                    'comment' => $comment,
+                    'requires_verification' => true,
+                    'email_sent' => true
+                ]);
+            }
+
+            // 댓글 HTML 렌더링 (로그인 사용자만)
             $commentHtml = view($this->selectView('comment'), compact('comment', 'board', 'post') + ['level' => 0])->render();
 
             return response()->json([

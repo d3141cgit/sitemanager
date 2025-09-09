@@ -17,6 +17,8 @@ abstract class BoardPost extends Model
         'board_id',
         'member_id',
         'author_name',
+        'author_email',
+        'author_password',
         'title',
         'content',
         'content_type',
@@ -33,7 +35,9 @@ abstract class BoardPost extends Model
         'like_count',
         'published_at',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'email_verification_token',
+        'email_verified_at'
     ];
 
     protected $casts = [
@@ -42,11 +46,26 @@ abstract class BoardPost extends Model
         'comment_count' => 'integer',
         'file_count' => 'integer',
         'like_count' => 'integer',
+        'email_verified_at' => 'datetime',
         'published_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    /**
+     * 이메일 인증 여부를 확인하는 accessor
+     */
+    public function getIsVerifiedAttribute(): bool
+    {
+        // 회원은 항상 인증된 것으로 간주
+        if ($this->member_id) {
+            return true;
+        }
+        
+        // 비회원은 email_verified_at 필드로 판단
+        return !is_null($this->email_verified_at);
+    }
 
     /**
      * 동적 모델 생성

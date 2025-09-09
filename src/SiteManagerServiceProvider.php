@@ -13,6 +13,8 @@ use SiteManager\Services\BoardService;
 use SiteManager\Services\ConfigService;
 use SiteManager\Services\PermissionService;
 use SiteManager\Services\MemberService;
+use SiteManager\Services\FileUploadService;
+use SiteManager\Services\EmailVerificationService;
 
 class SiteManagerServiceProvider extends ServiceProvider
 {
@@ -110,6 +112,8 @@ class SiteManagerServiceProvider extends ServiceProvider
         $this->app->singleton(ConfigService::class);
         $this->app->singleton(PermissionService::class);
         $this->app->singleton(MemberService::class);
+        $this->app->singleton(FileUploadService::class);
+        $this->app->singleton(EmailVerificationService::class);
         
         // Repository 바인딩
         $this->app->bind(
@@ -126,6 +130,8 @@ class SiteManagerServiceProvider extends ServiceProvider
         $this->app->alias(ConfigService::class, 'sitemanager.config');
         $this->app->alias(PermissionService::class, 'sitemanager.permission');
         $this->app->alias(MemberService::class, 'sitemanager.member');
+        $this->app->alias(FileUploadService::class, 'sitemanager.fileupload');
+        $this->app->alias(EmailVerificationService::class, 'sitemanager.emailverification');
         
         // 콘솔 명령어 등록 (웹에서도 사용 가능)
         $this->commands([

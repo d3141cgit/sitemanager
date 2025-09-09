@@ -62,6 +62,9 @@ class BoardService
                 $table->unsignedBigInteger('board_id')->comment('게시판 ID');
                 $table->unsignedBigInteger('member_id')->nullable()->comment('작성자 회원 ID');
                 $table->string('author_name', 100)->nullable()->comment('작성자명 (비회원용)');
+                $table->string('author_email', 255)->nullable()->comment('작성자 이메일 (비회원용)');
+                $table->string('email_verification_token', 100)->nullable()->comment('이메일 인증 토큰');
+                $table->timestamp('email_verified_at')->nullable()->comment('이메일 인증 완료 시간');
                 $table->string('title', 500)->comment('게시글 제목');
                 $table->longText('content')->nullable()->comment('게시글 내용');
                 $table->enum('content_type', ['html', 'markdown', 'text'])->default('html')->comment('내용 형식');
@@ -99,6 +102,9 @@ class BoardService
                 $table->unsignedBigInteger('parent_id')->nullable()->comment('부모 댓글 ID (대댓글용)');
                 $table->unsignedBigInteger('member_id')->nullable()->comment('작성자 회원 ID');
                 $table->string('author_name', 100)->nullable()->comment('작성자명 (비회원용)');
+                $table->string('author_email', 255)->nullable()->comment('작성자 이메일 (비회원용)');
+                $table->string('email_verification_token', 100)->nullable()->comment('이메일 인증 토큰');
+                $table->timestamp('email_verified_at')->nullable()->comment('이메일 인증 완료 시간');
                 $table->text('content')->comment('댓글 내용');
                 $table->enum('status', ['approved', 'pending', 'rejected', 'deleted'])->default('approved')->comment('승인 상태');
                 $table->unsignedInteger('file_count')->default(0)->comment('첨부파일 수');
@@ -472,8 +478,6 @@ class BoardService
 
         $postData = [
             'board_id' => $board->id,
-            'member_id' => Auth::id(),
-            'author_name' => Auth::user()?->name,
             'title' => $data['title'],
             'content' => $data['content'] ?? null,
             'content_type' => 'html',
@@ -483,6 +487,22 @@ class BoardService
             'options' => $this->buildOptionsString($data),
             'published_at' => now(),
         ];
+
+        // 로그인 사용자와 익명 사용자 구분 처리
+        if (Auth::check()) {
+            $postData['member_id'] = Auth::id();
+            $postData['author_name'] = Auth::user()->name;
+            $postData['author_email'] = Auth::user()->email;
+        } else {
+            // 익명 사용자
+            $postData['member_id'] = null;
+            $postData['author_name'] = $data['author_name'] ?? '익명';
+            $postData['author_email'] = $data['author_email'] ?? null;
+            $postData['email_verified_at'] = null; // 이메일 인증 필요
+            $postData['email_verification_token'] = $data['email_verification_token'] ?? null;
+            // 익명 게시글은 이메일 인증 후 게시
+            $postData['status'] = 'pending';
+        }
 
         $post = $postModelClass::create($postData);
 

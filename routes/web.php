@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use SiteManager\Http\Controllers\BoardController;
 use SiteManager\Http\Controllers\CommentController;
 use SiteManager\Http\Controllers\EditorController;
+use SiteManager\Http\Controllers\EmailVerificationController;
 use SiteManager\Http\Controllers\Auth\LoginController;
 
 // 로그인 관련 라우트
@@ -96,4 +97,13 @@ Route::prefix('board')->name('board.')->group(function () {
         Route::get('/{commentId}/attachments/{attachmentId}', [CommentController::class, 'downloadAttachment'])->name('attachment.download');
         Route::delete('/{commentId}/attachments/{attachmentId}', [CommentController::class, 'deleteAttachment'])->name('attachment.delete');
     });
+});
+
+// 이메일 인증 라우트
+Route::group(['prefix' => 'board/email', 'as' => 'board.email.'], function () {
+    Route::get('/verify/{token}', [EmailVerificationController::class, 'verify'])->name('verify');
+    Route::get('/edit-verify/{token}', [EmailVerificationController::class, 'editVerify'])->name('edit-verify');
+    Route::post('/resend-verification', [EmailVerificationController::class, 'resendVerification'])->name('resend-verification');
+    Route::post('/send-edit-verification', [EmailVerificationController::class, 'sendEditVerification'])->name('send-edit-verification');
+    Route::post('/confirm-delete', [EmailVerificationController::class, 'confirmDelete'])->name('confirm-delete');
 });

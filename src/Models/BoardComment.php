@@ -23,14 +23,31 @@ abstract class BoardComment extends Model
         'ip_address',
         'user_agent',
         'meta',
+        'email_verification_token',
+        'email_verified_at',
     ];
 
     protected $casts = [
         'meta' => 'array',
+        'email_verified_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    /**
+     * 이메일 인증 여부를 확인하는 accessor
+     */
+    public function getIsVerifiedAttribute(): bool
+    {
+        // 회원은 항상 인증된 것으로 간주
+        if ($this->member_id) {
+            return true;
+        }
+        
+        // 비회원은 email_verified_at 필드로 판단
+        return !is_null($this->email_verified_at);
+    }
 
     /**
      * Boot the model
