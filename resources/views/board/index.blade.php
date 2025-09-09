@@ -3,6 +3,7 @@
 @section('title', $board->name)
 
 @push('head')
+    {!! resource('sitemanager::js/image-optimizer.js') !!}
     {!! resource('sitemanager::css/board.default.css') !!}
     {!! resource('sitemanager::css/pagination.css') !!}
 @endpush

@@ -42,7 +42,7 @@ function initializeCommentForm() {
     if (commentForm) {
         // 메인 댓글 폼의 파일 업로드 미리보기 이벤트 추가
         const commentFileInput = document.getElementById('comment-files');
-        const commentFilePreview = document.getElementById('comment-file-preview');
+        const commentFilePreview = commentForm.querySelector('.comment-file-preview');
         
         if (commentFileInput && commentFilePreview) {
             commentFileInput.addEventListener('change', function() {
@@ -82,13 +82,10 @@ function initializeCommentForm() {
             // 실제 파일 input 상태 확인
             const fileInput = this.querySelector('input[type="file"]');
             if (fileInput) {
-                console.log('DEBUG - Form submission - fileInput.files.length:', fileInput.files.length);
                 const fileNames = Array.from(fileInput.files).map(f => f.name);
-                console.log('DEBUG - Form submission - file names:', fileNames);
-                
+
                 // FormData에 포함된 파일들도 확인
                 const formDataFiles = formData.getAll('files[]');
-                console.log('DEBUG - Form submission - FormData files count:', formDataFiles.length);
             }
             
             if (!content.trim()) {
@@ -108,8 +105,7 @@ function initializeCommentForm() {
             // Get route from global variables
             const storeUrl = window.commentRoutes?.store;
             if (!storeUrl) {
-                console.error('Comment store route not found');
-                SiteManager.notifications.error('Configuration error. Please refresh the page.');
+                SiteManager.notifications.error('Configuration error [No route]. Please refresh the page.');
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
                 return;
@@ -187,11 +183,7 @@ function initializeCommentForm() {
                     if (data.comment_count !== undefined) {
                         const commentCountElements = document.querySelectorAll('[data-comment-count]');
                         commentCountElements.forEach(el => {
-                            if (el.textContent.includes('Comments')) {
-                                el.textContent = `Comments (${data.comment_count})`;
-                            } else {
-                                el.textContent = `${data.comment_count} comments`;
-                            }
+                            el.textContent = data.comment_count;
                         });
                     }
                 } else {
@@ -278,7 +270,7 @@ function initializeNewCommentEvents(commentId) {
     const editForm = commentElement.querySelector(`#edit-form-${commentId}`);
     if (editForm) {
         const fileInput = editForm.querySelector('input[type="file"]');
-        const filePreview = editForm.querySelector('.file-preview');
+        const filePreview = editForm.querySelector('.comment-file-preview');
         
         if (fileInput && filePreview) {
             fileInput.addEventListener('change', function() {
@@ -387,7 +379,6 @@ function editComment(commentId) {
         
         // 삭제 예정 목록 초기화 (매번 편집 시작할 때마다)
         editForm.dataset.deletedAttachments = JSON.stringify([]);
-        console.log('DEBUG - editComment: Initialized deleted attachments for comment', commentId);
         
         // 누적 파일 선택 초기화
         const formId = `edit-comment-${commentId}`;
@@ -405,10 +396,14 @@ function initializeEditFormFileUpload(commentId) {
     if (!editForm) return;
     
     const fileInput = editForm.querySelector('input[type="file"]');
-    const filePreview = editForm.querySelector('.file-preview');
+    const filePreview = editForm.querySelector('.comment-file-preview');
     
     if (fileInput && filePreview) {
-        fileInput.addEventListener('change', function() {
+        // 기존 이벤트 리스너 제거 (중복 방지)
+        const newFileInput = fileInput.cloneNode(true);
+        fileInput.parentNode.replaceChild(newFileInput, fileInput);
+        
+        newFileInput.addEventListener('change', function() {
             if (this.files.length > 0) {
                 // 새로 선택된 파일들을 기존 선택에 추가
                 const formId = `edit-comment-${commentId}`;
@@ -433,6 +428,42 @@ function initializeEditFormFileUpload(commentId) {
     // 삭제 예정 첨부파일 추적을 위한 배열 초기화
     if (!editForm.dataset.deletedAttachments) {
         editForm.dataset.deletedAttachments = JSON.stringify([]);
+    }
+}
+
+// 댓글 reply 폼의 파일 업로드 기능 초기화
+function initializeReplyFormFileUpload(commentId) {
+    const replyForm = document.getElementById(`reply-form-${commentId}`);
+    if (!replyForm) return;
+    
+    const fileInput = replyForm.querySelector('input[type="file"]');
+    const filePreview = replyForm.querySelector('.comment-file-preview');
+    
+    if (fileInput && filePreview) {
+        // 기존 이벤트 리스너 제거 (중복 방지)
+        const newFileInput = fileInput.cloneNode(true);
+        fileInput.parentNode.replaceChild(newFileInput, fileInput);
+        
+        newFileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                // 새로 선택된 파일들을 기존 선택에 추가
+                const formId = `reply-comment-${commentId}`;
+                const allFiles = addFilesToSelection(formId, Array.from(this.files));
+                
+                // 원래 파일 input은 빈 상태로 리셋 (hidden input들이 실제 데이터를 관리)
+                this.value = '';
+                
+                // 미리보기 업데이트 (hidden input들이 자동 생성됨)
+                displayFilePreview(allFiles, filePreview, formId);
+                
+                // Add Files 버튼 텍스트 업데이트
+                const addFilesBtn = replyForm.querySelector(`button[onclick*="file-reply-${commentId}"]`);
+                if (addFilesBtn) {
+                    addFilesBtn.innerHTML = `<i class="bi bi-paperclip"></i> ${allFiles.length} file(s) selected`;
+                    addFilesBtn.className = 'btn btn-sm btn-outline-primary';
+                }
+            }
+        });
     }
 }
 
@@ -523,7 +554,7 @@ function displayFilePreview(files, previewContainer, formId = null) {
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const fileItem = document.createElement('div');
-        fileItem.className = 'file-preview-item d-inline-flex align-items-center me-2 mb-1 px-2 py-1 bg-light border rounded';
+        fileItem.className = 'file-preview-item';
         
         const fileIcon = getFileIcon(file.type);
         
@@ -544,7 +575,7 @@ function displayFilePreview(files, previewContainer, formId = null) {
         if (file.type.startsWith('image/')) {
             const imageUrl = URL.createObjectURL(file);
             imagePreview = `
-                <img src="${imageUrl}" alt="Preview" style="width: 20px; height: 20px; object-fit: cover; border-radius: 3px; margin-right: 6px;">
+                <img src="${imageUrl}" alt="Preview">
             `;
         } else {
             imagePreview = `<i class="${fileIcon} me-2"></i>`;
@@ -590,13 +621,11 @@ function removeFilePreview(button, fileIndex, formId = null) {
     console.log('DEBUG - fileItem found:', !!fileItem);
     console.log('DEBUG - fileItem className:', fileItem?.className);
     
-    // 다양한 방법으로 previewContainer 찾기
-    let previewContainer = button.closest('.file-preview');
+    // 다양한 방법으로 previewContainer 찾기 (클래스 우선)
+    let previewContainer = button.closest('.comment-file-preview');
     if (!previewContainer) {
-        previewContainer = button.closest('#comment-file-preview');
-    }
-    if (!previewContainer) {
-        previewContainer = document.getElementById('comment-file-preview');
+        // 폴백: 메인 댓글 폼의 경우
+        previewContainer = document.querySelector('.comment-file-preview');
     }
     
     console.log('DEBUG - previewContainer found:', !!previewContainer);
@@ -657,8 +686,7 @@ function removeFilePreview(button, fileIndex, formId = null) {
         console.log('DEBUG - fileItem or previewContainer not found');
         console.log('DEBUG - Available elements in DOM:');
         console.log('DEBUG - .file-preview-item elements:', document.querySelectorAll('.file-preview-item').length);
-        console.log('DEBUG - .file-preview elements:', document.querySelectorAll('.file-preview').length);
-        console.log('DEBUG - #comment-file-preview:', !!document.getElementById('comment-file-preview'));
+        console.log('DEBUG - .comment-file-preview elements:', document.querySelectorAll('.comment-file-preview').length);
     }
 }
 
@@ -734,7 +762,7 @@ function cancelEdit(commentId) {
         
         // 새 파일 input 및 preview 초기화
         const fileInput = editForm.querySelector('input[type="file"]');
-        const filePreview = editForm.querySelector('.file-preview');
+        const filePreview = editForm.querySelector('.comment-file-preview');
         if (fileInput) fileInput.value = '';
         if (filePreview) filePreview.innerHTML = '';
         
@@ -882,7 +910,7 @@ function submitEdit(event, commentId) {
                     const contentElement = commentElement.querySelector('.comment-content');
                     if (contentElement) {
                         const attachmentsDiv = document.createElement('div');
-                        attachmentsDiv.className = 'comment-attachments mt-2';
+                        attachmentsDiv.className = 'comment-attachments';
                         attachmentsDiv.innerHTML = data.attachments_html;
                         contentElement.after(attachmentsDiv);
                     }
@@ -895,7 +923,7 @@ function submitEdit(event, commentId) {
             
             // 새 파일 input 초기화
             const fileInput = form.querySelector('input[type="file"]');
-            const filePreview = form.querySelector('.file-preview');
+            const filePreview = form.querySelector('.comment-file-preview');
             if (fileInput) fileInput.value = '';
             if (filePreview) filePreview.innerHTML = '';
             
@@ -957,6 +985,9 @@ function replyToComment(commentId) {
         if (textarea) {
             textarea.focus();
         }
+        
+        // 파일 업로드 기능 초기화
+        initializeReplyFormFileUpload(commentId);
     }
     
     // Hide loading state

@@ -5,7 +5,11 @@
 @push('head')
     @if($post->isSecret())
         <meta name="robots" content="noindex,nofollow">
-    @endif    @if ($board->getSetting('enable_likes', false))
+    @endif
+
+    {!! resource('sitemanager::js/image-optimizer.js') !!}
+    
+    @if ($board->getSetting('enable_likes', false))
         {!! resource('sitemanager::js/board/like.js') !!}
     @endif
 
@@ -40,39 +44,39 @@
         </h1>
 
         @if ($board->getSetting('show_info'))
-        <div class="post-meta">
-            @if ($board->getSetting('show_name'))
-                @if($post->author_profile_photo)
-                    <img src="{{ $post->author_profile_photo }}" alt="{{ $post->author }}" class="profile-photo">
+            <div class="post-meta">
+                @if ($board->getSetting('show_name'))
+                    @if($post->author_profile_photo)
+                        <img src="{{ $post->author_profile_photo }}" alt="{{ $post->author }}" class="profile-photo">
+                    @endif
+                    <span class="name">
+                        {{ $post->author_name }}
+                    </span>
                 @endif
-                <span class="name">
-                    {{ $post->author_name }}
+
+                <span>
+                    <i class="bi bi-eye"></i> {{ number_format($post->view_count) }}
                 </span>
-            @endif
 
-            <span>
-                <i class="bi bi-eye"></i> {{ number_format($post->view_count) }}
-            </span>
+                @if($post->comment_count > 0)
+                    <span data-comment-count>
+                        <i class="bi bi-chat"></i> {{ $post->comment_count }}
+                    </span>
+                @endif
 
-            @if($post->comment_count > 0)
-                <span data-comment-count>
-                    <i class="bi bi-chat"></i> {{ $post->comment_count }}
-                </span>
-            @endif
-
-            @if ($board->getSetting('enable_likes', false))
-                <button type="button" 
-                        class="like-btn" 
-                        data-post-id="{{ $post->id }}"
-                        data-board-slug="{{ $board->slug }}"
-                        data-like-count="{{ $post->like_count ?? 0 }}"
-                        data-has-liked="{{ $hasLiked ? 'true' : 'false' }}"
-                        {{ $hasLiked ? 'disabled' : '' }}>
-                    <i class="bi {{ $hasLiked ? 'bi-heart-fill' : 'bi-heart' }}"></i> 
-                    <span class="like-count">{{ number_format($post->like_count ?? '') }}</span>
-                </button>
-            @endif
-        </div>
+                @if ($board->getSetting('enable_likes', false))
+                    <button type="button" 
+                            class="like-btn" 
+                            data-post-id="{{ $post->id }}"
+                            data-board-slug="{{ $board->slug }}"
+                            data-like-count="{{ $post->like_count ?? 0 }}"
+                            data-has-liked="{{ $hasLiked ? 'true' : 'false' }}"
+                            {{ $hasLiked ? 'disabled' : '' }}>
+                        <i class="bi {{ $hasLiked ? 'bi-heart-fill' : 'bi-heart' }}"></i> 
+                        <span class="like-count">{{ number_format($post->like_count ?? '') }}</span>
+                    </button>
+                @endif
+            </div>
         @endif
 
         @if ($post->header_image)
@@ -174,12 +178,11 @@
             </div>
         @endif
 
-
-        <!-- Action Buttons -->
+        {{-- Action Buttons --}}
         <div class="action-buttons">
             @if($canEdit)
                 <a href="{{ route('board.edit', [$board->slug, $post->slug ?: $post->id]) }}" 
-                class="btn btn-sm btn-outline-primary">
+                class="btn btn-sm btn-primary">
                     <i class="bi bi-pencil"></i> Edit
                 </a>
             @endif
@@ -189,145 +192,92 @@
                     class="d-inline delete-form">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-outline-danger delete-post-btn">
+                    <button type="submit" class="btn btn-sm btn-danger delete-post-btn">
                         <i class="bi bi-trash"></i> Delete
                     </button>
                 </form>
             @endif
         </div>
 
-
-        <!-- Post Navigation -->
+        {{-- Post Navigation --}}
         @if($prevPost || $nextPost)
-            <div class="row mt-3">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body py-2">
-                            <div class="row">
-                                @if($prevPost)
-                                    <div class="col-md-6 mb-2 mb-md-0">
-                                        <a href="{{ route('board.show', [$board->slug, $prevPost->slug ?: $prevPost->id]) }}" 
-                                        class="text-decoration-none">
-                                            <small class="text-muted d-block">
-                                                <i class="bi bi-chevron-left"></i> Previous Post
-                                            </small>
-                                            <span class="small">{{ Str::limit($prevPost->title, 50) }}</span>
-                                        </a>
-                                    </div>
-                                @endif
-                                
-                                @if($nextPost)
-                                    <div class="col-md-6 text-md-end">
-                                        <a href="{{ route('board.show', [$board->slug, $nextPost->slug ?: $nextPost->id]) }}" 
-                                        class="text-decoration-none">
-                                            <small class="text-muted d-block">
-                                                Next Post <i class="bi bi-chevron-right"></i>
-                                            </small>
-                                            <span class="small">{{ Str::limit($nextPost->title, 50) }}</span>
-                                        </a>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
+            <div class="post-navigation">
+                @if($prevPost)
+                    <div class="prev-post">
+                        <i class="bi bi-chevron-left"></i>
+                        <a href="{{ route('board.show', [$board->slug, $prevPost->slug ?: $prevPost->id]) }}">
+                            {{ Str::limit($prevPost->title, 50) }}
+                        </a>
                     </div>
-                </div>
+                @endif
+                
+                @if($nextPost)
+                    <div class="next-post">
+                        <a href="{{ route('board.show', [$board->slug, $nextPost->slug ?: $nextPost->id]) }}">
+                            {{ Str::limit($nextPost->title, 50) }} 
+                        </a>
+                        <i class="bi bi-chevron-right"></i>
+                    </div>
+                @endif
             </div>
         @endif
 
-        <!-- Comments Section -->
+        {{-- Comments Section --}}
         @if($board->getSetting('allow_comments', true) && can('readComments', $board))
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="bi bi-chat-left"></i> <span data-comment-count>Comments ({{ $post->comment_count }})</span>
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <!-- Comment Form -->
-                            @if(can('writeComments', $board))
-                                <form id="commentForm" action="{{ route('board.comments.store', [$board->slug, $post->id]) }}" method="POST" enctype="multipart/form-data" class="mb-4">
-                                    @csrf
-                                    <input type="hidden" name="post_id" value="{{ $post->id }}">
-                                    <div class="mb-3">
-                                        <label for="comment-content" class="form-label">Write a comment</label>
-                                        <textarea id="comment-content" name="content" class="form-control" 
-                                                rows="3" placeholder="Share your thoughts..." required></textarea>
-                                    </div>
-                                    
-                                    @if(can('uploadCommentFiles', $board))
-                                        <div class="mb-3">
-                                            <label for="comment-files" class="form-label">
-                                                <i class="bi bi-paperclip"></i> Attach files (optional)
-                                            </label>
-                                            <input type="file" class="form-control" id="comment-files" name="files[]" multiple>
-                                            <div class="form-text">
-                                                You can attach multiple files. Maximum file size: {{ ini_get('upload_max_filesize') }}
-                                            </div>
-                                            <div id="comment-file-preview" class="mt-2"></div>
-                                        </div>
-                                    @endif
-                                    
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted">
-                                            @if($board->getSetting('moderate_comments', false))
-                                                Comments require approval before being displayed.
-                                            @endif
-                                        </small>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="bi bi-send"></i> Post Comment
-                                        </button>
-                                    </div>
-                                </form>
-                            @else
-                                <div class="alert alert-info">
-                                    @if(!auth()->check())
-                                        <a href="{{ route('login') }}">Login</a> to write a comment.
-                                    @else
-                                        You don't have permission to write comments.
-                                    @endif
-                                </div>
-                            @endif
+            <a name="comments"></a>
+            <div class="comments">
+                <h5>
+                    <i class="bi bi-chat-left"></i> Comments <span data-comment-count>{{ $post->comment_count ? $post->comment_count:'' }}</span>
+                </h5>
 
-                            <!-- Comments List -->
-                            <div id="comments-container">
-                                @if($comments && $comments->count() > 0)
-                                    @foreach($comments as $comment)
-                                        @include('sitemanager::board.partials.comment', ['comment' => $comment, 'level' => 0])
-                                    @endforeach
-                                @else
-                                    <div class="text-center text-muted py-4" id="no-comments">
-                                        <i class="bi bi-chat display-4 mb-3"></i>
-                                        <p>No comments yet. Be the first to comment!</p>
-                                    </div>
-                                @endif
+                {{-- Comment Form --}}
+                @if(can('writeComments', $board))
+                    <form id="commentForm" action="{{ route('board.comments.store', [$board->slug, $post->id]) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" name="post_id" value="{{ $post->id }}">
+
+                        <textarea id="comment-content" name="content" class="form-control" rows="3" placeholder="Share your thoughts..." required></textarea>
+                        
+                        @if(can('uploadCommentFiles', $board))
+                            <div>
+                                <input type="file" id="comment-files" name="files[]" class="d-none" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar">
+                                <button type="button" class="btn btn-sm btn-light" onclick="document.getElementById('comment-files').click()"> <i class="bi bi-paperclip"></i> Add Files </button>
+                                <div class="comment-file-preview"></div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        <!-- Comments Access Denied Message -->
-        @if($board->getSetting('allow_comments', true) && !can('readComments', $board))
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="alert alert-warning">
-                        <i class="bi bi-lock"></i> 
-                        @if(!auth()->check())
-                            <a href="{{ route('login') }}">Login</a> to view comments.
-                        @else
-                            You don't have permission to view comments.
                         @endif
+                        
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-sm btn-primary text-nowrap">
+                                <i class="bi bi-send"></i> Post Comment @if($board->getSetting('moderate_comments', false)) (Require approval) @endif
+                            </button>
+                        </div>
+                    </form>
+                @else
+                    @if(!auth()->check())
+                        <div class="alert alert-info">
+                            <a href="{{ route('login') }}">Login</a> to write a comment.
+                        </div>
+                    @endif
+                @endif
+
+                {{-- Comments List --}}
+                @if($comments && $comments->count() > 0)
+                    <div id="comments-container">
+                        @foreach($comments as $comment)
+                            @include('sitemanager::board.partials.comment', ['comment' => $comment, 'level' => 0])
+                        @endforeach
                     </div>
-                </div>
+                @else
+                    <div id="no-comments" class="text-center text-muted mt-4">
+                        <p>No comments yet. Be the first to comment!</p>
+                    </div>
+                @endif
             </div>
         @endif
 
-        <!-- Back to List -->
-        <div class="row mt-4">
-            <div class="col-12 text-center">
+        {{-- Back to List --}}
+        <div class="my-4">
+            <div class="text-center">
                 <a href="{{ route('board.index', $board->slug) }}" class="btn btn-outline-secondary">
                     <i class="bi bi-list"></i> Back to List
                 </a>
@@ -336,54 +286,6 @@
     </div>
 </main>
 @endsection
-
-@push('styles')
-<style>
-.post-content {
-    line-height: 1.6;
-    font-size: 1rem;
-}
-
-.post-content img {
-    max-width: 100%;
-    height: auto;
-    margin: 1rem 0;
-}
-
-.breadcrumb {
-    background: none;
-    padding: 0;
-    margin: 0;
-}
-
-.comment-item {
-    border-left: 3px solid var(--bs-border-color);
-    margin-left: 1rem;
-    padding-left: 1rem;
-}
-
-.comment-content {
-    white-space: pre-wrap;
-}
-
-@media (max-width: 768px) {
-    .container {
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-    
-    .card-header .d-flex {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .comment-item {
-        margin-left: 0.5rem;
-        padding-left: 0.5rem;
-    }
-}
-</style>
-@endpush
 
 @if($board->getSetting('allow_comments', true))
 @push('scripts')
