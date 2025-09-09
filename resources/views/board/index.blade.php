@@ -13,7 +13,7 @@
         <div class="board-header">
             <h1>
                 {{ $board->name }}
-                <span class="total-count">{{ number_format($posts->total()) }}</span>
+                <span class="total-count">{{ $board->getSetting('enable_notice', false)  ? number_format($posts->total() + $notices->count()) : number_format($posts->total()) }}</span>
             </h1>
             
             @if ($board->getSetting('enable_search', false))
@@ -57,11 +57,14 @@
                             @endif
                             <th class="text-center" width="100"> Views </th>
                             <th class="text-center" width="100"> Comments </th>
+                            @if ($board->getSetting('enable_likes', false))
+                            <th class="text-center" width="100"> Likes </th>
+                            @endif
                             <th class="text-center" width="140"> Date </th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if(isset($notices) && $notices->count() > 0)
+                        @if($board->getSetting('enable_notice', false) && isset($notices) && $notices->count() > 0)
                             @foreach($notices as $post)
                             <tr class="notice">
                                 <td><i class="bi bi-flag-fill"></i></td>
@@ -102,15 +105,23 @@
 
                                 <td class="text-center">
                                     <span class="text-muted small">
-                                        {{ number_format($post->view_count) }}
+                                        {{ $post->view_count ? number_format($post->view_count):'-' }}
                                     </span>
                                 </td>
 
                                 <td class="text-center">
                                     <span class="text-muted small">
-                                        {{ $post->comment_count }}
+                                        {{ $post->comment_count ? number_format($post->comment_count) : '-' }}
                                     </span>
                                 </td>
+
+                                @if ($board->getSetting('enable_likes', false))
+                                <td class="text-center">
+                                    <span class="text-muted small">
+                                        {{ $post->like_count ? number_format($post->like_count) : '-' }}
+                                    </span>
+                                </td>
+                                @endif
                                 
                                 <td class="text-center">
                                     <time class="text-muted small">{{ $post->created_at->format('M j, Y') }}</time>
@@ -161,15 +172,23 @@
 
                                 <td class="text-center">
                                     <span class="text-muted small">
-                                        {{ number_format($post->view_count) }}
+                                        {{ $post->view_count ? number_format($post->view_count):'-' }}
                                     </span>
                                 </td>
 
                                 <td class="text-center">
                                     <span class="text-muted small">
-                                        {{ $post->comment_count }}
+                                        {{ $post->comment_count ? number_format($post->comment_count) : '-' }}
                                     </span>
                                 </td>
+
+                                @if ($board->getSetting('enable_likes', false))
+                                <td class="text-center">
+                                    <span class="text-muted small">
+                                        {{ $post->like_count ? number_format($post->like_count) : '-' }}
+                                    </span>
+                                </td>
+                                @endif
 
                                 <td class="text-center">
                                     <time class="text-muted small">{{ $post->created_at->format('M j, Y') }}</time>

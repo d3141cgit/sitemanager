@@ -145,13 +145,15 @@ class BoardController extends Controller
         }
         
         // 서비스를 통해 데이터 조회
-        $posts = $this->boardService->getFilteredPosts($board, $request);
-        $notices = $this->boardService->getNotices($board);
+        $posts = $this->boardService->getFilteredPosts($board, $request, $board->getSetting('enable_notice', false));
+        $notices = $board->getSetting('enable_notice', false) ? $this->boardService->getNotices($board) : collect();
 
         // 각 게시글의 like 상태 확인
-        foreach ($posts as $post) {
-            $sessionKey = "liked_post_{$board->slug}_{$post->id}";
-            $post->hasLiked = session()->has($sessionKey);
+        if ($board->getSetting('enable_likes', false)) {
+            foreach ($posts as $post) {
+                $sessionKey = "liked_post_{$board->slug}_{$post->id}";
+                $post->hasLiked = session()->has($sessionKey);
+            }
         }
 
         // SEO 데이터 구성

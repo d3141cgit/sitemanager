@@ -119,7 +119,7 @@ body > header {
 
 header nav { display: flex; align-items: center; justify-content: space-between; }
 header nav .nav-section { display: flex; align-items: center; gap: 2rem; }
-header nav ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 1rem; }
+header nav ul { list-style: none; padding: 0; margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; }
 header nav ul li { margin: 0; }
 header nav ul li a { padding: 0; font-weight: 500; }
 header nav ul i { color: var(--bs-gray-500); transition: color .5s linear; }
@@ -157,6 +157,8 @@ main { padding: 2rem 0; }
 .member-profile-photo { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
 .member-profile-photo:hover { transform: scale(5); transition: transform 0.3s ease-in-out; }
 .member-profile-placeholder { width: 30px; height: 30px; border-radius: 50%; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 1.2rem; }
+
+.admin-profile-photo { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; margin-right: 0.15rem; }
 
 /* Profile Photo Management */
 .profile-photo-preview { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; transition: opacity 0.3s ease; }

@@ -115,11 +115,11 @@ class SiteManagerBoardController extends Controller
             'Use Tags', 
             'Enable tag system for posts'
         ],
-        'require_approval' => [
-            'boolean', 
-            'Require Approval', 
-            'Posts require admin approval before publishing'
-        ],
+        // 'require_approval' => [
+        //     'boolean', 
+        //     'Require Approval', 
+        //     'Posts require admin approval before publishing'
+        // ],
         'show_info' => [
             'boolean', 
             'Show Info', 
@@ -130,10 +130,20 @@ class SiteManagerBoardController extends Controller
             'Show Name', 
             'Display author information on posts'
         ],
+        'enable_notice' => [
+            'boolean', 
+            'Enable Notice', 
+            'Enable notice functionality for this board'
+        ],
         'enable_search' => [
             'boolean', 
             'Enable Search', 
             'Enable search functionality for this board'
+        ],
+        'enable_likes' => [
+            'boolean', 
+            'Enable Likes', 
+            'Enable likes functionality for this board'
         ],
         'allow_secret_posts' => [
             'boolean', 

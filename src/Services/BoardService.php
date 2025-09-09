@@ -248,14 +248,22 @@ class BoardService
     /**
      * 게시물 목록 조회 (필터링 포함)
      */
-    public function getFilteredPosts(Board $board, Request $request)
+    public function getFilteredPosts(Board $board, Request $request, bool $excludeNotices = false)
     {
         $postModelClass = BoardPost::forBoard($board->slug);
         
         $query = $postModelClass::with('member')
             ->published()
-            // ->orderByRaw("CASE WHEN options LIKE '%is_notice%' THEN 1 ELSE 0 END DESC")
             ->orderBy('published_at', 'desc');
+
+        // 공지사항 제외 필터링 (옵션)
+        if ($excludeNotices) {
+            $query->where(function($q) {
+                $q->whereNull('options')
+                  ->orWhere('options', '')
+                  ->orWhere('options', 'not like', '%is_notice%');
+            }); // 공지 제외 (options가 null이거나 빈 값이거나 is_notice가 없는 경우)
+        }
 
         // 카테고리 필터링 (다중 카테고리 지원)
         if ($request->filled('categories')) {
