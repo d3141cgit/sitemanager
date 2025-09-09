@@ -19,6 +19,7 @@
 
     {!! resource('sitemanager::js/board/show.js') !!}
     {!! resource('sitemanager::css/board.default.css') !!}
+    {!! resource('sitemanager::css/pagination.css') !!}
 @endpush
 
 @section('content')
@@ -260,18 +261,10 @@
                     @endif
                 @endif
 
-                {{-- Comments List --}}
-                @if($comments && $comments->count() > 0)
-                    <div id="comments-container">
-                        @foreach($comments as $comment)
-                            @include('sitemanager::board.partials.comment', ['comment' => $comment, 'level' => 0])
-                        @endforeach
-                    </div>
-                @else
-                    <div id="no-comments" class="text-center text-muted mt-4">
-                        <p>No comments yet. Be the first to comment!</p>
-                    </div>
-                @endif
+                {{-- Comments List with Pagination --}}
+                <div id="comments-container">
+                    @include('sitemanager::board.partials.comments', ['comments' => $comments, 'board' => $board])
+                </div>
             </div>
         @endif
 
@@ -292,6 +285,7 @@
 <script>
 // Comment routes configuration for comment.js
 window.commentRoutes = {
+    index: "{{ route('board.comments.index', [$board->slug, $post->id]) }}",
     store: "{{ route('board.comments.store', [$board->slug, $post->id]) }}",
     update: "{{ route('board.comments.update', [$board->slug, $post->id, ':id']) }}",
     destroy: "{{ route('board.comments.destroy', [$board->slug, $post->id, ':id']) }}",

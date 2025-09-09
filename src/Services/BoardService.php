@@ -349,9 +349,9 @@ class BoardService
     }
 
     /**
-     * 게시물 댓글 조회
+     * 게시물 댓글 조회 (Pagination 지원)
      */
-    public function getPostComments(Board $board, $postId)
+    public function getPostComments(Board $board, $postId, $perPage = 5)
     {
         if (!$board->getSetting('allow_comments', true)) {
             return null;
@@ -360,7 +360,7 @@ class BoardService
         $commentModelClass = BoardComment::forBoard($board->slug);
         $currentUserId = Auth::id();
         
-        // 댓글 조회 조건: 승인된 댓글 OR 본인이 작성한 댓글
+        // 쓰레드 단위 Pagination: 부모 댓글을 기준으로 페이징
         $comments = $commentModelClass::with([
                 'member',
                 'attachments',
@@ -372,7 +372,7 @@ class BoardService
                         if ($currentUserId) {
                             $subQuery->orWhere('member_id', $currentUserId);
                         }
-                    });
+                    })->orderBy('created_at', 'asc'); // 자식 댓글은 오래된 순
                 },
                 'children.member',
                 'children.attachments',
@@ -384,7 +384,7 @@ class BoardService
                         if ($currentUserId) {
                             $subQuery->orWhere('member_id', $currentUserId);
                         }
-                    });
+                    })->orderBy('created_at', 'asc');
                 },
                 'children.children.member',
                 'children.children.attachments'
@@ -399,13 +399,38 @@ class BoardService
                 }
             })
             ->forPost($postId)
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc') // 부모 댓글은 최신 순
+            ->paginate($perPage);
             
         // 각 댓글에 권한 정보 추가 (재귀적으로 모든 레벨 처리)
         $this->setCommentsPermissions($comments, $board);
         
         return $comments;
+    }
+    
+    /**
+     * 게시물의 전체 댓글 수 조회 (모든 레벨 포함)
+     */
+    public function getPostCommentCount(Board $board, $postId): int
+    {
+        if (!$board->getSetting('allow_comments', true)) {
+            return 0;
+        }
+
+        $commentModelClass = BoardComment::forBoard($board->slug);
+        $currentUserId = Auth::id();
+        
+        // 모든 댓글 수 계산 (부모, 자식, 대댓글 모두 포함)
+        return $commentModelClass::where(function($query) use ($currentUserId) {
+                $query->where('status', 'approved');
+                
+                // 로그인한 사용자의 경우 본인 댓글도 포함
+                if ($currentUserId) {
+                    $query->orWhere('member_id', $currentUserId);
+                }
+            })
+            ->forPost($postId)
+            ->count();
     }
     
     /**

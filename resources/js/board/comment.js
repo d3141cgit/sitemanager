@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     initializeCommentForm();
+    
+    // Initialize pagination events if comments exist
+    initializePaginationEvents();
 });
 
 // 페이지 언로드 시 제출 상태 리셋 (브라우저 새로고침/뒤로가기 대응)
@@ -181,36 +184,12 @@ function initializeCommentForm() {
                         noComments.remove();
                     }
                     
-                    // Add new comment HTML to the top of comments container
-                    if (data.comment_html) {
-                        const commentsContainer = document.getElementById('comments-container');
-                        if (commentsContainer) {
-                            // Insert new comment at the beginning (top)
-                            commentsContainer.insertAdjacentHTML('afterbegin', data.comment_html);
-                            
-                            // 새로 추가된 댓글에 이벤트 리스너 연결
-                            initializeNewCommentEvents(data.comment.id);
-                        } else {
-                            // Create comments container if it doesn't exist
-                            const commentsSection = document.querySelector('.comments');
-                            if (commentsSection) {
-                                const newContainer = document.createElement('div');
-                                newContainer.id = 'comments-container';
-                                newContainer.innerHTML = data.comment_html;
-                                commentsSection.appendChild(newContainer);
-                                
-                                // 새로 추가된 댓글에 이벤트 리스너 연결
-                                initializeNewCommentEvents(data.comment.id);
-                            }
-                        }
-                    }
+                    // Reload comments with pagination (새 댓글이 첫 페이지에 나타나도록)
+                    loadComments(1);
                     
                     // Update comment count if provided
                     if (data.comment_count !== undefined) {
-                        const commentCountElements = document.querySelectorAll('[data-comment-count]');
-                        commentCountElements.forEach(el => {
-                            el.textContent = data.comment_count;
-                        });
+                        updateCommentCount(data.comment_count);
                     }
                 } else {
                     SiteManager.notifications.error(data.message || 'An error occurred while posting your comment.');
@@ -1255,3 +1234,100 @@ function approveComment(commentId) {
         SiteManager.notifications.error('An error occurred while approving the comment.');
     });
 }
+
+/**
+ * 댓글 목록 로드 (Pagination 지원)
+ */
+function loadComments(page = 1, perPage = 5) {
+    if (!window.commentRoutes) {
+        console.error('Comment routes not found');
+        return;
+    }
+    
+    const url = new URL(window.commentRoutes.index);
+    url.searchParams.append('page', page);
+    url.searchParams.append('per_page', perPage);
+    
+    // Show loading indicator
+    const commentsContainer = document.getElementById('comments-container');
+    if (commentsContainer) {
+        commentsContainer.innerHTML = '<div class="text-center py-4"><i class="bi bi-arrow-clockwise spin"></i> Loading comments...</div>';
+    }
+    
+    fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update comments container
+            if (commentsContainer) {
+                commentsContainer.innerHTML = data.comments_html;
+                
+                // Initialize pagination event listeners
+                initializePaginationEvents();
+                
+                // Update comment count
+                updateCommentCount(data.comment_count);
+            }
+        } else {
+            console.error('Failed to load comments:', data.message);
+            SiteManager.notifications.error(data.message || 'Failed to load comments');
+        }
+    })
+    .catch(error => {
+        console.error('Error loading comments:', error);
+        SiteManager.notifications.error('An error occurred while loading comments');
+        
+        if (commentsContainer) {
+            commentsContainer.innerHTML = '<div class="text-center text-muted py-4">Failed to load comments. Please try again.</div>';
+        }
+    });
+}
+
+/**
+ * Pagination 이벤트 리스너 초기화
+ */
+function initializePaginationEvents() {
+    const paginationLinks = document.querySelectorAll('.comments-page-link');
+    if (paginationLinks.length === 0) {
+        return; // pagination 링크가 없으면 종료
+    }
+    
+    paginationLinks.forEach(link => {
+        // 기존 이벤트 리스너 제거 (중복 방지)
+        link.removeEventListener('click', handlePaginationClick);
+        link.addEventListener('click', handlePaginationClick);
+    });
+}
+
+/**
+ * Pagination 클릭 핸들러
+ */
+function handlePaginationClick(e) {
+    e.preventDefault();
+    const page = parseInt(this.getAttribute('data-page'));
+    if (page && page > 0) {
+        loadComments(page);
+    }
+}
+
+/**
+ * 댓글 수 업데이트
+ */
+function updateCommentCount(count) {
+    const commentCountElements = document.querySelectorAll('[data-comment-count]');
+    commentCountElements.forEach(element => {
+        element.textContent = count;
+        element.setAttribute('data-comment-count', count);
+    });
+}
+
+// 전역 함수로 등록
+window.loadComments = loadComments;
+window.initializePaginationEvents = initializePaginationEvents;

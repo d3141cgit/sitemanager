@@ -342,13 +342,16 @@ class CommentController extends Controller
 
             // 댓글 HTML 렌더링 (로그인 사용자만)
             $commentHtml = view($this->selectView('comment'), compact('comment', 'board', 'post') + ['level' => 0])->render();
+            
+            // 전체 댓글 수 조회 (새로 추가된 댓글 포함)
+            $totalCommentCount = $this->boardService->getPostCommentCount($board, $postId);
 
             return response()->json([
                 'success' => true,
                 'message' => $requireModeration ? '댓글이 등록되었습니다. 승인 후 표시됩니다.' : '댓글이 등록되었습니다.',
                 'comment' => $comment,
                 'comment_html' => $commentHtml,
-                'comment_count' => $post->fresh()->comment_count,
+                'comment_count' => $totalCommentCount,
             ]);
 
         } catch (\Exception $e) {
@@ -494,7 +497,7 @@ class CommentController extends Controller
     }
 
     /**
-     * 댓글 목록 조회 (AJAX)
+     * 댓글 목록 조회 (AJAX) - Pagination 지원
      */
     public function index(string $slug, $postId): JsonResponse
     {
@@ -508,8 +511,14 @@ class CommentController extends Controller
         $postModelClass = BoardPost::forBoard($slug);
         $post = $postModelClass::findOrFail($postId);
         
-        // 서비스 레이어를 통해 댓글 조회
-        $comments = $this->boardService->getPostComments($board, $postId);
+        // 페이지당 댓글 수 (기본값: 5개 쓰레드)
+        $perPage = request()->get('per_page', 5);
+        
+        // 서비스 레이어를 통해 댓글 조회 (Pagination)
+        $comments = $this->boardService->getPostComments($board, $postId, $perPage);
+        
+        // 전체 댓글 수 조회 (모든 레벨 포함)
+        $totalCommentCount = $this->boardService->getPostCommentCount($board, $postId);
 
         $commentsHtml = view($this->selectView('comments'), compact('comments', 'board'))->render();
 
@@ -517,7 +526,11 @@ class CommentController extends Controller
             'success' => true,
             'comments' => $comments,
             'comments_html' => $commentsHtml,
-            'comment_count' => $comments ? $comments->count() : 0,
+            'comment_count' => $totalCommentCount, // 전체 댓글 수
+            'thread_count' => $comments ? $comments->total() : 0, // 전체 쓰레드 수
+            'current_page' => $comments ? $comments->currentPage() : 1,
+            'last_page' => $comments ? $comments->lastPage() : 1,
+            'per_page' => $comments ? $comments->perPage() : $perPage,
         ]);
     }
 
