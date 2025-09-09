@@ -1,3 +1,4 @@
+/* Index */
 .board-header { display: flex; justify-content: space-between; align-items: center; margin: 1rem 0; }
 .board-header h1 { font-size: 1.25rem; font-weight: 500; margin: 0; display: flex; align-items: center; margin-right: 0.5rem; }
 .board-header h1 .total-count { font-size: 1rem; color: var(--bs-gray-700); font-weight: 400; margin-left: 0.25rem; }
@@ -13,12 +14,38 @@
 
 .post-title { min-width: 300px; }
 
-.post-categories { display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; margin-right: 0.25rem; margin-bottom: 0.25rem; }
-.post-categories span { border: solid 1px var(--bs-gray-700); color: var(--bs-gray-700); border-radius: 2rem; padding: 1px 0.5rem; }
+.post-categories { display: flex; align-items: center; gap: 0.25rem; font-size: 0.6rem; margin-right: 0.25rem; margin-bottom: 0.25rem; }
+.post-categories span { border: solid 1px var(--bs-gray-700); color: var(--bs-gray-700); border-radius: 2rem; padding: 0 0.25rem; }
 
 .board-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: 1rem; }
 
 @media (min-width: 768px) {
     .post-title { display: flex; align-items: center; justify-content: flex-start; }
     .post-categories { margin-bottom: 0; }
+}
+
+
+/* Password Form */
+.private-form-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    min-height: 60vh;
+    max-width: 768px;
+    margin: 2rem auto;
+    border: solid 1px var(--bs-gray-200);
+    padding: 4rem;
+    border-radius: 2rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.075);
+}
+
+.private-form-container input.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: solid 1px var(--bs-gray-300);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin: 1rem 0 2rem 0;
 }
