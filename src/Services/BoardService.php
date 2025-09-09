@@ -302,7 +302,13 @@ class BoardService
             });
         }
 
-        return $query->paginate($board->posts_per_page ?? 20);
+        $perPage = $request->input('per_page');
+        if ($perPage && is_numeric($perPage) && $perPage > ($board->posts_per_page ?? 20)) {
+            $perPage = 20;
+        } else {
+            $perPage = $perPage ?: ($board->posts_per_page ?? 20);
+        }
+        return $query->paginate($perPage);
     }
 
     /**

@@ -1,0 +1,24 @@
+.board-header { display: flex; justify-content: space-between; align-items: center; margin: 1rem 0; }
+.board-header h1 { font-size: 1.25rem; font-weight: 500; margin: 0; display: flex; align-items: center; margin-right: 0.5rem; }
+.board-header h1 .total-count { font-size: 1rem; color: var(--bs-gray-700); font-weight: 400; margin-left: 0.25rem; }
+
+.board-search-form input:focus, .board-search-form select:focus { outline: none; box-shadow: none; }
+
+.board-posts-table { width: 100%; border-collapse: collapse; }
+.board-posts-table th, .board-posts-table td { padding: 0.75rem; text-align: center; border-bottom: 1px solid var(--bs-gray-200); font-size: 0.9rem; color: var(--bs-gray-700); }
+.board-posts-table th { border-top: solid 1px #000; font-weight: 400; }
+.board-posts-table tr.notice td { background-color: var(--bs-gray-100); }
+.board-posts-table a:link, .board-posts-table a:visited { color: #000; text-decoration: none; }
+.board-posts-table a:hover { color: var(--bs-red); }
+
+.post-title { min-width: 300px; }
+
+.post-categories { display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; margin-right: 0.25rem; margin-bottom: 0.25rem; }
+.post-categories span { border: solid 1px var(--bs-gray-700); color: var(--bs-gray-700); border-radius: 2rem; padding: 1px 0.5rem; }
+
+.board-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: 1rem; }
+
+@media (min-width: 768px) {
+    .post-title { display: flex; align-items: center; justify-content: flex-start; }
+    .post-categories { margin-bottom: 0; }
+}

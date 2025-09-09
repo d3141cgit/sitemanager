@@ -1,0 +1,122 @@
+/* Custom Pagination Styles */
+.sitemanager-pagination {
+    display: flex;
+    justify-content: center;
+    margin: 3rem 0 2rem;
+}
+
+.per-page-selector {
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--bs-gray-700);
+}
+
+.pagination-list {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.page-item {
+    display: flex;
+}
+
+.page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0.5rem 0.75rem;
+    color: #6c757d;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.page-link:hover {
+    color: var(--bs-red, #007bff);
+    background-color: #f8f9fa;
+    text-decoration: none;
+}
+
+.page-item.active .page-link {
+    color: var(--bs-red, #007bff);
+    background-color: transparent;
+    font-weight: 600;
+}
+
+.page-item.disabled .page-link {
+    color: #adb5bd;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.page-item.disabled .page-link:hover {
+    background-color: transparent;
+    color: #adb5bd;
+}
+
+/* Icon styling */
+.page-link i {
+    font-size: 0.8rem;
+}
+
+/* Simple pagination specific styles */
+.sitemanager-pagination.simple .pagination-list {
+    gap: 1rem;
+}
+
+.sitemanager-pagination.simple .page-link {
+    min-width: auto;
+    padding: 0.5rem 1rem;
+}
+
+.sitemanager-pagination.simple .page-info .page-link {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 500;
+    border-radius: 1rem;
+    padding: 0.5rem 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .pagination-list {
+        gap: 0.25rem;
+    }
+    
+    .page-link {
+        min-width: 36px;
+        height: 36px;
+        padding: 0.375rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .sitemanager-pagination.simple .page-link {
+        padding: 0.375rem 0.75rem;
+    }
+}
+
+/* Hide page numbers on very small screens, show only prev/next */
+@media (max-width: 480px) {
+    .sitemanager-pagination:not(.simple) .page-item:not(:first-child):not(:last-child) {
+        display: none;
+    }
+    
+    .sitemanager-pagination:not(.simple) .page-item:nth-child(2),
+    .sitemanager-pagination:not(.simple) .page-item:nth-last-child(2) {
+        display: flex;
+    }
+}
