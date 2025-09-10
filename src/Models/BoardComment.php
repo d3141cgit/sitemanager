@@ -351,7 +351,7 @@ abstract class BoardComment extends Model
 
     /**
      * 권한 관련 Helper 메서드들
-     * 뷰에서 간편하게 권한을 체크할 수 있도록 제공
+     * 실시간으로 권한을 계산하여 반환 (BoardPost와 동일한 패턴)
      */
 
     /**
@@ -359,7 +359,24 @@ abstract class BoardComment extends Model
      */
     public function canEdit(): bool
     {
-        return $this->permissions['canEdit'] ?? false;
+        $board = $this->getBoard();
+        if (!$board || !$board->menu_id) return false;
+        
+        $user = \Illuminate\Support\Facades\Auth::user();
+        
+        if ($user) {
+            // 로그인한 사용자
+            $isAuthor = $this->member_id && $this->member_id === $user->id;
+            $canManageComments = can('manageComments', $board);
+            
+            return $canManageComments || $isAuthor;
+        } else {
+            // 비회원: 댓글 작성 권한이 있고 비회원 댓글인 경우
+            $canWriteComments = can('writeComments', $board);
+            $isGuestComment = !$this->member_id;
+            
+            return $canWriteComments && $isGuestComment;
+        }
     }
 
     /**
@@ -367,7 +384,24 @@ abstract class BoardComment extends Model
      */
     public function canDeleteComment(): bool
     {
-        return $this->permissions['canDelete'] ?? false;
+        $board = $this->getBoard();
+        if (!$board || !$board->menu_id) return false;
+        
+        $user = \Illuminate\Support\Facades\Auth::user();
+        
+        if ($user) {
+            // 로그인한 사용자
+            $isAuthor = $this->member_id && $this->member_id === $user->id;
+            $canManageComments = can('manageComments', $board);
+            
+            return $canManageComments || $isAuthor;
+        } else {
+            // 비회원: 댓글 작성 권한이 있고 비회원 댓글인 경우
+            $canWriteComments = can('writeComments', $board);
+            $isGuestComment = !$this->member_id;
+            
+            return $canWriteComments && $isGuestComment;
+        }
     }
 
     /**
@@ -375,7 +409,15 @@ abstract class BoardComment extends Model
      */
     public function canReply(): bool
     {
-        return $this->permissions['canReply'] ?? false;
+        $board = $this->getBoard();
+        if (!$board || !$board->menu_id) return false;
+        
+        // 게시판 설정에서 댓글 허용 여부 확인
+        if (!$board->getSetting('allow_comments', true)) {
+            return false;
+        }
+        
+        return can('writeComments', $board);
     }
 
     /**
@@ -383,7 +425,10 @@ abstract class BoardComment extends Model
      */
     public function canManage(): bool
     {
-        return $this->permissions['canManage'] ?? false;
+        $board = $this->getBoard();
+        if (!$board || !$board->menu_id) return false;
+        
+        return can('manageComments', $board);
     }
 
     /**
@@ -391,7 +436,15 @@ abstract class BoardComment extends Model
      */
     public function canUploadFiles(): bool
     {
-        return $this->permissions['canFileUpload'] ?? false;
+        $board = $this->getBoard();
+        if (!$board || !$board->menu_id) return false;
+        
+        // 게시판 설정에서 댓글 허용 여부 확인
+        if (!$board->getSetting('allow_comments', true)) {
+            return false;
+        }
+        
+        return can('uploadCommentFiles', $board);
     }
 
     /**
@@ -399,14 +452,33 @@ abstract class BoardComment extends Model
      */
     public function hasPermission(string $action): bool
     {
-        return $this->permissions[$action] ?? false;
+        return match($action) {
+            'canEdit' => $this->canEdit(),
+            'canDelete' => $this->canDeleteComment(),
+            'canReply' => $this->canReply(),
+            'canManage' => $this->canManage(),
+            'canFileUpload' => $this->canUploadFiles(),
+            default => false,
+        };
     }
 
     /**
-     * 권한이 설정되어 있는지 확인
+     * 권한이 설정되어 있는지 확인 (하위 호환성을 위해 유지)
      */
     public function hasPermissions(): bool
     {
-        return isset($this->permissions) && is_array($this->permissions);
+        return true; // 실시간 계산 방식에서는 항상 true
+    }
+
+    /**
+     * 현재 댓글의 게시판 정보를 가져옴
+     */
+    private function getBoard()
+    {
+        // 테이블명에서 게시판 slug 추출 (board_comments_xxx -> xxx)
+        $tableName = $this->getTable();
+        $boardSlug = str_replace('board_comments_', '', $tableName);
+        
+        return \SiteManager\Models\Board::where('slug', $boardSlug)->first();
     }
 }

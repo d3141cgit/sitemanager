@@ -410,8 +410,8 @@ class BoardService
             ->orderBy('created_at', 'desc') // 부모 댓글은 최신 순
             ->paginate($perPage);
             
-        // 각 댓글에 권한 정보 추가 (재귀적으로 모든 레벨 처리)
-        $this->setCommentsPermissions($comments, $board);
+        // 각 댓글에 권한 정보 추가 (재귀적으로 모든 레벨 처리) - 사용 안함 (모델에서 직접 계산)
+        // $this->setCommentsPermissions($comments, $board);
         
         return $comments;
     }
@@ -444,89 +444,89 @@ class BoardService
     /**
      * 댓글들에 권한 정보를 재귀적으로 설정
      */
-    private function setCommentsPermissions($comments, Board $board, $level = 0)
-    {
-        $comments->each(function ($comment) use ($board, $level) {
-            $comment->permissions = $this->calculateCommentPermissions($board, $comment);
+    // private function setCommentsPermissions($comments, Board $board, $level = 0)
+    // {
+    //     $comments->each(function ($comment) use ($board, $level) {
+    //         $comment->permissions = $this->calculateCommentPermissions($board, $comment);
             
-            // 자식 댓글들에도 재귀적으로 권한 정보 추가
-            if ($comment->children && $comment->children->count() > 0) {
-                $this->setCommentsPermissions($comment->children, $board, $level + 1);
-            }
-        });
-    }
+    //         // 자식 댓글들에도 재귀적으로 권한 정보 추가
+    //         if ($comment->children && $comment->children->count() > 0) {
+    //             $this->setCommentsPermissions($comment->children, $board, $level + 1);
+    //         }
+    //     });
+    // }
 
     /**
      * 댓글 권한 계산
      */
-    public function calculateCommentPermissions(Board $board, $comment): array
-    {
-        $user = Auth::user();
+    // public function calculateCommentPermissions(Board $board, $comment): array
+    // {
+    //     $user = Auth::user();
         
-        $canEdit = false;
-        $canDelete = false;
-        $canReply = false;
-        $canManageComments = false;
-        $canUploadFiles = false;
+    //     $canEdit = false;
+    //     $canDelete = false;
+    //     $canReply = false;
+    //     $canManageComments = false;
+    //     $canUploadFiles = false;
         
-        // 메뉴에 연결되지 않은 게시판: 아무 권한 없음
-        if (!$board->menu_id) {
-            return [
-                'canEdit' => false,
-                'canDelete' => false,
-                'canReply' => false,
-                'canManage' => false,
-                'canFileUpload' => false,
-            ];
-        }
+    //     // 메뉴에 연결되지 않은 게시판: 아무 권한 없음
+    //     if (!$board->menu_id) {
+    //         return [
+    //             'canEdit' => false,
+    //             'canDelete' => false,
+    //             'canReply' => false,
+    //             'canManage' => false,
+    //             'canFileUpload' => false,
+    //         ];
+    //     }
         
-        if ($user) {
-            // 로그인한 사용자: 메뉴 권한 그대로 적용
+    //     if ($user) {
+    //         // 로그인한 사용자: 메뉴 권한 그대로 적용
             
-            // 본인 댓글인지 확인 (member_id가 존재하고 일치하는 경우만)
-            $isAuthor = $comment->member_id && $comment->member_id === $user->id;
+    //         // 본인 댓글인지 확인 (member_id가 존재하고 일치하는 경우만)
+    //         $isAuthor = $comment->member_id && $comment->member_id === $user->id;
             
-            // 메뉴 권한 확인
-            $canManageComments = can('manageComments', $board);
-            $canWriteComments = can('writeComments', $board);
-            $canUploadFiles = can('uploadCommentFiles', $board);
+    //         // 메뉴 권한 확인
+    //         $canManageComments = can('manageComments', $board);
+    //         $canWriteComments = can('writeComments', $board);
+    //         $canUploadFiles = can('uploadCommentFiles', $board);
             
-            // 수정 권한: 댓글 관리 권한 OR 작성자 본인
-            $canEdit = $canManageComments || $isAuthor;
+    //         // 수정 권한: 댓글 관리 권한 OR 작성자 본인
+    //         $canEdit = $canManageComments || $isAuthor;
             
-            // 삭제 권한: 댓글 관리 권한 OR 작성자 본인
-            $canDelete = $canManageComments || $isAuthor;
+    //         // 삭제 권한: 댓글 관리 권한 OR 작성자 본인
+    //         $canDelete = $canManageComments || $isAuthor;
             
-            // 답글 권한: 댓글 작성 권한
-            $canReply = $canWriteComments;
-        } else {
-            // 로그인하지 않은 사용자: 메뉴에 writeComments 권한이 있을 때만
+    //         // 답글 권한: 댓글 작성 권한
+    //         $canReply = $canWriteComments;
+    //     } else {
+    //         // 로그인하지 않은 사용자: 메뉴에 writeComments 권한이 있을 때만
             
-            // 메뉴 권한 확인 (비회원도 가능한 권한)
-            $canWriteComments = can('writeComments', $board);
-            $canUploadFiles = can('uploadCommentFiles', $board);
+    //         // 메뉴 권한 확인 (비회원도 가능한 권한)
+    //         $canWriteComments = can('writeComments', $board);
+    //         $canUploadFiles = can('uploadCommentFiles', $board);
             
-            if ($canWriteComments) {
-                // 비회원 댓글인지 확인
-                $isGuestComment = !$comment->member_id;
+    //         if ($canWriteComments) {
+    //             // 비회원 댓글인지 확인
+    //             $isGuestComment = !$comment->member_id;
                 
-                // 수정/삭제 권한: 비회원 댓글인 경우 (이메일 인증 후 이메일+비밀번호로 확인)
-                $canEdit = $isGuestComment;
-                $canDelete = $isGuestComment;
+    //             // 수정/삭제 권한: 비회원 댓글인 경우 (이메일 인증 후 이메일+비밀번호로 확인)
+    //             $canEdit = $isGuestComment;
+    //             $canDelete = $isGuestComment;
                 
-                // 답글 권한: 댓글 작성 권한이 있으면 가능
-                $canReply = true;
-            }
-        }
+    //             // 답글 권한: 댓글 작성 권한이 있으면 가능
+    //             $canReply = true;
+    //         }
+    //     }
         
-        return [
-            'canEdit' => $canEdit,
-            'canDelete' => $canDelete,
-            'canReply' => $canReply,
-            'canManage' => $canManageComments,
-            'canFileUpload' => $canUploadFiles,
-        ];
-    }    
+    //     return [
+    //         'canEdit' => $canEdit,
+    //         'canDelete' => $canDelete,
+    //         'canReply' => $canReply,
+    //         'canManage' => $canManageComments,
+    //         'canFileUpload' => $canUploadFiles,
+    //     ];
+    // }    
     
     /**
      * 게시물 첨부파일 조회

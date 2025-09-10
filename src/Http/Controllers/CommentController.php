@@ -308,9 +308,6 @@ class CommentController extends Controller
                 );
             }
 
-            // 댓글에 권한 정보 추가
-            $comment->permissions = $this->boardService->calculateCommentPermissions($board, $comment);
-            
             // 첨부파일과 함께 댓글 다시 로드
             $comment->load('attachments');
 
@@ -423,9 +420,7 @@ class CommentController extends Controller
 
             DB::commit();
 
-            // 권한 정보 추가 (BoardService를 통해 계산)
-            $comment->permissions = $this->boardService->calculateCommentPermissions($board, $comment);
-
+            // 권한 정보 추가 (하위 호환성을 위해 유지)
             // 첨부파일 정보도 함께 로드
             $comment->load('attachments');
 
@@ -798,11 +793,8 @@ class CommentController extends Controller
         $post = $postModelClass::findOrFail($postId);
         $comment = $commentModelClass::findOrFail($commentId);
         
-        // 댓글 권한 계산
-        $comment->permissions = $this->boardService->calculateCommentPermissions($board, $comment);
-        
         // 권한 검사 - 답글 작성 권한이 있는지 확인
-        if (!$comment->permissions['canReply']) {
+        if (!$comment->canReply()) {
             abort(403);
         }
         
@@ -823,11 +815,8 @@ class CommentController extends Controller
         $post = $postModelClass::findOrFail($postId);
         $comment = $commentModelClass::with('attachments')->findOrFail($commentId);
         
-        // 댓글 권한 계산
-        $comment->permissions = $this->boardService->calculateCommentPermissions($board, $comment);
-        
         // 권한 검사 - 편집 권한이 있는지 확인
-        if (!$comment->permissions['canEdit']) {
+        if (!$comment->canEdit()) {
             abort(403);
         }
         
