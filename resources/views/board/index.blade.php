@@ -57,7 +57,9 @@
                             <th class="text-center" width="200"> Author </th>
                             @endif
                             <th class="text-center" width="100"> Views </th>
+                            @if ($board->getSetting('allow_comments', false))
                             <th class="text-center" width="100"> Comments </th>
+                            @endif
                             @if ($board->getSetting('enable_likes', false))
                             <th class="text-center" width="100"> Likes </th>
                             @endif
@@ -110,11 +112,13 @@
                                     </span>
                                 </td>
 
+                                @if ($board->getSetting('allow_comments', false))
                                 <td class="text-center">
                                     <span class="text-muted small">
                                         {{ $post->comment_count ? number_format($post->comment_count) : '-' }}
                                     </span>
                                 </td>
+                                @endif
 
                                 @if ($board->getSetting('enable_likes', false))
                                 <td class="text-center">
@@ -177,11 +181,13 @@
                                     </span>
                                 </td>
 
+                                @if ($board->getSetting('allow_comments', false))
                                 <td class="text-center">
                                     <span class="text-muted small">
                                         {{ $post->comment_count ? number_format($post->comment_count) : '-' }}
                                     </span>
                                 </td>
+                                @endif
 
                                 @if ($board->getSetting('enable_likes', false))
                                 <td class="text-center">
