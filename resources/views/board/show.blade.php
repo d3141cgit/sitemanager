@@ -184,14 +184,14 @@
 
         {{-- Action Buttons --}}
         <div class="action-buttons">
-            @if($canEdit)
+            @if($post->canEdit())
                 <a href="{{ route('board.edit', [$board->slug, $post->slug ?: $post->id]) }}" 
                 class="btn btn-sm btn-dark">
                     <i class="bi bi-pencil"></i> Edit
                 </a>
             @endif
 
-            @if($canDelete)
+            @if($post->canDelete())
                 <form method="POST" action="{{ route('board.destroy', [$board->slug, $post->slug ?: $post->id]) }}" 
                     class="d-inline delete-form">
                     @csrf

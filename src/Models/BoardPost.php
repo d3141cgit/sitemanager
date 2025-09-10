@@ -631,4 +631,127 @@ abstract class BoardPost extends Model
         return $this->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($this->content), 200);
     }
 
+        /**
+     * 권한 체크 Helper 메서드들
+     * 실시간으로 권한을 계산하여 반환
+     */
+
+    /**
+     * 게시글 수정 권한 확인
+     */
+    public function canEdit(): bool
+    {
+        $board = $this->getBoard();
+        if (!$board || !$board->menu_id) return false;
+        
+        $user = Auth::user();
+        $canManage = can('manage', $board);
+        $canWrite = can('write', $board);
+        $isAuthor = $user && $this->member_id && $this->member_id === $user->id;
+        
+        return $canManage || ($isAuthor && $canWrite);
+    }
+
+    /**
+     * 게시글 삭제 권한 확인
+     */
+    public function canDelete(): bool
+    {
+        $board = $this->getBoard();
+        if (!$board || !$board->menu_id) return false;
+        
+        $user = Auth::user();
+        $canManage = can('manage', $board);
+        $canWrite = can('write', $board);
+        $isAuthor = $user && $this->member_id && $this->member_id === $user->id;
+        
+        return $canManage || ($isAuthor && $canWrite);
+    }
+
+    /**
+     * 댓글 작성 권한 확인
+     */
+    public function canWriteComments(): bool
+    {
+        $board = $this->getBoard();
+        if (!$board || !$board->menu_id) return false;
+        
+        // 게시판 설정에서 댓글 허용 여부 확인
+        if (!$board->getSetting('allow_comments', true)) {
+            return false;
+        }
+        
+        return can('writeComments', $board);
+    }
+
+    /**
+     * 파일 업로드 권한 확인
+     */
+    public function canUploadFiles(): bool
+    {
+        $board = $this->getBoard();
+        if (!$board || !$board->menu_id) return false;
+        
+        // 게시판 설정에서 파일 업로드 허용 여부 확인
+        if (!$board->getSetting('allow_file_upload', false)) {
+            return false;
+        }
+        
+        return can('uploadFiles', $board);
+    }
+
+    /**
+     * 댓글에 파일 업로드 권한 확인
+     */
+    public function canUploadCommentFiles(): bool
+    {
+        $board = $this->getBoard();
+        if (!$board || !$board->menu_id) return false;
+        
+        // 게시판 설정에서 댓글 허용 여부 확인
+        if (!$board->getSetting('allow_comments', true)) {
+            return false;
+        }
+        
+        return can('uploadCommentFiles', $board);
+    }
+
+    /**
+     * 특정 액션에 대한 권한 확인
+     */
+    public function hasPermission(string $action): bool
+    {
+        return match($action) {
+            'canEdit' => $this->canEdit(),
+            'canDelete' => $this->canDelete(),
+            'canWriteComments' => $this->canWriteComments(),
+            'canUploadFiles' => $this->canUploadFiles(),
+            'canUploadCommentFiles' => $this->canUploadCommentFiles(),
+            default => false,
+        };
+    }
+
+    /**
+     * 권한이 설정되어 있는지 확인 (하위 호환성을 위해 유지)
+     */
+    public function hasPermissions(): bool
+    {
+        return true; // 실시간 계산 방식에서는 항상 true
+    }
+
+    /**
+     * 게시판 정보를 가져오는 helper 메서드
+     */
+    protected function getBoard()
+    {
+        // 이미 로드된 관계가 있으면 사용
+        if ($this->relationLoaded('board')) {
+            return $this->board;
+        }
+
+        // 게시판 slug를 통해 Board 모델 조회
+        $boardSlug = $this->getBoardSlug();
+        return \SiteManager\Models\Board::where('slug', $boardSlug)->first();
+    }
+
 }
