@@ -526,7 +526,9 @@ class BoardService
             'canManage' => $canManageComments,
             'canFileUpload' => $canUploadFiles,
         ];
-    }    /**
+    }    
+    
+    /**
      * 게시물 첨부파일 조회
      */
     public function getPostAttachments(Board $board, $postId, $excludeCategories = null, $includeCategories = null)
