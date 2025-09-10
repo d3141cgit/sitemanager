@@ -12,7 +12,7 @@
         <textarea name="content" class="form-control form-control-sm" 
                       rows="2" placeholder="Write a reply..." required></textarea>
 
-        @if($comment->permissions['canFileUpload'] ?? false)
+        @if($comment->canUploadFiles())
             <div>
                 <input type="file" name="files[]" id="file-reply-{{ $comment->id }}" class="d-none" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar">
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('file-reply-{{ $comment->id }}').click()">

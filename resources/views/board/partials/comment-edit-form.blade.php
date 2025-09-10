@@ -14,7 +14,7 @@
         @endif
         
         <!-- 새 파일 업로드 (파일 업로드 권한이 있는 경우만) -->
-        @if($comment->permissions['canFileUpload'] ?? false)
+        @if($comment->canUploadFiles())
             <div>
                 <input type="file" name="files[]" id="file-input-{{ $comment->id }}" class="d-none" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar">
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('file-input-{{ $comment->id }}').click()">

@@ -29,18 +29,18 @@
                 <span class="comment-pending">Pending Approval</span>
             @endif
 
-            @if(isset($comment->permissions) && (
-                (isset($comment->permissions['canEdit']) && $comment->permissions['canEdit']) ||
-                (isset($comment->permissions['canReply']) && $comment->permissions['canReply'] && $comment->status !== 'pending') ||
-                (isset($comment->permissions['canManage']) && $comment->permissions['canManage'] && $comment->status === 'pending') ||
-                (isset($comment->permissions['canDelete']) && $comment->permissions['canDelete'])
+            @if($comment->hasPermissions() && (
+                $comment->canEdit() ||
+                ($comment->canReply() && $comment->status !== 'pending') ||
+                ($comment->canManage() && $comment->status === 'pending') ||
+                $comment->canDeleteComment()
             ))
                 <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
                     <i class="bi bi-three-dots"></i>
                 </button>
 
                 <ul class="dropdown-menu dropdown-menu-end">
-                    @if(isset($comment->permissions['canEdit']) && $comment->permissions['canEdit'])
+                    @if($comment->canEdit())
                         <li>
                             @if(!Auth::check() && $comment->email_verified_at)
                                 {{-- 비회원 댓글 수정 (이메일 인증 완료) --}}
@@ -57,7 +57,7 @@
                         </li>
                     @endif
                     
-                    @if(isset($comment->permissions['canReply']) && $comment->permissions['canReply'] && $comment->status !== 'pending')
+                    @if($comment->canReply() && $comment->status !== 'pending')
                         <li>
                             @if(!Auth::check())
                                 {{-- 비회원 답글 (이메일 인증 필요) --}}
@@ -74,7 +74,7 @@
                         </li>
                     @endif
                     
-                    @if(isset($comment->permissions['canManage']) && $comment->permissions['canManage'] && $comment->status === 'pending')
+                    @if($comment->canManage() && $comment->status === 'pending')
                         <li>
                             <a class="dropdown-item" href="javascript:void(0)" onclick="approveComment({{ $comment->id }})">
                                 <i class="bi bi-check-circle text-success"></i> Approve
@@ -82,7 +82,7 @@
                         </li>
                     @endif
                     
-                    @if(isset($comment->permissions['canDelete']) && $comment->permissions['canDelete'])
+                    @if($comment->canDeleteComment())
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             @if(!Auth::check() && $comment->email_verified_at)

@@ -348,4 +348,65 @@ abstract class BoardComment extends Model
             ]
         ];
     }
+
+    /**
+     * 권한 관련 Helper 메서드들
+     * 뷰에서 간편하게 권한을 체크할 수 있도록 제공
+     */
+
+    /**
+     * 댓글 수정 권한 확인
+     */
+    public function canEdit(): bool
+    {
+        return $this->permissions['canEdit'] ?? false;
+    }
+
+    /**
+     * 댓글 삭제 권한 확인
+     */
+    public function canDeleteComment(): bool
+    {
+        return $this->permissions['canDelete'] ?? false;
+    }
+
+    /**
+     * 댓글 답글 작성 권한 확인
+     */
+    public function canReply(): bool
+    {
+        return $this->permissions['canReply'] ?? false;
+    }
+
+    /**
+     * 댓글 관리 권한 확인 (승인 등)
+     */
+    public function canManage(): bool
+    {
+        return $this->permissions['canManage'] ?? false;
+    }
+
+    /**
+     * 파일 업로드 권한 확인
+     */
+    public function canUploadFiles(): bool
+    {
+        return $this->permissions['canFileUpload'] ?? false;
+    }
+
+    /**
+     * 특정 액션에 대한 권한 확인
+     */
+    public function hasPermission(string $action): bool
+    {
+        return $this->permissions[$action] ?? false;
+    }
+
+    /**
+     * 권한이 설정되어 있는지 확인
+     */
+    public function hasPermissions(): bool
+    {
+        return isset($this->permissions) && is_array($this->permissions);
+    }
 }
