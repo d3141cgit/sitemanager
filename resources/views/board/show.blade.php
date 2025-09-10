@@ -186,7 +186,7 @@
         <div class="action-buttons">
             @if($canEdit)
                 <a href="{{ route('board.edit', [$board->slug, $post->slug ?: $post->id]) }}" 
-                class="btn btn-sm btn-primary">
+                class="btn btn-sm btn-dark">
                     <i class="bi bi-pencil"></i> Edit
                 </a>
             @endif
@@ -255,18 +255,11 @@
                         @endif
 
                         <div class="text-end">
-                            <button type="submit" class="btn btn-sm btn-primary text-nowrap">
+                            <button type="submit" class="btn btn-sm btn-dark text-nowrap">
                                 <i class="bi bi-send"></i> Post Comment @if($board->getSetting('moderate_comments', false)) (Require approval) @endif
                             </button>
                         </div>
                     </form>
-                    
-                @else
-                    @if(!auth()->check())
-                        <div class="alert alert-info">
-                            <a href="{{ route('login') }}">Login</a> to write a comment.
-                        </div>
-                    @endif
                 @endif
 
                 {{-- Comments List with Pagination --}}
@@ -279,7 +272,7 @@
         {{-- Back to List --}}
         <div class="my-4">
             <div class="text-center">
-                <a href="{{ route('board.index', $board->slug) }}" class="btn btn-outline-secondary">
+                <a href="{{ route('board.index', $board->slug) }}" class="btn btn-outline-dark">
                     <i class="bi bi-list"></i> Back to List
                 </a>
             </div>

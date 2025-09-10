@@ -325,7 +325,7 @@
                     </a>
                     
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-dark">
                             <i class="bi bi-send"></i> {{ isset($post) ? 'Update Post' : 'Publish Post' }}
                         </button>
                     </div>

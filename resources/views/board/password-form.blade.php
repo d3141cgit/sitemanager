@@ -33,11 +33,11 @@
             @enderror
 
             <div class="d-flex align-items-center justify-content-center gap-2">
-                <a href="{{ route('board.index', $board->slug) }}" class="btn btn-outline-secondary">
+                <a href="{{ route('board.index', $board->slug) }}" class="btn btn-outline-dark">
                     <i class="bi bi-arrow-left mr-2"></i> Back to List
                 </a>
 
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-dark">
                     <i class="bi bi-check-lg mr-2"></i> Confirm
                 </button>
             </div>

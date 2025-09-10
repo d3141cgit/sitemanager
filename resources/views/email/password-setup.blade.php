@@ -1,97 +1,90 @@
 @extends($layoutPath ?? 'sitemanager::layouts.app')
 
-@section('title', '비밀번호 설정')
+@section('title', 'Password Setup')
+
+@push('head')
+    {!! resource('sitemanager::css/email-verification.css') !!}
+@endpush
 
 @section('content')
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <div class="text-center mb-4">
-                        <i class="bi bi-shield-check-fill text-success" style="font-size: 3rem;"></i>
-                        <h2 class="card-title text-success mt-3">✅ 이메일 인증 완료</h2>
-                        <p class="text-muted">수정/삭제용 비밀번호를 설정해주세요</p>
-                    </div>
-                    
-                    <form id="passwordSetupForm" action="{{ route('board.email.setup-password') }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="token" value="{{ $token }}">
-                        
-                        <div class="alert alert-info" role="alert">
-                            <h6 class="alert-heading">
-                                <i class="bi bi-info-circle me-2"></i>
-                                비밀번호 설정
-                            </h6>
-                            <p class="mb-0">향후 이 {{ $tokenData['type'] === 'post' ? '게시글' : '댓글' }}을 수정하거나 삭제할 때 사용할 비밀번호를 설정해주세요.</p>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="password" class="form-label">
-                                <i class="bi bi-key-fill me-1"></i>
-                                비밀번호 <span class="text-danger">*</span>
-                            </label>
-                            <input type="password" 
-                                   class="form-control @error('password') is-invalid @enderror" 
-                                   id="password" 
-                                   name="password" 
-                                   placeholder="4-20자 비밀번호"
-                                   minlength="4"
-                                   maxlength="20"
-                                   required>
-                            @error('password')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>
-                                4자 이상 20자 이하로 입력해주세요
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="password_confirmation" class="form-label">
-                                <i class="bi bi-key-fill me-1"></i>
-                                비밀번호 확인 <span class="text-danger">*</span>
-                            </label>
-                            <input type="password" 
-                                   class="form-control @error('password_confirmation') is-invalid @enderror" 
-                                   id="password_confirmation" 
-                                   name="password_confirmation" 
-                                   placeholder="비밀번호 재입력"
-                                   minlength="4"
-                                   maxlength="20"
-                                   required>
-                            @error('password_confirmation')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        
-                        <div class="alert alert-warning" role="alert">
-                            <h6 class="alert-heading">
-                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                주의사항
-                            </h6>
-                            <ul class="mb-0 small">
-                                <li>설정한 비밀번호는 분실 시 복구가 불가능합니다</li>
-                                <li>비밀번호를 잊어버리시면 수정/삭제가 불가능합니다</li>
-                                <li>비밀번호는 안전한 곳에 보관해주세요</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary" id="setupBtn">
-                                <i class="bi bi-check-circle me-1"></i>
-                                비밀번호 설정 완료
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary" onclick="skipPassword()">
-                                <i class="bi bi-skip-end me-1"></i>
-                                나중에 설정하기
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+<div class="email-verification-container">
+    <div class="email-verification-card">
+        <div class="icon text-success">
+            <i class="bi bi-shield-check-fill"></i>
         </div>
+        
+        <h1>Email Verified!</h1>
+        <p class="lead">Please set up a password for editing/deleting your content</p>
+        
+        <form id="passwordSetupForm" action="{{ route('board.email.setup-password') }}" method="POST">
+            @csrf
+            <input type="hidden" name="token" value="{{ $token }}">
+            
+            <div class="alert alert-info">
+                <strong>Password Setup</strong>
+                <p class="mb-0">Set a password to edit or delete this {{ $tokenData['type'] === 'post' ? 'post' : 'comment' }} in the future.</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="password" class="form-label">
+                    <i class="bi bi-key-fill me-1"></i>
+                    Password <span class="text-danger">*</span>
+                </label>
+                <input type="password" 
+                       class="form-control @error('password') is-invalid @enderror" 
+                       id="password" 
+                       name="password" 
+                       placeholder="4-20 characters"
+                       minlength="4"
+                       maxlength="20"
+                       required>
+                @error('password')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+                <small class="form-text text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Enter 4-20 characters
+                </small>
+            </div>
+            
+            <div class="form-group">
+                <label for="password_confirmation" class="form-label">
+                    <i class="bi bi-key-fill me-1"></i>
+                    Confirm Password <span class="text-danger">*</span>
+                </label>
+                <input type="password" 
+                       class="form-control @error('password_confirmation') is-invalid @enderror" 
+                       id="password_confirmation" 
+                       name="password_confirmation" 
+                       placeholder="Re-enter password"
+                       minlength="4"
+                       maxlength="20"
+                       required>
+                @error('password_confirmation')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+            
+            <div class="alert alert-info">
+                <strong><i class="bi bi-exclamation-triangle me-2"></i>Important Notes</strong>
+                <ul class="mb-0">
+                    <li>This password cannot be recovered if lost</li>
+                    <li>You won't be able to edit/delete without it</li>
+                    <li>Please store it in a safe place</li>
+                </ul>
+            </div>
+            
+            <div>
+                <button type="submit" class="btn btn-dark" id="setupBtn">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Complete Password Setup
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="skipPassword()">
+                    <i class="bi bi-skip-end me-1"></i>
+                    Set Up Later
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 

@@ -124,6 +124,7 @@
 
 .comment-item { border: dashed 1px transparent; margin-top: 3rem; }
 .comment-item:hover { border-color: rgba(25, 135, 84, 0.5); border-radius: 0.5rem; }
+#comments-list > .comment-item:first-child { margin-top: 0; }
 .comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.8rem; }
 
 .comment-author { font-weight: 700; color: var(--bs-dark); margin-right: 1rem; }

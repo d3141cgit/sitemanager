@@ -65,7 +65,7 @@
                     <i class="bi bi-x-lg me-1"></i>
                     취소
                 </button>
-                <button type="button" class="btn btn-primary" id="sendVerificationBtn">
+                <button type="button" class="btn btn-dark" id="sendVerificationBtn">
                     <i class="bi bi-envelope me-1"></i>
                     인증 이메일 발송
                 </button>
@@ -115,7 +115,7 @@ function showEmailVerificationModal(type, id, boardSlug, action = 'edit') {
         sendBtn.className = 'btn btn-danger';
         sendBtn.innerHTML = '<i class="bi bi-envelope me-1"></i>삭제 인증 이메일 발송';
     } else {
-        sendBtn.className = 'btn btn-primary';
+        sendBtn.className = 'btn btn-dark';
         sendBtn.innerHTML = '<i class="bi bi-envelope me-1"></i>수정 인증 이메일 발송';
     }
     

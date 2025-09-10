@@ -29,7 +29,12 @@
                 <span class="comment-pending">Pending Approval</span>
             @endif
 
-            @if(isset($comment->permissions))
+            @if(isset($comment->permissions) && (
+                (isset($comment->permissions['canEdit']) && $comment->permissions['canEdit']) ||
+                (isset($comment->permissions['canReply']) && $comment->permissions['canReply'] && $comment->status !== 'pending') ||
+                (isset($comment->permissions['canManage']) && $comment->permissions['canManage'] && $comment->status === 'pending') ||
+                (isset($comment->permissions['canDelete']) && $comment->permissions['canDelete'])
+            ))
                 <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
                     <i class="bi bi-three-dots"></i>
                 </button>

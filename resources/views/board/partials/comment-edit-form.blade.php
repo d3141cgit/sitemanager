@@ -25,7 +25,7 @@
         @endif
         
         <div class="d-flex justify-content-end gap-2">
-            <button type="submit" class="btn btn-sm btn-primary">
+            <button type="submit" class="btn btn-sm btn-dark">
                 <i class="bi bi-check"></i> Save
             </button>
             <button type="button" class="btn btn-sm btn-secondary" 

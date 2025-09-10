@@ -212,7 +212,7 @@
 
         @if(can('write', $board))
             <div class="board-footer">
-                <a href="{{ route('board.create', $board->slug) }}" class="btn btn-primary rounded-pill text-nowrap px-4 shadow-sm">
+                <a href="{{ route('board.create', $board->slug) }}" class="btn btn-dark rounded-pill text-nowrap px-4 shadow-sm">
                     <i class="bi bi-plus-lg me-2"></i> New Post
                 </a>
             </div>

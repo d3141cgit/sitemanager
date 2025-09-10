@@ -1,54 +1,49 @@
 @extends($layoutPath ?? 'sitemanager::layouts.app')
 
-@section('title', '삭제 확인')
+@section('title', 'Delete Confirmation')
+
+@push('head')
+    {!! resource('sitemanager::css/email-verification.css') !!}
+@endpush
 
 @section('content')
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card border-danger">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        삭제 확인
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-warning" role="alert">
-                        <h5 class="alert-heading">
-                            <i class="bi bi-shield-exclamation me-2"></i>
-                            이메일 인증이 완료되었습니다
-                        </h5>
-                        <p>정말로 다음 내용을 삭제하시겠습니까?</p>
-                        <hr>
-                        <p class="mb-0">
-                            <strong>
-                                @if($tokenData['type'] === 'post')
-                                    게시글을 삭제합니다
-                                @else
-                                    댓글을 삭제합니다
-                                @endif
-                            </strong>
-                        </p>
-                    </div>
-                    
-                    <div class="alert alert-danger" role="alert">
-                        <i class="bi bi-exclamation-circle me-2"></i>
-                        <strong>주의:</strong> 삭제된 내용은 복구할 수 없습니다.
-                    </div>
-                    
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                        <button type="button" class="btn btn-outline-secondary" onclick="cancelDelete()">
-                            <i class="bi bi-x-lg me-1"></i>
-                            취소
-                        </button>
-                        <button type="button" class="btn btn-danger" onclick="confirmDelete()">
-                            <i class="bi bi-trash me-1"></i>
-                            삭제하기
-                        </button>
-                    </div>
-                </div>
-            </div>
+<div class="email-verification-container">
+    <div class="email-verification-card">
+        <div class="icon text-danger">
+            <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        
+        <h1>Delete Confirmation</h1>
+        
+        <div class="alert alert-success">
+            <strong><i class="bi bi-shield-check me-2"></i>Email verification completed</strong>
+            <p class="mb-0">Are you sure you want to delete the following content?</p>
+        </div>
+        
+        <div class="alert alert-info">
+            <strong>
+                @if($tokenData['type'] === 'post')
+                    You are about to delete a post
+                @else
+                    You are about to delete a comment
+                @endif
+            </strong>
+        </div>
+        
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            <strong>Warning:</strong> Deleted content cannot be recovered.
+        </div>
+        
+        <div>
+            <button type="button" class="btn btn-secondary" onclick="cancelDelete()">
+                <i class="bi bi-x-lg me-1"></i>
+                Cancel
+            </button>
+            <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                <i class="bi bi-trash me-1"></i>
+                Delete
+            </button>
         </div>
     </div>
 </div>
