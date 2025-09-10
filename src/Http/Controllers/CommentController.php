@@ -265,17 +265,6 @@ class CommentController extends Controller
         DB::beginTransaction();
         
         try {
-            // 익명 사용자의 경우 이메일 인증 토큰 생성
-            $emailToken = null;
-            if (!Auth::check()) {
-                $emailToken = $this->emailVerificationService->sendVerificationEmail(
-                    $validated['author_email'],
-                    'comment',
-                    0, // 임시 ID, 댓글 생성 후 업데이트
-                    $slug
-                );
-            }
-
             // 댓글 데이터 준비
             $commentData = [
                 'post_id' => $post->id,
@@ -292,8 +281,6 @@ class CommentController extends Controller
                 // 비회원 댓글
                 $commentData['author_name'] = $validated['author_name'];
                 $commentData['author_email'] = $validated['author_email'];
-                $commentData['ip_address'] = $request->ip();
-                $commentData['email_verification_token'] = $emailToken;
                 $commentData['email_verified_at'] = null; // 이메일 인증 필요
             }
 
@@ -311,9 +298,9 @@ class CommentController extends Controller
             }
 
             // 익명 사용자의 경우 이메일 인증 메일 발송
-            if (!Auth::check() && $emailToken) {
-                // 댓글 ID로 토큰 데이터 업데이트
-                $updatedToken = $this->emailVerificationService->sendVerificationEmail(
+            if (!Auth::check()) {
+                // 댓글 ID로 이메일 인증 토큰 생성 및 발송
+                $emailToken = $this->emailVerificationService->sendVerificationEmail(
                     $validated['author_email'],
                     'comment',
                     $comment->id,
@@ -480,7 +467,21 @@ class CommentController extends Controller
         $board = Board::where('slug', $slug)->firstOrFail();
         
         try {
-            $result = $this->boardService->deleteComment($board, $postId, $commentId, Auth::id());
+            // 비회원 인증 확인
+            $guestVerified = $this->checkGuestVerification($commentId, 'delete');
+            
+            if (Auth::check()) {
+                // 로그인한 사용자
+                $result = $this->boardService->deleteComment($board, $postId, $commentId, Auth::id());
+            } elseif ($guestVerified) {
+                // 비회원이지만 인증된 경우
+                $result = $this->boardService->deleteCommentAsGuest($board, $postId, $commentId, $guestVerified['email']);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authentication required.'
+                ], 401);
+            }
             
             return response()->json($result);
         } catch (\Exception $e) {
@@ -831,5 +832,114 @@ class CommentController extends Controller
         }
         
         return view($this->selectView('comment-edit-form'), compact('comment'));
+    }
+    
+    /**
+     * 비회원 댓글 이메일+비밀번호 인증
+     */
+    public function verifyGuest(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+            'comment_id' => 'required|integer',
+            'action' => 'required|in:edit,delete'
+        ]);
+        
+        try {
+            // 댓글 정보 가져오기
+            $commentId = $validated['comment_id'];
+            $email = $validated['email'];
+            $password = $validated['password'];
+            $action = $validated['action'];
+            
+            // 먼저 모든 가능한 게시판에서 댓글 찾기
+            $comment = null;
+            $boardSlug = null;
+            
+            $boards = Board::all();
+            foreach ($boards as $board) {
+                $commentModelClass = BoardComment::forBoard($board->slug);
+                $foundComment = $commentModelClass::find($commentId);
+                if ($foundComment && $foundComment->author_email === $email) {
+                    $comment = $foundComment;
+                    $boardSlug = $board->slug;
+                    break;
+                }
+            }
+            
+            if (!$comment || !$boardSlug) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Comment not found or email mismatch.'
+                ], 404);
+            }
+            
+            // 이메일과 비밀번호로 인증
+            $isVerified = $this->emailVerificationService->verifyGuestCredentials(
+                $email, 
+                $password, 
+                'comment', 
+                $commentId, 
+                $boardSlug
+            );
+            
+            if ($isVerified) {
+                // 세션에 인증 정보 저장 (임시)
+                session(['guest_verified_comment_' . $commentId => [
+                    'email' => $email,
+                    'action' => $action,
+                    'verified_at' => now(),
+                    'expires_at' => now()->addMinutes(10) // 10분 후 만료
+                ]]);
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Verification successful.'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid email or password.'
+                ], 401);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Guest comment verification failed', [
+                'request' => $validated,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Verification failed. Please try again.'
+            ], 500);
+        }
+    }
+    
+    /**
+     * 비회원 인증 정보 확인 (세션에서)
+     */
+    private function checkGuestVerification(int $commentId, string $action): ?array
+    {
+        $sessionKey = 'guest_verified_comment_' . $commentId;
+        $verificationData = session($sessionKey);
+        
+        if (!$verificationData) {
+            return null;
+        }
+        
+        // 만료 시간 확인
+        if (now()->greaterThan($verificationData['expires_at'])) {
+            session()->forget($sessionKey);
+            return null;
+        }
+        
+        // 액션 확인
+        if ($verificationData['action'] !== $action) {
+            return null;
+        }
+        
+        return $verificationData;
     }
 }

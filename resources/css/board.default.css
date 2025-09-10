@@ -156,3 +156,7 @@
 .existing-attachment-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.5rem; background: #fff; border: 1px solid var(--bs-gray-300); border-radius: 0.375rem; font-size: 0.85rem; color: var(--bs-gray-700); }
 .existing-attachment-item img { width: 20px; height: 20px; object-fit: cover; border-radius: 3px; margin-right: 6px; }
 .existing-attachment-item button { background: none; border: none; color: var(--bs-red); cursor: pointer; padding: 0; }
+
+.guest-author-form { margin: 1rem 0; }
+.guest-author-form .form-group { display: flex; align-items: center; gap: 0.5rem; }
+.guest-author-form .email-verification-info-btn { color: var(--bs-info); font-size: 1.25rem; cursor: pointer; }

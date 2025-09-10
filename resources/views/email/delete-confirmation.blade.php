@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.app')
+@extends($layoutPath ?? 'sitemanager::layouts.app')
 
 @section('title', '삭제 확인')
 

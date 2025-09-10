@@ -4,6 +4,11 @@
         <input type="hidden" name="post_id" value="{{ $comment->post_id }}">
         <input type="hidden" name="parent_id" value="{{ $comment->id }}">
 
+        {{-- 비회원 작성자 정보 폼 --}}
+        @guest
+            @include('sitemanager::board.partials.guest-author-form')
+        @endguest
+
         <textarea name="content" class="form-control form-control-sm" 
                       rows="2" placeholder="Write a reply..." required></textarea>
 

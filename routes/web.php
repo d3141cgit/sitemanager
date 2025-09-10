@@ -19,6 +19,21 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/editor/images/{filename}', [EditorController::class, 'deleteImage'])->name('editor.delete-image');
 });
 
+
+// 비회원 댓글 인증 라우트
+Route::post('/board/comment/verify-guest', [CommentController::class, 'verifyGuest'])->name('board.comment.verify-guest');
+
+// 이메일 인증 라우트
+Route::group(['prefix' => 'board/email', 'as' => 'board.email.'], function () {
+    Route::get('/verify/{token}', [EmailVerificationController::class, 'verify'])->name('verify');
+    Route::get('/edit-verify/{token}', [EmailVerificationController::class, 'editVerify'])->name('edit-verify');
+    Route::post('/resend-verification', [EmailVerificationController::class, 'resendVerification'])->name('resend-verification');
+    Route::post('/send-edit-verification', [EmailVerificationController::class, 'sendEditVerification'])->name('send-edit-verification');
+    Route::post('/confirm-delete', [EmailVerificationController::class, 'confirmDelete'])->name('confirm-delete');
+    Route::post('/setup-password', [EmailVerificationController::class, 'setupPassword'])->name('setup-password');
+    Route::get('/setup-complete', [EmailVerificationController::class, 'setupComplete'])->name('setup-complete');
+});
+
 // 게시판 라우트
 Route::prefix('board')->name('board.')->group(function () {
     // 첨부파일 관련 라우트 (더 구체적인 패턴을 먼저 배치)
@@ -82,6 +97,10 @@ Route::prefix('board')->name('board.')->group(function () {
     Route::post('/generate-excerpt', [BoardController::class, 'generateExcerptFromContent'])
         ->name('generate-excerpt');
     
+    // 댓글 관련 추가 라우트 (전역)
+    Route::post('/board/comment/verify-guest', [CommentController::class, 'verifyGuest'])
+        ->name('board.comment.verify-guest');
+    
     // 댓글 라우트
     Route::group([
         'prefix' => '/{slug}/{postId}/comments',
@@ -99,13 +118,4 @@ Route::prefix('board')->name('board.')->group(function () {
         Route::get('/{commentId}/attachments/{attachmentId}', [CommentController::class, 'downloadAttachment'])->name('attachment.download');
         Route::delete('/{commentId}/attachments/{attachmentId}', [CommentController::class, 'deleteAttachment'])->name('attachment.delete');
     });
-});
-
-// 이메일 인증 라우트
-Route::group(['prefix' => 'board/email', 'as' => 'board.email.'], function () {
-    Route::get('/verify/{token}', [EmailVerificationController::class, 'verify'])->name('verify');
-    Route::get('/edit-verify/{token}', [EmailVerificationController::class, 'editVerify'])->name('edit-verify');
-    Route::post('/resend-verification', [EmailVerificationController::class, 'resendVerification'])->name('resend-verification');
-    Route::post('/send-edit-verification', [EmailVerificationController::class, 'sendEditVerification'])->name('send-edit-verification');
-    Route::post('/confirm-delete', [EmailVerificationController::class, 'confirmDelete'])->name('confirm-delete');
 });

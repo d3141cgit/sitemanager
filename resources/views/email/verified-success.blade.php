@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.app')
+@extends($layoutPath ?? 'sitemanager::layouts.app')
 
 @section('title', '이메일 인증 완료')
 
@@ -27,10 +27,10 @@
                     </div>
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                        <button type="button" class="btn btn-primary" onclick="window.close()">
+                        {{-- <button type="button" class="btn btn-primary" onclick="window.close()">
                             <i class="bi bi-x-lg me-1"></i>
                             창 닫기
-                        </button>
+                        </button> --}}
                         <a href="{{ url('/') }}" class="btn btn-outline-secondary">
                             <i class="bi bi-house-door me-1"></i>
                             메인으로

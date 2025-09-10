@@ -106,6 +106,28 @@
 
                     <td>
                         {{ $comment->author }}
+                        
+                        {{-- 이메일 인증 상태 표시 --}}
+                        @if($comment->email_verification_token && !$comment->email_verified_at)
+                            <small class="text-warning">
+                                <i class="bi bi-envelope-exclamation"></i> {{ t('Email Verification Pending') }}
+                            </small>
+                        @elseif($comment->email_verification_token && $comment->email_verified_at)
+                            <small class="text-success">
+                                <i class="bi bi-envelope-check"></i> {{ t('Email Verified') }}
+                            </small>
+                        @endif
+                        
+                        {{-- 회원/비회원 구분 --}}
+                        @if($comment->member_id)
+                            <small class="text-info">
+                                <i class="bi bi-person-check"></i> {{ t('Member') }}
+                            </small>
+                        @else
+                            <small class="text-muted">
+                                <i class="bi bi-person"></i> {{ t('Guest') }}
+                            </small>
+                        @endif
                     </td>
 
                     <td>
@@ -127,6 +149,18 @@
                             {!! Str::limit(strip_tags($comment->content), 100) !!}
                         </div>
                         
+                        {{-- 이메일 인증 상태 추가 정보 --}}
+                        @if($comment->email_verification_token && !$comment->email_verified_at)
+                            <div class="mt-2">
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-envelope-exclamation"></i> Awaiting Email Verification
+                                </span>
+                                <small class="text-muted d-block mt-1">
+                                    This comment cannot be approved until email verification is completed.
+                                </small>
+                            </div>
+                        @endif
+                        
                         {{-- 부모 상태 경고 (자식 댓글의 경우) --}}
                         @if($comment->parent_id && $comment->parent && $comment->parent->status !== 'approved')
                             <small class="text-warning">
@@ -136,6 +170,15 @@
                             <small class="text-danger">
                                 <i class="bi bi-exclamation-triangle"></i> {{ t('Parent deleted') }}
                             </small>
+                        @endif
+                        
+                        {{-- 이메일 인증 상태 추가 정보 --}}
+                        @if($comment->email_verification_token && !$comment->email_verified_at)
+                            <div class="mt-1">
+                                <small class="text-warning bg-warning bg-opacity-10 px-2 py-1 rounded">
+                                    <i class="bi bi-hourglass-split"></i> {{ t('Waiting for email verification') }} - {{ t('Cannot approve until verified') }}
+                                </small>
+                            </div>
                         @endif
                         
                         {{-- 자식 댓글 정보 (부모 댓글의 경우) --}}
@@ -175,12 +218,23 @@
                             </button>
                         @elseif($comment->status === 'pending')
                             {{-- Approve 버튼 --}}
+                            @php
+                                $canApprove = $comment->actions['approve']['can'];
+                                $approveReason = $comment->actions['approve']['reason'] ?? '';
+                                
+                                // 이메일 인증이 필요한데 아직 인증되지 않은 경우
+                                if ($comment->email_verification_token && !$comment->email_verified_at) {
+                                    $canApprove = false;
+                                    $approveReason = 'Email verification required before approval';
+                                }
+                            @endphp
+                            
                             <button type="button" 
-                                class="btn btn-outline-success btn-sm {{ !$comment->actions['approve']['can'] ? 'disabled' : '' }}" 
+                                class="btn btn-outline-success btn-sm {{ !$canApprove ? 'disabled' : '' }}" 
                                 onclick="approveComment({{ $comment->id }}, '{{ $selectedBoard->slug }}')"
-                                @if(!$comment->actions['approve']['can']) 
+                                @if(!$canApprove) 
                                     disabled 
-                                    title="{{ $comment->actions['approve']['reason'] }}"
+                                    title="{{ $approveReason }}"
                                 @endif>
                                 {{ t('Approve') }}
                             </button>

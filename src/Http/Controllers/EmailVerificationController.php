@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class EmailVerificationController extends Controller
@@ -18,15 +19,37 @@ class EmailVerificationController extends Controller
     ) {}
 
     /**
+     * 현재 프로젝트의 레이아웃 경로 감지
+     */
+    private function getProjectLayoutPath(): string
+    {
+        // 프로젝트에 layouts.app이 있으면 우선 사용
+        if (view()->exists('layouts.app')) {
+            return 'layouts.app';
+        }
+        
+        // 없으면 sitemanager 기본 레이아웃 사용
+        return 'sitemanager::layouts.app';
+    }
+
+    /**
      * 이메일 인증 페이지 표시
      */
     public function verify(Request $request, string $token): View|RedirectResponse
     {
-        if ($this->emailVerificationService->verifyEmail($token)) {
-            return view('sitemanager::email.verified-success');
-        } else {
-            return view('sitemanager::email.verified-failed');
+        $tokenData = Cache::get("email_verification:{$token}");
+        $layoutPath = $this->getProjectLayoutPath();
+        
+        if (!$tokenData) {
+            return view('sitemanager::email.verified-failed', compact('layoutPath'));
         }
+        
+        // 비회원 게스트인 경우 비밀번호 설정 페이지로 이동
+        return view('sitemanager::email.password-setup', [
+            'tokenData' => $tokenData,
+            'token' => $token,
+            'layoutPath' => $layoutPath
+        ]);
     }
     
     /**
@@ -35,9 +58,10 @@ class EmailVerificationController extends Controller
     public function editVerify(Request $request, string $token): View|RedirectResponse
     {
         $tokenData = $this->emailVerificationService->verifyEditToken($token);
+        $layoutPath = $this->getProjectLayoutPath();
         
         if (!$tokenData) {
-            return view('sitemanager::email.edit-verification-failed');
+            return view('sitemanager::email.edit-verification-failed', compact('layoutPath'));
         }
         
         // 인증 성공 시 해당 작업 페이지로 리다이렉트
@@ -56,11 +80,12 @@ class EmailVerificationController extends Controller
             }
         } elseif ($tokenData['action'] === 'delete') {
             return view('sitemanager::email.delete-confirmation', [
-                'tokenData' => $tokenData
+                'tokenData' => $tokenData,
+                'layoutPath' => $layoutPath
             ]);
         }
         
-        return view('sitemanager::email.edit-verification-failed');
+        return view('sitemanager::email.edit-verification-failed', compact('layoutPath'));
     }
     
     /**
@@ -228,5 +253,69 @@ class EmailVerificationController extends Controller
                 'message' => '삭제 처리 중 오류가 발생했습니다.'
             ], 500);
         }
+    }
+    
+    /**
+     * 비밀번호 설정 처리
+     */
+    public function setupPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'token' => 'required|string',
+            'password' => 'required|string|min:4|max:20|confirmed'
+        ]);
+        
+        $tokenData = Cache::get("email_verification:{$validated['token']}");
+        
+        if (!$tokenData) {
+            return response()->json([
+                'success' => false,
+                'message' => '유효하지 않거나 만료된 토큰입니다.'
+            ], 400);
+        }
+        
+        try {
+            // 이메일 인증과 비밀번호 설정을 함께 처리
+            $result = $this->emailVerificationService->verifyEmailAndSetPassword(
+                $validated['token'],
+                $validated['password']
+            );
+            
+            if ($result) {
+                // 토큰 삭제 (일회용)
+                Cache::forget("email_verification:{$validated['token']}");
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => '비밀번호가 설정되었습니다.',
+                    'redirect_url' => '/board/email/setup-complete'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => '인증 처리에 실패했습니다.'
+                ], 500);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to setup password', [
+                'token' => $validated['token'],
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => '비밀번호 설정 중 오류가 발생했습니다.'
+            ], 500);
+        }
+    }
+    
+    /**
+     * 비밀번호 설정 완료 페이지
+     */
+    public function setupComplete(): View
+    {
+        $layoutPath = $this->getProjectLayoutPath();
+        return view('sitemanager::email.setup-complete', compact('layoutPath'));
     }
 }

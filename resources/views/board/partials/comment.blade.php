@@ -37,17 +37,35 @@
                 <ul class="dropdown-menu dropdown-menu-end">
                     @if(isset($comment->permissions['canEdit']) && $comment->permissions['canEdit'])
                         <li>
-                            <a class="dropdown-item" href="javascript:void(0)" onclick="editComment({{ $comment->id }})">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
+                            @if(!Auth::check() && $comment->email_verified_at)
+                                {{-- 비회원 댓글 수정 (이메일 인증 완료) --}}
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="requestEmailVerification({{ $comment->id }}, 'edit')">
+                                    <i class="bi bi-pencil"></i> Edit
+                                    <small class="text-muted d-block">Email/Password required</small>
+                                </a>
+                            @elseif(Auth::check())
+                                {{-- 회원 댓글 수정 --}}
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="editComment({{ $comment->id }})">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                            @endif
                         </li>
                     @endif
                     
                     @if(isset($comment->permissions['canReply']) && $comment->permissions['canReply'] && $comment->status !== 'pending')
                         <li>
-                            <a class="dropdown-item" href="javascript:void(0)" onclick="event.preventDefault(); showReplyLoading({{ $comment->id }}); replyToComment({{ $comment->id }})">
-                                <i class="bi bi-reply"></i> Reply
-                            </a>
+                            @if(!Auth::check())
+                                {{-- 비회원 답글 (이메일 인증 필요) --}}
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="event.preventDefault(); showReplyLoading({{ $comment->id }}); replyToComment({{ $comment->id }})">
+                                    <i class="bi bi-reply"></i> Reply
+                                    <small class="text-muted d-block">Guest reply with email verification</small>
+                                </a>
+                            @else
+                                {{-- 일반 답글 --}}
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="event.preventDefault(); showReplyLoading({{ $comment->id }}); replyToComment({{ $comment->id }})">
+                                    <i class="bi bi-reply"></i> Reply
+                                </a>
+                            @endif
                         </li>
                     @endif
                     
@@ -62,10 +80,20 @@
                     @if(isset($comment->permissions['canDelete']) && $comment->permissions['canDelete'])
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <a class="dropdown-item text-danger" href="javascript:void(0)" 
-                               onclick="deleteComment({{ $comment->id }})">
-                                <i class="bi bi-trash"></i> Delete
-                            </a>
+                            @if(!Auth::check() && $comment->email_verified_at)
+                                {{-- 비회원 댓글 삭제 (이메일 인증 완료) --}}
+                                <a class="dropdown-item text-danger" href="javascript:void(0)" 
+                                   onclick="requestEmailVerification({{ $comment->id }}, 'delete')">
+                                    <i class="bi bi-trash"></i> Delete
+                                    <small class="text-muted d-block">Email/Password required</small>
+                                </a>
+                            @elseif(Auth::check())
+                                {{-- 회원 댓글 삭제 --}}
+                                <a class="dropdown-item text-danger" href="javascript:void(0)" 
+                                   onclick="deleteComment({{ $comment->id }})">
+                                    <i class="bi bi-trash"></i> Delete
+                                </a>
+                            @endif
                         </li>
                     @endif
                 </ul>

@@ -1,4 +1,4 @@
-@extends('sitemanager::layouts.app')
+@extends($layoutPath ?? 'sitemanager::layouts.app')
 
 @section('title', '수정/삭제 인증 실패')
 

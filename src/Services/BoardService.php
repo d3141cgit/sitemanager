@@ -28,23 +28,31 @@ class BoardService
             // 먼저 동적 테이블 생성 (DDL 작업)
             $this->createBoardTables($data['slug']);
             
-            // 트랜잭션 시작하여 게시판 레코드 생성
-            return DB::transaction(function () use ($data) {
-                return Board::create([
-                    'menu_id' => $data['menu_id'] ?? null,
-                    'slug' => $data['slug'],
-                    'name' => $data['name'],
-                    'skin' => $data['skin'] ?? 'default',
-                    'posts_per_page' => $data['posts_per_page'] ?? 15,
-                    'categories' => $data['categories'] ?? [],
-                    'settings' => $data['settings'] ?? [],
-                ]);
-            });
+            // 게시판 레코드 생성
+            return $this->createBoardRecord($data);
         } catch (\Exception $e) {
-            // 테이블 생성 후 게시판 레코드 생성에 실패한 경우 테이블 정리
+            // 실패 시 테이블 정리
             $this->dropBoardTables($data['slug']);
             throw $e;
         }
+    }
+    
+    /**
+     * 게시판 레코드 생성
+     */
+    private function createBoardRecord(array $data): Board
+    {
+        return DB::transaction(function () use ($data) {
+            return Board::create([
+                'menu_id' => $data['menu_id'] ?? null,
+                'slug' => $data['slug'],
+                'name' => $data['name'],
+                'skin' => $data['skin'] ?? 'default',
+                'posts_per_page' => $data['posts_per_page'] ?? 15,
+                'categories' => $data['categories'] ?? [],
+                'settings' => $data['settings'] ?? [],
+            ]);
+        });
     }
 
     /**
@@ -461,17 +469,26 @@ class BoardService
         $canManageComments = false;
         $canUploadFiles = false;
         
-        if ($board->menu_id && $user) {
-            // 본인 댓글인 경우 수정/삭제 가능 (member_id가 존재하고 일치하는 경우만)
+        // 메뉴에 연결되지 않은 게시판: 아무 권한 없음
+        if (!$board->menu_id) {
+            return [
+                'canEdit' => false,
+                'canDelete' => false,
+                'canReply' => false,
+                'canManage' => false,
+                'canFileUpload' => false,
+            ];
+        }
+        
+        if ($user) {
+            // 로그인한 사용자: 메뉴 권한 그대로 적용
+            
+            // 본인 댓글인지 확인 (member_id가 존재하고 일치하는 경우만)
             $isAuthor = $comment->member_id && $comment->member_id === $user->id;
             
-            // 댓글 관리 권한
+            // 메뉴 권한 확인
             $canManageComments = can('manageComments', $board);
-            
-            // 댓글 작성 권한 (답글용)
             $canWriteComments = can('writeComments', $board);
-            
-            // 댓글 파일 업로드 권한
             $canUploadFiles = can('uploadCommentFiles', $board);
             
             // 수정 권한: 댓글 관리 권한 OR 작성자 본인
@@ -482,18 +499,34 @@ class BoardService
             
             // 답글 권한: 댓글 작성 권한
             $canReply = $canWriteComments;
+        } else {
+            // 로그인하지 않은 사용자: 메뉴에 writeComments 권한이 있을 때만
+            
+            // 메뉴 권한 확인 (비회원도 가능한 권한)
+            $canWriteComments = can('writeComments', $board);
+            $canUploadFiles = can('uploadCommentFiles', $board);
+            
+            if ($canWriteComments) {
+                // 비회원 댓글인지 확인
+                $isGuestComment = !$comment->member_id;
+                
+                // 수정/삭제 권한: 비회원 댓글인 경우 (이메일 인증 후 이메일+비밀번호로 확인)
+                $canEdit = $isGuestComment;
+                $canDelete = $isGuestComment;
+                
+                // 답글 권한: 댓글 작성 권한이 있으면 가능
+                $canReply = true;
+            }
         }
         
         return [
             'canEdit' => $canEdit,
             'canDelete' => $canDelete,
             'canReply' => $canReply,
-            'canManage' => $canManageComments, // 댓글 관리 권한 추가
-            'canFileUpload' => $canUploadFiles, // 댓글 파일 업로드 권한 추가
+            'canManage' => $canManageComments,
+            'canFileUpload' => $canUploadFiles,
         ];
-    }
-
-    /**
+    }    /**
      * 게시물 첨부파일 조회
      */
     public function getPostAttachments(Board $board, $postId, $excludeCategories = null, $includeCategories = null)
@@ -851,6 +884,53 @@ class BoardService
 
             // 데이터베이스에서 삭제
             $image->delete();
+        }
+    }
+
+    /**
+     * 비회원 댓글 삭제
+     */
+    public function deleteCommentAsGuest(Board $board, int $postId, int $commentId, string $email): array
+    {
+        $commentModelClass = BoardComment::forBoard($board->slug);
+        $postModelClass = BoardPost::forBoard($board->slug);
+        
+        $comment = $commentModelClass::findOrFail($commentId);
+        $post = $postModelClass::findOrFail($postId);
+
+        // 비회원 댓글 권한 체크 (이메일 확인 + 이메일 인증 완료)
+        if ($comment->member_id || 
+            $comment->author_email !== $email || 
+            !$comment->email_verified_at) {
+            throw new \Exception('삭제 권한이 없습니다.');
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            // 대댓글이 있는 경우 내용만 삭제하고 "[삭제된 댓글입니다]"로 표시
+            $hasReplies = $commentModelClass::where('parent_id', $comment->id)->exists();
+            
+            if ($hasReplies) {
+                $comment->update([
+                    'content' => '[삭제된 댓글입니다]',
+                    'status' => 'deleted',
+                ]);
+            } else {
+                $comment->delete();
+            }
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => '댓글이 삭제되었습니다.',
+                'comment_count' => $post->fresh()->comment_count,
+                'deleted_completely' => !$hasReplies,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
     }
 }

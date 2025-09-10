@@ -8,6 +8,7 @@ use SiteManager\Models\BoardComment;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -299,6 +300,11 @@ class EmailVerificationService
      */
     public function checkRateLimit(string $ip, string $action = 'post'): bool
     {
+        // 개발 환경에서는 rate limiting 완화
+        if (app()->environment('local')) {
+            return true;
+        }
+        
         $key = "rate_limit:{$action}:{$ip}";
         $maxAttempts = config('sitemanager.security.rate_limiting.max_attempts', 5);
         $decayMinutes = config('sitemanager.security.rate_limiting.decay_minutes', 60);
@@ -388,16 +394,30 @@ class EmailVerificationService
         $tokenData = Cache::get("form_token:{$formToken}");
         
         if (!$tokenData) {
-            Log::warning('Invalid form token');
+            Log::warning('Invalid form token for submission time verification', [
+                'form_token' => substr($formToken, 0, 8) . '...'
+            ]);
             return false;
         }
         
-        $elapsed = now()->diffInSeconds($tokenData['created_at']);
+        $elapsed = $tokenData['created_at']->diffInSeconds(now(), false); // false = 항상 양수 반환
+        
+        // 디버깅 로그 추가
+        Log::info('Form submission time verification', [
+            'form_token' => substr($formToken, 0, 8) . '...',
+            'created_at' => $tokenData['created_at']->toDateTimeString(),
+            'current_time' => now()->toDateTimeString(),
+            'elapsed_seconds' => $elapsed,
+            'min_required' => $minTime,
+            'is_valid' => $elapsed >= $minTime
+        ]);
         
         if ($elapsed < $minTime) {
             Log::warning('Form submitted too quickly', [
                 'elapsed_seconds' => $elapsed,
-                'min_required' => $minTime
+                'min_required' => $minTime,
+                'token_created' => $tokenData['created_at']->toDateTimeString(),
+                'current_time' => now()->toDateTimeString()
             ]);
             return false;
         }
@@ -417,5 +437,117 @@ class EmailVerificationService
         ], now()->addHours(1));
         
         return $token;
+    }
+    
+    /**
+     * 비회원 댓글의 이메일과 비밀번호로 인증 확인
+     */
+    public function verifyGuestCredentials(string $email, string $password, string $type, int $id, string $boardSlug): bool
+    {
+        try {
+            if ($type === 'comment') {
+                $commentModelClass = BoardComment::forBoard($boardSlug);
+                $comment = $commentModelClass::where('id', $id)
+                    ->where('author_email', $email)
+                    ->whereNotNull('email_verified_at') // 이메일 인증이 완료된 댓글만
+                    ->whereNull('member_id') // 비회원 댓글만
+                    ->first();
+                
+                if (!$comment) {
+                    return false;
+                }
+                
+                // 저장된 해시된 비밀번호와 입력된 비밀번호 비교
+                return Hash::check($password, $comment->email_verification_token);
+            }
+            
+            // 다른 타입 (post 등)도 필요시 추가
+            return false;
+            
+        } catch (\Exception $e) {
+            Log::error('Guest credentials verification failed', [
+                'email' => $email,
+                'type' => $type,
+                'id' => $id,
+                'board_slug' => $boardSlug,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+    
+    /**
+     * 이메일 인증과 비밀번호 설정을 함께 처리
+     */
+    public function verifyEmailAndSetPassword(string $token, string $password): bool
+    {
+        $tokenData = Cache::get("email_verification:{$token}");
+        
+        if (!$tokenData) {
+            Log::warning('Invalid or expired verification token', ['token' => $token]);
+            return false;
+        }
+        
+        try {
+            $hashedPassword = Hash::make($password);
+            
+            if ($tokenData['type'] === 'post') {
+                $this->verifyPostEmailWithPassword($tokenData, $hashedPassword);
+            } elseif ($tokenData['type'] === 'comment') {
+                $this->verifyCommentEmailWithPassword($tokenData, $hashedPassword);
+            }
+            
+            Log::info('Email verified and password set successfully', $tokenData);
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Email verification with password failed', [
+                'token_data' => $tokenData,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+    
+    /**
+     * 게시글 이메일 인증 및 비밀번호 설정
+     */
+    private function verifyPostEmailWithPassword(array $tokenData, string $hashedPassword): void
+    {
+        $postModelClass = BoardPost::forBoard($tokenData['board_slug']);
+        $post = $postModelClass::findOrFail($tokenData['id']);
+        
+        // 이메일 확인
+        if ($post->author_email !== $tokenData['email']) {
+            throw new \Exception('이메일이 일치하지 않습니다.');
+        }
+        
+        // 이메일 인증 완료 및 비밀번호 설정
+        $post->update([
+            'email_verified_at' => now(),
+            'email_verification_token' => $hashedPassword, // 비밀번호를 토큰 필드에 저장
+            'status' => 'approved'
+        ]);
+    }
+    
+    /**
+     * 댓글 이메일 인증 및 비밀번호 설정
+     */
+    private function verifyCommentEmailWithPassword(array $tokenData, string $hashedPassword): void
+    {
+        $commentModelClass = BoardComment::forBoard($tokenData['board_slug']);
+        $comment = $commentModelClass::findOrFail($tokenData['id']);
+        
+        // 이메일 확인
+        if ($comment->author_email !== $tokenData['email']) {
+            throw new \Exception('이메일이 일치하지 않습니다.');
+        }
+        
+        // 이메일 인증 완료 및 비밀번호 설정
+        $comment->update([
+            'email_verified_at' => now(),
+            'email_verification_token' => $hashedPassword, // 비밀번호를 토큰 필드에 저장
+            'status' => 'approved'
+        ]);
     }
 }

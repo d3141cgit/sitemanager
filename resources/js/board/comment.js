@@ -25,6 +25,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initializeCommentForm();
     
+    // Initialize guest author form functions
+    initializeGuestAuthorForm();
+    
+    // Initialize anti-spam protection
+    initializeAntiSpamProtection();
+    
     // Initialize pagination events if comments exist
     initializePaginationEvents();
 });
@@ -41,6 +47,9 @@ window.addEventListener('focus', function() {
 
 function initializeCommentForm() {
     const commentForm = document.getElementById('commentForm');
+    
+    // 로그인 상태에 따른 작성자 폼 표시/숨김
+    initializeAuthorForm();
     
     // 댓글 첨부파일 이미지 클릭 이벤트 (중복 방지)
     if (!window.commentImageEventInitialized) {
@@ -1046,6 +1055,13 @@ function replyToComment(commentId) {
         .then(html => {
             container.innerHTML = html;
             
+            // Initialize guest author form if present
+            const guestForm = container.querySelector('.guest-author-form');
+            if (guestForm) {
+                guestForm.style.display = 'block';
+                initializeAuthorForm(container);
+            }
+            
             // Focus on the textarea
             const textarea = container.querySelector('textarea');
             if (textarea) {
@@ -1331,3 +1347,640 @@ function updateCommentCount(count) {
 // 전역 함수로 등록
 window.loadComments = loadComments;
 window.initializePaginationEvents = initializePaginationEvents;
+
+/**
+ * 로그인 상태에 따른 작성자 폼 초기화
+ */
+function initializeAuthorForm() {
+    const guestForm = document.querySelector('.guest-author-form');
+    const memberInfo = document.querySelector('.member-author-info');
+    
+    if (!guestForm && !memberInfo) {
+        return; // 작성자 폼이 없으면 종료
+    }
+    
+    // Laravel에서 auth 상태를 JavaScript로 전달받기
+    const authMeta = document.querySelector('meta[name="auth-user"]');
+    const isLoggedIn = authMeta && authMeta.content === 'true';
+    
+    if (isLoggedIn) {
+        // 로그인한 사용자
+        if (guestForm) guestForm.style.display = 'none';
+        if (memberInfo) memberInfo.style.display = 'block';
+    } else {
+        // 비로그인 사용자
+        if (guestForm) guestForm.style.display = 'block';
+        if (memberInfo) memberInfo.style.display = 'none';
+    }
+}
+
+/**
+ * 비회원 댓글 이메일 인증 요청 (이메일 + 비밀번호)
+ */
+function requestEmailVerification(commentId, action) {
+    // 기존 모달이 있으면 제거
+    const existingModal = document.getElementById('guestVerificationModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // 모달 HTML 생성
+    const modalHtml = `
+        <div class="modal fade" id="guestVerificationModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-shield-check me-2"></i>
+                            Guest Comment Verification
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Please enter the email and password you used when creating this comment.
+                        </div>
+                        
+                        <form id="guestVerificationForm">
+                            <div class="mb-3">
+                                <label for="verifyEmail" class="form-label">
+                                    <i class="bi bi-envelope me-1"></i>
+                                    Email Address
+                                </label>
+                                <input type="email" class="form-control" id="verifyEmail" name="email" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="verifyPassword" class="form-label">
+                                    <i class="bi bi-key me-1"></i>
+                                    Password
+                                </label>
+                                <input type="password" class="form-control" id="verifyPassword" name="password" required>
+                                <div class="form-text">
+                                    Enter the password you set when creating the comment.
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="verifyGuestCredentials(${commentId}, '${action}')">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Verify & ${action === 'edit' ? 'Edit' : 'Delete'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 모달을 body에 추가
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // 모달 표시
+    const modal = new bootstrap.Modal(document.getElementById('guestVerificationModal'));
+    modal.show();
+    
+    // 모달이 닫힐 때 DOM에서 제거
+    document.getElementById('guestVerificationModal').addEventListener('hidden.bs.modal', function () {
+        this.remove();
+    });
+}
+
+/**
+ * 비회원 댓글 이메일+비밀번호 인증 처리
+ */
+function verifyGuestCredentials(commentId, action) {
+    const form = document.getElementById('guestVerificationForm');
+    const email = document.getElementById('verifyEmail').value;
+    const password = document.getElementById('verifyPassword').value;
+    
+    if (!email || !password) {
+        SiteManager.showNotification('Please enter both email and password.', 'warning');
+        return;
+    }
+    
+    // 인증 요청
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('password', password);
+    formData.append('comment_id', commentId);
+    formData.append('action', action);
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+    
+    fetch('/board/comment/verify-guest', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 모달 닫기
+            const modal = bootstrap.Modal.getInstance(document.getElementById('guestVerificationModal'));
+            modal.hide();
+            
+            // 인증 성공 시 해당 액션 수행
+            if (action === 'edit') {
+                editComment(commentId);
+            } else if (action === 'delete') {
+                deleteComment(commentId);
+            }
+        } else {
+            SiteManager.showNotification(data.message || 'Verification failed. Please check your email and password.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        SiteManager.showNotification('An error occurred during verification.', 'error');
+    });
+}
+
+// ==========================================
+// Guest Author Form Functions
+// ==========================================
+
+// Guest Author Form 초기화 (중복 실행 방지)
+function initializeGuestAuthorForm() {
+    // reCAPTCHA 중복 로드 방지
+    initializeRecaptcha();
+    
+    // Email verification info 버튼 초기화
+    initializeEmailVerificationInfo();
+    
+    // Author form visibility 업데이트
+    updateAuthorFormVisibility();
+    
+    // Form validation 이벤트 초기화 (중복 방지)
+    initializeFormValidation();
+}
+
+// reCAPTCHA 초기화 (중복 방지)
+function initializeRecaptcha() {
+    const recaptchaConfig = document.querySelector('.recaptcha-config');
+    if (!recaptchaConfig || recaptchaConfig.dataset.enabled !== 'true') {
+        return;
+    }
+    
+    const recaptchaVersion = recaptchaConfig.dataset.version || 'v2';
+    const siteKey = recaptchaConfig.dataset.siteKey;
+    
+    if (!siteKey) {
+        console.warn('reCAPTCHA site key not found');
+        return;
+    }
+    
+    // reCAPTCHA 스크립트 중복 로드 방지
+    if (!document.querySelector('script[src*="recaptcha"]')) {
+        const script = document.createElement('script');
+        
+        if (recaptchaVersion === 'v3') {
+            script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+            script.onload = function() {
+                window.grecaptcha.ready(function() {
+                    console.log('reCAPTCHA v3 ready');
+                    // v3는 페이지 로드 시 자동으로 초기화됨
+                });
+            };
+        } else {
+            // v2
+            script.src = 'https://www.google.com/recaptcha/api.js';
+            script.onload = function() {
+                console.log('reCAPTCHA v2 ready');
+            };
+        }
+        
+        script.async = true;
+        script.defer = true;
+        script.onerror = function() {
+            console.error('Failed to load reCAPTCHA script');
+        };
+        
+        document.head.appendChild(script);
+        
+        // reCAPTCHA v2 콜백 함수 설정 (중복 방지)
+        if (recaptchaVersion === 'v2') {
+            if (!window.onCaptchaSuccess) {
+                window.onCaptchaSuccess = function(token) {
+                    const captchaError = document.getElementById('captcha-error');
+                    if (captchaError) {
+                        captchaError.style.display = 'none';
+                    }
+                };
+            }
+            
+            if (!window.onCaptchaExpired) {
+                window.onCaptchaExpired = function() {
+                    const captchaError = document.getElementById('captcha-error');
+                    if (captchaError) {
+                        captchaError.style.display = 'block';
+                        captchaError.textContent = '캡챠가 만료되었습니다. 다시 인증해주세요.';
+                    }
+                };
+            }
+        }
+    }
+}
+
+// reCAPTCHA v3 토큰 생성 함수
+async function getRecaptchaV3Token(action = 'submit') {
+    const recaptchaConfig = document.querySelector('.recaptcha-config');
+    if (!recaptchaConfig || recaptchaConfig.dataset.enabled !== 'true') {
+        return null;
+    }
+    
+    const recaptchaVersion = recaptchaConfig.dataset.version || 'v2';
+    const siteKey = recaptchaConfig.dataset.siteKey;
+    
+    if (recaptchaVersion !== 'v3' || !siteKey) {
+        return null;
+    }
+    
+    try {
+        if (typeof grecaptcha === 'undefined') {
+            console.warn('reCAPTCHA v3 not loaded yet');
+            return null;
+        }
+        
+        return await grecaptcha.execute(siteKey, { action: action });
+    } catch (error) {
+        console.error('reCAPTCHA v3 token generation failed:', error);
+        return null;
+    }
+}
+
+// Email verification info 버튼 초기화
+function initializeEmailVerificationInfo() {
+    // 이미 초기화된 버튼들은 스킵 (중복 이벤트 방지)
+    const uninitializedButtons = document.querySelectorAll('.email-verification-info-btn:not([data-initialized])');
+    
+    uninitializedButtons.forEach(function(infoButton) {
+        // 초기화 마크
+        infoButton.setAttribute('data-initialized', 'true');
+        
+        // 해당 버튼과 연결된 상세 정보 div 찾기
+        const container = infoButton.closest('.guest-author-form') || infoButton.closest('form') || infoButton.parentElement.parentElement;
+        const detailsDiv = container ? container.querySelector('.email-verification-details') : null;
+        
+        if (detailsDiv) {
+            // 정보 버튼 클릭 이벤트
+            infoButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                toggleEmailVerificationDetails(detailsDiv);
+            });
+            
+            // 정보 버튼 호버 이벤트
+            infoButton.addEventListener('mouseenter', function() {
+                this.setAttribute('data-bs-toggle', 'tooltip');
+                this.setAttribute('data-bs-placement', 'top');
+                this.setAttribute('data-bs-title', 'Click to view email verification details');
+                
+                if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                    const tooltip = new bootstrap.Tooltip(this);
+                    tooltip.show();
+                    
+                    this.addEventListener('mouseleave', function() {
+                        tooltip.dispose();
+                    }, { once: true });
+                }
+            });
+        }
+    });
+}
+
+// Email verification details 토글
+function toggleEmailVerificationDetails(detailsDiv) {
+    if (!detailsDiv) return;
+    
+    if (detailsDiv.style.display === 'none' || !detailsDiv.style.display) {
+        // 슬라이드 다운 효과로 표시
+        detailsDiv.style.display = 'block';
+        detailsDiv.style.opacity = '0';
+        detailsDiv.style.transform = 'translateY(-10px)';
+        
+        // 부드러운 애니메이션
+        setTimeout(() => {
+            detailsDiv.style.transition = 'all 0.3s ease-in-out';
+            detailsDiv.style.opacity = '1';
+            detailsDiv.style.transform = 'translateY(0)';
+        }, 10);
+    } else {
+        // 슬라이드 업 효과로 숨김
+        detailsDiv.style.transition = 'all 0.3s ease-in-out';
+        detailsDiv.style.opacity = '0';
+        detailsDiv.style.transform = 'translateY(-10px)';
+        
+        setTimeout(() => {
+            detailsDiv.style.display = 'none';
+        }, 300);
+    }
+}
+
+// Author form visibility 업데이트
+function updateAuthorFormVisibility() {
+    const authConfig = document.querySelector('.auth-config');
+    if (!authConfig) return;
+    
+    const isLoggedIn = authConfig.dataset.loggedIn === 'true';
+    const guestForms = document.querySelectorAll('.guest-author-form');
+    const memberInfos = document.querySelectorAll('.member-author-info');
+    
+    guestForms.forEach(form => {
+        form.style.display = isLoggedIn ? 'none' : 'block';
+    });
+    
+    memberInfos.forEach(info => {
+        info.style.display = isLoggedIn ? 'block' : 'none';
+    });
+}
+
+// Form validation 초기화 (중복 방지)
+function initializeFormValidation() {
+    // 이미 초기화되었는지 확인
+    if (window.guestFormValidationInitialized) {
+        return;
+    }
+    window.guestFormValidationInitialized = true;
+    
+    // 폼 제출 전 검증
+    document.addEventListener('submit', async function(e) {
+        const form = e.target.closest('form');
+        if (!form) return;
+        
+        // Guest author form 검증
+        if (!validateGuestAuthorForm(form)) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // reCAPTCHA v3 토큰 처리
+        const recaptchaConfig = document.querySelector('.recaptcha-config');
+        if (recaptchaConfig && recaptchaConfig.dataset.enabled === 'true' && recaptchaConfig.dataset.version === 'v3') {
+            // v3의 경우 토큰을 비동기로 생성하고 폼에 추가
+            try {
+                const token = await getRecaptchaV3Token('comment_submit');
+                if (token) {
+                    // 기존 recaptcha_token 필드 제거
+                    const existingTokenField = form.querySelector('input[name="recaptcha_token"]');
+                    if (existingTokenField) {
+                        existingTokenField.remove();
+                    }
+                    
+                    // 새 토큰 필드 추가
+                    const tokenField = document.createElement('input');
+                    tokenField.type = 'hidden';
+                    tokenField.name = 'recaptcha_token';
+                    tokenField.value = token;
+                    form.appendChild(tokenField);
+                }
+            } catch (error) {
+                console.error('reCAPTCHA v3 token generation failed:', error);
+                // 토큰 생성 실패 시에도 폼 제출은 허용 (선택사항)
+            }
+        }
+        
+        // 검증 성공 시 알림 표시
+        const authConfig = document.querySelector('.auth-config');
+        const isLoggedIn = authConfig ? authConfig.dataset.loggedIn === 'true' : false;
+        
+        if (!isLoggedIn && window.SiteManager && window.SiteManager.notifications && typeof window.SiteManager.notifications.toast === 'function') {
+            window.SiteManager.notifications.toast('Form validation passed! Submitting...', 'success', 2000);
+        }
+    });
+}
+
+// Guest author form 검증
+function validateGuestAuthorForm(form) {
+    const authConfig = document.querySelector('.auth-config');
+    const isLoggedIn = authConfig ? authConfig.dataset.loggedIn === 'true' : false;
+    
+    if (isLoggedIn) {
+        return true; // 로그인한 사용자는 검증 불필요
+    }
+    
+    const nameInput = form.querySelector('#author_name, [name="author_name"]');
+    const emailInput = form.querySelector('#author_email, [name="author_email"]');
+    
+    if (!nameInput || !emailInput) {
+        return true; // guest form이 아니면 검증 스킵
+    }
+    
+    let isValid = true;
+    let errors = [];
+    
+    // 이름 검증
+    if (!nameInput.value.trim()) {
+        nameInput.classList.add('is-invalid');
+        errors.push('Name is required');
+        isValid = false;
+    } else {
+        nameInput.classList.remove('is-invalid');
+    }
+    
+    // 이메일 검증
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailInput.value.trim() || !emailRegex.test(emailInput.value)) {
+        emailInput.classList.add('is-invalid');
+        errors.push('Valid email address is required');
+        isValid = false;
+    } else {
+        emailInput.classList.remove('is-invalid');
+    }
+    
+    // reCAPTCHA 검증
+    const recaptchaConfig = document.querySelector('.recaptcha-config');
+    if (recaptchaConfig && recaptchaConfig.dataset.enabled === 'true') {
+        const recaptchaVersion = recaptchaConfig.dataset.version || 'v2';
+        
+        if (recaptchaVersion === 'v2') {
+            // v2 검증: 체크박스 확인
+            if (typeof grecaptcha !== 'undefined') {
+                const recaptchaResponse = grecaptcha.getResponse();
+                if (!recaptchaResponse) {
+                    const captchaError = document.getElementById('captcha-error');
+                    if (captchaError) {
+                        captchaError.style.display = 'block';
+                        captchaError.textContent = 'Please complete the captcha verification.';
+                    }
+                    errors.push('Captcha verification required');
+                    isValid = false;
+                }
+            }
+        }
+        // v3의 경우 토큰은 form submit 이벤트에서 자동으로 생성됨
+    }
+    
+    // 에러가 있을 경우 알림으로 표시
+    if (!isValid && window.SiteManager && window.SiteManager.notifications && typeof window.SiteManager.notifications.error === 'function') {
+        if (errors.length === 1) {
+            window.SiteManager.notifications.error(errors[0]);
+        } else {
+            const errorMessage = 'Please fix the following errors:\n• ' + errors.join('\n• ');
+            window.SiteManager.notifications.error(errorMessage);
+        }
+    }
+    
+    return isValid;
+}
+
+// 이메일 인증 성공 시 호출할 수 있는 함수
+function showEmailVerificationSuccess() {
+    if (window.SiteManager && window.SiteManager.notifications && typeof window.SiteManager.notifications.success === 'function') {
+        window.SiteManager.notifications.success('Email verification completed successfully!');
+    }
+}
+
+// 이메일 인증 실패 시 호출할 수 있는 함수
+function showEmailVerificationError(message = 'Email verification failed') {
+    if (window.SiteManager && window.SiteManager.notifications && typeof window.SiteManager.notifications.error === 'function') {
+        window.SiteManager.notifications.error(message);
+    }
+}
+
+// ==========================================
+// Anti-Spam Protection Functions
+// ==========================================
+
+// Anti-spam protection 초기화 (중복 실행 방지)
+function initializeAntiSpamProtection() {
+    const antiSpamConfig = document.querySelector('.anti-spam-config');
+    if (!antiSpamConfig || antiSpamConfig.dataset.enabled !== 'true') {
+        return;
+    }
+    
+    // 이미 초기화되었는지 확인
+    if (window.antiSpamInitialized) {
+        return;
+    }
+    window.antiSpamInitialized = true;
+    
+    // 폼 타임스탬프 설정
+    initializeFormTimestamps();
+    
+    // 사용자 행동 추적
+    initializeUserBehaviorTracking();
+    
+    // 폼 제출 시 검증
+    initializeAntiSpamValidation();
+}
+
+// 폼 타임스탬프 초기화
+function initializeFormTimestamps() {
+    const timestampFields = document.querySelectorAll('.form-timestamp');
+    timestampFields.forEach(field => {
+        if (!field.value) {
+            field.value = Date.now();
+        }
+    });
+}
+
+// 사용자 행동 추적 초기화
+function initializeUserBehaviorTracking() {
+    // 전역 변수로 사용자 행동 추적
+    if (!window.userBehavior) {
+        window.userBehavior = {
+            mouseMovements: 0,
+            keystrokes: 0
+        };
+        
+        // 마우스 움직임 추적
+        document.addEventListener('mousemove', function() {
+            window.userBehavior.mouseMovements++;
+        });
+        
+        // 키보드 입력 추적
+        document.addEventListener('keydown', function() {
+            window.userBehavior.keystrokes++;
+        });
+    }
+}
+
+// Anti-spam 폼 검증 초기화
+function initializeAntiSpamValidation() {
+    // 이미 초기화되었는지 확인
+    if (window.antiSpamValidationInitialized) {
+        return;
+    }
+    window.antiSpamValidationInitialized = true;
+    
+    // 폼 제출 시 검증
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        
+        // Anti-spam이 활성화된 폼인지 확인
+        const antiSpamConfig = form.querySelector('.anti-spam-config');
+        if (!antiSpamConfig || antiSpamConfig.dataset.enabled !== 'true') {
+            return;
+        }
+        
+        // 허니팟 필드 검증
+        if (!validateHoneypotFields(form)) {
+            e.preventDefault();
+            console.warn('Spam detected: Honeypot field filled');
+            return false;
+        }
+        
+        // 사용자 행동 데이터 추가
+        addUserBehaviorData(form);
+    });
+}
+
+// 허니팟 필드 검증
+function validateHoneypotFields(form) {
+    const honeypotFields = ['website', 'url', 'homepage', 'phone_number', 'email_confirm', 'company', 'address'];
+    
+    for (let field of honeypotFields) {
+        const input = form.querySelector(`input[name="${field}"]`);
+        if (input && input.value.trim() !== '') {
+            return false;
+        }
+    }
+    
+    // 체크박스 트랩 검증
+    const subscribeCheckbox = form.querySelector('input[name="subscribe_newsletter"]');
+    if (subscribeCheckbox && subscribeCheckbox.checked) {
+        return false;
+    }
+    
+    // 텍스트에어리어 트랩 검증
+    const messageBackup = form.querySelector('textarea[name="message_backup"]');
+    if (messageBackup && messageBackup.value.trim() !== '') {
+        return false;
+    }
+    
+    return true;
+}
+
+// 사용자 행동 데이터 추가
+function addUserBehaviorData(form) {
+    const timestampField = form.querySelector('.form-timestamp');
+    const formLoadTime = timestampField ? parseInt(timestampField.value) : Date.now();
+    
+    // 최소 상호작용 검증 (경고만)
+    if (window.userBehavior.mouseMovements < 3 && window.userBehavior.keystrokes < 5) {
+        console.warn('Insufficient user interaction detected');
+    }
+    
+    // 사용자 행동 데이터 생성
+    const behaviorData = {
+        mouse_movements: window.userBehavior.mouseMovements,
+        keystrokes: window.userBehavior.keystrokes,
+        form_focus_time: Date.now() - formLoadTime
+    };
+    
+    // 기존 행동 데이터 필드 제거 (중복 방지)
+    const existingBehaviorField = form.querySelector('input[name="user_behavior"]');
+    if (existingBehaviorField) {
+        existingBehaviorField.remove();
+    }
+    
+    // 행동 데이터를 숨겨진 필드로 추가
+    const behaviorField = document.createElement('input');
+    behaviorField.type = 'hidden';
+    behaviorField.name = 'user_behavior';
+    behaviorField.value = JSON.stringify(behaviorData);
+    form.appendChild(behaviorField);
+}

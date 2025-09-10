@@ -6,6 +6,9 @@
     @if($post->isSecret())
         <meta name="robots" content="noindex,nofollow">
     @endif
+    
+    {{-- 로그인 상태 정보 전달 --}}
+    <meta name="auth-user" content="{{ auth()->check() ? 'true' : 'false' }}">
 
     {!! resource('sitemanager::js/image-optimizer.js') !!}
     
@@ -237,6 +240,10 @@
                         @csrf
                         <input type="hidden" name="post_id" value="{{ $post->id }}">
 
+                        @if(!auth()->check())
+                            @include('sitemanager::board.partials.guest-author-form', ['comments' => $comments, 'board' => $board])
+                        @endif
+
                         <textarea id="comment-content" name="content" class="form-control" rows="3" placeholder="Share your thoughts..." required></textarea>
                         
                         @if(can('uploadCommentFiles', $board))
@@ -246,13 +253,14 @@
                                 <div class="comment-file-preview"></div>
                             </div>
                         @endif
-                        
+
                         <div class="text-end">
                             <button type="submit" class="btn btn-sm btn-primary text-nowrap">
                                 <i class="bi bi-send"></i> Post Comment @if($board->getSetting('moderate_comments', false)) (Require approval) @endif
                             </button>
                         </div>
                     </form>
+                    
                 @else
                     @if(!auth()->check())
                         <div class="alert alert-info">
