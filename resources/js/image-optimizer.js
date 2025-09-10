@@ -4,8 +4,12 @@
 (function() {
     'use strict';
     
-    // 이미 로드되었는지 확인
-    if (window.ImageOptimizer) {
+    // 이미 로드되었는지 확인하되, 인스턴스가 있어도 새로운 이미지 처리는 허용
+    if (window.ImageOptimizer && window.ImageOptimizer.instance) {
+        // 기존 인스턴스가 있으면 새 이미지만 처리
+        if (window.ImageOptimizer.instance.optimizeNewImages) {
+            window.ImageOptimizer.instance.optimizeNewImages();
+        }
         return;
     }
 
@@ -19,7 +23,10 @@ class ImageOptimizer {
         ImageOptimizer.initialized = true;
         ImageOptimizer.instance = this;
         
-        this.optimizedImages = new Set(); // 이미 처리된 이미지 추적
+        this.optimizedImages = new Map(); // URL과 상태를 함께 저장
+        this.loadingImages = new Set(); // 현재 로딩 중인 이미지
+        this.failedImages = new Set(); // 로딩 실패한 이미지
+        this.intersectionObserver = null;
         this.init();
     }
 
@@ -30,22 +37,65 @@ class ImageOptimizer {
         } else {
             this.optimizeImages();
         }
+        
+        // Intersection Observer 초기화
+        this.initIntersectionObserver();
     }
 
     /**
-     * 페이지의 모든 S3 이미지들을 최적화
+     * Intersection Observer 초기화 (재사용 가능)
+     */
+    initIntersectionObserver() {
+        if (!('IntersectionObserver' in window)) {
+            return;
+        }
+        
+        this.intersectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    const imgSrc = img.src || img.dataset.src;
+                    
+                    // 이미 로딩 중이거나 완료된 이미지는 스킵
+                    if (this.loadingImages.has(imgSrc) || 
+                        (this.optimizedImages.has(imgSrc) && this.optimizedImages.get(imgSrc) === 'loaded')) {
+                        this.intersectionObserver.unobserve(img);
+                        return;
+                    }
+                    
+                    this.loadImageWithRetry(img);
+                }
+            });
+        }, {
+            rootMargin: '50px', // 뷰포트 50px 전에 미리 로드
+            threshold: 0.1 // 10%만 보여도 로딩 시작
+        });
+    }
+
+    /**
+     * 페이지의 모든 S3 이미지들을 최적화 (새로운 이미지만)
      */
     optimizeImages() {
+        this.optimizeNewImages();
+    }
+    
+    /**
+     * 새로운 이미지들만 최적화 (기존 처리된 이미지 제외)
+     */
+    optimizeNewImages() {
         // body 전체에서 S3 이미지만 선택
         const images = document.querySelectorAll('img[src*="amazonaws.com"]');
         
         images.forEach(img => {
-            // 이미 처리된 이미지는 스킵
-            if (this.optimizedImages.has(img.src)) {
+            const imgSrc = img.src;
+            
+            // 이미 처리된 이미지는 스킵 (실패한 이미지는 재처리 허용)
+            if (this.optimizedImages.has(imgSrc) && 
+                this.optimizedImages.get(imgSrc) !== 'failed') {
                 return;
             }
             
-            this.optimizedImages.add(img.src);
+            this.optimizedImages.set(imgSrc, 'processing');
             this.optimizeImage(img);
             this.addLazyLoading(img);
             this.addImagePreview(img);
@@ -73,10 +123,22 @@ class ImageOptimizer {
             img.src = optimizedSrc;
         }
 
-        // 캐시 최적화를 위한 속성 추가
-        img.crossOrigin = 'anonymous'; // CORS 에러 방지를 위해 임시 주석처리
+        // 캐시 최적화를 위한 속성 추가 (CORS 문제 방지)
+        // img.crossOrigin = 'anonymous'; // CORS 에러 가능성 때문에 주석처리
         img.decoding = 'async';
         img.loading = 'lazy';
+        
+        // 로딩 상태 확인
+        if (img.complete && img.naturalHeight !== 0) {
+            // 이미 로드된 이미지
+            this.optimizedImages.set(img.src, 'loaded');
+            this.addImagePreview(img);
+        } else {
+            // 아직 로드되지 않은 이미지
+            this.addLazyLoading(img);
+        }
+        
+        this.addErrorHandling(img);
     }
 
     /**
@@ -93,12 +155,9 @@ class ImageOptimizer {
      */
     addLazyLoading(img) {
         // Intersection Observer 지원 여부 확인
-        if (!('IntersectionObserver' in window)) {
-            return; // 지원하지 않으면 기본 로딩
-        }
-
-        // 이미 로딩된 이미지는 스킵
-        if (img.complete && img.naturalHeight !== 0) {
+        if (!this.intersectionObserver) {
+            // fallback: 바로 로딩
+            this.loadImageWithRetry(img);
             return;
         }
 
@@ -106,18 +165,7 @@ class ImageOptimizer {
         this.addLoadingPlaceholder(img);
 
         // Intersection Observer로 지연 로딩 구현
-        const intersectionObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    this.loadImage(entry.target);
-                    intersectionObserver.unobserve(entry.target);
-                }
-            });
-        }, {
-            rootMargin: '50px' // 뷰포트 50px 전에 미리 로드
-        });
-
-        intersectionObserver.observe(img);
+        this.intersectionObserver.observe(img);
     }
 
     /**
@@ -168,25 +216,90 @@ class ImageOptimizer {
     }
 
     /**
-     * 이미지 로딩 실행
+     * 이미지 로딩 실행 (재시도 로직 포함)
      */
-    loadImage(img) {
+    loadImageWithRetry(img, retryCount = 0) {
+        const maxRetries = 3;
+        const imgSrc = img.src;
+        
+        // 이미 로딩 중인 이미지는 스킵
+        if (this.loadingImages.has(imgSrc)) {
+            return;
+        }
+        
+        this.loadingImages.add(imgSrc);
         img.classList.add('image-loading');
         
         const tempImg = new Image();
+        
+        // 타임아웃 설정 (30초)
+        const timeoutId = setTimeout(() => {
+            tempImg.onload = null;
+            tempImg.onerror = null;
+            this.handleImageLoadFailure(img, retryCount, maxRetries, 'timeout');
+        }, 30000);
+        
         tempImg.onload = () => {
+            clearTimeout(timeoutId);
+            this.loadingImages.delete(imgSrc);
+            this.optimizedImages.set(imgSrc, 'loaded');
+            
             img.src = tempImg.src;
             img.classList.remove('image-loading');
-            img.style.backgroundColor = '';
-            img.style.backgroundImage = '';
-            img.style.animation = '';
+            this.removeLoadingPlaceholder(img);
+            this.addImagePreview(img);
+            
+            // Intersection Observer에서 제거
+            if (this.intersectionObserver) {
+                this.intersectionObserver.unobserve(img);
+            }
         };
         
         tempImg.onerror = () => {
-            this.handleImageError(img);
+            clearTimeout(timeoutId);
+            this.handleImageLoadFailure(img, retryCount, maxRetries, 'error');
         };
         
         tempImg.src = img.dataset.originalSrc || img.src;
+    }
+    
+    /**
+     * 이미지 로딩 실패 처리
+     */
+    handleImageLoadFailure(img, retryCount, maxRetries, reason) {
+        const imgSrc = img.src;
+        this.loadingImages.delete(imgSrc);
+        
+        console.warn(`Image load failed (${reason}): ${imgSrc}, retry ${retryCount + 1}/${maxRetries}`);
+        
+        if (retryCount < maxRetries) {
+            // 재시도 (지수 백오프)
+            const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+            setTimeout(() => {
+                this.loadImageWithRetry(img, retryCount + 1);
+            }, delay);
+        } else {
+            // 최대 재시도 횟수 초과
+            this.optimizedImages.set(imgSrc, 'failed');
+            this.failedImages.add(imgSrc);
+            this.handleImageError(img);
+        }
+    }
+
+    /**
+     * 이미지 로딩 실행 (기존 메서드 - 호환성 유지)
+     */
+    loadImage(img) {
+        this.loadImageWithRetry(img);
+    }
+    
+    /**
+     * 로딩 플레이스홀더 제거
+     */
+    removeLoadingPlaceholder(img) {
+        img.style.backgroundColor = '';
+        img.style.backgroundImage = '';
+        img.style.animation = '';
     }
 
     /**
@@ -220,8 +333,14 @@ class ImageOptimizer {
      * 이미지 에러 처리
      */
     addErrorHandling(img) {
-        img.addEventListener('error', () => {
-            this.handleImageError(img);
+        img.addEventListener('error', (e) => {
+            const imgSrc = img.src;
+            console.warn('Image error event:', imgSrc, e);
+            
+            // 이미 에러 처리되지 않았다면 처리
+            if (!this.failedImages.has(imgSrc)) {
+                this.handleImageLoadFailure(img, 0, 3, 'immediate_error');
+            }
         });
     }
 
@@ -229,13 +348,15 @@ class ImageOptimizer {
      * 이미지 로딩 에러 처리
      */
     handleImageError(img) {
+        const imgSrc = img.src;
+        
         img.classList.remove('image-loading');
-        img.style.backgroundColor = '#f8f9fa';
-        img.style.backgroundImage = 'none';
-        img.style.animation = 'none';
+        this.removeLoadingPlaceholder(img);
+        this.loadingImages.delete(imgSrc);
         
         // 에러 플레이스홀더 생성
         const placeholder = document.createElement('div');
+        placeholder.className = 'image-error-placeholder';
         placeholder.style.cssText = `
             display: flex;
             align-items: center;
@@ -267,14 +388,27 @@ class ImageOptimizer {
             border-radius: 4px;
             cursor: pointer;
         `;
+        
         retryBtn.onclick = () => {
+            // 기존 실패 상태 초기화
+            this.failedImages.delete(imgSrc);
+            this.optimizedImages.delete(imgSrc);
+            
+            // 플레이스홀더 제거
             placeholder.remove();
-            this.loadImage(img);
+            img.style.display = '';
+            
+            // 재시도
+            this.loadImageWithRetry(img, 0);
         };
+        
         placeholder.querySelector('div').appendChild(retryBtn);
         
-        img.parentNode.insertBefore(placeholder, img);
-        img.style.display = 'none';
+        // 이미지 숨기고 플레이스홀더 표시
+        if (img.parentNode) {
+            img.parentNode.insertBefore(placeholder, img);
+            img.style.display = 'none';
+        }
     }
 
     /**
@@ -330,13 +464,14 @@ if (typeof MutationObserver !== 'undefined' && !window.imageOptimizerObserverIni
         });
         
         if (hasNewImages) {
+            // 지연 시간을 줄여서 깜빡임 최소화
             setTimeout(() => {
                 if (ImageOptimizer.instance) {
-                    ImageOptimizer.instance.optimizeImages();
+                    ImageOptimizer.instance.optimizeNewImages();
                 } else {
                     new ImageOptimizer();
                 }
-            }, 100);
+            }, 50); // 100ms → 50ms로 단축
         }
     });
 
