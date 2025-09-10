@@ -10,8 +10,4 @@
     @if($comments->hasPages())
         {{ $comments->links('sitemanager::pagination.comments') }}
     @endif
-@else
-    <div id="no-comments" class="text-center text-muted mt-4">
-        <p>No comments yet. Be the first to comment!</p>
-    </div>
 @endif
