@@ -10,4 +10,8 @@
     @if($comments->hasPages())
         {{ $comments->links('sitemanager::pagination.comments') }}
     @endif
+@else
+    <div class="text-muted">
+        <p>No comments yet.</p>
+    </div>
 @endif
