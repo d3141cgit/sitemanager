@@ -147,8 +147,6 @@
 .comment-attachments { margin: 1rem 0; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .comment-attachments img { max-width: 120px; max-height: 80px; cursor: pointer; border-radius: 0.375rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); transition: all 0.2s ease; }
 
-.child-comments { }
-
 .reply-form, .edit-form { border: solid 1px var(--bs-gray-200); padding: 1rem; border-radius: 0.5rem; background: var(--bs-gray-100); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
 .reply-form { margin-left: 30px; margin-top: 2rem; }
 .reply-form textarea, .edit-form textarea { width: 100%; border: solid 1px var(--bs-gray-300); border-radius: 0.375rem; padding: 0.5rem; font-size: 1rem; resize: vertical; min-height: 100px; }
