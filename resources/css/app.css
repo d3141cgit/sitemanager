@@ -236,3 +236,8 @@ body > main { height: 100%; overflow-y: auto; }
     .welcome-subtitle { font-size: 1rem; }
     .feature-icon { width: 3rem; height: 3rem; font-size: 1.25rem; }
 }
+
+.btn {
+    vertical-align: top;
+    line-height: 1.2;
+}

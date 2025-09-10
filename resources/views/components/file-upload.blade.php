@@ -16,7 +16,7 @@
     'required' => false,
     'errors' => null,
     'class' => '',
-    'wrapperClass' => 'mb-3'
+    'wrapperClass' => 'form-group'
 ])
 
 @once

@@ -159,3 +159,31 @@
 .guest-author-form { margin: 1rem 0; }
 .guest-author-form .form-group { display: flex; align-items: center; gap: 0.5rem; }
 .guest-author-form .email-verification-info-btn { color: var(--bs-info); font-size: 1.25rem; cursor: pointer; }
+
+
+/* Form */
+.form-group { margin: 1rem 0; }
+.card-body > .form-group:first-child { margin-top: 0; }
+.card-body > .form-group:last-child { margin-bottom: 0; }
+
+.board-form { margin: 2rem 0.5rem; }
+.board-form .form-label { font-weight: 400; margin-bottom: 0.25rem; display: block; }
+.board-form .form-label small.text-muted { font-size: 0.8rem; color: var(--bs-gray-500) !important; }
+.board-form .form-control, .board-form .form-select, .board-form textarea { font-weight: 500; color: #000; }
+.board-form .form-control::placeholder, .board-form textarea::placeholder { color: var(--bs-gray-400); font-weight: 400; }
+
+.board-form .note-editable { word-break: keep-all; }
+.board-form .note-editable img { max-width: 100%; height: auto; }
+
+.secret-post-section { border: dashed 1px var(--bs-gray-300); padding: 1rem; border-radius: 0.5rem; background: var(--bs-gray-100); }
+
+@media (min-width: 768px) {
+    .board-form { margin: 2rem 1rem; }
+    .form-group { margin: 1.5rem 0; }
+}
+
+/* Bootstrap button vertical alignment fix */
+.board .btn {
+    vertical-align: top;
+    line-height: 1.2;
+}

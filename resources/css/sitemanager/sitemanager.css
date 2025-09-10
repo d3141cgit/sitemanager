@@ -49,6 +49,11 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); font-weight: 700; }
 
 b,strong { font-weight: 700 }
 
+.btn {
+    vertical-align: top;
+    line-height: 1.2;
+}
+
 /* Bootstrap Button Color Fixes for Anchor Tags */
 a.btn-primary { color: #fff !important; }
 a.btn-secondary { color: #fff !important; }
