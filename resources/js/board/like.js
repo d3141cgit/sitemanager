@@ -48,7 +48,7 @@ function initializeLikeButton() {
                     icon.className = 'bi bi-heart-fill';
                     
                     // Change button style to indicate it's been liked
-                    this.className = 'btn btn-sm btn-danger like-btn';
+                    this.className = 'like-btn';
                     
                     // Mark as liked and keep disabled
                     this.dataset.hasLiked = 'true';
@@ -62,7 +62,7 @@ function initializeLikeButton() {
                     
                     // Update UI to reflect already liked state
                     icon.className = 'bi bi-heart-fill';
-                    this.className = 'btn btn-sm btn-danger like-btn';
+                    this.className = 'like-btn';
                     this.dataset.hasLiked = 'true';
                     this.title = 'You have already liked this post';
                 } else {
