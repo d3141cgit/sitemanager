@@ -17,12 +17,12 @@ return new class extends Migration
             $table->unsignedBigInteger('parent_id')->nullable()->comment('상위 메뉴 id');
             $table->string('title', 100)->comment('메뉴명');
             $table->text('description')->nullable(); // 설명
+            $table->text('search_content')->nullable()->comment('검색용 컨텐츠 (뷰 파일에서 추출한 텍스트)');
             $table->string('type', 30)->default('route')->comment('메뉴 타입: route, url, text');
             $table->string('target', 255)->nullable()->comment('라우트명 또는 URL');
             $table->boolean('hidden')->default(false)->comment('메뉴 숨김 여부');
             $table->unsignedTinyInteger('permission')->default(1)->comment('기본 권한 (bitmask)');
             $table->json('images')->nullable()->comment('이미지 정보 (thumbnail, seo, header 등)');
-            $table->text('search_content')->nullable()->comment('검색용 컨텐츠 (뷰 파일에서 추출한 텍스트)');
             
             // Nested Set Model 필드 (섹션별로 독립적)
             $table->unsignedInteger('_lft')->default(0)->index()->comment('Nested Set Left');
