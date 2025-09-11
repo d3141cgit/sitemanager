@@ -86,6 +86,8 @@ class MenuController extends Controller
         
         $request->validate([
             'title' => 'required|string|max:100',
+            'description' => 'nullable|string',
+            'search_content' => 'nullable|string',
             'type' => 'required|in:route,url,text',
             'target' => 'nullable|string|max:255',
             'parent_id' => 'nullable|exists:menus,id',
@@ -104,7 +106,7 @@ class MenuController extends Controller
         
         try {
             // 권한 관련 데이터 분리
-            $menuData = $request->only(['title', 'description', 'type', 'target', 'parent_id', 'hidden']);
+            $menuData = $request->only(['title', 'description', 'search_content', 'type', 'target', 'parent_id', 'hidden']);
             
             // hidden 필드를 boolean으로 변환 (checkbox 처리)
             $menuData['hidden'] = $request->has('hidden') && $request->input('hidden') == '1';
@@ -164,6 +166,8 @@ class MenuController extends Controller
         
         $request->validate([
             'title' => 'required|string|max:100',
+            'description' => 'nullable|string',
+            'search_content' => 'nullable|string',
             'type' => 'required|in:route,url,text',
             'target' => 'nullable|string|max:255',
             'parent_id' => 'nullable|exists:menus,id',
@@ -188,7 +192,7 @@ class MenuController extends Controller
         
         try {
             // 권한 관련 데이터 분리
-            $menuData = $request->only(['title', 'description', 'type', 'target', 'parent_id', 'hidden']);
+            $menuData = $request->only(['title', 'description', 'search_content', 'type', 'target', 'parent_id', 'hidden']);
             
             // hidden 필드를 boolean으로 변환 (checkbox 처리)
             $menuData['hidden'] = $request->has('hidden') && $request->input('hidden') == '1';
@@ -439,5 +443,131 @@ class MenuController extends Controller
         }
         
         return $imageData;
+    }
+
+    /**
+     * 검색 컨텐츠 업데이트
+     */
+    public function updateSearchContent()
+    {
+        $this->checkAdminPermission();
+
+        try {
+            $menus = Menu::whereNotNull('target')
+                        ->where('type', 'route')
+                        ->get();
+
+            $updated = 0;
+            $errors = [];
+            $debugInfo = [];
+
+            foreach ($menus as $menu) {
+                try {
+                    // 라우트에서 뷰 파일 경로 추출
+                    $viewPath = $this->getViewPathFromRoute($menu->target);
+                    
+                    $debugInfo[] = "Menu: {$menu->title} -> Route: {$menu->target} -> View: " . ($viewPath ?: 'NOT FOUND');
+                    
+                    if ($viewPath) {
+                        // 뷰 파일에서 텍스트 추출
+                        $content = Menu::extractTextFromView($viewPath);
+                        
+                        if ($content && mb_check_encoding($content, 'UTF-8')) {
+                            $menu->updateSearchContent($content);
+                            $updated++;
+                            $debugInfo[] = "  -> Content extracted: " . mb_strlen($content, 'UTF-8') . " chars";
+                        } else {
+                            $debugInfo[] = "  -> Content extraction failed or invalid UTF-8";
+                        }
+                    }
+                } catch (\Exception $e) {
+                    $errors[] = "Menu '{$menu->title}': " . $e->getMessage();
+                }
+            }
+
+            $message = "Search content updated successfully. Updated: {$updated} menus";
+            
+            if (!empty($errors)) {
+                $message .= " Errors: " . count($errors);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'updated' => $updated,
+                'errors' => $errors,
+                'debug' => $debugInfo
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "Search content update failed: " . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * 라우트명에서 뷰 파일 경로 추출
+     */
+    private function getViewPathFromRoute(string $routeName): ?string
+    {
+        try {
+            // 직접 뷰 경로 매핑 시도 (라우트 정보 조회 없이)
+            return $this->mapRouteNameToView($routeName);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * 라우트명을 뷰 파일 경로로 직접 매핑
+     */
+    private function mapRouteNameToView(string $routeName): ?string
+    {
+        // 라우트명에서 뷰 경로 추출 시도
+        if (str_contains($routeName, '.')) {
+            $parts = explode('.', $routeName);
+            
+            // 기본 뷰 경로들 확인
+            $possiblePaths = [
+                // 라우트명 그대로 (about.edm-korean-global-campus)
+                $routeName,
+                // 슬래시로 변환 (about/edm-korean-global-campus)
+                str_replace('.', '/', $routeName),
+                // pages 접두사 추가
+                'pages.' . $routeName,
+                'pages/' . str_replace('.', '/', $routeName),
+                // 대시를 언더스코어로 변환
+                str_replace('-', '_', $routeName),
+                str_replace('-', '_', str_replace('.', '/', $routeName)),
+                // 대시 제거
+                str_replace('-', '', $routeName),
+                str_replace('-', '', str_replace('.', '/', $routeName)),
+            ];
+            
+            foreach ($possiblePaths as $path) {
+                if (view()->exists($path)) {
+                    return $path;
+                }
+            }
+        }
+
+        // 단일 라우트명인 경우
+        $singlePaths = [
+            $routeName,
+            'pages.' . $routeName,
+            'pages/' . $routeName,
+            str_replace('-', '_', $routeName),
+            str_replace('-', '', $routeName),
+        ];
+        
+        foreach ($singlePaths as $path) {
+            if (view()->exists($path)) {
+                return $path;
+            }
+        }
+
+        return null;
     }
 }

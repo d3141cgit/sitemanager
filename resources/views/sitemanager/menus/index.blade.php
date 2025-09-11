@@ -23,6 +23,9 @@
     </h1>
 
     <div class="d-flex gap-1">
+        <button type="button" class="btn-outline-default" id="update-search-content-btn">
+            <i class="bi bi-search me-1"></i>{{ t('Update Search Content') }}
+        </button>
         <button type="button" class="btn-outline-default" id="rebuild-tree-btn">
             <i class="bi bi-arrow-clockwise me-1"></i>{{ t('Rebuild Tree') }}
         </button>
@@ -108,15 +111,94 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     @endif
 
-        // Rebuild tree with confirmation (Desktop)
-    document.querySelector('#rebuild-tree-btn').addEventListener('click', function() {
-        showRebuildConfirmation();
-    });
+    // Update search content with confirmation - 안전한 요소 확인
+    const updateSearchContentBtn = document.querySelector('#update-search-content-btn');
+    if (updateSearchContentBtn) {
+        updateSearchContentBtn.addEventListener('click', function() {
+            showUpdateSearchContentConfirmation();
+        });
+    }
 
-    // Rebuild tree with confirmation (Mobile)
-    document.querySelector('#rebuild-tree-btn-mobile').addEventListener('click', function() {
-        showRebuildConfirmation();
-    });
+    function showUpdateSearchContentConfirmation() {
+        Swal.fire({
+            title: '{{ t("Update Search Content") }}',
+            text: '{{ t("This will extract text content from all menu-linked view files and update search database. Continue?") }}',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '{{ t("Update") }}',
+            cancelButtonText: '{{ t("Cancel") }}'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                updateSearchContent();
+            }
+        });
+    }
+
+    // Update search content function
+    function updateSearchContent() {
+        Swal.fire({
+            title: '{{ t("Processing...") }}',
+            text: '{{ t("Extracting content from view files and updating search database.") }}',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        fetch('{{ route("sitemanager.menus.update-search-content") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '{{ t("Complete!") }}',
+                    text: data.message,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: true
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: '{{ t("Error!") }}',
+                    text: data.message || '{{ t("Search content update failed.") }}'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: '{{ t("Error!") }}',
+                text: '{{ t("An error occurred during search content update.") }}'
+            });
+        });
+    }
+
+        // Rebuild tree with confirmation (Desktop) - 안전한 요소 확인
+    const rebuildTreeBtn = document.querySelector('#rebuild-tree-btn');
+    if (rebuildTreeBtn) {
+        rebuildTreeBtn.addEventListener('click', function() {
+            showRebuildConfirmation();
+        });
+    }
+
+    // Rebuild tree with confirmation (Mobile) - 안전한 요소 확인
+    const rebuildBtnMobile = document.querySelector('#rebuild-tree-btn-mobile');
+    if (rebuildBtnMobile) {
+        rebuildBtnMobile.addEventListener('click', function() {
+            showRebuildConfirmation();
+        });
+    }
 
     function showRebuildConfirmation() {
         Swal.fire({

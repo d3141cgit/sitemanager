@@ -376,6 +376,18 @@
                         {{ t('Permissions can only be set for existing menus. Save the menu first to configure permissions.') }}
                     </div>
                     @endif
+
+
+                    <div class="form-group border-top pt-3 mt-3">
+                        <label for="search_content" class="form-label">{{ t('Search Content') }}</label>
+                        <textarea class="form-control @error('search_content') is-invalid @enderror" id="search_content" name="search_content" rows="12" placeholder="{{ t('Content for search indexing. Leave empty to auto-extract from view file.') }}">{{ old('search_content', isset($menu) ? $menu->search_content : '') }}</textarea>
+                        @error('search_content')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="form-text">
+                            {{ t('Optional. Text content used for site search. If empty, it will be automatically extracted from the linked view file.') }}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

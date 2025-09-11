@@ -23,6 +23,7 @@ class Menu extends Model
         'hidden',
         'permission',
         'images',
+        'search_content',
         '_lft',
         '_rgt',
         'depth',
@@ -654,5 +655,228 @@ class Menu extends Model
         }
         
         return $processedImages;
+    }
+
+    /**
+     * 검색용 컨텐츠 업데이트
+     */
+    public function updateSearchContent(string $content): void
+    {
+        $this->update(['search_content' => $this->cleanSearchContent($content)]);
+    }
+
+    /**
+     * 검색용 컨텐츠 정리 (HTML 태그 제거, 공백 정리 등)
+     */
+    public function cleanSearchContent(string $content): string
+    {
+        // UTF-8 인코딩 확인 및 정리
+        if (!mb_check_encoding($content, 'UTF-8')) {
+            $content = mb_convert_encoding($content, 'UTF-8', 'auto');
+        }
+        
+        // HTML 태그 제거
+        $text = strip_tags($content);
+        
+        // HTML 엔티티 디코딩
+        $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+        
+        // 잘못된 UTF-8 문자 제거
+        $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+        
+        // 여러 개의 공백을 하나로 정리 (UTF-8 safe)
+        $text = preg_replace('/\s+/u', ' ', $text);
+        
+        // 앞뒤 공백 제거
+        $text = trim($text);
+        
+        // 최종 UTF-8 검증
+        if (!mb_check_encoding($text, 'UTF-8')) {
+            return '';
+        }
+        
+        return $text;
+    }
+
+    /**
+     * 검색용 스코프
+     */
+    public function scopeSearch($query, string $keyword)
+    {
+        return $query->whereRaw('MATCH(search_content) AGAINST(? IN BOOLEAN MODE)', [$keyword . '*'])
+                    ->orWhere('title', 'LIKE', '%' . $keyword . '%')
+                    ->orWhere('description', 'LIKE', '%' . $keyword . '%');
+    }
+
+    /**
+     * 뷰 파일에서 텍스트 추출 (정적 메소드)
+     */
+    public static function extractTextFromView(string $viewPath): ?string
+    {
+        try {
+            // 뷰 파일의 실제 경로 찾기
+            $filePath = self::findViewFile($viewPath);
+            
+            if (!$filePath || !file_exists($filePath)) {
+                return null;
+            }
+            
+            // 블레이드 파일 내용 읽기
+            $content = file_get_contents($filePath);
+            
+            if (!$content) {
+                return null;
+            }
+            
+            // UTF-8 인코딩 확인 및 정리
+            if (!mb_check_encoding($content, 'UTF-8')) {
+                $content = mb_convert_encoding($content, 'UTF-8', 'auto');
+            }
+            
+            // 블레이드 문법 제거
+            $content = self::removeBladeSyntax($content);
+            
+            // PHP 코드 제거
+            $content = preg_replace('/<\?php.*?\?>/s', '', $content);
+            $content = preg_replace('/<\?.*?\?>/s', '', $content);
+            
+            // CSS 스타일 제거 (style 태그와 인라인 스타일)
+            $content = preg_replace('/<style[^>]*>.*?<\/style>/uis', '', $content);
+            
+            // JavaScript 제거 (script 태그)
+            $content = preg_replace('/<script[^>]*>.*?<\/script>/uis', '', $content);
+            
+            // 주석 제거
+            $content = preg_replace('/<!--.*?-->/us', '', $content);
+            
+            // 메타 태그, 링크 태그 등 제거
+            $content = preg_replace('/<(meta|link|base|title)[^>]*>/i', '', $content);
+            
+            // HTML 태그 제거하고 텍스트만 추출
+            $text = strip_tags($content);
+            
+            // HTML 엔티티 디코딩
+            $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+            
+            // 다시 UTF-8 인코딩 확인
+            if (!mb_check_encoding($text, 'UTF-8')) {
+                $text = mb_convert_encoding($text, 'UTF-8', 'auto');
+            }
+            
+            // 잘못된 UTF-8 문자 제거
+            $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+            
+            // 연속된 공백, 탭, 줄바꿈을 하나의 공백으로 정리
+            $text = preg_replace('/\s+/u', ' ', $text);
+            
+            // 안전한 문자만 유지 (UTF-8 호환)
+            $text = preg_replace('/[^\p{L}\p{N}\s\p{P}]/u', ' ', $text);
+            $text = preg_replace('/\s+/u', ' ', $text);
+            
+            // 앞뒤 공백 제거
+            $text = trim($text);
+            
+            // 너무 짧은 텍스트는 제외
+            if (mb_strlen($text, 'UTF-8') < 10) {
+                return null;
+            }
+            
+            // 최종 UTF-8 검증
+            if (!mb_check_encoding($text, 'UTF-8')) {
+                return null;
+            }
+            
+            return $text;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * 뷰 파일의 실제 경로 찾기
+     */
+    private static function findViewFile(string $viewPath): ?string
+    {
+        try {
+            // Laravel의 뷰 팩토리를 통해 뷰 파인더 가져오기
+            $viewFactory = app('view');
+            $viewFinder = $viewFactory->getFinder();
+            $viewPaths = $viewFinder->getPaths();
+            
+            // . 을 / 로 변환
+            $relativePath = str_replace('.', '/', $viewPath);
+            
+            foreach ($viewPaths as $basePath) {
+                // .blade.php 확장자로 시도
+                $filePath = $basePath . '/' . $relativePath . '.blade.php';
+                if (file_exists($filePath)) {
+                    return $filePath;
+                }
+                
+                // .php 확장자로 시도
+                $filePath = $basePath . '/' . $relativePath . '.php';
+                if (file_exists($filePath)) {
+                    return $filePath;
+                }
+            }
+        } catch (\Exception $e) {
+            // 기본 경로들로 시도
+            $basePaths = [
+                resource_path('views'),
+                base_path('resources/views'),
+            ];
+            
+            $relativePath = str_replace('.', '/', $viewPath);
+            
+            foreach ($basePaths as $basePath) {
+                // .blade.php 확장자로 시도
+                $filePath = $basePath . '/' . $relativePath . '.blade.php';
+                if (file_exists($filePath)) {
+                    return $filePath;
+                }
+                
+                // .php 확장자로 시도
+                $filePath = $basePath . '/' . $relativePath . '.php';
+                if (file_exists($filePath)) {
+                    return $filePath;
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * 블레이드 문법 제거
+     */
+    private static function removeBladeSyntax(string $content): string
+    {
+        // @extends, @section, @yield 등 블레이드 지시문 제거
+        $content = preg_replace('/@\w+(\([^)]*\))?/u', '', $content);
+        
+        // {{ }} 변수 출력 제거
+        $content = preg_replace('/\{\{[^}]*\}\}/u', '', $content);
+        
+        // {!! !!} HTML 출력 제거
+        $content = preg_replace('/\{!![^!]*!!\}/u', '', $content);
+        
+        // @if, @foreach 등의 블록 제거 (내용은 유지)
+        $content = preg_replace('/@(if|unless|isset|empty|auth|guest|env)\([^)]*\)/u', '', $content);
+        $content = preg_replace('/@(endif|endunless|endisset|endempty|endauth|endguest|endenv)/u', '', $content);
+        $content = preg_replace('/@(foreach|for|while)\([^)]*\)/u', '', $content);
+        $content = preg_replace('/@(endforeach|endfor|endwhile)/u', '', $content);
+        $content = preg_replace('/@(else|elseif)\([^)]*\)?/u', '', $content);
+        
+        // @push, @stack 등 제거
+        $content = preg_replace('/@(push|prepend|stack)\([^)]*\)/u', '', $content);
+        $content = preg_replace('/@(endpush|endprepend)/u', '', $content);
+        
+        // @include 제거
+        $content = preg_replace('/@include\([^)]*\)/u', '', $content);
+        
+        // @csrf, @method 등 제거
+        $content = preg_replace('/@(csrf|method)\([^)]*\)?/u', '', $content);
+        
+        return $content;
     }
 }

@@ -39,6 +39,7 @@ Route::middleware(['auth', 'sitemanager'])->prefix('sitemanager')->name('siteman
     Route::get('/menus/routes', [MenuController::class, 'getRoutes'])->name('menus.routes');
     Route::get('/menus/section/{section}/parents', [MenuController::class, 'getSectionParents'])->name('menus.section-parents');
     Route::post('/menus/rebuild-tree', [MenuController::class, 'rebuildTree'])->name('menus.rebuild-tree');
+    Route::post('/menus/update-search-content', [MenuController::class, 'updateSearchContent'])->name('menus.update-search-content');
     Route::post('/menus/check-board-connection', [MenuController::class, 'checkBoardConnection'])->name('menus.check-board-connection');
     // Route::get('/menus/tree', [MenuController::class, 'treeIndex'])->name('menus.tree');
     Route::post('/menus/move', [MenuController::class, 'moveNode'])->name('menus.move');
