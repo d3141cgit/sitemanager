@@ -14,6 +14,7 @@
     
     {!! setResources(['jquery', 'bootstrap', 'sweetalert']) !!}
     {!! resource('sitemanager::css/sitemanager/sitemanager.css') !!}
+    {!! resource('sitemanager::css/pagination.css') !!}
     {!! resource('sitemanager::js/sitemanager/sitemanager.js') !!}
     {!! resource('sitemanager::js/notifications.js') !!}
     

@@ -5,6 +5,7 @@ namespace SiteManager\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 
 class InstallCommand extends Command
 {
@@ -28,14 +29,17 @@ class InstallCommand extends Command
         // 3. 마이그레이션 발행 및 실행
         $this->publishAndRunMigrations();
         
-        // 4. 기본 이미지 발행
+        // 4. 언어 데이터 복원
+        $this->restoreLanguageData();
+        
+        // 5. 기본 이미지 발행
         $this->publishImages();
         
-        // 5. 홈 라우트 설정
+        // 6. 홈 라우트 설정
         $this->info('🏠 Setting up home route...');
         $this->setupHomeRoute();
         
-        // 6. 완료 메시지
+        // 7. 완료 메시지
         $this->displayCompletionMessage();
         
         return 0;
@@ -121,6 +125,26 @@ class InstallCommand extends Command
     }
 
     /**
+     * 언어 데이터를 복원합니다.
+     */
+    protected function restoreLanguageData(): void
+    {
+        $this->info('🌍 Restoring language data...');
+        
+        $exitCode = Artisan::call('sitemanager:restore-languages', [
+            '--force' => true
+        ]);
+        
+        if ($exitCode === 0) {
+            $this->line('   ✅ Language data restored successfully');
+        } else {
+            $this->warn('   ⚠️  Language data restoration failed');
+        }
+        
+        $this->newLine();
+    }
+
+    /**
      * 기본 이미지를 발행합니다.
      */
     protected function publishImages(): void
@@ -149,6 +173,7 @@ class InstallCommand extends Command
         $this->line('   • Backed up existing Laravel migrations');
         $this->line('   • Published SiteManager configuration files');
         $this->line('   • Published and ran SiteManager migrations');
+        $this->line('   • Restored language data from SQL dump');
         $this->line('   • Published admin images');
         $this->line('   • Backed up original routes and created new web.php');
         $this->newLine();

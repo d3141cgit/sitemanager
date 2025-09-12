@@ -470,9 +470,6 @@ function toggleTrace(enabled) {
     .then(data => {
         if (data.success) {
             showSuccessToast(data.message || '{{ t("Trace mode updated successfully") }}');
-            if (enabled) {
-                showSuccessToast('{{ t("All location information has been cleared. Please navigate through the site to collect new location data.") }}');
-            }
         } else {
             showErrorToast(data.message || '{{ t("Failed to toggle trace mode") }}');
             // 실패시 토글 상태 원복

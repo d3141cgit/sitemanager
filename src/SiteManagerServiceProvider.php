@@ -6,6 +6,10 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use SiteManager\Http\Middleware\AdminMiddleware;
 use SiteManager\Http\Middleware\SiteManagerMiddleware;
 use SiteManager\Http\Middleware\CheckMenuPermission;
@@ -40,6 +44,9 @@ class SiteManagerServiceProvider extends ServiceProvider
         
         // 마이그레이션 로드
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        
+        // 마이그레이션 후 언어 데이터 복원 이벤트 등록
+        $this->registerMigrationEvents();
         
         // 라우트 로드 (모두 web 미들웨어 그룹으로)
         Route::middleware('web')->group(function () {
@@ -142,7 +149,47 @@ class SiteManagerServiceProvider extends ServiceProvider
             \SiteManager\Console\Commands\CheckS3Configuration::class,
             \SiteManager\Console\Commands\MigrateImagesToS3::class,
             \SiteManager\Console\Commands\ResourceCommand::class,
+            \SiteManager\Console\Commands\RestoreLanguageCommand::class,
+            \SiteManager\Console\Commands\DumpLanguageCommand::class,
         ]);
+    }
+    
+    /**
+     * 마이그레이션 이벤트를 등록합니다.
+     */
+    private function registerMigrationEvents()
+    {
+        if (!$this->app->runningInConsole()) {
+            return;
+        }
+        
+        // 마이그레이션 완료 후 언어 데이터 복원
+        Event::listen('Illuminate\Database\Events\MigrationsEnded', function ($event) {
+            // languages 테이블이 존재하는지 확인
+            if (!Schema::hasTable('languages')) {
+                return;
+            }
+            
+            // 언어 데이터가 비어있는지 확인
+            $languageCount = DB::table('languages')->count();
+            if ($languageCount > 0) {
+                return; // 이미 데이터가 있으면 복원하지 않음
+            }
+            
+            // 언어 데이터 복원
+            $sqlPath = dirname(__DIR__, 2) . '/database/sql/languages.sql';
+            if (file_exists($sqlPath)) {
+                try {
+                    $sql = file_get_contents($sqlPath);
+                    if (!empty($sql)) {
+                        DB::unprepared($sql);
+                        Log::info('SiteManager: Language data restored automatically after migration');
+                    }
+                } catch (\Exception $e) {
+                    Log::error('SiteManager: Failed to restore language data after migration: ' . $e->getMessage());
+                }
+            }
+        });
     }
     
     private function defineGates()
