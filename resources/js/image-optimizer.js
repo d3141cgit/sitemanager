@@ -97,9 +97,8 @@ class ImageOptimizer {
             
             this.optimizedImages.set(imgSrc, 'processing');
             this.optimizeImage(img);
+            // optimizeImage() 메서드에서 이미 addImagePreview()와 addErrorHandling()을 호출하므로 중복 제거
             this.addLazyLoading(img);
-            this.addImagePreview(img);
-            this.addErrorHandling(img);
         });
     }
 
@@ -311,6 +310,11 @@ class ImageOptimizer {
             return;
         }
         
+        // 이미 클릭 이벤트가 추가되었는지 확인
+        if (img.dataset.hasClickListener === 'true') {
+            return;
+        }
+        
         img.style.cursor = 'pointer';
         img.title = 'Click to view full size';
         
@@ -327,12 +331,20 @@ class ImageOptimizer {
                 window.open(originalSrc, '_blank');
             }
         });
+        
+        // 클릭 이벤트 추가 플래그 설정
+        img.dataset.hasClickListener = 'true';
     }
 
     /**
      * 이미지 에러 처리
      */
     addErrorHandling(img) {
+        // 이미 에러 핸들러가 추가되었는지 확인
+        if (img.dataset.hasErrorHandler === 'true') {
+            return;
+        }
+        
         img.addEventListener('error', (e) => {
             const imgSrc = img.src;
             console.warn('Image error event:', imgSrc, e);
@@ -342,6 +354,9 @@ class ImageOptimizer {
                 this.handleImageLoadFailure(img, 0, 3, 'immediate_error');
             }
         });
+        
+        // 에러 핸들러 추가 플래그 설정
+        img.dataset.hasErrorHandler = 'true';
     }
 
     /**
