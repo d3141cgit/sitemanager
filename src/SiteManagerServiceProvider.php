@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use SiteManager\Http\Middleware\AdminMiddleware;
 use SiteManager\Http\Middleware\SiteManagerMiddleware;
 use SiteManager\Http\Middleware\CheckMenuPermission;
 use SiteManager\Services\BoardService;
