@@ -26,8 +26,8 @@
 @endpush
 
 @section('content')
-<main class="board show">
-    <div class="content-container">
+<main class="board">
+    <div class="content-container show">
         <div class="d-flex align-items-center">
             <time class="mb-0">{{ $post->created_at->format('M j, Y') }}</time>
 
@@ -267,6 +267,14 @@
                     @include('sitemanager::board.partials.comments', ['comments' => $comments, 'board' => $board])
                 </div>
             </div>
+        @endif
+    </div>
+
+    <div class="container" style="margin: 3rem auto;">
+        @if ($board->getSetting('index_in_show', true))
+            @if($posts->count() > 0)
+                @include('sitemanager::board.partials.posts', ['posts' => $posts, 'notices' => $notices, 'board' => $board])
+            @endif
         @endif
 
         {{-- Back to List --}}

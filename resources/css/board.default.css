@@ -12,6 +12,13 @@
 .board-posts-table a:link, .board-posts-table a:visited { color: #000; text-decoration: none; }
 .board-posts-table a:hover { color: var(--bs-red); }
 
+.board-posts-table tr.active { background-color: #f8f9fa; font-weight: 600; border-left: 3px solid var(--bs-red); }
+.board-posts-table tr.active a { color: var(--bs-red); }
+
+.board-posts-table td.title { text-align: left; width: 70%; }
+.board-posts-table td.author { text-align: left; white-space: nowrap; }
+.board-posts-table td.date { text-align: right; white-space: nowrap; }
+
 .post-title { min-width: 300px; }
 
 .post-categories { display: flex; align-items: center; gap: 0.25rem; font-size: 0.6rem; margin-right: 0.25rem; margin-bottom: 0.25rem; }
@@ -24,6 +31,10 @@
     .post-categories { margin-bottom: 0; }
 }
 
+/* Author Profile Photos */
+.profile-photo { width: 50px; height: 50px; border: 1px solid rgba(0, 0, 0, 0.1); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); transition: all 0.2s ease; border-radius: 50%; object-fit: cover; }
+.profile-photo-icon { font-size: 50px; color: var(--bs-gray-300); line-height: 1; }
+.profile-photo:hover { box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); transform: scale(1.05); }
 
 /* Password Form */
 .private-form-container { display: flex; justify-content: center; align-items: center; flex-direction: column; min-height: 60vh; max-width: 768px; margin: 2rem auto; border: solid 1px var(--bs-gray-200); padding: 4rem; border-radius: 2rem; box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.075); }

@@ -110,6 +110,16 @@ class SiteManagerBoardController extends Controller
             'Moderate Comments', 
             'Comments require admin approval before appearing'
         ],
+        'show_in_index' => [
+            'boolean', 
+            'Show in Index', 
+            'Display recent posts from this board on the main index page'
+        ],
+        'index_in_show' => [
+            'boolean', 
+            'Index in Board View', 
+            'Display index page within this board view'
+        ],
         'use_tags' => [
             'boolean', 
             'Use Tags', 

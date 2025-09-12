@@ -318,12 +318,12 @@ class BoardService
             });
         }
 
+        // $perPage 계산 우선순위: 1. request per_page -> 2. $board->posts_per_page -> 3. 20
         $perPage = $request->input('per_page');
-        if ($perPage && is_numeric($perPage) && $perPage > ($board->posts_per_page ?? 20)) {
-            $perPage = 20;
-        } else {
-            $perPage = $perPage ?: ($board->posts_per_page ?? 20);
+        if (!$perPage || !is_numeric($perPage) || $perPage <= 0) {
+            $perPage = $board->posts_per_page ?? 20;
         }
+        
         return $query->paginate($perPage);
     }
 
@@ -573,6 +573,45 @@ class BoardService
             ->first();
 
         return compact('prevPost', 'nextPost');
+    }
+
+    /**
+     * 현재 게시글이 속한 페이지 번호 계산
+     */
+    public function getCurrentPostPage(Board $board, $post, Request $request): int
+    {
+        $postModelClass = BoardPost::forBoard($board->slug);
+        
+        // 게시글 목록과 동일한 조건으로 쿼리 생성
+        $query = $postModelClass::with(['member'])
+            ->published()
+            ->orderBy('published_at', 'desc');
+
+        // 검색 조건 적용 (getFilteredPosts와 동일한 로직)
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%")
+                  ->orWhere('author_name', 'like', "%{$search}%");
+            });
+        }
+
+        // 카테고리 필터 적용
+        if ($category = $request->input('category')) {
+            $query->whereJsonContains('category', $category);
+        }
+
+        // 현재 게시글보다 최신인 게시글 수를 계산
+        $newerPostsCount = $query->where('published_at', '>', $post->published_at)->count();
+        
+        // 페이지당 게시글 수
+        $perPage = $request->input('per_page');
+        if (!$perPage || !is_numeric($perPage) || $perPage <= 0) {
+            $perPage = $board->posts_per_page ?? 20;
+        }
+        
+        // 페이지 번호 계산 (1부터 시작)
+        return intval($newerPostsCount / $perPage) + 1;
     }
 
     /**
@@ -848,9 +887,9 @@ class BoardService
                 $skinName = basename($dir);
                 
                 // 기본 뷰 파일들이 있는지 확인 (index.blade.php는 필수)
-                if (file_exists($dir . '/index.blade.php')) {
+                #if (file_exists($dir . '/index.blade.php')) {
                     $skins[$skinName] = ucfirst($skinName);
-                }
+                #}
             }
         }
         

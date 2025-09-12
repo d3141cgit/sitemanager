@@ -144,6 +144,51 @@ class BoardController extends Controller
             abort(403, '게시판에 접근할 권한이 없습니다.');
         }
         
+        // show_in_index 설정이 true인 경우 show() 메서드로 위임
+        if ($board->getSetting('show_in_index', false)) {
+            // URL에서 id 파라미터 확인
+            $postId = $request->query('id');
+            
+            if (!$postId) {
+                // page 파라미터가 있으면 해당 페이지의 첫 번째 게시글 조회
+                if ($request->has('page')) {
+                    $posts = $this->boardService->getFilteredPosts($board, $request, false);
+                    if ($posts->isNotEmpty()) {
+                        $firstPost = $posts->first();
+                        $postId = $firstPost->id;
+                    }
+                }
+                
+                // page 파라미터가 없거나 게시글을 못 찾은 경우 최근글 조회
+                if (!$postId) {
+                    // 동일한 정렬 방식으로 첫 번째 게시글 조회
+                    $tempRequest = clone $request;
+                    $tempRequest->merge(['page' => 1]); // 첫 페이지로 설정
+                    
+                    $posts = $this->boardService->getFilteredPosts($board, $tempRequest, false);
+                    if ($posts->isNotEmpty()) {
+                        $firstPost = $posts->first();
+                        $postId = $firstPost->id;
+                    } else {
+                        // 게시글이 없는 경우에도 show 뷰로 처리 (show_in_index에서는 index 뷰 불필요)
+                        return $this->show($request, $slug, null);
+                    }
+                }
+            }
+            
+            // show() 메서드로 위임 (중복 코드 제거)
+            return $this->show($request, $slug, $postId);
+        }
+        
+        // 일반 목록 뷰
+        return $this->showPostList($request, $board);
+    }
+    
+    /**
+     * 일반 게시글 목록 표시
+     */
+    private function showPostList(Request $request, Board $board): View
+    {
         // 서비스를 통해 데이터 조회
         $posts = $this->boardService->getFilteredPosts($board, $request, $board->getSetting('enable_notice', false));
         $notices = $board->getSetting('enable_notice', false) ? $this->boardService->getNotices($board) : collect();
@@ -184,6 +229,11 @@ class BoardController extends Controller
             abort(403, 'You do not have permission to read this post.');
         }
         
+        // 게시글이 없는 경우 처리 (show_in_index에서 호출된 경우)
+        if ($id === null) {
+            return $this->showEmptyBoard($request, $board);
+        }
+        
         // 서비스를 통해 데이터 조회
         $post = $this->boardService->getPost($board, $id);
         
@@ -219,8 +269,37 @@ class BoardController extends Controller
         $sessionKey = "liked_post_{$board->slug}_{$post->id}";
         $hasLiked = session()->has($sessionKey);
 
+        // index_in_show 설정이 활성화된 경우 또는 show_in_index에서 호출된 경우 목록 데이터 조회
+        // (show_in_index에서 이 메서드를 호출하는 경우도 포함)
+        $posts = collect();
+        $notices = collect();
+        $currentPage = 1;
+        
+        $shouldShowIndex = $board->getSetting('index_in_show', false) || $board->getSetting('show_in_index', false);
+        
+        if ($shouldShowIndex) {
+            // URL에서 page 파라미터를 확인하고, 없으면 현재 게시글이 속한 페이지 계산
+            if (!$request->has('page')) {
+                $currentPage = $this->boardService->getCurrentPostPage($board, $post, $request);
+                $request->merge(['page' => $currentPage]);
+            } else {
+                $currentPage = (int) $request->get('page', 1);
+            }
+            
+            $posts = $this->boardService->getFilteredPosts($board, $request, $board->getSetting('enable_notice', false));
+            $notices = $board->getSetting('enable_notice', false) ? $this->boardService->getNotices($board) : collect();
+            
+            // 각 게시글의 like 상태 확인
+            if ($board->getSetting('enable_likes', false)) {
+                foreach ($posts as $postItem) {
+                    $sessionKey = "liked_post_{$board->slug}_{$postItem->id}";
+                    $postItem->hasLiked = session()->has($sessionKey);
+                }
+            }
+        }
+
         return view($this->selectView('show'), array_merge(
-            compact('board', 'post', 'comments', 'attachments', 'seoData', 'hasLiked'),
+            compact('board', 'post', 'comments', 'attachments', 'seoData', 'hasLiked', 'posts', 'notices', 'currentPage'),
             $prevNext,
             [
                 'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
@@ -232,6 +311,27 @@ class BoardController extends Controller
                 ]
             ]
         ));
+    }
+
+    /**
+     * 게시글이 없는 경우의 show 뷰 처리 (show_in_index 전용)
+     */
+    private function showEmptyBoard(Request $request, Board $board): View
+    {
+        // SEO 데이터 구성
+        $seoData = $this->buildBoardSeoData($board, $request);
+
+        return view($this->selectView('show-empty'), [
+            'board' => $board,
+            'seoData' => $seoData,
+            'currentMenuId' => $board->menu_id,
+            'currentSkin' => $board->skin ?? 'default',
+            'layoutPath' => $this->getLayoutPath(),
+            'additionalBreadcrumb' => [
+                'title' => '게시글이 없습니다',
+                'url' => null
+            ]
+        ]);
     }
 
     /**
