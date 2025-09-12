@@ -6,6 +6,7 @@ use SiteManager\Models\Menu;
 use SiteManager\Services\MenuService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 // use Illuminate\Support\Facades\Log;
 
 class MenuController extends Controller
@@ -513,10 +514,48 @@ class MenuController extends Controller
     private function getViewPathFromRoute(string $routeName): ?string
     {
         try {
-            // 직접 뷰 경로 매핑 시도 (라우트 정보 조회 없이)
+            // 1. 먼저 실제 라우트 정보에서 뷰 경로 추출 시도
+            $route = Route::getRoutes()->getByName($routeName);
+            if ($route) {
+                $action = $route->getAction();
+                
+                // 클로저인 경우 - 라우트 내부에서 view() 호출 확인
+                if (isset($action['uses']) && $action['uses'] instanceof \Closure) {
+                    // 클로저 내용을 분석하여 view() 호출 찾기
+                    $reflection = new \ReflectionFunction($action['uses']);
+                    $filename = $reflection->getFileName();
+                    $startLine = $reflection->getStartLine();
+                    $endLine = $reflection->getEndLine();
+                    
+                    if ($filename && file_exists($filename)) {
+                        $lines = file($filename);
+                        $closureCode = implode('', array_slice($lines, $startLine - 1, $endLine - $startLine + 1));
+                        
+                        // view('docs.vision') 형태 추출
+                        if (preg_match("/view\s*\(\s*['\"]([^'\"]+)['\"]\s*\)/", $closureCode, $matches)) {
+                            $viewPath = $matches[1];
+                            if (view()->exists($viewPath)) {
+                                return $viewPath;
+                            }
+                        }
+                    }
+                }
+                
+                // 컨트롤러@메서드 형태인 경우
+                if (isset($action['controller'])) {
+                    // 컨트롤러 메서드에서 뷰 경로 추출 로직 필요시 추가
+                }
+            }
+            
+            // 2. 실패시 기존 방식으로 폴백
             return $this->mapRouteNameToView($routeName);
         } catch (\Exception $e) {
-            return null;
+            // 3. 모든 방법 실패시 기존 방식으로 폴백
+            try {
+                return $this->mapRouteNameToView($routeName);
+            } catch (\Exception $e2) {
+                return null;
+            }
         }
     }
 

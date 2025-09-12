@@ -21,7 +21,7 @@ return new class extends Migration
         Schema::table('menus', function (Blueprint $table) {
             // search_content 필드가 존재하지 않는 경우에만 추가
             if (!Schema::hasColumn('menus', 'search_content')) {
-                $table->text('search_content')->nullable()->comment('검색용 컨텐츠 (뷰 파일에서 추출한 텍스트)');
+                $table->text('search_content')->nullable()->comment('검색용 컨텐츠 (뷰 파일에서 추출한 텍스트)')->after('description');
             }
         });
 
