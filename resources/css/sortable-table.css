@@ -1,0 +1,37 @@
+/* Sortable Table Styles */
+.sortable-table th.sortable {
+    position: relative;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.sortable-table th.sortable:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sortable-table th.sortable .sort-icon {
+    margin-left: 5px;
+    font-size: 0.8em;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.sortable-table th.sortable:hover .sort-icon {
+    opacity: 1;
+}
+
+.sortable-table th.sortable[data-sort] .sort-icon.bi-chevron-up,
+.sortable-table th.sortable[data-sort] .sort-icon.bi-chevron-down {
+    opacity: 1;
+    color: var(--bs-primary, #0d6efd);
+}
+
+/* Active sort column styling */
+.sortable-table th.sortable.active {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.sortable-table th.sortable.active .sort-icon {
+    color: var(--bs-primary, #0d6efd);
+    opacity: 1;
+}

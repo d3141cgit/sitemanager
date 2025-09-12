@@ -261,8 +261,32 @@ class BoardService
         $postModelClass = BoardPost::forBoard($board->slug);
         
         $query = $postModelClass::with('member')
-            ->published()
-            ->orderBy('published_at', 'desc');
+            ->published();
+
+        // 정렬 처리
+        $sortField = $request->input('sort', 'created_at');
+        $sortOrder = $request->input('order', 'desc');
+        
+        // 허용된 정렬 필드 확인
+        $allowedSortFields = [
+            'title', 'author_name', 'view_count', 'comment_count', 
+            'like_count', 'created_at', 'published_at', 'updated_at'
+        ];
+        
+        if (!in_array($sortField, $allowedSortFields)) {
+            $sortField = 'created_at';
+        }
+        
+        if (!in_array(strtolower($sortOrder), ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+        
+        // 기본 정렬 적용
+        if ($sortField === 'created_at') {
+            $query->orderBy('published_at', $sortOrder);
+        } else {
+            $query->orderBy($sortField, $sortOrder);
+        }
 
         // 공지사항 제외 필터링 (옵션)
         if ($excludeNotices) {

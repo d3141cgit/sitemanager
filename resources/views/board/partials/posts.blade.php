@@ -1,20 +1,40 @@
 <div class="table-responsive">
-    <table class="table table-hover align-middle board-posts-table">
+    <table class="table table-hover align-middle board-posts-table sortable-table" 
+           data-current-sort="{{ request('sort', 'created_at') }}" 
+           data-current-order="{{ request('order', 'desc') }}">
         <thead>
             <tr>
                 <th> # </th>
-                <th class="text-start"> Title </th>
+                <th class="text-start sortable" data-sort="title"> 
+                    Title 
+                    <i class="sort-icon bi bi-chevron-expand"></i>
+                </th>
                 @if ($board->getSetting('show_name', false))
-                <th class="text-start"> Author </th>
+                <th class="text-start sortable" data-sort="author_name"> 
+                    Author 
+                    <i class="sort-icon bi bi-chevron-expand"></i>
+                </th>
                 @endif
-                <th class="text-center"> Views </th>
+                <th class="text-center sortable" data-sort="view_count"> 
+                    Views 
+                    <i class="sort-icon bi bi-chevron-expand"></i>
+                </th>
                 @if ($board->getSetting('allow_comments', false))
-                <th class="text-center"> Comments </th>
+                <th class="text-center sortable" data-sort="comment_count"> 
+                    Comments 
+                    <i class="sort-icon bi bi-chevron-expand"></i>
+                </th>
                 @endif
                 @if ($board->getSetting('enable_likes', false))
-                <th class="text-center"> Likes </th>
+                <th class="text-center sortable" data-sort="like_count"> 
+                    Likes 
+                    <i class="sort-icon bi bi-chevron-expand"></i>
+                </th>
                 @endif
-                <th class="text-end"> Date </th>
+                <th class="text-end sortable" data-sort="created_at"> 
+                    Date 
+                    <i class="sort-icon bi bi-chevron-expand"></i>
+                </th>
             </tr>
         </thead>
         <tbody>
@@ -173,3 +193,8 @@
         {{ $posts->appends(request()->except('id'))->links('sitemanager::pagination.simple') }}
     </div>
 @endif
+
+@push('scripts')
+{!! resource('sitemanager::js/sortable-table.js') !!}
+{!! resource('sitemanager::css/sortable-table.css') !!}
+@endpush

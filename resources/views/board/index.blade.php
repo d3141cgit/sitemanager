@@ -13,7 +13,7 @@
     <div class="container">
         <div class="board-header">
             <h1>
-                {{ $board->name }}
+                <a href="{{ route('board.index', $board->slug) }}">{{ $board->name }}</a>
                 <span class="total-count">{{ $board->getSetting('enable_notice', false)  ? number_format($posts->total() + $notices->count()) : number_format($posts->total()) }}</span>
             </h1>
             
