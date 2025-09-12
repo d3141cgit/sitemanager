@@ -52,9 +52,9 @@
                     <thead>
                         <tr>
                             <th width="80"> # </th>
-                            <th> Title </th>
+                            <th class="text-start"> Title </th>
                             @if ($board->getSetting('show_name', false))
-                            <th class="text-center" width="200"> Author </th>
+                            <th class="text-start"> Author </th>
                             @endif
                             <th class="text-center" width="100"> Views </th>
                             @if ($board->getSetting('allow_comments', false))
@@ -93,8 +93,8 @@
                                 </td>
 
                                 @if ($board->getSetting('show_name', false))
-                                <td class="text-center">
-                                    <div class="d-flex align-items-center justify-content-center">
+                                <td class="text-start">
+                                    <div class="d-flex align-items-center justify-content-start">
                                         @if($post->author_profile_photo)
                                             <img src="{{ $post->author_profile_photo }}" 
                                                     alt="{{ $post->author }}" 
@@ -162,8 +162,8 @@
                                 </td>
 
                                 @if ($board->getSetting('show_name', false))
-                                <td class="text-center">
-                                    <div class="d-flex align-items-center justify-content-center">
+                                <td class="text-start">
+                                    <div class="d-flex align-items-center justify-content-start">
                                         @if($post->author_profile_photo)
                                             <img src="{{ $post->author_profile_photo }}" 
                                                     alt="{{ $post->author }}" 
