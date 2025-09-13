@@ -351,6 +351,11 @@ class MenuService
                 continue;
             }
             
+            // SiteManager 패키지 라우트 제외 (내부 시스템 라우트)
+            if (str_starts_with($name, 'sitemanager.')) {
+                continue;
+            }
+            
             // API 라우트 제외
             if (str_starts_with($name, 'api.')) {
                 continue;
@@ -412,6 +417,11 @@ class MenuService
                 continue;
             }
             
+            // 게시판은 board.index만 허용하고 나머지는 제외
+            if (str_starts_with($name, 'board.') && $name !== 'board.index') {
+                continue;
+            }
+            
             // 메뉴에 적합한 라우트 패턴 우선순위
             $priority = $this->getRouteMenuPriority($name);
             
@@ -444,6 +454,8 @@ class MenuService
         if (preg_match('/^[^.]+\.index$/', $routeName) || // board.index, news.index 등
             $routeName === 'home' || 
             $routeName === 'welcome' ||
+            $routeName === 'sermons.sunday' ||  // 주일설교 메뉴
+            $routeName === 'sermons.special' || // 주일 외 설교 메뉴
             preg_match('/^[^.]+$/', $routeName)) { // 단일 레벨 라우트 (home, about 등)
             return 10;
         }
@@ -471,12 +483,18 @@ class MenuService
             'welcome' => 'Welcome Page',
             'about' => 'About Page',
             'contact' => 'Contact Page',
+            'vision' => 'Vision & Mission',
+            'senior-pastor' => 'Senior Pastor',
+            'worship-service' => 'Worship Service',
+            'leaders' => 'Church Leaders',
             'news.index' => 'News List',
             'board.index' => 'Board List',
             'gallery.index' => 'Gallery',
             'events.index' => 'Events',
             'services.index' => 'Services',
             'products.index' => 'Products',
+            'sermons.sunday' => 'Sunday Sermons (주일설교)',
+            'sermons.special' => 'Special Sermons (주일 외 설교)',
         ];
         
         if (isset($specialDescriptions[$routeName])) {

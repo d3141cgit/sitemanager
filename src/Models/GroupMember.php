@@ -17,6 +17,8 @@ class GroupMember extends Model
         'role', // 그룹 내 역할(예: manager, editor, member 등)
     ];
 
+    public $timestamps = false;
+
     public function group()
     {
         return $this->belongsTo(Group::class);
