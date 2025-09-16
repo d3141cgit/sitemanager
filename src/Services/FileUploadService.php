@@ -22,14 +22,14 @@ class FileUploadService
         
         // 첫 번째 초기화에서만 로그 남기기
         if (!static::$initialized) {
-            if ($this->useS3) {
-                Log::debug('FileUploadService initialized with S3 storage', [
-                    'bucket' => config('filesystems.disks.s3.bucket'),
-                    'region' => config('filesystems.disks.s3.region')
-                ]);
-            } else {
-                Log::debug('FileUploadService initialized with local storage');
-            }
+            // if ($this->useS3) {
+            //     Log::debug('FileUploadService initialized with S3 storage', [
+            //         'bucket' => config('filesystems.disks.s3.bucket'),
+            //         'region' => config('filesystems.disks.s3.region')
+            //     ]);
+            // } else {
+            //     Log::debug('FileUploadService initialized with local storage');
+            // }
             static::$initialized = true;
         }
     }
