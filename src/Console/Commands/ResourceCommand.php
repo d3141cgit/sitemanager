@@ -20,7 +20,14 @@ class ResourceCommand extends Command
     /**
      * The console command description.
      */
-    protected $description = 'Manage application resources and published files (CSS/JS assets, views)';
+    protected $description = 'Manage application resources and published files
+    
+    Available actions:
+    • build   - Build and optimize resources for production (adds version hash, compresses)
+    • clear   - Clear all resource caches and published files (complete reset)
+    • reset   - Reset to development mode (disable production optimizations)
+    • status  - Show current resource status and detailed statistics
+    • cleanup - Clean up old and unused asset files to free disk space';
 
     /**
      * Execute the console command.
@@ -31,28 +38,33 @@ class ResourceCommand extends Command
 
         switch ($action) {
             case 'build':
+                // 개발 모드의 리소스를 프로덕션용으로 빌드 (버전 해시 추가, 압축 등)
                 return $this->buildResources();
                 
             case 'clear':
+                // 모든 리소스 캐시와 빌드된 파일을 삭제 (완전 초기화)
                 return $this->clearResources();
                 
             case 'reset':
+                // 프로덕션 모드를 해제하고 개발 모드로 전환
                 return $this->resetResources();
                 
             case 'status':
+                // 현재 리소스 상태와 통계 정보를 표시
                 return $this->showStatus();
                 
             case 'cleanup':
+                // 오래되거나 사용하지 않는 리소스 파일을 정리
                 return $this->cleanupResources();
                 
             default:
                 $this->error("Unknown action: {$action}");
                 $this->info("Available actions:");
-                $this->info("  build   - Build resources for production");
-                $this->info("  clear   - Clear all caches and published files");
-                $this->info("  reset   - Reset to development mode");
-                $this->info("  status  - Show resource status");
-                $this->info("  cleanup - Clean up old asset files");
+                $this->info("  build   - Build and optimize resources for production deployment");
+                $this->info("  clear   - Clear all resource caches and published files (full reset)");
+                $this->info("  reset   - Reset to development mode (disable production optimizations)");
+                $this->info("  status  - Show current resource status and statistics");
+                $this->info("  cleanup - Clean up old and unused asset files");
                 return 1;
         }
     }
