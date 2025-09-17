@@ -572,9 +572,12 @@ class BoardService
         }
         // include가 없고 exclude가 있으면 exclude 적용
         elseif (!empty($excludeCategories)) {
-            $query->whereNotIn('category', $excludeCategories);
+            $query->where(function($q) use ($excludeCategories) {
+                $q->whereNull('category')
+                  ->orWhereNotIn('category', $excludeCategories);
+            });
         }
-        
+
         return $query->ordered()->get();
     }
 
