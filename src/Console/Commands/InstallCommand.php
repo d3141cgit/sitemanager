@@ -46,7 +46,7 @@ class InstallCommand extends Command
     }
 
     /**
-     * 기존 Laravel 마이그레이션을 백업합니다.
+     * 기존 Laravel 마이그레이션을 백업하고 SiteManager 전용으로 정리합니다.
      */
     protected function backupExistingMigrations(): void
     {
@@ -66,6 +66,10 @@ class InstallCommand extends Command
             return;
         }
         
+        $this->warn('📋 Found existing migrations (Laravel defaults like users/cache/jobs not needed for SiteManager)');
+        $this->line('   💡 SiteManager uses Member model and file-based cache/queue');
+        $this->newLine();
+        
         if ($this->option('force') || $this->confirm('🗂️  Backup existing migrations to migrations.backup?', true)) {
             // 백업 폴더가 이미 있으면 제거
             if (is_dir($backupPath)) {
@@ -79,6 +83,7 @@ class InstallCommand extends Command
             File::makeDirectory($migrationPath, 0755, true);
             
             $this->info("   ✅ Backed up " . count($files) . " migration files to migrations.backup/");
+            $this->line('   📝 Starting fresh with SiteManager-only migrations');
         } else {
             $this->line('   ⏭️  Skipped migration backup.');
         }
@@ -103,11 +108,71 @@ class InstallCommand extends Command
     }
 
     /**
-     * 마이그레이션을 발행하고 실행합니다.
+     * SiteManager 마이그레이션을 직접 실행합니다.
      */
     protected function publishAndRunMigrations(): void
     {
-        $this->info('🔄 Publishing and running migrations...');
+        $this->info('🔄 Running SiteManager migrations...');
+        
+        // 패키지 마이그레이션 경로 자동 감지
+        $migrationPath = $this->getPackageMigrationPath();
+        
+        if (!$migrationPath || !is_dir($migrationPath)) {
+            $this->error('   ❌ SiteManager migration path not found. Falling back to publish method.');
+            $this->fallbackToPublishMethod();
+            return;
+        }
+        
+        // vendor 내의 마이그레이션을 직접 실행
+        Artisan::call('migrate', [
+            '--path' => $migrationPath,
+            '--force' => $this->option('force')
+        ]);
+        
+        $this->line('   ✅ SiteManager migrations executed successfully');
+        $this->line('   📁 Migration path: ' . $migrationPath);
+        $this->newLine();
+    }
+
+    /**
+     * 패키지 마이그레이션 경로를 자동으로 감지합니다.
+     */
+    protected function getPackageMigrationPath(): ?string
+    {
+        // 1. 현재 파일 기준으로 상대 경로 계산 (개발환경)
+        $relativePath = __DIR__ . '/../../../database/migrations';
+        if (is_dir($relativePath)) {
+            return realpath($relativePath);
+        }
+        
+        // 2. Composer vendor 경로 (설치된 패키지)
+        $vendorPath = base_path('vendor/d3141cgit/sitemanager/database/migrations');
+        if (is_dir($vendorPath)) {
+            return $vendorPath;
+        }
+        
+        // 3. 패키지 디스커버리를 통한 경로 찾기
+        try {
+            $reflection = new \ReflectionClass(\SiteManager\SiteManagerServiceProvider::class);
+            $packagePath = dirname($reflection->getFileName());
+            $migrationPath = $packagePath . '/../database/migrations';
+            
+            if (is_dir($migrationPath)) {
+                return realpath($migrationPath);
+            }
+        } catch (\Exception $e) {
+            // 실패시 null 반환
+        }
+        
+        return null;
+    }
+
+    /**
+     * 직접 실행이 실패했을 때 기존 방식으로 대체합니다.
+     */
+    protected function fallbackToPublishMethod(): void
+    {
+        $this->warn('   ⚠️  Using fallback: publish and execute method');
         
         // 마이그레이션 발행
         Artisan::call('vendor:publish', [
@@ -121,7 +186,6 @@ class InstallCommand extends Command
         ]);
         
         $this->line('   ✅ SiteManager migrations published and executed');
-        $this->newLine();
     }
 
     /**
@@ -170,11 +234,11 @@ class InstallCommand extends Command
         $this->newLine();
         
         $this->line('📋 <comment>What was done:</comment>');
-        $this->line('   • Backed up existing Laravel migrations');
+        $this->line('   • Backed up existing Laravel migrations (users/cache/jobs not needed)');
         $this->line('   • Published SiteManager configuration files');
-        $this->line('   • Published and ran SiteManager migrations');
+        $this->line('   • Executed SiteManager migrations from vendor directory');
         $this->line('   • Restored language data from SQL dump');
-        $this->line('   • Published admin images');
+        $this->line('   • Published SiteManager images');
         $this->line('   • Backed up original routes and created new web.php');
         $this->newLine();
         
