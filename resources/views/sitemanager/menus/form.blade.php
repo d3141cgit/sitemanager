@@ -70,9 +70,22 @@
                             <option value="">{{ t('Select a route') }}</option>
                             @if(isset($availableRoutes) && count($availableRoutes) > 0)
                                 @foreach($availableRoutes as $route)
+                                    @php
+                                        $isSelected = false;
+                                        if (isset($menu) && $menu->target) {
+                                            // 일반 라우트 이름과 직접 비교
+                                            if ($route['name'] === $menu->target) {
+                                                $isSelected = true;
+                                            }
+                                            // 커스텀 경로의 경우 기본 라우트 이름과 비교
+                                            elseif (isset($baseRouteName) && $route['name'] === $baseRouteName) {
+                                                $isSelected = true;
+                                            }
+                                        }
+                                    @endphp
                                     <option value="{{ $route['name'] }}" 
                                             data-uri="{{ $route['uri'] }}"
-                                            {{ old('target', isset($menu) ? $menu->target : '') == $route['name'] ? 'selected' : '' }}>
+                                            {{ $isSelected ? 'selected' : '' }}>
                                         {{ $route['description'] }} ({{ $route['name'] }})
                                     </option>
                                 @endforeach
@@ -88,19 +101,7 @@
                         </div>
                         
                         @if(isset($menu) && $menu->type === 'route' && $menu->target)
-                            @php
-                                $currentRouteExists = false;
-                                if(isset($availableRoutes)) {
-                                    foreach($availableRoutes as $route) {
-                                        if($route['name'] === $menu->target) {
-                                            $currentRouteExists = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                            @endphp
-                            
-                            @if(!$currentRouteExists)
+                            @if(isset($currentRouteExists) && !$currentRouteExists)
                                 <div class="alert alert-warning mt-2" id="invalid-route-warning">
                                     <i class="bi bi-exclamation-triangle me-2"></i>
                                     <strong>{{ t('Warning') }}:</strong> {{ t('The current route') }} "<code>{{ $menu->target }}</code>" {{ t('no longer exists in the application.') }}
@@ -122,19 +123,7 @@
                         <div class="form-text" id="target-help">{{ t('Please select menu type first.') }}</div>
                         
                         @if(isset($menu) && $menu->type === 'route' && $menu->target)
-                            @php
-                                $currentRouteExists = false;
-                                if(isset($availableRoutes)) {
-                                    foreach($availableRoutes as $route) {
-                                        if($route['name'] === $menu->target) {
-                                            $currentRouteExists = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                            @endphp
-                            
-                            @if(!$currentRouteExists)
+                            @if(isset($currentRouteExists) && !$currentRouteExists)
                                 <div class="alert alert-danger mt-2" id="target-invalid-route-warning">
                                     <i class="bi bi-exclamation-triangle me-2"></i>
                                     <strong>{{ t('Invalid Route') }}:</strong> "<code>{{ $menu->target }}</code>" {{ t('does not exist.') }}
@@ -555,7 +544,16 @@ document.addEventListener('DOMContentLoaded', function() {
         switch(selectedType) {
             case 'route':
                 routeContainer.style.display = 'block';
-                targetContainer.style.display = 'none';
+                
+                // Check if a route is already selected and if it supports custom ID
+                const selectedRouteValue = $('#route-select').val();
+                if (selectedRouteValue) {
+                    const supportsCustomId = @json($availableRoutes ?? []).find(route => route.name === selectedRouteValue)?.supports_custom_id;
+                    targetContainer.style.display = supportsCustomId ? 'block' : 'none';
+                } else {
+                    targetContainer.style.display = 'none';
+                }
+                
                 if (routeWarning) routeWarning.style.display = 'block';
                 if (targetWarning) targetWarning.style.display = 'none';
                 break;
@@ -611,7 +609,50 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedOption = e.target.selectedOptions[0];
         
         if (selectedData.id && targetField) {
-            targetField.value = selectedData.id;
+            // Check if this route supports custom ID
+            const supportsCustomId = @json($availableRoutes ?? []).find(route => route.name === selectedData.id)?.supports_custom_id;
+            
+            if (supportsCustomId) {
+                // For routes that support custom ID, show target field for editing
+                targetContainer.style.display = 'block';
+                targetField.value = selectedData.id; // Set default route name
+                
+                // Get the actual route URI pattern from the selected option
+                const routeUri = selectedOption.dataset.uri || '';
+                const examplePath = routeUri ? `/${routeUri.replace('{menuId?}', 'sunday1team')}` : '/music/sunday1team';
+                
+                targetField.placeholder = `e.g., ${selectedData.id} or ${examplePath}`;
+                targetField.required = true;
+                if (targetHelp) {
+                    targetHelp.innerHTML = '<i class="bi bi-info-circle me-1"></i>' + 
+                        '{{ t("This route supports custom menu ID. You can use the route name (") }}' + selectedData.id + 
+                        '{{ t(") or specify a custom path like ") }}' + examplePath + '"';
+                }
+                
+                // Add custom ID notice
+                const customIdNotice = targetContainer.querySelector('.custom-id-notice') || document.createElement('div');
+                customIdNotice.className = 'custom-id-notice alert alert-info mt-2 small';
+                customIdNotice.innerHTML = `
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>{{ t("Custom Menu ID Support") }}:</strong><br>
+                    • {{ t("Use route name") }}: <code>${selectedData.id}</code> {{ t("(default behavior)") }}<br>
+                    • {{ t("Use custom path") }}: <code>${examplePath}</code> {{ t("(for team-specific menus)") }}<br>
+                    • {{ t("Route pattern") }}: <code>/${routeUri}</code>
+                `;
+                if (!targetContainer.querySelector('.custom-id-notice')) {
+                    targetContainer.appendChild(customIdNotice);
+                }
+            } else {
+                // For regular routes, hide target field and set value automatically
+                targetField.value = selectedData.id;
+                targetContainer.style.display = 'none';
+                
+                // Remove custom ID notice if exists
+                const customIdNotice = targetContainer.querySelector('.custom-id-notice');
+                if (customIdNotice) {
+                    customIdNotice.remove();
+                }
+            }
             
             // Check if board.index route is selected and validate board connection
             if (selectedData.id === 'board.index') {
@@ -715,6 +756,18 @@ document.addEventListener('DOMContentLoaded', function() {
             if (routeInfo) {
                 routeInfo.remove();
             }
+            
+            // Remove custom ID notice if exists
+            const customIdNotice = targetContainer.querySelector('.custom-id-notice');
+            if (customIdNotice) {
+                customIdNotice.remove();
+            }
+            
+            // Hide target container
+            targetContainer.style.display = 'block';
+            if (targetHelp) {
+                targetHelp.textContent = '{{ t("Please select a route first.") }}';
+            }
         }
     });
     
@@ -734,6 +787,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     routeInfo.innerHTML = `<i class="bi bi-check-circle me-1"></i>Selected: <code>${routeSelectValue}</code> → <code>/${uri}</code>`;
                     routeContainer.appendChild(routeInfo);
                 }
+            }
+            
+            // Check if this route supports custom ID and show target field if needed
+            const supportsCustomId = @json($availableRoutes ?? []).find(route => route.name === routeSelectValue)?.supports_custom_id;
+            if (supportsCustomId) {
+                targetContainer.style.display = 'block';
+                
+                // Get the actual route URI pattern
+                const routeUri = selectedOption ? selectedOption.dataset.uri : '';
+                const examplePath = routeUri ? `/${routeUri.replace('{menuId?}', 'sunday1team')}` : '/music/sunday1team';
+                
+                // Check if current target is a custom path (starts with /)
+                const isCustomPath = targetField.value && targetField.value.startsWith('/');
+                
+                if (targetHelp) {
+                    targetHelp.innerHTML = '<i class="bi bi-info-circle me-1"></i>' + 
+                        '{{ t("This route supports custom menu ID. You can use the route name (") }}' + routeSelectValue + 
+                        '{{ t(") or specify a custom path like ") }}' + examplePath + '"';
+                }
+                
+                // Add custom ID notice for existing menu
+                const customIdNotice = document.createElement('div');
+                customIdNotice.className = 'custom-id-notice alert alert-info mt-2 small';
+                customIdNotice.innerHTML = `
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>{{ t("Custom Menu ID Support") }}:</strong><br>
+                    • {{ t("Use route name") }}: <code>${routeSelectValue}</code> {{ t("(default behavior)") }}<br>
+                    • {{ t("Use custom path") }}: <code>${examplePath}</code> {{ t("(for team-specific menus)") }}<br>
+                    • {{ t("Route pattern") }}: <code>/${routeUri}</code>
+                    ${isCustomPath ? '<br><strong>{{ t("Current") }}:</strong> {{ t("Using custom path") }} <code>' + targetField.value + '</code>' : ''}
+                `;
+                targetContainer.appendChild(customIdNotice);
             }
             
             // Check board connection if board.index is already selected

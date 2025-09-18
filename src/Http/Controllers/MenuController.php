@@ -155,7 +155,26 @@ class MenuController extends Controller
         $availableRoutes = $this->menuService->getAvailableRoutes();
         $menuPermissions = $this->menuService->getMenuPermissions($menu->id);
         
-        return view('sitemanager::sitemanager.menus.form', compact('menu', 'availableRoutes', 'menuPermissions'));
+        // 현재 메뉴의 라우트가 유효한지 확인
+        $currentRouteExists = false;
+        $baseRouteName = null;
+        
+        if ($menu->type === 'route' && $menu->target) {
+            $currentRouteExists = $this->menuService->routeExists($menu->target);
+            
+            // 커스텀 경로인 경우 기본 라우트 이름 찾기
+            if (str_starts_with($menu->target, '/')) {
+                $baseRouteName = $this->menuService->findBaseRouteForCustomPath($menu->target);
+            }
+        }
+        
+        return view('sitemanager::sitemanager.menus.form', compact(
+            'menu', 
+            'availableRoutes', 
+            'menuPermissions', 
+            'currentRouteExists',
+            'baseRouteName'
+        ));
     }
     
     /**

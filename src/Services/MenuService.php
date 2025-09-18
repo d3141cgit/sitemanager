@@ -322,12 +322,60 @@ class MenuService
     }
     
     /**
+     * 현재 메뉴에서 사용 중인 라우트들 조회
+     */
+    private function getUsedRoutes(): array
+    {
+        return Menu::where('type', 'route')
+            ->whereNotNull('target')
+            ->pluck('target')
+            ->toArray();
+    }
+    
+    /**
+     * 라우트가 다중 사용 가능한지 확인 (menuId 패턴 또는 board.index)
+     */
+    private function isMultiUseRoute(string $routeName): bool
+    {
+        // board.index는 특별히 다중 사용 허용
+        if ($routeName === 'board.index') {
+            return true;
+        }
+        
+        // 라우트 URI에서 {menuId?} 패턴 확인
+        try {
+            $route = Route::getRoutes()->getByName($routeName);
+            if ($route) {
+                return $this->supportsCustomId($route->uri());
+            }
+        } catch (\Exception $e) {
+            // 라우트를 찾을 수 없는 경우
+        }
+        
+        return false;
+    }
+    
+    /**
+     * 라우트가 커스텀 ID를 지원하는지 확인
+     */
+    private function supportsCustomId(string $uri): bool
+    {
+        // {menuId?} 패턴을 찾기
+        return str_contains($uri, '{menuId?}') || 
+               str_contains($uri, '{id?}') ||
+               str_contains($uri, '{customId?}');
+    }
+
+    /**
      * 라우트 목록 조회 (메뉴에 적합한 라우트만)
      */
     public function getAvailableRoutes(): array
     {
         $routes = Route::getRoutes();
         $routeData = [];
+        
+        // 현재 사용 중인 라우트들 조회
+        $usedRoutes = $this->getUsedRoutes();
         
         foreach ($routes as $route) {
             $name = $route->getName();
@@ -422,16 +470,34 @@ class MenuService
                 continue;
             }
             
+            // 다중 사용 가능한 라우트인지 확인
+            $isMultiUse = $this->isMultiUseRoute($name);
+            $supportsCustomId = $this->supportsCustomId($route->uri());
+            
+            // 이미 사용 중인 라우트는 다중 사용 가능한 경우에만 포함
+            if (in_array($name, $usedRoutes) && !$isMultiUse) {
+                continue;
+            }
+            
             // 메뉴에 적합한 라우트 패턴 우선순위
             $priority = $this->getRouteMenuPriority($name);
             
-            $routeData[] = [
+            $routeInfo = [
                 'name' => $name,
                 'uri' => $route->uri(),
                 'methods' => $methods,
                 'priority' => $priority,
-                'description' => $this->generateRouteDescription($name, $route->uri())
+                'description' => $this->generateRouteDescription($name, $route->uri()),
+                'supports_custom_id' => $supportsCustomId,
+                'is_multi_use' => $isMultiUse,
             ];
+            
+            // 커스텀 ID 지원하는 경우 추가 정보 제공
+            if ($supportsCustomId) {
+                $routeInfo['custom_id_note'] = 'This route supports custom menu ID parameter. You can specify a custom path like /music/sunday1team';
+            }
+            
+            $routeData[] = $routeInfo;
         }
         
         // 우선순위와 이름으로 정렬 (우선순위 높은 것 먼저, 같으면 이름순)
@@ -520,10 +586,72 @@ class MenuService
     public function routeExists(string $routeName): bool
     {
         try {
+            // 커스텀 경로인지 확인 (슬래시로 시작하는 경우)
+            if (str_starts_with($routeName, '/')) {
+                // 커스텀 경로의 경우 기본 라우트 패턴과 매칭되는지 확인
+                return $this->isValidCustomPath($routeName);
+            }
+            
+            // 일반 라우트 이름인 경우
             return Route::has($routeName);
         } catch (\Exception $e) {
             return false;
         }
+    }
+    
+    /**
+     * 커스텀 경로가 유효한지 확인
+     */
+    private function isValidCustomPath(string $customPath): bool
+    {
+        // 사용 가능한 라우트들 중에서 {menuId?} 패턴을 가진 라우트 찾기
+        $routes = Route::getRoutes();
+        
+        foreach ($routes as $route) {
+            $routeName = $route->getName();
+            $routeUri = $route->uri();
+            
+            // menuId 패턴을 가진 라우트만 확인
+            if ($routeName && $this->supportsCustomId($routeUri)) {
+                // 라우트 패턴에서 {menuId?}를 제거한 기본 패턴
+                $basePattern = str_replace('{menuId?}', '', $routeUri);
+                $basePattern = rtrim($basePattern, '/');
+                
+                // 커스텀 경로가 이 기본 패턴으로 시작하는지 확인
+                if (str_starts_with($customPath, '/' . $basePattern)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * 커스텀 경로에 해당하는 기본 라우트 이름 찾기
+     */
+    public function findBaseRouteForCustomPath(string $customPath): ?string
+    {
+        $routes = Route::getRoutes();
+        
+        foreach ($routes as $route) {
+            $routeName = $route->getName();
+            $routeUri = $route->uri();
+            
+            // menuId 패턴을 가진 라우트만 확인
+            if ($routeName && $this->supportsCustomId($routeUri)) {
+                // 라우트 패턴에서 {menuId?}를 제거한 기본 패턴
+                $basePattern = str_replace('{menuId?}', '', $routeUri);
+                $basePattern = rtrim($basePattern, '/');
+                
+                // 커스텀 경로가 이 기본 패턴으로 시작하는지 확인
+                if (str_starts_with($customPath, '/' . $basePattern)) {
+                    return $routeName;
+                }
+            }
+        }
+        
+        return null;
     }
 
     /**

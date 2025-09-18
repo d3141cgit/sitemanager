@@ -182,12 +182,12 @@ main { padding: 2rem 0; }
 .default-form.card .card-header { outline: solid 1px var(--bs-dark); }
 .default-form.card .card-header h4 { margin: 0; font-family: var(--font-gothic); font-weight: 500; }
 
-.default-form .form-label { font-weight: 500; font-size: 0.7rem; color: var(--bs-gray-500); line-height: 1; margin-bottom: 0; }
+.default-form .form-label { font-weight: 500; font-size: 0.7rem; color: var(--bs-orange); line-height: 1; margin-bottom: 0; }
 .default-form .form-control, .default-form .form-select { background-color: var(--bs-gray-100); border-color: var(--bs-gray-100); color: #000; font-weight: 500; }
 .default-form .form-control::placeholder { color: var(--bs-info); }
 .form-control:focus, .form-select:focus { box-shadow: none; border-color: var(--bs-red); }
 
-.default-form .form-group { margin-bottom: 1.5rem; }
+.default-form .form-group { margin-bottom: 2.5rem; }
 .default-form .form-text { font-size: 0.8rem; color: var(--bs-gray-600); }
 
 .default-form .groups { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
