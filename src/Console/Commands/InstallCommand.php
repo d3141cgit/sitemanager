@@ -126,20 +126,76 @@ class InstallCommand extends Command
         $this->line('   📁 Migration path found: ' . $migrationPath);
         
         try {
+            // 마이그레이션 파일 목록 확인
+            $migrationFiles = glob($migrationPath . '/*.php');
+            $this->line('   📄 Found ' . count($migrationFiles) . ' migration files');
+            
+            if (empty($migrationFiles)) {
+                throw new \Exception('No migration files found in the path');
+            }
+            
             // vendor 내의 마이그레이션을 직접 실행
-            Artisan::call('migrate', [
+            $this->line('   🔄 Executing migrations...');
+            $exitCode = Artisan::call('migrate', [
                 '--path' => $migrationPath,
-                '--force' => $this->option('force')
+                '--force' => $this->option('force'),
+                '--verbose' => true
             ]);
             
-            $this->line('   ✅ SiteManager migrations executed successfully');
+            // 마이그레이션 결과 확인
+            $output = Artisan::output();
+            if ($exitCode !== 0) {
+                throw new \Exception('Migration command failed with exit code: ' . $exitCode);
+            }
+            
+            // 실제 테이블 생성 확인
+            $this->line('   🔍 Verifying table creation...');
+            $createdTables = $this->verifyTablesCreated();
+            
+            if (count($createdTables) > 0) {
+                $this->line('   ✅ SiteManager migrations executed successfully');
+                $this->line('   📊 Created tables: ' . implode(', ', $createdTables));
+            } else {
+                throw new \Exception('No tables were created despite successful migration command');
+            }
+            
+            // 마이그레이션 출력 표시 (디버깅용)
+            if (!empty(trim($output))) {
+                $this->line('   📝 Migration output:');
+                foreach (explode("\n", trim($output)) as $line) {
+                    if (!empty(trim($line))) {
+                        $this->line('      ' . $line);
+                    }
+                }
+            }
+            
         } catch (\Exception $e) {
             $this->warn('   ⚠️  Direct migration failed: ' . $e->getMessage());
-            $this->line('   � Trying publish method as fallback...');
+            $this->line('   💡 Trying publish method as fallback...');
             $this->publishMigrationsAndRun();
         }
         
         $this->newLine();
+    }
+
+    /**
+     * 실제로 테이블이 생성되었는지 확인합니다.
+     */
+    protected function verifyTablesCreated(): array
+    {
+        $expectedTables = [
+            'migrations', 'languages', 'members', 'menus', 'boards', 'posts', 
+            'groups', 'group_members', 'menu_permissions', 'site_configs'
+        ];
+        
+        $createdTables = [];
+        foreach ($expectedTables as $table) {
+            if (DB::getSchemaBuilder()->hasTable($table)) {
+                $createdTables[] = $table;
+            }
+        }
+        
+        return $createdTables;
     }
 
     /**
@@ -157,11 +213,36 @@ class InstallCommand extends Command
             
             // 발행된 마이그레이션 실행
             $this->line('   🔄 Running published migrations...');
-            Artisan::call('migrate', [
-                '--force' => $this->option('force')
+            $exitCode = Artisan::call('migrate', [
+                '--force' => $this->option('force'),
+                '--verbose' => true
             ]);
             
-            $this->line('   ✅ Migrations published and executed successfully');
+            $output = Artisan::output();
+            if ($exitCode !== 0) {
+                throw new \Exception('Migration command failed with exit code: ' . $exitCode);
+            }
+            
+            // 실제 테이블 생성 확인
+            $this->line('   🔍 Verifying table creation...');
+            $createdTables = $this->verifyTablesCreated();
+            
+            if (count($createdTables) > 0) {
+                $this->line('   ✅ Migrations published and executed successfully');
+                $this->line('   📊 Created tables: ' . implode(', ', $createdTables));
+            } else {
+                throw new \Exception('No tables were created despite successful migration command');
+            }
+            
+            // 마이그레이션 출력 표시 (디버깅용)
+            if (!empty(trim($output))) {
+                $this->line('   📝 Migration output:');
+                foreach (explode("\n", trim($output)) as $line) {
+                    if (!empty(trim($line))) {
+                        $this->line('      ' . $line);
+                    }
+                }
+            }
             
         } catch (\Exception $e) {
             $this->error('   ❌ Migration execution failed: ' . $e->getMessage());
@@ -300,15 +381,25 @@ class InstallCommand extends Command
     protected function checkTablesExist(): bool
     {
         $requiredTables = ['languages', 'menus', 'members'];
+        $missingTables = [];
+        $existingTables = [];
         
         foreach ($requiredTables as $table) {
             if (!DB::getSchemaBuilder()->hasTable($table)) {
+                $missingTables[] = $table;
                 $this->line("   ❌ Table '{$table}' not found");
-                return false;
+            } else {
+                $existingTables[] = $table;
+                $this->line("   ✅ Table '{$table}' exists");
             }
         }
         
-        $this->line('   ✅ All required tables exist');
+        if (!empty($missingTables)) {
+            $this->warn('   ⚠️  Missing tables: ' . implode(', ', $missingTables));
+            return false;
+        }
+        
+        $this->line('   ✅ All required tables exist: ' . implode(', ', $existingTables));
         return true;
     }
 
