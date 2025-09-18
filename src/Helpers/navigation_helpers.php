@@ -76,13 +76,31 @@ if (!function_exists('get_menu_url')) {
         switch ($menu['type']) {
             case 'route':
                 try {
-                    $routeName = $menu['target'];
+                    $target = $menu['target'];
                     
-                    // 라우트에 필요한 파라미터 처리
+                    // 커스텀 경로인지 확인 (/ 로 시작하면 커스텀 경로)
+                    if (str_starts_with($target, '/')) {
+                        // 커스텀 경로는 그대로 반환
+                        return $target;
+                    }
+                    
+                    // 라우트명인 경우
+                    $routeName = $target;
                     $routeParams = [];
                     
+                    // 커스텀 ID 지원 라우트인지 확인
+                    try {
+                        $route = \Illuminate\Support\Facades\Route::getRoutes()->getByName($routeName);
+                        if ($route && str_contains($route->uri(), '{menuId?}')) {
+                            // 현재 메뉴 ID를 menuId 파라미터로 추가
+                            $routeParams['menuId'] = $menu['id'] ?? null;
+                        }
+                    } catch (\Exception $e) {
+                        // 라우트가 없어도 계속 진행
+                    }
+                    
                     // board.index의 경우 연결된 게시판의 slug 파라미터가 필요
-                    if ($routeName === 'board.index') {
+                    if ($routeName === 'board.index' && !isset($routeParams['slug'])) {
                         $menuId = $menu['id'] ?? null;
                         if ($menuId) {
                             $board = \SiteManager\Models\Board::where('menu_id', $menuId)->first();
@@ -99,15 +117,13 @@ if (!function_exists('get_menu_url')) {
                         }
                     }
                     
-                    // 기타 파라미터가 필요한 라우트들을 여기에 추가 가능
-                    
                     return route($routeName, $routeParams);
                 } catch (Exception $e) {
-                    // Log::warning("Failed to generate route URL for menu", [
-                    //     'menu_target' => $menu['target'] ?? 'unknown',
-                    //     'menu_id' => $menu['id'] ?? 'unknown',
-                    //     'error' => $e->getMessage()
-                    // ]);
+                    Log::warning("Failed to generate route URL for menu", [
+                        'menu_target' => $menu['target'] ?? 'unknown',
+                        'menu_id' => $menu['id'] ?? 'unknown',
+                        'error' => $e->getMessage()
+                    ]);
                     return '#';
                 }
                 

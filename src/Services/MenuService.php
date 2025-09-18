@@ -125,6 +125,9 @@ class MenuService
         // 메뉴 변경 시 권한 캐시 리셋
         app('SiteManager\\Services\\PermissionService')->clearPermissionCache();
         
+        // 네비게이션 캐시 리셋
+        \SiteManager\Http\View\Composers\NavigationComposer::clearCache();
+        
         // 안전한 방식으로 최신 데이터 반환
         try {
             return $menu->fresh();
@@ -292,6 +295,9 @@ class MenuService
         if ($result) {
             // 메뉴 변경 시 권한 캐시 리셋
             app('SiteManager\\Services\\PermissionService')->clearPermissionCache();
+            
+            // 네비게이션 캐시 리셋
+            \SiteManager\Http\View\Composers\NavigationComposer::clearCache();
         }
         return $result;
     }
@@ -317,6 +323,9 @@ class MenuService
         if ($result) {
             // 메뉴 삭제 시 권한 캐시 리셋
             app('SiteManager\\Services\\PermissionService')->clearPermissionCache();
+            
+            // 네비게이션 캐시 리셋
+            \SiteManager\Http\View\Composers\NavigationComposer::clearCache();
         }
         return $result;
     }

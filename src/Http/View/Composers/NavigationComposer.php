@@ -151,7 +151,21 @@ class NavigationComposer
         $currentUrl = Request::url();
         $currentPath = Request::path();
         
-        // 1. 정확한 라우트명 매칭
+        // 1. 커스텀 경로 매칭 (/ 로 시작하는 target)
+        $customPathMatch = $menus->filter(function($menu) use ($currentPath) {
+            if ($menu && $menu->type === 'route' && $menu->target && str_starts_with($menu->target, '/')) {
+                $menuPath = ltrim($menu->target, '/');
+                $currentPathClean = ltrim($currentPath, '/');
+                return $menuPath === $currentPathClean;
+            }
+            return false;
+        })->first();
+        
+        if ($customPathMatch) {
+            return $customPathMatch;
+        }
+        
+        // 2. 정확한 라우트명 매칭
         $exactMatch = $menus->filter(function($menu) use ($currentRouteName) {
             return $menu && $menu->type === 'route' && $menu->target === $currentRouteName;
         })->first();
@@ -160,7 +174,25 @@ class NavigationComposer
             return $exactMatch;
         }
         
-        // 2. URL 패턴 매칭
+        // 3. menuId 파라미터를 사용한 라우트 매칭
+        if ($currentRouteName) {
+            $menuIdFromRoute = request()->route('menuId');
+            if ($menuIdFromRoute) {
+                $menuIdMatch = $menus->filter(function($menu) use ($currentRouteName, $menuIdFromRoute) {
+                    if ($menu && $menu->type === 'route' && $menu->id == $menuIdFromRoute) {
+                        // 라우트명이 target과 일치하거나, target이 커스텀 경로인 경우
+                        return $menu->target === $currentRouteName || str_starts_with($menu->target, '/');
+                    }
+                    return false;
+                })->first();
+                
+                if ($menuIdMatch) {
+                    return $menuIdMatch;
+                }
+            }
+        }
+        
+        // 4. URL 패턴 매칭
         $urlMatch = $menus->filter(function($menu) use ($currentUrl, $currentPath) {
             if ($menu && $menu->type === 'url' && $menu->target) {
                 $menuUrl = $menu->target;
@@ -180,7 +212,7 @@ class NavigationComposer
             return $urlMatch;
         }
         
-        // 3. 패턴 매칭 (예: /about/* 패턴으로 /about/edm-korean-global-campus 매칭)
+        // 5. 패턴 매칭 (예: /about/* 패턴으로 /about/edm-korean-global-campus 매칭)
         $patternMatch = $menus->filter(function($menu) use ($currentPath) {
             if ($menu && $menu->type === 'url' && $menu->target) {
                 $menuPath = ltrim($menu->target, '/');
@@ -326,7 +358,16 @@ class NavigationComposer
         switch ($menu->type) {
             case 'route':
                 try {
-                    $routeName = $menu->target;
+                    $target = $menu->target;
+                    
+                    // 커스텀 경로인지 확인 (/ 로 시작하면 커스텀 경로)
+                    if (str_starts_with($target, '/')) {
+                        // 커스텀 경로는 그대로 반환
+                        return $target;
+                    }
+                    
+                    // 라우트명인 경우 기존 로직 사용
+                    $routeName = $target;
                     $routeParameters = [];
                     
                     // 메뉴의 route_parameters 속성이 있으면 사용
@@ -334,6 +375,17 @@ class NavigationComposer
                         $routeParameters = is_array($menu->route_parameters) 
                             ? $menu->route_parameters 
                             : json_decode($menu->route_parameters, true) ?? [];
+                    }
+                    
+                    // 커스텀 ID 지원 라우트인지 확인 ({menuId?} 패턴)
+                    try {
+                        $route = \Illuminate\Support\Facades\Route::getRoutes()->getByName($routeName);
+                        if ($route && str_contains($route->uri(), '{menuId?}')) {
+                            // 현재 메뉴 ID를 menuId 파라미터로 추가
+                            $routeParameters['menuId'] = $menu->id;
+                        }
+                    } catch (\Exception $e) {
+                        // 라우트가 없어도 계속 진행
                     }
                     
                     // board.index의 경우 연결된 게시판의 slug 파라미터가 필요
@@ -353,6 +405,7 @@ class NavigationComposer
                     
                     return route($routeName, $routeParameters);
                 } catch (\Exception $e) {
+                    Log::warning("Failed to generate route URL for menu {$menu->id}: " . $e->getMessage());
                     return '#';
                 }
             case 'url':
@@ -531,17 +584,29 @@ class NavigationComposer
     }
 
     /**
+     * 캐시 무효화 메서드
+     */
+    public static function clearCache(): void
+    {
+        static::$composerCache = [];
+    }
+
+    /**
      * 요청 기반 캐시 키 생성 (뷰 데이터 무관)
      */
     private function generateRequestCacheKey(): string
     {
         $user = Auth::user();
         
+        // 메뉴 테이블의 최신 업데이트 시간 추가
+        $menuLastUpdate = \SiteManager\Models\Menu::max('updated_at');
+        
         // 요청 레벨의 핵심 정보만 사용
         $keyParts = [
             'user_id' => $user ? $user->id : 'guest',
             'route' => Route::currentRouteName() ?? 'unknown',
             'url_path' => parse_url(Request::url(), PHP_URL_PATH), // 도메인 제외, 경로만
+            'menu_update' => $menuLastUpdate ? strtotime($menuLastUpdate) : 0, // 메뉴 변경 감지
         ];
         
         return 'nav_composer_req_' . md5(serialize($keyParts));
