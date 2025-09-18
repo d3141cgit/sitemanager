@@ -20,6 +20,18 @@ class InstallCommand extends Command
         $this->info('🚀 Installing SiteManager Package...');
         $this->newLine();
         
+        // 0. 설치 상태 확인
+        if ($this->isAlreadyInstalled()) {
+            $this->warn('⚠️  SiteManager appears to be already installed.');
+            
+            if (!$this->option('force') && !$this->confirm('🔄 Proceed with reinstallation?', false)) {
+                $this->line('❌ Installation cancelled.');
+                return 1;
+            }
+            
+            $this->line('🔄 Proceeding with reinstallation...');
+        }
+        
         // 1. 기존 마이그레이션 백업
         $this->backupExistingMigrations();
         
@@ -39,10 +51,38 @@ class InstallCommand extends Command
         $this->info('🏠 Setting up home route...');
         $this->setupHomeRoute();
         
-        // 7. 완료 메시지
+        // 7. 설치 후 정리
+        $this->cleanupAfterInstallation();
+        
+        // 8. 완료 메시지
         $this->displayCompletionMessage();
         
         return 0;
+    }
+
+    /**
+     * SiteManager가 이미 설치되었는지 확인합니다.
+     */
+    protected function isAlreadyInstalled(): bool
+    {
+        try {
+            // 주요 테이블들 확인
+            $requiredTables = ['menus', 'members', 'languages'];
+            $existingTables = [];
+            
+            foreach ($requiredTables as $table) {
+                if (DB::getSchemaBuilder()->hasTable($table)) {
+                    $existingTables[] = $table;
+                }
+            }
+            
+            // 모든 주요 테이블이 존재하면 설치됨으로 간주
+            return count($existingTables) === count($requiredTables);
+            
+        } catch (\Exception $e) {
+            // DB 연결 문제 등이 있으면 설치되지 않은 것으로 간주
+            return false;
+        }
     }
 
     /**
@@ -125,6 +165,11 @@ class InstallCommand extends Command
         
         $this->line('   📁 Migration path found: ' . $migrationPath);
         
+        // Laravel이 절대 경로를 인식하지 못하는 문제가 있으므로 
+        // 마이그레이션을 먼저 publish한 후 실행하는 방식으로 변경
+        $this->warn('   💡 Using publish method for better compatibility...');
+        $this->publishMigrationsAndRun();
+        
         try {
             // 마이그레이션 파일 목록 확인
             $migrationFiles = glob($migrationPath . '/*.php');
@@ -132,6 +177,40 @@ class InstallCommand extends Command
             
             if (empty($migrationFiles)) {
                 throw new \Exception('No migration files found in the path');
+            }
+            
+            // 마이그레이션 파일 이름들 표시
+            $this->line('   📋 Migration files:');
+            foreach ($migrationFiles as $file) {
+                $filename = basename($file);
+                $this->line('      • ' . $filename);
+            }
+            
+            // 마이그레이션 상태 확인
+            $this->line('   🔍 Checking migration status...');
+            $migrationCount = $this->getMigrationRecordCount();
+            
+            if ($migrationCount > 0) {
+                $this->warn('   ⚠️  Found ' . $migrationCount . ' migration records. Clearing for fresh installation...');
+                
+                // migrations 테이블 비우기
+                DB::table('migrations')->truncate();
+                $this->line('   🗑️  Cleared migration records');
+            } else {
+                $this->line('   ✅ Migration table is empty, ready for fresh installation');
+            }
+            
+            // Laravel 마이그레이션 상태 확인
+            $this->line('   🔍 Checking Laravel migration status...');
+            $statusExitCode = Artisan::call('migrate:status', [
+                '--path' => $migrationPath
+            ]);
+            $statusOutput = Artisan::output();
+            $this->line('   📝 Migration status output:');
+            foreach (explode("\n", trim($statusOutput)) as $line) {
+                if (!empty(trim($line))) {
+                    $this->line('      ' . $line);
+                }
             }
             
             // vendor 내의 마이그레이션을 직접 실행
@@ -146,6 +225,50 @@ class InstallCommand extends Command
             $output = Artisan::output();
             if ($exitCode !== 0) {
                 throw new \Exception('Migration command failed with exit code: ' . $exitCode);
+            }
+            
+            // "Nothing to migrate" 체크
+            if (strpos($output, 'Nothing to migrate') !== false) {
+                $this->warn('   ⚠️  Laravel says "Nothing to migrate" but checking table status...');
+                
+                // migrations 테이블 레코드 확인
+                $migrationCount = $this->getMigrationRecordCount();
+                $this->line('   📊 Migration records in database: ' . $migrationCount);
+                
+                // 실제 테이블 존재 확인
+                $createdTables = $this->verifyTablesCreated();
+                $this->line('   📊 Created tables found: ' . count($createdTables));
+                
+                if (count($createdTables) <= 1 || $migrationCount === 0) { // migrations 테이블만 있거나 레코드가 없는 경우
+                    $this->line('   💡 Tables missing despite "Nothing to migrate". Forcing execution...');
+                    
+                    // migrations 테이블 완전 초기화
+                    if ($migrationCount > 0) {
+                        DB::table('migrations')->truncate();
+                        $this->line('   🗑️  Cleared migration records');
+                    }
+                    
+                    // --step 옵션으로 강제 실행
+                    $this->line('   🔄 Forcing migration with --step option...');
+                    $exitCode = Artisan::call('migrate', [
+                        '--path' => $migrationPath,
+                        '--force' => true,
+                        '--step' => true,
+                        '--verbose' => true
+                    ]);
+                    
+                    $output = Artisan::output();
+                    if ($exitCode !== 0) {
+                        throw new \Exception('Forced migration with --step failed with exit code: ' . $exitCode);
+                    }
+                    
+                    $this->line('   📝 Forced migration output:');
+                    foreach (explode("\n", trim($output)) as $line) {
+                        if (!empty(trim($line))) {
+                            $this->line('      ' . $line);
+                        }
+                    }
+                }
             }
             
             // 실제 테이블 생성 확인
@@ -199,6 +322,61 @@ class InstallCommand extends Command
     }
 
     /**
+     * migrations 테이블의 레코드 수를 확인합니다.
+     */
+    protected function getMigrationRecordCount(): int
+    {
+        try {
+            // migrations 테이블이 존재하는지 확인
+            if (!DB::getSchemaBuilder()->hasTable('migrations')) {
+                return 0;
+            }
+            
+            return DB::table('migrations')->count();
+            
+        } catch (\Exception $e) {
+            $this->line('   ⚠️  Cannot check migration count: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * 마이그레이션 상태를 확인합니다.
+     */
+    protected function checkMigrationStatus(string $migrationPath): array
+    {
+        try {
+            // migrations 테이블이 존재하는지 확인
+            if (!DB::getSchemaBuilder()->hasTable('migrations')) {
+                return [];
+            }
+            
+            // 마이그레이션 파일 목록 가져오기
+            $migrationFiles = glob($migrationPath . '/*.php');
+            $migratedFiles = [];
+            
+            foreach ($migrationFiles as $file) {
+                $filename = basename($file, '.php');
+                
+                // migrations 테이블에서 해당 마이그레이션이 실행되었는지 확인
+                $exists = DB::table('migrations')
+                    ->where('migration', $filename)
+                    ->exists();
+                    
+                if ($exists) {
+                    $migratedFiles[] = $filename;
+                }
+            }
+            
+            return $migratedFiles;
+            
+        } catch (\Exception $e) {
+            $this->line('   ⚠️  Cannot check migration status: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * 마이그레이션을 발행한 후 실행합니다 (fallback 방법).
      */
     protected function publishMigrationsAndRun(): void
@@ -223,6 +401,46 @@ class InstallCommand extends Command
                 throw new \Exception('Migration command failed with exit code: ' . $exitCode);
             }
             
+            // "Nothing to migrate" 체크 (published 버전)
+            if (strpos($output, 'Nothing to migrate') !== false) {
+                $this->warn('   ⚠️  Published migrations also show "Nothing to migrate".');
+                
+                // 발행된 마이그레이션 파일들 확인
+                $publishedMigrations = glob(database_path('migrations/????_??_??_??????_create_*_table.php'));
+                $this->line('   📋 Published migration files: ' . count($publishedMigrations));
+                
+                if (count($publishedMigrations) > 0) {
+                    foreach ($publishedMigrations as $file) {
+                        $this->line('      • ' . basename($file));
+                    }
+                    
+                    // migrations 테이블 초기화
+                    $migrationCount = $this->getMigrationRecordCount();
+                    if ($migrationCount >= 0) {
+                        DB::table('migrations')->truncate();
+                        $this->line('   🗑️  Cleared migration records');
+                    }
+                    
+                    // --seed 옵션 없이 강제 실행
+                    $this->line('   🔄 Forcing published migration without any cache...');
+                    
+                    // config cache 클리어
+                    Artisan::call('config:clear');
+                    
+                    $exitCode = Artisan::call('migrate', [
+                        '--force' => true,
+                        '--verbose' => true
+                    ]);
+                    
+                    $output = Artisan::output();
+                    if ($exitCode !== 0) {
+                        throw new \Exception('Forced published migration failed with exit code: ' . $exitCode);
+                    }
+                } else {
+                    throw new \Exception('No migration files were published to database/migrations');
+                }
+            }
+            
             // 실제 테이블 생성 확인
             $this->line('   🔍 Verifying table creation...');
             $createdTables = $this->verifyTablesCreated();
@@ -245,6 +463,18 @@ class InstallCommand extends Command
             }
             
         } catch (\Exception $e) {
+            // 테이블이 이미 존재하는 경우 처리
+            if (strpos($e->getMessage(), 'Base table or view already exists') !== false) {
+                $this->warn('   ⚠️  Tables already exist. Verifying installation...');
+                
+                $createdTables = $this->verifyTablesCreated();
+                if (count($createdTables) >= 8) { // 주요 테이블들이 존재
+                    $this->line('   ✅ All required tables already exist');
+                    $this->line('   📊 Existing tables: ' . implode(', ', $createdTables));
+                    return; // 성공적으로 처리됨
+                }
+            }
+            
             $this->error('   ❌ Migration execution failed: ' . $e->getMessage());
             throw new \Exception('Unable to execute SiteManager migrations. Installation aborted.');
         }
@@ -535,5 +765,60 @@ Route::get('/', function () {
 ";
         
         file_put_contents($webRoutesPath, $webRoutesContent);
+    }
+
+    /**
+     * 설치 완료 후 임시 파일들을 정리합니다.
+     */
+    protected function cleanupAfterInstallation(): void
+    {
+        $this->info('🧹 Cleaning up after installation...');
+        
+        $migrationPath = database_path('migrations');
+        
+        if (!is_dir($migrationPath)) {
+            $this->line('   ✅ No migration folder to clean up.');
+            $this->newLine();
+            return;
+        }
+        
+        // SiteManager 마이그레이션 파일들 식별 (2025_08_* 또는 2025_09_* 패턴)
+        $siteManagerMigrations = glob($migrationPath . '/2025_0[89]_*_create_*_table.php');
+        
+        if (empty($siteManagerMigrations)) {
+            $this->line('   ✅ No SiteManager migration files to clean up.');
+            $this->newLine();
+            return;
+        }
+        
+        $this->line('   📋 Found ' . count($siteManagerMigrations) . ' SiteManager migration files to clean up:');
+        foreach ($siteManagerMigrations as $file) {
+            $this->line('      • ' . basename($file));
+        }
+        
+        if ($this->option('force') || $this->confirm('🗑️  Remove published SiteManager migration files?', true)) {
+            $deletedCount = 0;
+            
+            foreach ($siteManagerMigrations as $file) {
+                if (File::delete($file)) {
+                    $deletedCount++;
+                }
+            }
+            
+            $this->line("   ✅ Deleted {$deletedCount} SiteManager migration files");
+            $this->line('   💡 Migration files removed, but database tables remain intact');
+            
+            // migrations 폴더가 비어있다면 새로 생성
+            $remainingFiles = File::files($migrationPath);
+            if (empty($remainingFiles)) {
+                File::deleteDirectory($migrationPath);
+                File::makeDirectory($migrationPath, 0755, true);
+                $this->line('   🔄 Recreated empty migrations folder');
+            }
+        } else {
+            $this->line('   ⏭️  Skipped migration cleanup. Files remain in database/migrations/');
+        }
+        
+        $this->newLine();
     }
 }
