@@ -168,24 +168,22 @@ class InstallCommand extends Command
     }
 
     /**
-     * 직접 실행이 실패했을 때 기존 방식으로 대체합니다.
+     * 직접 실행이 실패했을 때 에러 메시지를 표시합니다.
      */
     protected function fallbackToPublishMethod(): void
     {
-        $this->warn('   ⚠️  Using fallback: publish and execute method');
+        $this->error('   ❌ Unable to locate SiteManager migrations');
+        $this->error('   💡 Please check your package installation');
+        $this->newLine();
         
-        // 마이그레이션 발행
-        Artisan::call('vendor:publish', [
-            '--tag' => 'sitemanager-migrations',
-            '--force' => $this->option('force')
-        ]);
+        $this->line('🔍 <comment>Troubleshooting steps:</comment>');
+        $this->line('   1. Verify SiteManager package is properly installed');
+        $this->line('   2. Check vendor/d3141cgit/sitemanager exists');
+        $this->line('   3. Try reinstalling: composer require d3141cgit/sitemanager:dev-main');
+        $this->newLine();
         
-        // 마이그레이션 실행
-        Artisan::call('migrate', [
-            '--force' => $this->option('force')
-        ]);
-        
-        $this->line('   ✅ SiteManager migrations published and executed');
+        // 설치 중단
+        throw new \Exception('SiteManager migrations not found. Installation aborted.');
     }
 
     /**
