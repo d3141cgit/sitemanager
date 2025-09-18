@@ -179,10 +179,13 @@ if (!function_exists('should_show_menu')) {
         if (isset($menu['permission_required']) && $menu['permission_required'] > 0) {
             $permissionService = app(\SiteManager\Services\PermissionService::class);
             
+            $user = \Illuminate\Support\Facades\Auth::user();
+            $userId = $user ? $user->id : null;
+            
             if (!$permissionService->hasPermission(
                 $menu['id'] ?? 0, 
                 $menu['permission_required'],
-                auth()->id()
+                $userId
             )) {
                 return false;
             }
