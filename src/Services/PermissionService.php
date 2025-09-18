@@ -126,7 +126,7 @@ class PermissionService
     }
 
     /**
-     * 특정 권한이 있는지 확인합니다.
+     * 특정 권한이 있는지 확인합니다. (비트 검사)
      */
     public function hasPermission(int $userPermission, int $requiredPermission): bool
     {
