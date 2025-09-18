@@ -118,20 +118,55 @@ class InstallCommand extends Command
         $migrationPath = $this->getPackageMigrationPath();
         
         if (!$migrationPath || !is_dir($migrationPath)) {
-            $this->error('   ❌ SiteManager migration path not found. Falling back to publish method.');
-            $this->fallbackToPublishMethod();
+            $this->warn('   ⚠️  Direct migration execution failed. Trying publish method...');
+            $this->publishMigrationsAndRun();
             return;
         }
         
-        // vendor 내의 마이그레이션을 직접 실행
-        Artisan::call('migrate', [
-            '--path' => $migrationPath,
-            '--force' => $this->option('force')
-        ]);
+        $this->line('   📁 Migration path found: ' . $migrationPath);
         
-        $this->line('   ✅ SiteManager migrations executed successfully');
-        $this->line('   📁 Migration path: ' . $migrationPath);
+        try {
+            // vendor 내의 마이그레이션을 직접 실행
+            Artisan::call('migrate', [
+                '--path' => $migrationPath,
+                '--force' => $this->option('force')
+            ]);
+            
+            $this->line('   ✅ SiteManager migrations executed successfully');
+        } catch (\Exception $e) {
+            $this->warn('   ⚠️  Direct migration failed: ' . $e->getMessage());
+            $this->line('   � Trying publish method as fallback...');
+            $this->publishMigrationsAndRun();
+        }
+        
         $this->newLine();
+    }
+
+    /**
+     * 마이그레이션을 발행한 후 실행합니다 (fallback 방법).
+     */
+    protected function publishMigrationsAndRun(): void
+    {
+        try {
+            // 마이그레이션 발행
+            $this->line('   📦 Publishing migrations to database/migrations...');
+            Artisan::call('vendor:publish', [
+                '--tag' => 'sitemanager-migrations',
+                '--force' => $this->option('force')
+            ]);
+            
+            // 발행된 마이그레이션 실행
+            $this->line('   🔄 Running published migrations...');
+            Artisan::call('migrate', [
+                '--force' => $this->option('force')
+            ]);
+            
+            $this->line('   ✅ Migrations published and executed successfully');
+            
+        } catch (\Exception $e) {
+            $this->error('   ❌ Migration execution failed: ' . $e->getMessage());
+            throw new \Exception('Unable to execute SiteManager migrations. Installation aborted.');
+        }
     }
 
     /**
@@ -139,15 +174,22 @@ class InstallCommand extends Command
      */
     protected function getPackageMigrationPath(): ?string
     {
+        $possiblePaths = [];
+        
         // 1. 현재 파일 기준으로 상대 경로 계산 (개발환경)
         $relativePath = __DIR__ . '/../../../database/migrations';
+        $possiblePaths['relative'] = $relativePath;
         if (is_dir($relativePath)) {
-            return realpath($relativePath);
+            $realPath = realpath($relativePath);
+            $this->line('   ✅ Found migration path (relative): ' . $realPath);
+            return $realPath;
         }
         
         // 2. Composer vendor 경로 (설치된 패키지)
         $vendorPath = base_path('vendor/d3141cgit/sitemanager/database/migrations');
+        $possiblePaths['vendor'] = $vendorPath;
         if (is_dir($vendorPath)) {
+            $this->line('   ✅ Found migration path (vendor): ' . $vendorPath);
             return $vendorPath;
         }
         
@@ -156,34 +198,61 @@ class InstallCommand extends Command
             $reflection = new \ReflectionClass(\SiteManager\SiteManagerServiceProvider::class);
             $packagePath = dirname($reflection->getFileName());
             $migrationPath = $packagePath . '/../database/migrations';
+            $possiblePaths['reflection'] = $migrationPath;
             
             if (is_dir($migrationPath)) {
-                return realpath($migrationPath);
+                $realPath = realpath($migrationPath);
+                $this->line('   ✅ Found migration path (reflection): ' . $realPath);
+                return $realPath;
             }
         } catch (\Exception $e) {
-            // 실패시 null 반환
+            $possiblePaths['reflection_error'] = $e->getMessage();
+        }
+        
+        // 4. ServiceProvider에서 마이그레이션 경로 확인
+        try {
+            $serviceProvider = app(\SiteManager\SiteManagerServiceProvider::class);
+            // SiteManagerServiceProvider에서 loadMigrationsFrom 호출하는 경로 확인
+            $providerPath = (new \ReflectionClass($serviceProvider))->getFileName();
+            $packageRoot = dirname(dirname(dirname($providerPath)));
+            $migrationPath = $packageRoot . '/database/migrations';
+            $possiblePaths['service_provider'] = $migrationPath;
+            
+            if (is_dir($migrationPath)) {
+                $realPath = realpath($migrationPath);
+                $this->line('   ✅ Found migration path (service provider): ' . $realPath);
+                return $realPath;
+            }
+        } catch (\Exception $e) {
+            $possiblePaths['service_provider_error'] = $e->getMessage();
+        }
+        
+        // 5. 모든 vendor 디렉토리 스캔
+        $vendorDir = base_path('vendor');
+        if (is_dir($vendorDir)) {
+            $searchPaths = [
+                $vendorDir . '/d3141cgit/sitemanager/database/migrations',
+                $vendorDir . '/*/sitemanager/database/migrations'
+            ];
+            
+            foreach ($searchPaths as $searchPath) {
+                $possiblePaths['vendor_scan_' . basename(dirname($searchPath))] = $searchPath;
+                if (is_dir($searchPath)) {
+                    $realPath = realpath($searchPath);
+                    $this->line('   ✅ Found migration path (vendor scan): ' . $realPath);
+                    return $realPath;
+                }
+            }
+        }
+        
+        // 디버깅 정보 출력
+        $this->warn('   ❌ No migration paths found. Searched locations:');
+        foreach ($possiblePaths as $type => $path) {
+            $status = is_string($path) && is_dir($path) ? '✅' : '❌';
+            $this->line("      {$status} {$type}: {$path}");
         }
         
         return null;
-    }
-
-    /**
-     * 직접 실행이 실패했을 때 에러 메시지를 표시합니다.
-     */
-    protected function fallbackToPublishMethod(): void
-    {
-        $this->error('   ❌ Unable to locate SiteManager migrations');
-        $this->error('   💡 Please check your package installation');
-        $this->newLine();
-        
-        $this->line('🔍 <comment>Troubleshooting steps:</comment>');
-        $this->line('   1. Verify SiteManager package is properly installed');
-        $this->line('   2. Check vendor/d3141cgit/sitemanager exists');
-        $this->line('   3. Try reinstalling: composer require d3141cgit/sitemanager:dev-main');
-        $this->newLine();
-        
-        // 설치 중단
-        throw new \Exception('SiteManager migrations not found. Installation aborted.');
     }
 
     /**

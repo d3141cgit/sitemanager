@@ -74,6 +74,11 @@ class SiteManagerServiceProvider extends ServiceProvider
                 __DIR__.'/../config/permissions.php' => config_path('permissions.php'),
                 __DIR__.'/../config/auth.php' => config_path('auth.php'),
             ], 'sitemanager-config');
+
+            // 마이그레이션 발행 (fallback 용도)
+            $this->publishes([
+                __DIR__.'/../database/migrations' => database_path('migrations'),
+            ], 'sitemanager-migrations');
             
             // 뷰 파일 발행 (고급 커스터마이징 시에만 필요)
             $this->publishes([

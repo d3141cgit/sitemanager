@@ -55,15 +55,6 @@ composer require d3141cgit/sitemanager:dev-main
 composer install
 ```
 
-#### 방법 3: Packagist 등록 후 (미래)
-
-Packagist에 패키지가 등록되면 간단하게 설치 가능:
-
-```bash
-# Packagist 등록 후에는 이렇게 설치 가능 (현재는 불가)
-composer require d3141cgit/sitemanager
-```
-
 ### 3️⃣ 환경 설정
 
 ```bash
