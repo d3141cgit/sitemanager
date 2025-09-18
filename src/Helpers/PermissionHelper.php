@@ -51,9 +51,10 @@ if (!function_exists('can')) {
      * 
      * @param string $permission 권한 이름
      * @param mixed $model 권한을 체크할 모델 (Board, Menu 등)
+     * @param \SiteManager\Models\Menu|null $specificMenu 특정 메뉴 지정 (선택사항)
      * @return bool
      */
-    function can(string $permission, $model): bool
+    function can(string $permission, $model, $specificMenu = null): bool
     {
         // 권한 이름을 비트값으로 매핑
         $permissionMap = [
@@ -87,6 +88,11 @@ if (!function_exists('can')) {
         }
         
         $requiredPermission = $permissionMap[$permission];
+        
+        // 특정 메뉴가 지정된 경우 해당 메뉴로 권한 체크
+        if ($specificMenu instanceof \SiteManager\Models\Menu) {
+            return hasMenuPermission($specificMenu, $requiredPermission);
+        }
         
         // 모든 권한은 메뉴를 통해서만 작동
         if ($model instanceof \SiteManager\Models\Board) {
@@ -127,5 +133,27 @@ if (!function_exists('hasMenuPermission')) {
         
         // 비트마스크로 권한 체크
         return $permissionService->hasPermission($userPermission, $requiredPermission);
+    }
+}
+
+// Legacy support functions for backward compatibility
+if (!function_exists('canWriteBoard')) {
+    function canWriteBoard($board): bool
+    {
+        return can('write', $board);
+    }
+}
+
+if (!function_exists('canReadBoard')) {
+    function canReadBoard($board): bool
+    {
+        return can('read', $board);
+    }
+}
+
+if (!function_exists('canManageBoard')) {
+    function canManageBoard($board): bool
+    {
+        return can('manage', $board);
     }
 }
