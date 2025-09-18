@@ -193,17 +193,54 @@ class InstallCommand extends Command
     {
         $this->info('🌍 Restoring language data...');
         
-        $exitCode = Artisan::call('sitemanager:restore-languages', [
-            '--force' => true
-        ]);
+        // 테이블 존재 여부 확인
+        try {
+            if (!$this->checkTablesExist()) {
+                $this->warn('   ⚠️  Required tables not found. Skipping language data restoration.');
+                $this->line('   💡 Run "php artisan sitemanager:restore-languages" after ensuring tables exist.');
+                $this->newLine();
+                return;
+            }
+        } catch (\Exception $e) {
+            $this->warn('   ⚠️  Cannot verify table existence: ' . $e->getMessage());
+            $this->line('   💡 Attempting language restoration anyway...');
+        }
         
-        if ($exitCode === 0) {
-            $this->line('   ✅ Language data restored successfully');
-        } else {
-            $this->warn('   ⚠️  Language data restoration failed');
+        try {
+            $exitCode = Artisan::call('sitemanager:restore-languages', [
+                '--force' => true
+            ]);
+            
+            if ($exitCode === 0) {
+                $this->line('   ✅ Language data restored successfully');
+            } else {
+                $this->warn('   ⚠️  Language data restoration failed (exit code: ' . $exitCode . ')');
+                $this->line('   💡 You can retry with: php artisan sitemanager:restore-languages');
+            }
+        } catch (\Exception $e) {
+            $this->warn('   ⚠️  Language data restoration failed: ' . $e->getMessage());
+            $this->line('   💡 You can retry with: php artisan sitemanager:restore-languages');
         }
         
         $this->newLine();
+    }
+
+    /**
+     * 필요한 테이블들이 존재하는지 확인합니다.
+     */
+    protected function checkTablesExist(): bool
+    {
+        $requiredTables = ['languages', 'menus', 'members'];
+        
+        foreach ($requiredTables as $table) {
+            if (!DB::getSchemaBuilder()->hasTable($table)) {
+                $this->line("   ❌ Table '{$table}' not found");
+                return false;
+            }
+        }
+        
+        $this->line('   ✅ All required tables exist');
+        return true;
     }
 
     /**
@@ -235,6 +272,7 @@ class InstallCommand extends Command
         $this->line('   • Backed up existing Laravel migrations (users/cache/jobs not needed)');
         $this->line('   • Published SiteManager configuration files');
         $this->line('   • Executed SiteManager migrations from vendor directory');
+        $this->line('   • Verified table creation before data restoration');
         $this->line('   • Restored language data from SQL dump');
         $this->line('   • Published SiteManager images');
         $this->line('   • Backed up original routes and created new web.php');

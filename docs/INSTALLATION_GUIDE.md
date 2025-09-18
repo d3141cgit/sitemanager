@@ -21,9 +21,47 @@ cd my-website
 
 ### 2️⃣ SiteManager 패키지 설치
 
+#### 방법 1: GitHub 저장소에서 직접 설치 (권장)
+
 ```bash
+# composer.json에 저장소 정보 추가
+composer config repositories.sitemanager vcs https://github.com/d3141cgit/sitemanager
+
 # SiteManager 패키지 설치
 composer require d3141cgit/sitemanager:dev-main
+```
+
+#### 방법 2: composer.json 수동 편집
+
+`composer.json` 파일을 열어서 다음 내용을 추가하세요:
+
+```json
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/d3141cgit/sitemanager"
+        }
+    ],
+    "require": {
+        "d3141cgit/sitemanager": "dev-main"
+    }
+}
+```
+
+그 후 설치 실행:
+
+```bash
+composer install
+```
+
+#### 방법 3: Packagist 등록 후 (미래)
+
+Packagist에 패키지가 등록되면 간단하게 설치 가능:
+
+```bash
+# Packagist 등록 후에는 이렇게 설치 가능 (현재는 불가)
+composer require d3141cgit/sitemanager
 ```
 
 ### 3️⃣ 환경 설정
@@ -64,13 +102,15 @@ AWS_URL_STYLE=virtual-hosted
 php artisan sitemanager:install
 ```
 
-**설치 과정에서 자동으로 처리되는 작업:**
-- ✅ 기존 Laravel 마이그레이션 백업 (`database/migrations.backup/`)
-- ✅ SiteManager 설정 파일 발행
-- ✅ 데이터베이스 마이그레이션 실행 (vendor 디렉토리에서 직접 실행)
-- ✅ 언어 데이터 복원
-- ✅ 사이트매니저용 이미지 발행 (`public/images/`)
-- ✅ 홈 라우트 자동 설정 (`routes/web.php` 백업 후 재생성)
+**설치 과정에서 자동으로 처리되는 작업 (순서대로):**
+1. ✅ 기존 Laravel 마이그레이션 백업 (`database/migrations.backup/`)
+2. ✅ SiteManager 설정 파일 발행
+3. ✅ **데이터베이스 마이그레이션 실행** (vendor 디렉토리에서 직접 실행)
+4. ✅ **언어 데이터 복원** (테이블 생성 후)
+5. ✅ 사이트매니저용 이미지 발행 (`public/images/`)
+6. ✅ 홈 라우트 자동 설정 (`routes/web.php` 백업 후 재생성)
+
+> **⚠️ 중요**: 마이그레이션이 완료된 후에 언어 데이터가 복원됩니다. `languages` 테이블이 먼저 생성되어야 하기 때문입니다.
 
 ### 5️⃣ 관리자 계정 생성
 
@@ -159,7 +199,90 @@ my-website/
 
 ## 🚨 문제 해결
 
+### 📦 패키지 설치 오류
+
+#### "Package not found" 오류 해결
+
+```bash
+# 저장소 정보가 없는 경우
+composer config repositories.sitemanager vcs https://github.com/d3141cgit/sitemanager
+composer require d3141cgit/sitemanager:dev-main
+
+# 또는 composer.json에 직접 추가
+```
+
+```json
+{
+    "repositories": [
+        {
+            "type": "vcs", 
+            "url": "https://github.com/d3141cgit/sitemanager"
+        }
+    ]
+}
+```
+
+#### GitHub 접근 권한 오류
+
+```bash
+# GitHub Personal Access Token 설정 (private 저장소인 경우)
+composer config github-oauth.github.com YOUR_GITHUB_TOKEN
+
+# 또는 SSH 키 사용
+composer config repositories.sitemanager vcs git@github.com:d3141cgit/sitemanager.git
+```
+
+#### Composer 캐시 문제
+
+```bash
+# Composer 캐시 정리
+composer clear-cache
+
+# 저장소 재설정
+composer config --unset repositories.sitemanager
+composer config repositories.sitemanager vcs https://github.com/d3141cgit/sitemanager
+```
+
 ### ❌ 설치 중 오류 발생
+
+#### "Table 'languages' doesn't exist" 오류
+
+```bash
+# 언어 테이블 생성 전에 언어 데이터 복원을 시도한 경우
+# 마이그레이션을 먼저 실행하세요
+
+# 1. 마이그레이션만 실행
+php artisan migrate --force
+
+# 2. 언어 데이터 수동 복원
+php artisan sitemanager:restore-languages
+
+# 3. 또는 전체 재설치
+php artisan sitemanager:install --force
+```
+
+#### 설치 프로세스 단계별 실행
+
+```bash
+# 설치가 중간에 실패한 경우 단계별로 실행 가능
+
+# 1단계: 설정 파일 발행
+php artisan vendor:publish --tag=sitemanager-config
+
+# 2단계: 마이그레이션 실행  
+php artisan migrate --force
+
+# 3단계: 언어 데이터 복원
+php artisan sitemanager:restore-languages
+
+# 4단계: 이미지 발행
+php artisan vendor:publish --tag=sitemanager-images
+
+# 5단계: 라우트 설정
+php artisan sitemanager:setup-routes
+```
+
+#### 강제 설치 옵션
 
 ```bash
 # 강제 설치 (프로덕션 환경에서)
@@ -318,7 +441,78 @@ server {
 
 ---
 
-## 📞 지원
+## � Packagist 등록 (개발자용)
+
+SiteManager 패키지를 Packagist에 등록하면 더 쉽게 설치할 수 있습니다:
+
+### 1️⃣ Packagist 등록 과정
+
+1. **https://packagist.org** 에서 계정 생성
+2. **"Submit"** 버튼 클릭
+3. **GitHub 저장소 URL 입력**: `https://github.com/d3141cgit/sitemanager`
+4. **Auto-update** 설정으로 GitHub과 연동
+
+### 2️⃣ composer.json 최적화
+
+패키지 루트의 `composer.json` 파일 확인:
+
+```json
+{
+    "name": "d3141cgit/sitemanager",
+    "description": "Laravel CMS Package for Content Management",
+    "type": "laravel-package",
+    "license": "MIT",
+    "keywords": ["laravel", "cms", "content-management", "sitemanager"],
+    "authors": [
+        {
+            "name": "d3141cgit",
+            "email": "your-email@example.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "laravel/framework": "^10.0|^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SiteManager\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "SiteManager\\SiteManagerServiceProvider"
+            ]
+        }
+    }
+}
+```
+
+### 3️⃣ 릴리즈 태그 생성
+
+```bash
+# 안정된 버전 태그 생성
+git tag v1.0.0
+git push origin v1.0.0
+
+# Packagist에서 자동으로 감지하여 버전 업데이트
+```
+
+### 4️⃣ Packagist 등록 후 설치
+
+등록 완료 후에는 간단하게 설치 가능:
+
+```bash
+# 저장소 정보 없이 바로 설치 가능
+composer require d3141cgit/sitemanager
+
+# 특정 버전 설치
+composer require d3141cgit/sitemanager:^1.0
+```
+
+---
+
+## �📞 지원
 
 설치나 사용 중 문제가 발생하면:
 
