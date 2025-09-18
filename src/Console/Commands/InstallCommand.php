@@ -9,8 +9,7 @@ use Illuminate\Support\Facades\File;
 class InstallCommand extends Command
 {
     protected $signature = 'sitemanager:install 
-                            {--force : Force the operation to run when in production}
-                            {--with-starter : Publish starter templates for front-end development}';
+                            {--force : Force the operation to run when in production}';
     
     protected $description = 'Install SiteManager package with all required setup';
 

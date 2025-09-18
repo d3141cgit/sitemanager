@@ -126,15 +126,11 @@ class SiteManagerServiceProvider extends ServiceProvider
         // 콘솔 명령어 등록 (웹에서도 사용 가능)
         $this->commands([
             \SiteManager\Console\Commands\InstallCommand::class,
-            \SiteManager\Console\Commands\CleanupCommand::class,
             \SiteManager\Console\Commands\CreateAdminCommand::class,
-            \SiteManager\Console\Commands\PublishStarterCommand::class,
-            \SiteManager\Console\Commands\TestS3Connection::class,
             \SiteManager\Console\Commands\CheckS3Configuration::class,
             \SiteManager\Console\Commands\MigrateImagesToS3::class,
             \SiteManager\Console\Commands\ResourceCommand::class,
             \SiteManager\Console\Commands\RestoreLanguageCommand::class,
-            \SiteManager\Console\Commands\DumpLanguageCommand::class,
         ]);
     }
     
