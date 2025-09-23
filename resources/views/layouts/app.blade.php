@@ -67,13 +67,13 @@
             <!-- Navigation Content -->
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav ms-auto">
-                    @auth
+                    @if(is_logged_in())
                         <li class="nav-item dropdown user-dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <div class="user-avatar">
                                     <i class="bi bi-person-circle"></i>
                                 </div>
-                                <span class="user-name">{{ Auth::user()->name }}</span>
+                                <span class="user-name">{{ current_user_name() }}</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
@@ -118,7 +118,7 @@
                                 <span>로그인</span>
                             </a>
                         </li>
-                    @endauth
+                    @endif
                 </ul>
             </div>
         </div>
@@ -176,11 +176,11 @@
 
         <nav class="user-nav">
             <ul>
-            @auth
+            @if(is_logged_in())
                 <li>
                     <a href="#">
                         <i class="bi bi-person-circle"></i>
-                        <span class="user-name">{{ Auth::user()->name }}</span>
+                        <span class="user-name">{{ current_user_name() }}</span>
                     </a>
                 </li>
                 <li>
@@ -222,7 +222,7 @@
                         <span>로그인</span>
                     </a>
                 </li>
-            @endauth
+            @endif
             </ul>
         </nav>
     </aside>

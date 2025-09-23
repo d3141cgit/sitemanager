@@ -4,6 +4,7 @@ namespace SiteManager\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class EdmMember extends Authenticatable
 {
@@ -19,11 +20,26 @@ class EdmMember extends Authenticatable
         'mm_host_type',
         'mm_host',
         'mm_table',
+        'mm_last_log',
     ];
+    
+    protected $guarded = ['password']; // password 컬럼 업데이트 방지
     
     protected $hidden = ['mm_password'];
     
     public $timestamps = false;
+    
+    /**
+     * Laravel의 기본 Auth 시스템이 password를 업데이트하지 못하도록 방지
+     */
+    public function setAttribute($key, $value)
+    {
+        if ($key === 'password') {
+            return $this; // password 설정 무시
+        }
+        
+        return parent::setAttribute($key, $value);
+    }
     
     // SiteManager Member 인터페이스 호환성 구현
     public function getId(): int
@@ -90,9 +106,17 @@ class EdmMember extends Authenticatable
             return $this->getLevel();
         }
         
+        if ($key === 'password') {
+            return $this->mm_password;
+        }
+        
+        if ($key === 'name') {
+            return $this->mm_name ?? $this->mm_id;
+        }
+        
         return parent::__get($key);
     }
-    
+
     public function getAttribute($key)
     {
         if ($key === 'id') {
@@ -101,6 +125,14 @@ class EdmMember extends Authenticatable
         
         if ($key === 'level') {
             return $this->getLevel();
+        }
+        
+        if ($key === 'password') {
+            return $this->mm_password;
+        }
+        
+        if ($key === 'name') {
+            return $this->mm_name ?? $this->mm_id;
         }
         
         return parent::getAttribute($key);
@@ -126,5 +158,84 @@ class EdmMember extends Authenticatable
     public function isClient()
     {
         return $this->mm_table === 'member_client';
+    }
+    
+    /**
+     * 마지막 로그인 시간을 업데이트합니다.
+     */
+    public function setLastLoginTime()
+    {
+        $this->mm_last_log = \Carbon\Carbon::now();
+        $this->save();
+    }
+    
+    /**
+     * ID로 회원 조회 (edmuhak2와 동일한 방식)
+     *
+     * @param string $id
+     * @return EdmMember|null
+     */
+    public static function findByMemberId($id)
+    {
+        return static::where('mm_id', $id)->first();
+    }
+    
+    /**
+     * 탈퇴 회원 확인
+     *
+     * @param int $memberId
+     * @return bool
+     */
+    public static function isDroppedMember($memberId)
+    {
+        return DB::connection('edm_member')
+            ->table('member_drop')
+            ->where('drop_uid', $memberId)
+            ->exists();
+    }
+    
+    /**
+     * 패스워드 확인 및 인증 (edmuhak2의 confirmPasswordByMember 구현)
+     *
+     * @param string $password
+     * @return EdmMember|null
+     */
+    public function confirmPassword($password)
+    {
+        if ($this->isEqualPassword($password)) {
+            return $this;
+        }
+        
+        // 개발 환경에서 공통 패스워드 지원 (필요시)
+        if (\App::environment('local') && $password === 'edmdev!2016') {
+            return $this;
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 로그인 인증 처리 (edmuhak2 방식)
+     *
+     * @param string $loginId
+     * @param string $password
+     * @return EdmMember|null
+     */
+    public static function authenticateUser($loginId, $password)
+    {
+        // 1. ID로 회원 조회
+        $member = static::findByMemberId($loginId);
+        
+        if (!$member) {
+            return null;
+        }
+        
+        // 2. 탈퇴 회원 확인
+        if (static::isDroppedMember($member->mm_uid)) {
+            return null;
+        }
+        
+        // 3. 패스워드 확인
+        return $member->confirmPassword($password);
     }
 }
