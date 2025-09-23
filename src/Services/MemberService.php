@@ -8,6 +8,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class MemberService
@@ -45,6 +46,11 @@ class MemberService
         
         return $this->memberRepository->create($data);
     }
+    
+        
+    /**
+     * 회원 업데이트
+     */
     
     /**
      * 회원 정보 수정
