@@ -60,7 +60,7 @@
 
 {{-- 로그인 상태를 위한 데이터 속성 --}}
 <div class="auth-config" 
-     data-logged-in="{{ Auth::check() ? 'true' : 'false' }}"
-     data-user-name="{{ Auth::user()->name ?? '' }}"
+     data-logged-in="{{ is_logged_in() ? 'true' : 'false' }}"
+     data-user-name="{{ current_user()?->name ?? '' }}"
      style="display: none;">
 </div>

@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -390,7 +389,7 @@ class BoardService
         }
 
         $commentModelClass = BoardComment::forBoard($board->slug);
-        $currentUserId = Auth::id();
+        $currentUserId = current_user_id();
         
         // 쓰레드 단위 Pagination: 부모 댓글을 기준으로 페이징
         $comments = $commentModelClass::with([
@@ -450,7 +449,7 @@ class BoardService
         }
 
         $commentModelClass = BoardComment::forBoard($board->slug);
-        $currentUserId = Auth::id();
+        $currentUserId = current_user_id();
         
         // 모든 댓글 수 계산 (부모, 자식, 대댓글 모두 포함)
         return $commentModelClass::where(function($query) use ($currentUserId) {
@@ -661,10 +660,11 @@ class BoardService
         ];
 
         // 로그인 사용자와 익명 사용자 구분 처리
-        if (Auth::check()) {
-            $postData['member_id'] = Auth::id();
-            $postData['author_name'] = Auth::user()->name;
-            $postData['author_email'] = Auth::user()->email;
+        if (is_logged_in()) {
+            $user = current_user();
+            $postData['member_id'] = current_user_id();
+            $postData['author_name'] = $user->name;
+            $postData['author_email'] = $user->email;
         } else {
             // 익명 사용자
             $postData['member_id'] = null;
@@ -740,7 +740,7 @@ class BoardService
      */
     public function canManagePost(Board $board, $post, $user = null): bool
     {
-        $user = $user ?: Auth::user();
+        $user = $user ?: current_user();
         
         if (!$user) {
             return false;
@@ -776,7 +776,7 @@ class BoardService
         // 조회수 증가 조건: 처음 조회하거나 30분이 지난 경우
         if (!$lastViewed || $now->diffInMinutes($lastViewed) >= 30) {
             // 작성자 본인은 조회수 증가 안함
-            if (Auth::check() && Auth::id() === $post->member_id) {
+            if (is_logged_in() && current_user_id() === $post->member_id) {
                 session([$sessionKey => $now]);
                 return;
             }

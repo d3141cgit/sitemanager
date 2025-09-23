@@ -13,7 +13,6 @@ use SiteManager\Services\EmailVerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -238,7 +237,7 @@ class BoardController extends Controller
         $post = $this->boardService->getPost($board, $id);
         
         // 비밀글 접근 권한 확인
-        if ($post->isSecret() && !$post->canAccess(Auth::id())) {
+        if ($post->isSecret() && !$post->canAccess(current_user_id())) {
             // 비밀번호 입력 폼 표시 (스킨 적용)
             return view($this->selectView('password-form'), array_merge(compact('board', 'post'), [
                 'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
@@ -444,7 +443,7 @@ class BoardController extends Controller
         ]);
 
         // 익명 사용자인 경우 추가 검증
-        if (!Auth::check()) {
+        if (!is_logged_in()) {
             // Rate Limiting 검사
             if (!$this->emailVerificationService->checkRateLimit($request->ip(), 'post')) {
                 return back()
@@ -529,7 +528,7 @@ class BoardController extends Controller
         try {
             // 익명 사용자의 경우 이메일 인증 토큰 생성
             $emailToken = null;
-            if (!Auth::check()) {
+            if (!is_logged_in()) {
                 $emailToken = $this->emailVerificationService->sendVerificationEmail(
                     $validated['author_email'],
                     'post',
@@ -576,7 +575,7 @@ class BoardController extends Controller
             }
 
             // 익명 사용자의 경우 이메일 인증 토큰을 실제 게시글 ID로 업데이트
-            if (!Auth::check() && $emailToken) {
+            if (!is_logged_in() && $emailToken) {
                 $updatedToken = $this->emailVerificationService->sendVerificationEmail(
                     $validated['author_email'],
                     'post',
@@ -588,7 +587,7 @@ class BoardController extends Controller
             DB::commit();
 
             // 익명 사용자에게는 이메일 인증 안내 메시지
-            if (!Auth::check()) {
+            if (!is_logged_in()) {
                 return redirect()
                     ->route('board.index', $slug)
                     ->with('success', '게시글이 등록되었습니다. 이메일 인증을 완료하시면 게시됩니다.');
@@ -620,7 +619,7 @@ class BoardController extends Controller
         }
 
         // 비밀글 접근 권한 확인 (작성자가 아닌 경우)
-        if ($post->isSecret() && !$post->canAccess(Auth::id()) && $post->member_id !== Auth::id()) {
+        if ($post->isSecret() && !$post->canAccess(current_user_id()) && $post->member_id !== current_user_id()) {
             return redirect()->route('board.show', [$slug, $id]);
         }
 
@@ -1031,7 +1030,7 @@ class BoardController extends Controller
         // 2. 마지막 조회로부터 30분이 지난 경우
         if (!$lastViewed || $now->diffInMinutes($lastViewed) >= 30) {
             // 게시글 작성자 본인은 조회수 증가에서 제외 (선택사항)
-            if (Auth::check() && Auth::id() === $post->member_id) {
+            if (is_logged_in() && current_user_id() === $post->member_id) {
                 // 작성자 본인은 조회수 증가 안함
                 session([$sessionKey => $now]);
                 return;
@@ -1066,7 +1065,7 @@ class BoardController extends Controller
         $postModelClass = BoardPost::forBoard($attachment->board_slug);
         $post = $postModelClass::find($attachment->post_id);
         
-        $user = Auth::user();
+        $user = current_user();
         $canDelete = false;
 
         if ($user) {
@@ -1118,7 +1117,7 @@ class BoardController extends Controller
                 $postModelClass = BoardPost::forBoard($attachment->board_slug);
                 $post = $postModelClass::find($attachment->post_id);
                 
-                $user = Auth::user();
+                $user = current_user();
                 $canUpdate = false;
 
                 if ($user) {
@@ -1594,7 +1593,7 @@ class BoardController extends Controller
         $post = $this->boardService->getPost($board, $id);
         
         // 비밀글 접근 권한 확인
-        if ($post->isSecret() && !$post->canAccess(Auth::id())) {
+        if ($post->isSecret() && !$post->canAccess(current_user_id())) {
             return response()->json(['error' => 'Cannot access private post'], 403);
         }
 

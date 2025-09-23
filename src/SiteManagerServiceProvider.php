@@ -35,6 +35,9 @@ class SiteManagerServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/permissions.php', 'permissions');
         $this->mergeConfigFrom(__DIR__.'/../config/auth.php', 'auth');
         
+        // EdmMember 지원 등록
+        $this->registerEdmMemberSupport();
+        
         // 뷰 로드 (패키지 기본)
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'sitemanager');
         
@@ -220,5 +223,36 @@ class SiteManagerServiceProvider extends ServiceProvider
         }
 
         return $defaultComponents;
+    }
+    
+    /**
+     * EdmMember 지원을 등록합니다.
+     */
+    private function registerEdmMemberSupport()
+    {
+        // EdmMember UserProvider 등록
+        \Illuminate\Support\Facades\Auth::provider('edm_eloquent', function ($app, array $config) {
+            return new \SiteManager\Auth\EdmUserProvider($app['hash'], $config['model']);
+        });
+        
+        // EdmMember 전용 모드가 활성화된 경우 (Member 시스템 비활성화)
+        if (config('sitemanager.auth.use_only_edm_member')) {
+            config(['auth.providers.users.driver' => 'edm_eloquent']);
+            config(['auth.providers.users.model' => \SiteManager\Models\EdmMember::class]);
+        }
+        
+        // EdmMember 고객 인증이 활성화된 경우
+        if (config('sitemanager.auth.enable_edm_member_auth')) {
+            config([
+                'auth.guards.customer' => [
+                    'driver' => 'session',
+                    'provider' => 'edm_users',
+                ],
+                'auth.providers.edm_users' => [
+                    'driver' => 'edm_eloquent',
+                    'model' => \SiteManager\Models\EdmMember::class,
+                ],
+            ]);
+        }
     }
 }

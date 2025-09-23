@@ -18,6 +18,15 @@ return [
         'editor' => true,
     ],
     
+    'auth' => [
+        'model' => env('AUTH_MODEL', 'SiteManager\Models\Member'),
+        
+        // EdmMember 고객 인증 시스템 활성화
+        'enable_edm_member_auth' => env('ENABLE_EDM_MEMBER_AUTH', false),
+        'admin_guard' => env('ADMIN_GUARD', 'web'),
+        'customer_guard' => env('CUSTOMER_GUARD', 'customer'),
+    ],
+    
     'ui' => [
         'theme' => 'default',
         'sitemanager_prefix' => 'sitemanager',

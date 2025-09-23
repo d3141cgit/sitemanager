@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
 
 abstract class BoardPost extends Model
 {
@@ -565,7 +564,7 @@ abstract class BoardPost extends Model
             return true;
         }
         
-        $userId = Auth::id() ?? 'guest';
+        $userId = current_user_id() ?? 'guest';
         $sessionKey = "post_password_verified_{$this->id}_{$userId}";
         $sessionData = session($sessionKey);
         
@@ -586,7 +585,7 @@ abstract class BoardPost extends Model
     public function markPasswordVerified(): void
     {
         if ($this->isSecret()) {
-            $userId = Auth::id() ?? 'guest';
+            $userId = current_user_id() ?? 'guest';
             $sessionKey = "post_password_verified_{$this->id}_{$userId}";
             session()->put($sessionKey, [
                 'verified_at' => now(),
@@ -644,7 +643,7 @@ abstract class BoardPost extends Model
         $board = $this->getBoard();
         if (!$board || !$board->menu_id) return false;
         
-        $user = Auth::user();
+        $user = current_user();
         $canManage = can('manage', $board);
         $canWrite = can('write', $board);
         $isAuthor = $user && $this->member_id && $this->member_id === $user->id;
@@ -660,7 +659,7 @@ abstract class BoardPost extends Model
         $board = $this->getBoard();
         if (!$board || !$board->menu_id) return false;
         
-        $user = Auth::user();
+        $user = current_user();
         $canManage = can('manage', $board);
         $canWrite = can('write', $board);
         $isAuthor = $user && $this->member_id && $this->member_id === $user->id;

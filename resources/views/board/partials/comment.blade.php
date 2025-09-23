@@ -42,13 +42,13 @@
                 <ul class="dropdown-menu dropdown-menu-end">
                     @if($comment->canEdit())
                         <li>
-                            @if(!Auth::check() && $comment->email_verified_at)
+                            @if(!is_logged_in() && $comment->email_verified_at)
                                 {{-- 비회원 댓글 수정 (이메일 인증 완료) --}}
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="requestEmailVerification({{ $comment->id }}, 'edit')">
                                     <i class="bi bi-pencil"></i> Edit
                                     <small class="text-muted d-block">Email/Password required</small>
                                 </a>
-                            @elseif(Auth::check())
+                            @elseif(is_logged_in())
                                 {{-- 회원 댓글 수정 --}}
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="editComment({{ $comment->id }})">
                                     <i class="bi bi-pencil"></i> Edit
@@ -59,7 +59,7 @@
                     
                     @if($comment->canReply() && $comment->status !== 'pending')
                         <li>
-                            @if(!Auth::check())
+                            @if(!is_logged_in())
                                 {{-- 비회원 답글 (이메일 인증 필요) --}}
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="event.preventDefault(); showReplyLoading({{ $comment->id }}); replyToComment({{ $comment->id }})">
                                     <i class="bi bi-reply"></i> Reply
@@ -85,14 +85,14 @@
                     @if($comment->canDeleteComment())
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            @if(!Auth::check() && $comment->email_verified_at)
+                            @if(!is_logged_in() && $comment->email_verified_at)
                                 {{-- 비회원 댓글 삭제 (이메일 인증 완료) --}}
                                 <a class="dropdown-item text-danger" href="javascript:void(0)" 
                                    onclick="requestEmailVerification({{ $comment->id }}, 'delete')">
                                     <i class="bi bi-trash"></i> Delete
                                     <small class="text-muted d-block">Email/Password required</small>
                                 </a>
-                            @elseif(Auth::check())
+                            @elseif(is_logged_in())
                                 {{-- 회원 댓글 삭제 --}}
                                 <a class="dropdown-item text-danger" href="javascript:void(0)" 
                                    onclick="deleteComment({{ $comment->id }})">

@@ -54,6 +54,11 @@ class PermissionService
             return 0;
         }
 
+        // EdmMember인 경우 단순화된 권한 계산
+        if ($user instanceof \SiteManager\Models\EdmMember) {
+            return $this->calculateEdmMemberPermission($menu, $user);
+        }
+
         $permissions = [];
 
         // 1. 메뉴 기본 권한
@@ -189,5 +194,27 @@ class PermissionService
         }
         
         return $names;
+    }
+
+    /**
+     * EdmMember용 단순화된 권한 계산
+     */
+    private function calculateEdmMemberPermission($menu, $user): int
+    {
+        if (!$menu instanceof Menu) {
+            $menu = Menu::find($menu);
+        }
+
+        if (!$menu) {
+            return 0;
+        }
+
+        // 관리자는 모든 권한
+        if ($user->isAdmin()) {
+            return 255;
+        }
+        
+        // 일반 사용자는 메뉴의 기본 권한만 사용
+        return $menu->permission ?? 0;
     }
 }
