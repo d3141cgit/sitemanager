@@ -152,7 +152,7 @@ class MenuController extends Controller
     {
         $this->checkAdminPermission();
         
-        $availableRoutes = $this->menuService->getAvailableRoutes();
+        $availableRoutes = $this->menuService->getAvailableRoutes($menu->id);
         $menuPermissions = $this->menuService->getMenuPermissions($menu->id);
         
         // 현재 메뉴의 라우트가 유효한지 확인

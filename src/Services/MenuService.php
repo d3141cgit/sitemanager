@@ -333,12 +333,17 @@ class MenuService
     /**
      * 현재 메뉴에서 사용 중인 라우트들 조회
      */
-    private function getUsedRoutes(): array
+    private function getUsedRoutes($excludeMenuId = null): array
     {
-        return Menu::where('type', 'route')
-            ->whereNotNull('target')
-            ->pluck('target')
-            ->toArray();
+        $query = Menu::where('type', 'route')
+            ->whereNotNull('target');
+        
+        // 현재 편집 중인 메뉴는 제외
+        if ($excludeMenuId) {
+            $query->where('id', '!=', $excludeMenuId);
+        }
+        
+        return $query->pluck('target')->toArray();
     }
     
     /**
@@ -378,13 +383,13 @@ class MenuService
     /**
      * 라우트 목록 조회 (메뉴에 적합한 라우트만)
      */
-    public function getAvailableRoutes(): array
+    public function getAvailableRoutes($excludeMenuId = null): array
     {
         $routes = Route::getRoutes();
         $routeData = [];
         
-        // 현재 사용 중인 라우트들 조회
-        $usedRoutes = $this->getUsedRoutes();
+        // 현재 사용 중인 라우트들 조회 (현재 편집 중인 메뉴 제외)
+        $usedRoutes = $this->getUsedRoutes($excludeMenuId);
         
         foreach ($routes as $route) {
             $name = $route->getName();
@@ -399,6 +404,7 @@ class MenuService
             if (str_starts_with($name, '_ignition') || 
                 str_starts_with($name, 'debugbar') ||
                 str_starts_with($name, 'telescope') ||
+                str_starts_with($name, 'download.') ||
                 str_starts_with($name, 'horizon')) {
                 continue;
             }
