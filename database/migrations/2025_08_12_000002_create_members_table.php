@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('members', function (Blueprint $table) {
             $table->id();
             $table->string('username', 50)->unique()->comment('로그인 아이디');
-            $table->string('password');
+            $table->string('password')->nullable();
             $table->string('title', 30)->nullable()->comment('직책 or 경칭(Mr., Mrs. 등)');
             $table->string('name', 100)->comment('이름');
             $table->string('email', 100)->unique()->nullable();

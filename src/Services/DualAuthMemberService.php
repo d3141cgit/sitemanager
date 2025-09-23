@@ -41,9 +41,18 @@ class DualAuthMemberService extends MemberService
         // 중복 체크 (이메일, 사용자명 등)
         $this->validateUniqueFields($data);
         
-        // EdmMember의 ID를 사용하여 Members에 생성
+        // EdmMember의 ID를 사용하여 Members에 생성 (새 비밀번호 사용)
         $data['id'] = $existingEdmMember->mm_uid;
         
+        // name 필드가 없으면 username을 사용
+        if (empty($data['name'])) {
+            $data['name'] = $data['username'] ?? $existingEdmMember->mm_id;
+        }
+        
+        // 불필요한 필드 제거
+        unset($data['password_confirmation']);
+        
+        // Repository를 통해 생성 (패스워드 해시 자동 처리)
         return $this->memberRepository->create($data);
     }
     

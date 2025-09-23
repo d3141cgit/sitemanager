@@ -47,8 +47,12 @@ class MemberRepository implements MemberRepositoryInterface
     
     public function create(array $data): Member
     {
-        if (isset($data['password'])) {
+        // 패스워드가 있고 빈 값이 아닐 때만 해시 처리
+        if (isset($data['password']) && !empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
+        } else {
+            // 패스워드가 없거나 빈 값이면 null로 설정
+            $data['password'] = null;
         }
         
         return $this->model->create($data);

@@ -188,21 +188,24 @@
                 <div class="col form-group">
                     <label for="password" class="form-label">
                         @if(isset($member))
-                            {{ t('New Password') }}
+                            {{ t('New Password') }} <span class="text-muted">({{ t('Optional') }})</span>
                         @else
-                            {{ t('Password') }}
+                            {{ t('Password') }} <span class="text-muted">({{ t('Optional') }})</span>
                         @endif
                     </label>
 
-                    <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" @if(!isset($member)) required @endif>
+                    <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password">
                     @error('password')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    @if(!isset($member))
+                        <div class="form-text text-muted">{{ t('Leave empty to set password later.') }}</div>
+                    @endif
                 </div>
 
                 <div class="col form-group">
                     <label for="password_confirmation" class="form-label">{{ t('Confirm Password') }}</label>
-                    <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" @if(!isset($member)) required @endif>
+                    <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
                 </div>
             </div>
         </div>

@@ -148,7 +148,7 @@ class MemberService
     /**
      * 중복 필드 검증
      */
-    private function validateUniqueFields(array $data, ?int $excludeId = null): void
+    protected function validateUniqueFields(array $data, ?int $excludeId = null): void
     {
         if (isset($data['username'])) {
             $existing = $this->memberRepository->findByUsername($data['username']);

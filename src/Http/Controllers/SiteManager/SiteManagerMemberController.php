@@ -6,6 +6,7 @@ use SiteManager\Http\Controllers\Controller;
 use SiteManager\Models\Member;
 use SiteManager\Models\Group;
 use SiteManager\Services\FileUploadService;
+use SiteManager\Services\MemberServiceFactory;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
@@ -105,15 +106,15 @@ class SiteManagerMemberController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:members,email',
             'phone' => 'nullable|string|max:20',
-            'password' => 'required|string|min:8|confirmed',
-            'level' => 'required|integer|between:1,9',
+            'password' => 'nullable|string|min:8|confirmed',
+            'level' => 'required|integer|between:1,255',
             'active' => 'boolean',
             'groups' => 'array',
             'groups.*' => 'exists:groups,id',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $validated['password'] = bcrypt($validated['password']);
+        // MemberServiceFactory를 통해 적절한 서비스 사용 (패스워드 해시는 서비스에서 처리)
         
         // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
@@ -122,7 +123,15 @@ class SiteManagerMemberController extends Controller
             $validated['profile_photo'] = $fileInfo['path'];
         }
         
-        $member = Member::create($validated);
+        $memberService = MemberServiceFactory::create();
+        
+        try {
+            $member = $memberService->createMember($validated);
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => $e->getMessage()]);
+        }
         
         if (isset($validated['groups'])) {
             $member->groups()->sync($validated['groups']);

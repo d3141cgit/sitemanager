@@ -28,7 +28,7 @@ class MemberServiceFactory
     private static function isDualAuthEnabled(): bool
     {
         // 1. 환경 변수로 활성화 확인
-        if (!Config::get('sitemanager.enable_edm_member_auth', false)) {
+        if (!Config::get('sitemanager.auth.enable_edm_member_auth', false)) {
             return false;
         }
         
