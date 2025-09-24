@@ -274,6 +274,10 @@ if (!function_exists('setResources')) {
                 'js' => ['https://cdn.jsdelivr.net/npm/flatpickr'],
                 'css' => ['https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css']
             ],
+            'swiper' => [
+                'js' => ['https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js'],
+                'css' => ['https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css']
+            ],
         ];
 
         foreach ($assets as $asset) {
