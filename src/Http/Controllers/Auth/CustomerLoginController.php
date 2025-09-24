@@ -33,8 +33,19 @@ class CustomerLoginController extends BaseController
     /**
      * 고객용 로그인 폼 표시
      */
-    public function showLoginForm()
+    public function showLoginForm(Request $request)
     {
+        // Store the intended URL if it exists and is not the login page itself
+        if ($request->has('redirect')) {
+            session(['url.intended' => $request->get('redirect')]);
+        } elseif (!$request->session()->has('url.intended')) {
+            // Only store referer if no intended URL is already set
+            $referer = $request->header('referer');
+            if ($referer && !str_contains($referer, '/customer/login') && !str_contains($referer, '/logout')) {
+                session(['url.intended' => $referer]);
+            }
+        }
+        
         return view($this->selectView('auth.customer-login'));
     }
 
@@ -60,7 +71,18 @@ class CustomerLoginController extends BaseController
             
             $request->session()->regenerate();
             
-            return redirect()->intended($this->redirectTo);
+            // Get the intended URL from session or fallback to default
+            $intendedUrl = session('url.intended', '/');
+            
+            // Clear the intended URL from session
+            session()->forget('url.intended');
+            
+            // Validate the intended URL for security
+            if ($this->isValidRedirectUrl($intendedUrl)) {
+                return redirect($intendedUrl);
+            }
+            
+            return redirect('/');
         }
 
         throw ValidationException::withMessages([
@@ -88,10 +110,36 @@ class CustomerLoginController extends BaseController
     public function logout(Request $request)
     {
         Auth::guard('customer')->logout();
-
+        
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
+        
         return redirect('/');
+    }
+    
+    /**
+     * Validate if the redirect URL is safe
+     */
+    private function isValidRedirectUrl($url)
+    {
+        // Check if URL is empty or null
+        if (empty($url)) {
+            return false;
+        }
+        
+        // Parse the URL
+        $parsedUrl = parse_url($url);
+        
+        // If it's a relative URL (no host), it's generally safe
+        if (!isset($parsedUrl['host'])) {
+            // But make sure it doesn't start with double slashes (protocol-relative URLs)
+            return !str_starts_with($url, '//');
+        }
+        
+        // If it has a host, check if it matches our app URL
+        $appHost = parse_url(config('app.url'), PHP_URL_HOST);
+        $currentHost = request()->getHost();
+        
+        return in_array($parsedUrl['host'], [$appHost, $currentHost]);
     }
 }

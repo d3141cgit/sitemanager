@@ -139,6 +139,50 @@ class EdmMember extends Authenticatable
     }
     
     /**
+     * mm_table에 따른 동적 관계 - Staff 정보
+     */
+    public function staffInfo()
+    {
+        return $this->hasOne(EdmMemberStaff::class, 'mm_uid', 'mm_uid');
+    }
+    
+    /**
+     * mm_table에 따른 동적 관계 - Client 정보  
+     */
+    public function clientInfo()
+    {
+        return $this->hasOne(EdmMemberClient::class, 'mm_uid', 'mm_uid');
+    }
+    
+    /**
+     * mm_table에 따른 실제 사용자 상세 정보 반환
+     */
+    public function getMemberDetailsAttribute()
+    {
+        if ($this->mm_table === 'member_staff') {
+            return $this->staffInfo;
+        } elseif ($this->mm_table === 'member_client') {
+            return $this->clientInfo;
+        }
+        
+        return null;
+    }
+    
+    /**
+     * mm_name 동적 반환 (mm_table에 따라)
+     */
+    public function getMmNameAttribute()
+    {
+        $details = $this->memberDetails;
+        
+        if ($details) {
+            return $details->mm_name ?? $this->mm_id;
+        }
+        
+        return $this->mm_id;
+    }
+
+    /**
      * 패스워드가 동일한지 여부를 반환합니다 (edm_member 방식).
      *
      * @param  string  $password
