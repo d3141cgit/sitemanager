@@ -131,12 +131,22 @@ class SiteManagerNotifications {
 
     /**
      * 로딩 표시
-     * @param {string} message - 로딩 메시지
+     * @param {string|HTMLElement} target - 로딩 메시지 또는 대상 엘리먼트
+     * @param {string} message - 로딩 메시지 (target이 엘리먼트일 때)
      */
-    showLoading(message = 'Loading...') {
+    showLoading(target = 'Loading...', message = null) {
+        // 엘리먼트가 전달된 경우 (버튼 로딩)
+        if (target instanceof HTMLElement) {
+            this.showButtonLoading(target, message || 'Loading...');
+            return;
+        }
+        
+        // 전역 로딩 (SweetAlert 또는 body 클래스)
+        const loadingMessage = typeof target === 'string' ? target : 'Loading...';
+        
         if (this.hasSweetAlert) {
             Swal.fire({
-                title: message,
+                title: loadingMessage,
                 allowOutsideClick: false,
                 allowEscapeKey: false,
                 showConfirmButton: false,
@@ -144,15 +154,86 @@ class SiteManagerNotifications {
                     Swal.showLoading();
                 }
             });
+        } else {
+            // Fallback: body에 loading 클래스 추가
+            document.body.classList.add('loading');
         }
     }
 
     /**
      * 로딩 숨기기
+     * @param {HTMLElement} target - 대상 엘리먼트 (선택사항)
      */
-    hideLoading() {
+    hideLoading(target = null) {
+        // 엘리먼트가 전달된 경우 (버튼 로딩)
+        if (target instanceof HTMLElement) {
+            this.hideButtonLoading(target);
+            return;
+        }
+        
+        // 전역 로딩 해제
         if (this.hasSweetAlert) {
             Swal.close();
+        } else {
+            // Fallback: body에서 loading 클래스 제거
+            document.body.classList.remove('loading');
+        }
+    }
+
+    /**
+     * 버튼 로딩 상태 표시
+     * @param {HTMLElement} button - 대상 버튼
+     * @param {string} loadingText - 로딩 중 텍스트
+     */
+    showButtonLoading(button, loadingText = 'Loading...') {
+        if (!button) return;
+        
+        button.disabled = true;
+        button.setAttribute('data-original-html', button.innerHTML);
+        
+        const btnText = button.querySelector('.btn-text');
+        const btnLoading = button.querySelector('.btn-loading');
+        
+        if (btnText && btnLoading) {
+            // 구조화된 버튼 (btn-text, btn-loading 구조)
+            btnText.classList.add('d-none');
+            btnLoading.classList.remove('d-none');
+        } else {
+            // 일반 버튼 - 스피너와 텍스트 추가
+            button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${loadingText}`;
+        }
+        
+        // CSS 클래스도 추가 (기존 스타일과의 호환성)
+        button.classList.add('loading');
+    }
+
+    /**
+     * 버튼 로딩 상태 해제
+     * @param {HTMLElement} button - 대상 버튼
+     * @param {string} defaultText - 기본 텍스트 (복원할 텍스트가 없을 때)
+     */
+    hideButtonLoading(button, defaultText = 'Submit') {
+        if (!button) return;
+        
+        button.disabled = false;
+        button.classList.remove('loading');
+        
+        const btnText = button.querySelector('.btn-text');
+        const btnLoading = button.querySelector('.btn-loading');
+        
+        if (btnText && btnLoading) {
+            // 구조화된 버튼
+            btnText.classList.remove('d-none');
+            btnLoading.classList.add('d-none');
+        } else {
+            // 일반 버튼 - 원본 HTML 복원
+            const originalHtml = button.getAttribute('data-original-html');
+            if (originalHtml) {
+                button.innerHTML = originalHtml;
+                button.removeAttribute('data-original-html');
+            } else {
+                button.innerHTML = defaultText;
+            }
         }
     }
 
@@ -364,4 +445,30 @@ window.confirmDelete = function(item = 'this item') {
 // Toast 편의 함수
 window.showToast = function(message, type = 'info', duration = 5000) {
     window.SiteManager.notifications.toast(message, type, duration);
+};
+
+// Loading 편의 함수들
+window.showLoading = function(target = 'Loading...', message = null) {
+    window.SiteManager.notifications.showLoading(target, message);
+};
+
+window.hideLoading = function(target = null) {
+    window.SiteManager.notifications.hideLoading(target);
+};
+
+// 하위 호환성을 위한 기존 함수명들
+window.setLoading = function(isLoading, target = null) {
+    if (isLoading) {
+        window.showLoading(target || 'Loading...');
+    } else {
+        window.hideLoading(target);
+    }
+};
+
+window.showLoadingState = function(button, message = 'Loading...') {
+    window.showLoading(button, message);
+};
+
+window.hideLoadingState = function(button, defaultText = 'Submit') {
+    window.SiteManager.notifications.hideButtonLoading(button, defaultText);
 };
