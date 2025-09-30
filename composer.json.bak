@@ -1,0 +1,17 @@
+
+        "sitemanager": {
+            "type": "path",
+            "url": "../sitemanager",
+            "options": {
+                "symlink": true
+            }
+        }
+
+
+
+
+        "sitemanager": {
+            "type": "vcs",
+            "url": "https://github.com/d3141cgit/sitemanager"
+        }
+
