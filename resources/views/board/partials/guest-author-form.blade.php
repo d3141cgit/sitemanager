@@ -26,27 +26,14 @@
     </div>
 </div>
 
-{{-- reCAPTCHA (현재 비활성화됨 - 키 타입 불일치로 인해) --}}
-@if(config('sitemanager.security.recaptcha.enabled', false) && config('sitemanager.security.recaptcha.site_key'))
-    @if(config('sitemanager.security.recaptcha.version') === 'v3')
-        {{-- reCAPTCHA v3 (invisible) --}}
-        <input type="hidden" name="recaptcha_token" id="recaptcha_token">
-    @else
-        {{-- reCAPTCHA v2 (checkbox) --}}
-        <div class="mb-3">
-            <div class="g-recaptcha" 
-                    data-sitekey="{{ config('sitemanager.security.recaptcha.site_key') ?? config('services.recaptcha.site_key') }}"
-                    data-callback="onCaptchaSuccess"
-                    data-expired-callback="onCaptchaExpired"></div>
-            <div class="invalid-feedback d-block" id="captcha-error" style="display: none !important;">
-                캡챠 인증을 완료해주세요.
-            </div>
-        </div>
-    @endif
-@endif
-
-{{-- 스팸 방지 필드들 --}}
-@include('sitemanager::board.partials.anti-spam-fields')
+{{-- SiteManager 통합 보안 서비스 --}}
+@include('sitemanager::security.form-security', [
+    'formType' => 'board_post',
+    'enableRecaptcha' => true,
+    'enableHoneypot' => true,
+    'enableTiming' => true,
+    'minTime' => 5
+])
 
 {{-- reCAPTCHA 설정을 위한 데이터 속성 --}}
 @if(config('sitemanager.security.recaptcha.enabled', false) && config('sitemanager.security.recaptcha.site_key'))

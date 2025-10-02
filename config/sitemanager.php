@@ -94,8 +94,17 @@ return [
             'enabled' => env('SITEMANAGER_RECAPTCHA_ENABLED', false),
             'site_key' => env('RECAPTCHA_SITE_KEY'),
             'secret_key' => env('RECAPTCHA_SECRET_KEY'),
-            'version' => env('RECAPTCHA_VERSION', 'v3'), // v2 또는 v3
-            'score_threshold' => env('RECAPTCHA_SCORE_THRESHOLD', 0.5), // v3용 점수 임계값
+            'version' => 'v3', // v3 전용으로 고정
+            'score_threshold' => 0.5, // v3용 점수 임계값 (고정값)
+        ],
+        'honeypot' => [
+            'enabled' => env('SITEMANAGER_HONEYPOT_ENABLED', true),
+            'fields' => ['website', 'url', 'homepage', 'phone_number', 'company_phone'],
+        ],
+        'behavior_tracking' => [
+            'enabled' => env('SITEMANAGER_BEHAVIOR_TRACKING_ENABLED', true),
+            'min_interaction_time' => 3, // 최소 상호작용 시간 (초)
+            'max_form_time' => 1800, // 최대 폼 시간 (초, 30분)
         ],
         'blocked_email_domains' => [
             '10minutemail.com',
@@ -109,8 +118,8 @@ return [
             '33mail.com',
         ],
         'rate_limiting' => [
-            'max_attempts' => env('SITEMANAGER_RATE_LIMIT_ATTEMPTS', 5), // IP당 최대 시도 횟수
-            'decay_minutes' => env('SITEMANAGER_RATE_LIMIT_DECAY', 60), // 제한 해제 시간 (분)
+            'max_attempts' => 5, // IP당 최대 시도 횟수
+            'decay_minutes' => 60, // 제한 해제 시간 (분)
         ],
         'spam_keywords' => [
             'casino', 'poker', 'viagra', 'cialis', 'loan', 'mortgage',
@@ -118,16 +127,12 @@ return [
             'weight loss', 'diet pill', 'sex', 'adult', 'porn',
             'dating', 'hookup', 'escort', 'pharmacy', 'drugs'
         ],
-        'max_urls_per_post' => env('SITEMANAGER_MAX_URLS_PER_POST', 3),
-        'min_form_time' => env('SITEMANAGER_MIN_FORM_TIME', 3), // 최소 폼 작성 시간 (초)
-        'honeypot' => [
-            'enabled' => env('SITEMANAGER_HONEYPOT_ENABLED', true),
-            'fields' => ['website', 'url', 'homepage', 'phone_number']
-        ],
+        'max_urls_per_post' => 3,
+        'min_form_time' => 3, // 최소 폼 작성 시간 (초)
         'guest_posting' => [
-            'enabled' => env('SITEMANAGER_GUEST_POSTING_ENABLED', true),
-            'require_email_verification' => env('SITEMANAGER_GUEST_EMAIL_VERIFICATION_REQUIRED', true),
-            'require_captcha' => env('SITEMANAGER_GUEST_CAPTCHA_REQUIRED', true),
+            'enabled' => true,
+            'require_email_verification' => true,
+            'require_captcha' => true,
         ],
     ],
     

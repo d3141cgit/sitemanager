@@ -8,7 +8,7 @@ use SiteManager\Models\BoardComment;
 use SiteManager\Models\BoardAttachment;
 use SiteManager\Services\BoardService;
 use SiteManager\Services\FileUploadService;
-use SiteManager\Services\EmailVerificationService;
+use SiteManager\Services\SecurityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -22,7 +22,7 @@ class CommentController extends Controller
     public function __construct(
         private BoardService $boardService,
         private FileUploadService $fileUploadService,
-        private EmailVerificationService $emailVerificationService
+        private SecurityService $securityService
     ) {}
 
     /**
@@ -143,16 +143,16 @@ class CommentController extends Controller
     public function store(Request $request, string $slug, $postId): JsonResponse
     {
         // 디버깅을 위한 로깅 추가
-        Log::info('Comment store request received', [
-            'slug' => $slug,
-            'post_id' => $postId,
-            'request_id' => Str::random(8),
-            'user_id' => Auth::id(),
-            'content_length' => strlen($request->input('content', '')),
-            'has_files' => $request->hasFile('files'),
-            'content_type' => $request->header('Content-Type'),
-            'method' => $request->method(),
-        ]);
+        // Log::info('Comment store request received', [
+        //     'slug' => $slug,
+        //     'post_id' => $postId,
+        //     'request_id' => Str::random(8),
+        //     'user_id' => Auth::id(),
+        //     'content_length' => strlen($request->input('content', '')),
+        //     'has_files' => $request->hasFile('files'),
+        //     'content_type' => $request->header('Content-Type'),
+        //     'method' => $request->method(),
+        // ]);
         
         $board = Board::where('slug', $slug)->firstOrFail();
         
@@ -180,60 +180,30 @@ class CommentController extends Controller
 
         // 익명 사용자인 경우 추가 검증
         if (!Auth::check()) {
-            // Rate Limiting 검사
-            if (!$this->emailVerificationService->checkRateLimit($request->ip(), 'comment')) {
-                return response()->json(['error' => '너무 많은 요청입니다. 잠시 후 다시 시도해주세요.'], 429);
-            }
+            // SiteManager 통합 보안 검증
+            $securityValidation = $this->securityService->validateFormSecurity($validated, $request->ip(), [
+                'form_type' => 'board_comment',
+                'min_time' => 3, // 댓글 작성 최소 시간
+                'text_fields' => ['content'],
+                'email_field' => 'author_email',
+                'email_domain' => true,
+                'rate_limit' => true,
+                'rate_limit_type' => 'comment'
+            ]);
             
-            // 허니팟 검증
-            if (!$this->emailVerificationService->verifyHoneypot($request->all())) {
-                Log::warning('Honeypot triggered for comment submission', [
+            if (!$securityValidation['valid']) {
+                Log::warning('Board comment security validation failed', [
+                    'error_type' => $securityValidation['error_type'],
+                    'error_message' => $securityValidation['error_message'],
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent()
                 ]);
-                return response()->json(['error' => '잘못된 요청입니다.'], 422);
-            }
-            
-            // 폼 토큰 검증 (제출 시간)
-            if ($request->has('form_token')) {
-                if (!$this->emailVerificationService->verifySubmissionTime($validated['form_token'])) {
-                    return response()->json(['error' => '폼 제출이 너무 빠릅니다. 다시 시도해주세요.'], 422);
-                }
-            }
-            
-            // reCAPTCHA 검증
-            if ($request->has('g-recaptcha-response')) {
-                if (!$this->emailVerificationService->verifyCaptcha(
-                    $validated['g-recaptcha-response'],
-                    $request->ip(),
-                    'comment'
-                )) {
-                    return response()->json(['error' => '보안 인증에 실패했습니다.'], 422);
-                }
+                return response()->json(['error' => $securityValidation['error_message']], 422);
             }
             
             // 작성자 정보 필수 입력 검증
             if (empty($validated['author_name']) || empty($validated['author_email'])) {
                 return response()->json(['error' => '익명 댓글 작성 시 이름과 이메일은 필수입니다.'], 422);
-            }
-            
-            // 이메일 도메인 블랙리스트 검사
-            if ($this->emailVerificationService->isBlockedEmailDomain($validated['author_email'])) {
-                return response()->json(['error' => '사용할 수 없는 이메일 도메인입니다.'], 422);
-            }
-            
-            // 스팸 내용 검사
-            if ($this->emailVerificationService->isSpamContent(
-                $validated['content'],
-                '',
-                $validated['author_email']
-            )) {
-                Log::warning('Spam content detected in comment', [
-                    'ip' => $request->ip(),
-                    'email' => $validated['author_email'],
-                    'content_preview' => substr($validated['content'], 0, 100)
-                ]);
-                return response()->json(['error' => '부적절한 내용이 감지되었습니다.'], 422);
             }
         }
 
@@ -300,7 +270,7 @@ class CommentController extends Controller
             // 익명 사용자의 경우 이메일 인증 메일 발송
             if (!Auth::check()) {
                 // 댓글 ID로 이메일 인증 토큰 생성 및 발송
-                $emailToken = $this->emailVerificationService->sendVerificationEmail(
+                $emailToken = $this->securityService->sendVerificationEmail(
                     $validated['author_email'],
                     'comment',
                     $comment->id,
@@ -389,12 +359,12 @@ class CommentController extends Controller
             DB::beginTransaction();
             
             // 디버깅 로그 추가
-            Log::info('Comment update request', [
-                'comment_id' => $commentId,
-                'deleted_attachments_raw' => $validated['deleted_attachments'] ?? null,
-                'has_files' => $request->hasFile('files'),
-                'request_data' => $request->all()
-            ]);
+            // Log::info('Comment update request', [
+            //     'comment_id' => $commentId,
+            //     'deleted_attachments_raw' => $validated['deleted_attachments'] ?? null,
+            //     'has_files' => $request->hasFile('files'),
+            //     'request_data' => $request->all()
+            // ]);
             
             $comment->update([
                 'content' => $this->filterHtml($validated['content']),
@@ -405,10 +375,10 @@ class CommentController extends Controller
             if (!empty($validated['deleted_attachments'])) {
                 $deletedAttachmentIds = json_decode($validated['deleted_attachments'], true);
                 if (is_array($deletedAttachmentIds) && !empty($deletedAttachmentIds)) {
-                    Log::info('Processing deleted attachments', [
-                        'comment_id' => $commentId,
-                        'deleted_attachment_ids' => $deletedAttachmentIds
-                    ]);
+                    // Log::info('Processing deleted attachments', [
+                    //     'comment_id' => $commentId,
+                    //     'deleted_attachment_ids' => $deletedAttachmentIds
+                    // ]);
                     $this->handleDeletedAttachments($comment, $deletedAttachmentIds);
                 }
             }
@@ -572,20 +542,20 @@ class CommentController extends Controller
     private function handleCommentFileUploads(Request $request, $comment, Board $board): void
     {
         if (!$request->hasFile('files')) {
-            Log::info('No files in request for comment', ['comment_id' => $comment->id]);
+            // Log::info('No files in request for comment', ['comment_id' => $comment->id]);
             return;
         }
 
         $files = $request->file('files');
         $fileCount = is_array($files) ? count($files) : 1;
         
-        Log::info('Processing comment file uploads', [
-            'comment_id' => $comment->id,
-            'file_count' => $fileCount,
-            'files_info' => is_array($files) ? 
-                array_map(fn($f) => ['name' => $f->getClientOriginalName(), 'size' => $f->getSize()], $files) :
-                [['name' => $files->getClientOriginalName(), 'size' => $files->getSize()]]
-        ]);
+        // Log::info('Processing comment file uploads', [
+        //     'comment_id' => $comment->id,
+        //     'file_count' => $fileCount,
+        //     'files_info' => is_array($files) ? 
+        //         array_map(fn($f) => ['name' => $f->getClientOriginalName(), 'size' => $f->getSize()], $files) :
+        //         [['name' => $files->getClientOriginalName(), 'size' => $files->getSize()]]
+        // ]);
 
         $folder = "attachments/board/{$board->slug}";
         
@@ -602,12 +572,12 @@ class CommentController extends Controller
                 // FileUploadService를 사용하여 파일 업로드
                 $uploadResult = $this->fileUploadService->uploadFile($file, $folder);
                 
-                Log::info('File uploaded successfully', [
-                    'comment_id' => $comment->id,
-                    'original_name' => $uploadResult['name'],
-                    'stored_filename' => $uploadResult['filename'],
-                    'file_size' => $uploadResult['size']
-                ]);
+                // Log::info('File uploaded successfully', [
+                //     'comment_id' => $comment->id,
+                //     'original_name' => $uploadResult['name'],
+                //     'stored_filename' => $uploadResult['filename'],
+                //     'file_size' => $uploadResult['size']
+                // ]);
                 
                 // 파일 카테고리 결정
                 $category = $this->determineFileCategory($uploadResult['mime_type'], $uploadResult['extension']);
@@ -731,11 +701,11 @@ class CommentController extends Controller
                 // DB에서 삭제
                 $attachment->delete();
 
-                Log::info('Comment attachment deleted via edit', [
-                    'attachment_id' => $attachment->id,
-                    'comment_id' => $comment->id,
-                    'file_path' => $attachment->file_path,
-                ]);
+                // Log::info('Comment attachment deleted via edit', [
+                //     'attachment_id' => $attachment->id,
+                //     'comment_id' => $comment->id,
+                //     'file_path' => $attachment->file_path,
+                // ]);
 
             } catch (\Exception $e) {
                 Log::error('Failed to delete attachment during comment edit', [
@@ -865,7 +835,7 @@ class CommentController extends Controller
             }
             
             // 이메일과 비밀번호로 인증
-            $isVerified = $this->emailVerificationService->verifyGuestCredentials(
+            $isVerified = $this->securityService->verifyGuestCredentials(
                 $email, 
                 $password, 
                 'comment', 

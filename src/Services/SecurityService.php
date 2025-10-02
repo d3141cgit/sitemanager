@@ -13,7 +13,16 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
-class EmailVerificationService
+/**
+ * SiteManager 통합 보안 서비스
+ * - 이메일 인증
+ * - Rate Limiting
+ * - reCAPTCHA 검증  
+ * - Honeypot 검증
+ * - 폼 보안 검증
+ * - 스팸 차단
+ */
+class SecurityService
 {
     /**
      * 이메일 인증 토큰 생성 및 발송
@@ -549,5 +558,278 @@ class EmailVerificationService
             'email_verification_token' => $hashedPassword, // 비밀번호를 토큰 필드에 저장
             'status' => 'approved'
         ]);
+    }
+    
+    /**
+     * ============================================================================
+     * 통합 폼 보안 검증 메서드들
+     * ============================================================================
+     */
+    
+    /**
+     * 종합 보안 검증 (원스톱 검증)
+     */
+    public function validateFormSecurity(array $data, string $ip, array $options = []): array
+    {
+        $defaultOptions = [
+            'honeypot' => true,
+            'timing' => true,
+            'recaptcha' => true,
+            'email_domain' => true,
+            'spam_content' => true,
+            'min_time' => 3, // 최소 폼 작성 시간 (초)
+            'form_type' => 'general', // 폼 타입 (로깅용)
+            'text_fields' => ['name', 'email', 'message'], // 스팸 검사할 필드들
+        ];
+        
+        $options = array_merge($defaultOptions, $options);
+        $errors = [];
+        
+        // 1. Honeypot 검증
+        if ($options['honeypot']) {
+            $honeypotResult = $this->validateHoneypotFields($data, $ip, $options['form_type']);
+            if (!$honeypotResult['valid']) {
+                $errors[] = $honeypotResult;
+            }
+        }
+        
+        // 2. 폼 제출 시간 검증
+        if ($options['timing']) {
+            $timingResult = $this->validateFormTiming($data, $ip, $options['min_time'], $options['form_type']);
+            if (!$timingResult['valid']) {
+                $errors[] = $timingResult;
+            }
+        }
+        
+        // 3. reCAPTCHA 검증
+        if ($options['recaptcha']) {
+            $recaptchaResult = $this->validateRecaptchaToken($data, $ip, $options['form_type']);
+            if (!$recaptchaResult['valid']) {
+                $errors[] = $recaptchaResult;
+            }
+        }
+        
+        // 4. 이메일 도메인 차단 검증
+        if ($options['email_domain'] && !empty($data['email'])) {
+            $emailResult = $this->validateEmailDomainBlocking($data['email'], $ip, $options['form_type']);
+            if (!$emailResult['valid']) {
+                $errors[] = $emailResult;
+            }
+        }
+        
+        // 5. 스팸 내용 검증
+        if ($options['spam_content']) {
+            $spamResult = $this->validateSpamContent($data, $options['text_fields'], $ip, $options['form_type']);
+            if (!$spamResult['valid']) {
+                $errors[] = $spamResult;
+            }
+        }
+        
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors,
+            'error_message' => $errors[0]['message'] ?? null,
+            'error_type' => $errors[0]['type'] ?? null
+        ];
+    }
+    
+    /**
+     * Honeypot 필드 검증
+     */
+    public function validateHoneypotFields(array $data, string $ip, string $formType = 'general'): array
+    {
+        $honeypotFields = config('sitemanager.security.honeypot.fields', [
+            'website', 'url', 'homepage', 'phone_number', 'company_phone'
+        ]);
+        
+        foreach ($honeypotFields as $field) {
+            if (!empty($data[$field])) {
+                Log::warning('SiteManager Security: Honeypot field detected', [
+                    'field' => $field,
+                    'value' => $data[$field],
+                    'ip' => $ip,
+                    'form_type' => $formType,
+                    'timestamp' => now()
+                ]);
+                
+                return [
+                    'valid' => false,
+                    'type' => 'honeypot',
+                    'message' => 'Invalid submission detected.',
+                    'field' => $field
+                ];
+            }
+        }
+        
+        return ['valid' => true];
+    }
+    
+    /**
+     * 폼 제출 시간 검증
+     */
+    public function validateFormTiming(array $data, string $ip, int $minTime = 3, string $formType = 'general'): array
+    {
+        if (empty($data['form_timestamp'])) {
+            return ['valid' => true]; // 타임스탬프가 없으면 통과
+        }
+        
+        $timeDiff = time() - (int)$data['form_timestamp'];
+        
+        if ($timeDiff < $minTime) {
+            Log::warning('SiteManager Security: Form submitted too quickly', [
+                'time_diff' => $timeDiff,
+                'min_time' => $minTime,
+                'ip' => $ip,
+                'form_type' => $formType,
+                'timestamp' => now()
+            ]);
+            
+            return [
+                'valid' => false,
+                'type' => 'timing',
+                'message' => 'Please take more time to fill out the form properly.',
+                'time_diff' => $timeDiff,
+                'min_time' => $minTime
+            ];
+        }
+        
+        // 너무 오래된 폼 (30분 초과)
+        $maxTime = config('sitemanager.security.behavior_tracking.max_form_time', 1800);
+        if ($timeDiff > $maxTime) {
+            Log::warning('SiteManager Security: Form expired', [
+                'time_diff' => $timeDiff,
+                'max_time' => $maxTime,
+                'ip' => $ip,
+                'form_type' => $formType,
+                'timestamp' => now()
+            ]);
+            
+            return [
+                'valid' => false,
+                'type' => 'expired',
+                'message' => 'Form has expired. Please refresh and try again.',
+                'time_diff' => $timeDiff,
+                'max_time' => $maxTime
+            ];
+        }
+        
+        return ['valid' => true];
+    }
+    
+    /**
+     * reCAPTCHA 토큰 검증 (기존 verifyCaptcha를 래핑)
+     */
+    public function validateRecaptchaToken(array $data, string $ip, string $formType = 'general'): array
+    {
+        $recaptchaToken = $data['recaptcha_token'] ?? $data['g-recaptcha-response'] ?? null;
+        
+        if (empty($recaptchaToken)) {
+            return ['valid' => true]; // 토큰이 없으면 통과 (선택적)
+        }
+        
+        $isValid = $this->verifyCaptcha($recaptchaToken, $ip, $formType);
+        
+        if (!$isValid) {
+            return [
+                'valid' => false,
+                'type' => 'recaptcha',
+                'message' => 'reCAPTCHA verification failed. Please try again.'
+            ];
+        }
+        
+        return ['valid' => true];
+    }
+    
+    /**
+     * 이메일 도메인 차단 검증
+     */
+    public function validateEmailDomainBlocking(string $email, string $ip, string $formType = 'general'): array
+    {
+        $blockedDomains = config('sitemanager.blocked_email_domains', []);
+        
+        if (empty($blockedDomains)) {
+            return ['valid' => true];
+        }
+        
+        $emailDomain = substr(strrchr($email, "@"), 1);
+        
+        if (in_array(strtolower($emailDomain), array_map('strtolower', $blockedDomains))) {
+            Log::warning('SiteManager Security: Blocked email domain detected', [
+                'email' => $email,
+                'domain' => $emailDomain,
+                'ip' => $ip,
+                'form_type' => $formType,
+                'timestamp' => now()
+            ]);
+            
+            return [
+                'valid' => false,
+                'type' => 'blocked_email',
+                'message' => 'Email domain not allowed.',
+                'domain' => $emailDomain
+            ];
+        }
+        
+        return ['valid' => true];
+    }
+    
+    /**
+     * 스팸 내용 검증
+     */
+    public function validateSpamContent(array $data, array $textFields, string $ip, string $formType = 'general'): array
+    {
+        $spamKeywords = config('sitemanager.spam_keywords', []);
+        
+        if (empty($spamKeywords)) {
+            return ['valid' => true];
+        }
+        
+        foreach ($textFields as $field) {
+            if (!empty($data[$field])) {
+                foreach ($spamKeywords as $keyword) {
+                    if (stripos($data[$field], $keyword) !== false) {
+                        Log::warning('SiteManager Security: Spam keyword detected', [
+                            'field' => $field,
+                            'keyword' => $keyword,
+                            'value' => substr($data[$field], 0, 100) . '...', // 로그에는 일부만
+                            'ip' => $ip,
+                            'form_type' => $formType,
+                            'timestamp' => now()
+                        ]);
+                        
+                        return [
+                            'valid' => false,
+                            'type' => 'spam_content',
+                            'message' => 'Your submission contains inappropriate content.',
+                            'field' => $field,
+                            'keyword' => $keyword
+                        ];
+                    }
+                }
+            }
+        }
+        
+        return ['valid' => true];
+    }
+    
+    /**
+     * 보안 검증 규칙을 Validator 규칙에 추가
+     */
+    public function getSecurityValidationRules(): array
+    {
+        return [
+            // 보안 필드들
+            'g-recaptcha-response' => 'nullable|string',
+            'form_token' => 'nullable|string',
+            'user_behavior' => 'nullable|string',
+            'recaptcha_token' => 'nullable|string',
+            'form_timestamp' => 'nullable|numeric',
+            // Honeypot 필드들 (비어있어야 함)
+            'website' => 'nullable|string',
+            'url' => 'nullable|string',
+            'homepage' => 'nullable|string',
+            'phone_number' => 'nullable|string',
+            'company_phone' => 'nullable|string',
+        ];
     }
 }
