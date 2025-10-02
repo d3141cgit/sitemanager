@@ -94,7 +94,7 @@ return [
             'enabled' => env('SITEMANAGER_RECAPTCHA_ENABLED', false),
             'site_key' => env('RECAPTCHA_SITE_KEY'),
             'secret_key' => env('RECAPTCHA_SECRET_KEY'),
-            'version' => env('RECAPTCHA_VERSION', 'v2'), // v2 또는 v3
+            'version' => env('RECAPTCHA_VERSION', 'v3'), // v2 또는 v3
             'score_threshold' => env('RECAPTCHA_SCORE_THRESHOLD', 0.5), // v3용 점수 임계값
         ],
         'blocked_email_domains' => [
