@@ -254,7 +254,8 @@ class NavigationComposer
                 [
                     'title' => 'Home',
                     'url' => '/',
-                    'is_current' => false
+                    'is_current' => false,
+                    'alternatives' => []
                 ]
             ];
         }
@@ -269,11 +270,12 @@ class NavigationComposer
             $menu = $menu->parent_id ? $menus->find($menu->parent_id) : null;
         }
         
-        // Home 추가
+        // Home 추가 (alternatives 없음)
         $breadcrumb[] = [
             'title' => 'Home',
             'url' => '/',
-            'is_current' => false
+            'is_current' => false,
+            'alternatives' => []
         ];
         
         // 역순으로 브레드크럼 구성
@@ -283,11 +285,48 @@ class NavigationComposer
             
             $isLast = $index === count($menuChain) - 1;
             
+            // 같은 레벨의 형제 메뉴들을 대안으로 찾기 (같은 section 내에서만)
+            $siblings = collect();
+            if ($menu->parent_id) {
+                // 같은 부모를 가진 형제 메뉴들 (같은 section 내)
+                $siblings = $menus->filter(function($sibling) use ($menu) {
+                    return $sibling && 
+                           $sibling->parent_id == $menu->parent_id && 
+                           $sibling->id != $menu->id &&
+                           $sibling->section == $menu->section && // 같은 section 체크 추가
+                           !empty($sibling->permission) && 
+                           ($sibling->permission & 1) === 1; // 보기 권한 체크
+                });
+            } else {
+                // 최상위 메뉴들 (같은 section 내)
+                $siblings = $menus->filter(function($sibling) use ($menu) {
+                    return $sibling && 
+                           !$sibling->parent_id && 
+                           $sibling->id != $menu->id &&
+                           $sibling->section == $menu->section && // 같은 section 체크 추가
+                           !empty($sibling->permission) && 
+                           ($sibling->permission & 1) === 1; // 보기 권한 체크
+                });
+            }
+            
+            // 디버깅: 형제 메뉴 개수 확인
+            $siblingCount = $siblings->count();
+            
+            $alternatives = [];
+            foreach ($siblings as $sibling) {
+                $alternatives[] = [
+                    'title' => $sibling->title ?? 'Menu',
+                    'url' => $this->getMenuUrl($sibling),
+                    'menu_id' => $sibling->id ?? null
+                ];
+            }
+            
             $breadcrumb[] = [
                 'title' => $menu->title ?? 'Menu',
                 'url' => $isLast ? null : $this->getMenuUrl($menu),
                 'is_current' => $isLast,
-                'menu_id' => $menu->id ?? null
+                'menu_id' => $menu->id ?? null,
+                'alternatives' => $alternatives
             ];
         }
         
