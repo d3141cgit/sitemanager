@@ -84,40 +84,45 @@ if (!function_exists('get_menu_url')) {
                         return $target;
                     }
                     
-                    // 라우트명인 경우
-                    $routeName = $target;
-                    $routeParams = [];
-                    
-                    // 커스텀 ID 지원 라우트인지 확인
-                    try {
-                        $route = \Illuminate\Support\Facades\Route::getRoutes()->getByName($routeName);
-                        if ($route && str_contains($route->uri(), '{menuId?}')) {
-                            // 현재 메뉴 ID를 menuId 파라미터로 추가
-                            $routeParams['menuId'] = $menu['id'] ?? null;
+                    // 라우트명인지 확인 - 존재하면 route() 함수 사용
+                    if (\Illuminate\Support\Facades\Route::has($target)) {
+                        $routeParams = [];
+                        
+                        // 커스텀 ID 지원 라우트인지 확인
+                        try {
+                            $route = \Illuminate\Support\Facades\Route::getRoutes()->getByName($target);
+                            if ($route && str_contains($route->uri(), '{menuId?}')) {
+                                // 현재 메뉴 ID를 menuId 파라미터로 추가
+                                $routeParams['menuId'] = $menu['id'] ?? null;
+                            }
+                        } catch (\Exception $e) {
+                            // 라우트가 없어도 계속 진행
                         }
-                    } catch (\Exception $e) {
-                        // 라우트가 없어도 계속 진행
-                    }
                     
-                    // board.index의 경우 연결된 게시판의 slug 파라미터가 필요
-                    if ($routeName === 'board.index' && !isset($routeParams['slug'])) {
-                        $menuId = $menu['id'] ?? null;
-                        if ($menuId) {
-                            $board = \SiteManager\Models\Board::where('menu_id', $menuId)->first();
-                            if ($board && $board->slug) {
-                                $routeParams['slug'] = $board->slug;
+                        // board.index의 경우 연결된 게시판의 slug 파라미터가 필요
+                        if ($target === 'board.index' && !isset($routeParams['slug'])) {
+                            $menuId = $menu['id'] ?? null;
+                            if ($menuId) {
+                                $board = \SiteManager\Models\Board::where('menu_id', $menuId)->first();
+                                if ($board && $board->slug) {
+                                    $routeParams['slug'] = $board->slug;
+                                } else {
+                                    // 연결된 게시판이 없으면 기본값 사용
+                                    Log::warning("No board found for menu ID: {$menuId}");
+                                    return '#';
+                                }
                             } else {
-                                // 연결된 게시판이 없으면 기본값 사용
-                                Log::warning("No board found for menu ID: {$menuId}");
+                                Log::warning("Menu ID not provided for board.index route");
                                 return '#';
                             }
-                        } else {
-                            Log::warning("Menu ID not provided for board.index route");
-                            return '#';
                         }
+                        
+                        return route($target, $routeParams);
                     }
                     
-                    return route($routeName, $routeParams);
+                    // 라우트가 없으면 URI로 처리 (앞에 / 추가)
+                    return '/' . ltrim($target, '/');
+                    
                 } catch (Exception $e) {
                     Log::warning("Failed to generate route URL for menu", [
                         'menu_target' => $menu['target'] ?? 'unknown',

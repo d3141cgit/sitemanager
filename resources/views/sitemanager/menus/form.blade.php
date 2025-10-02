@@ -73,22 +73,33 @@
                                     @php
                                         $isSelected = false;
                                         if (isset($menu) && $menu->target) {
-                                            // 일반 라우트 이름과 직접 비교
-                                            if ($route['name'] === $menu->target) {
+                                            // target_value와 현재 메뉴의 target 비교
+                                            if (isset($route['target_value']) && $route['target_value'] === $menu->target) {
                                                 $isSelected = true;
                                             }
+                                            // 기존 호환성을 위해 name도 확인
+                                            elseif ($route['name'] === $menu->target) {
+                                                $isSelected = true;
+                                            }
+
                                             // 커스텀 경로의 경우 기본 라우트 이름과 비교
                                             elseif (isset($baseRouteName) && $route['name'] === $baseRouteName) {
                                                 $isSelected = true;
                                             }
                                         }
                                     @endphp
-                                    <option value="{{ $route['name'] }}" 
+                                    <option value="{{ $route['target_value'] ?? $route['name'] }}" 
                                             data-uri="{{ $route['uri'] }}"
                                             {{ $isSelected ? 'selected' : '' }}>
-                                        {{ $route['description'] }} ({{ $route['name'] }})
+                                        {{ $route['name'] }}
                                     </option>
                                 @endforeach
+                                
+                                @if(isset($menu) && $menu->target && $menu->type === 'route')
+                                    <option value="{{ $menu->target }}" selected>
+                                        {{ $menu->target }}
+                                    </option>
+                                @endif
                             @else
                                 <option value="" disabled>{{ t('No routes available') }}</option>
                             @endif
@@ -670,7 +681,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (uri) {
                 const routeInfo = routeContainer.querySelector('.route-info') || document.createElement('div');
                 routeInfo.className = 'route-info form-text mt-2 text-success';
-                routeInfo.innerHTML = `<i class="bi bi-check-circle me-1"></i>{{ t("Selected") }}: <code>${selectedData.id}</code> → <code>/${uri}</code>`;
+                routeInfo.innerHTML = `<i class="bi bi-check-circle me-1"></i>{{ t("Selected") }}: <code>${selectedData.id}</code> → <code>${uri}</code>`;
                 if (!routeContainer.querySelector('.route-info')) {
                     routeContainer.appendChild(routeInfo);
                 }
@@ -726,16 +737,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 routeContainer.appendChild(warningDiv);
             } else {
-                // Show success message if board is connected
+                // Board is connected - auto-convert to URI format
+                const boardUri = `/board/${data.boardSlug}`;
+                targetField.value = boardUri;
+                
+                // Show success message with URI conversion info
                 const successDiv = document.createElement('div');
                 successDiv.className = 'board-warning alert alert-success mt-2';
                 successDiv.innerHTML = `
                     <i class="bi bi-check-circle me-2"></i>
-                    <strong>{{ t("Board Connected") }}:</strong> {{ t("Board") }} "${data.boardName}" {{ t("is connected to this menu.") }}
+                    <strong>{{ t("Board Connected & URI Updated") }}:</strong> {{ t("Board") }} "${data.boardName}" {{ t("is connected to this menu.") }}
+                    <br>
+                    <small class="text-success">
+                        <i class="bi bi-arrow-right me-1"></i>{{ t("Target automatically updated to") }}: <code>${boardUri}</code>
+                        <br>
+                        <span class="text-muted">{{ t("This provides better performance by avoiding database queries.") }}</span>
+                    </small>
                     <br>
                     <small class="text-muted">
-                        {{ t("This menu will redirect to the board index page when clicked.") }}
-                        <br>
                         <a href="{{ route('sitemanager.boards.index') }}" target="_blank" class="btn btn-sm btn-outline-info mt-1">
                             <i class="bi bi-list"></i> {{ t("Manage Boards") }}
                         </a>
@@ -784,7 +803,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (uri) {
                     const routeInfo = document.createElement('div');
                     routeInfo.className = 'route-info form-text mt-2 text-success';
-                    routeInfo.innerHTML = `<i class="bi bi-check-circle me-1"></i>Selected: <code>${routeSelectValue}</code> → <code>/${uri}</code>`;
+                    routeInfo.innerHTML = `<i class="bi bi-check-circle me-1"></i>Selected: <code>${routeSelectValue}</code> → <code>${uri}</code>`;
                     routeContainer.appendChild(routeInfo);
                 }
             }

@@ -391,208 +391,77 @@ class MenuService
         // 현재 사용 중인 라우트들 조회 (현재 편집 중인 메뉴 제외)
         $usedRoutes = $this->getUsedRoutes($excludeMenuId);
         
-        foreach ($routes as $route) {
+        // RouteCollection에서 GET 메서드 라우트들만 가져오기
+        $getRoutes = $routes->get('GET') ?? [];
+
+        foreach( $getRoutes as $route) {
+            // $route는 Illuminate\Routing\Route 객체
             $name = $route->getName();
-            $methods = $route->methods();
-            
-            // 기본 필터링: 이름이 있고 GET 메서드를 지원하는 라우트만
-            if (!$name || !in_array('GET', $methods)) {
+            $uri = $route->uri();
+
+            // 이름이 없는 라우트는 URI를 이름으로 사용
+            $displayName = $name ?: $uri;
+
+            // 시스템/헬스체크 라우트 필터링 (이름이 없어도 URI로 필터링)
+            if ($uri === 'up' || $displayName === 'up') {
                 continue;
             }
-            
-            // 시스템/디버그 라우트 제외
-            if (str_starts_with($name, '_ignition') || 
-                str_starts_with($name, 'debugbar') ||
-                str_starts_with($name, 'telescope') ||
-                str_starts_with($name, 'download.') ||
-                str_starts_with($name, 'horizon')) {
-                continue;
+
+            // 이름이 있는 경우에만 이름 기반 필터링 적용
+            if ($name) {
+                if (str_starts_with($name, 'sitemanager.')) {
+                    continue;
+                }
+
+                if (str_starts_with($name, 'api.')) {
+                    continue;
+                }
+
+                if (str_starts_with($name, 'storage.')) {
+                    continue;
+                }
+
+                if (str_starts_with($name, 'editor.')) {
+                    continue;
+                }
+
+                if (in_array($name, ['login', 'logout', 'register', 'password.request', 'password.email', 'password.reset', 'password.update', 'verification.notice', 'verification.verify', 'verification.send'])) {
+                    continue;
+                }
+
+                // 게시판은 board.index만 허용하고 나머지는 제외
+                if (str_starts_with($name, 'board.') && $name !== 'board.index') {
+                    continue;
+                }
             }
-            
-            // Admin 라우트 제외 (관리자 전용)
-            if (str_starts_with($name, 'admin.')) {
-                continue;
-            }
-            
-            // SiteManager 패키지 라우트 제외 (내부 시스템 라우트)
-            if (str_starts_with($name, 'sitemanager.')) {
-                continue;
-            }
-            
-            // API 라우트 제외
-            if (str_starts_with($name, 'api.')) {
-                continue;
-            }
-            
-            // 스토리지 라우트 제외
-            if (str_starts_with($name, 'storage.')) {
-                continue;
-            }
-            
-            // 인증 관련 라우트 제외
-            if (in_array($name, ['login', 'logout', 'register', 'password.request', 'password.email', 'password.reset', 'password.update', 'verification.notice', 'verification.verify', 'verification.send'])) {
-                continue;
-            }
-            
-            // CRUD 액션 중 메뉴에 부적합한 것들 제외
-            if (str_contains($name, '.store') ||    // POST 액션
-                str_contains($name, '.update') ||   // PUT/PATCH 액션
-                str_contains($name, '.destroy') ||  // DELETE 액션
-                str_contains($name, '.create') ||   // 생성 폼
-                str_contains($name, '.edit') ||     // 편집 폼
-                str_contains($name, '.confirm') ||  // 확인 페이지
-                str_contains($name, '.approve') ||  // 승인 액션
-                str_contains($name, '.reject') ||   // 거부 액션
-                str_contains($name, '.download') || // 다운로드 액션
-                str_contains($name, '.upload') ||   // 업로드 액션
-                str_contains($name, '.delete') ||   // 삭제 관련
-                str_contains($name, '.restore') ||  // 복원 관련
-                str_contains($name, '.toggle') ||   // 토글 관련
-                str_contains($name, '.search') ||   // 검색 API (일반적으로 AJAX)
-                str_contains($name, '.preview') ||  // 미리보기
-                str_contains($name, '.export') ||   // 내보내기
-                str_contains($name, '.import') ||   // 가져오기
-                str_contains($name, '.comments') || // 댓글 관련 (보통 하위 리소스)
-                str_contains($name, '.files') ||    // 파일 관련
-                str_contains($name, '.attachments') || // 첨부파일 관련
-                str_contains($name, '.get-') ||     // AJAX API 엔드포인트 (get-images, get-data 등)
-                str_contains($name, '.fetch-') ||   // AJAX fetch 엔드포인트
-                str_contains($name, '.load-') ||    // AJAX load 엔드포인트
-                str_contains($name, '.ajax') ||     // 명시적 AJAX 라우트
-                str_contains($name, '.api') ||      // API 엔드포인트
-                str_ends_with($name, '-api') ||     // API 접미사
-                str_ends_with($name, '.json') ||    // JSON 응답
-                str_ends_with($name, '.xml')) {     // XML 응답
-                continue;
-            }
-            
-            // 너무 깊은 중첩 라우트 제외 (3단계 이상은 메뉴에 부적합)
-            $routeDepth = substr_count($name, '.');
-            if ($routeDepth > 2) { // a.b.c까지는 허용, a.b.c.d부터는 제외
-                continue;
-            }
-            
-            // 상세 페이지는 ID나 slug가 필요한 경우 제외 (메뉴에 부적합)
-            if (str_contains($name, '.show') && 
-                (str_contains($route->uri(), '{id}') || 
-                 str_contains($route->uri(), '{slug}') || 
-                 str_contains($route->uri(), '{'))) {
-                continue;
-            }
-            
-            // 게시판은 board.index만 허용하고 나머지는 제외
-            if (str_starts_with($name, 'board.') && $name !== 'board.index') {
-                continue;
-            }
-            
-            // 다중 사용 가능한 라우트인지 확인
-            $isMultiUse = $this->isMultiUseRoute($name);
+
+            // 이름이 없는 라우트는 다중 사용 불가능
+            $isMultiUse = $name ? $this->isMultiUseRoute($name) : false;
             $supportsCustomId = $this->supportsCustomId($route->uri());
-            
-            // 이미 사용 중인 라우트는 다중 사용 가능한 경우에만 포함
-            if (in_array($name, $usedRoutes) && !$isMultiUse) {
-                continue;
-            }
-            
-            // 메뉴에 적합한 라우트 패턴 우선순위
-            $priority = $this->getRouteMenuPriority($name);
-            
+
+            // board.index 같은 특수 케이스는 라우트명 유지, 나머지는 URI 사용
+            $targetValue = ($name && in_array($name, ['board.index'])) ? $name : '/' . $route->uri();
+
             $routeInfo = [
-                'name' => $name,
-                'uri' => $route->uri(),
-                'methods' => $methods,
-                'priority' => $priority,
-                'description' => $this->generateRouteDescription($name, $route->uri()),
+                'name' => $name ?: $uri, // 이름이 없으면 URI 사용 (표시용)
+                'target_value' => $targetValue, // 실제 target으로 사용할 값
+                'uri' => '/'.$route->uri(),
                 'supports_custom_id' => $supportsCustomId,
                 'is_multi_use' => $isMultiUse,
             ];
-            
-            // 커스텀 ID 지원하는 경우 추가 정보 제공
-            if ($supportsCustomId) {
-                $routeInfo['custom_id_note'] = 'This route supports custom menu ID parameter. You can specify a custom path like /music/sunday1team';
-            }
             
             $routeData[] = $routeInfo;
         }
         
         // 우선순위와 이름으로 정렬 (우선순위 높은 것 먼저, 같으면 이름순)
         usort($routeData, function($a, $b) {
-            if ($a['priority'] !== $b['priority']) {
-                return $b['priority'] - $a['priority']; // 높은 우선순위 먼저
-            }
+            // if ($a['priority'] !== $b['priority']) {
+            //     return $b['priority'] - $a['priority']; // 높은 우선순위 먼저
+            // }
             return strcmp($a['name'], $b['name']);
         });
         
         return $routeData;
-    }
-    
-    /**
-     * 라우트의 메뉴 적합성 우선순위 계산
-     */
-    private function getRouteMenuPriority(string $routeName): int
-    {
-        // 높은 우선순위 (10점): 메인 인덱스 페이지들
-        if (preg_match('/^[^.]+\.index$/', $routeName) || // board.index, news.index 등
-            $routeName === 'home' || 
-            $routeName === 'welcome' ||
-            $routeName === 'sermons.sunday' ||  // 주일설교 메뉴
-            $routeName === 'sermons.special' || // 주일 외 설교 메뉴
-            preg_match('/^[^.]+$/', $routeName)) { // 단일 레벨 라우트 (home, about 등)
-            return 10;
-        }
-        
-        // 중간 우선순위 (5점): 카테고리나 섹션 페이지
-        if (str_contains($routeName, '.category') ||
-            str_contains($routeName, '.list') ||
-            str_contains($routeName, '.archive') ||
-            preg_match('/^[^.]+\.[^.]+\.index$/', $routeName)) { // board.category.index 등
-            return 5;
-        }
-        
-        // 낮은 우선순위 (1점): 기타 GET 라우트
-        return 1;
-    }
-    
-    /**
-     * 라우트 설명 생성
-     */
-    private function generateRouteDescription(string $routeName, string $uri): string
-    {
-        // 특별한 라우트들에 대한 사용자 친화적 설명
-        $specialDescriptions = [
-            'home' => 'Home Page',
-            'welcome' => 'Welcome Page',
-            'about' => 'About Page',
-            'contact' => 'Contact Page',
-            'vision' => 'Vision & Mission',
-            'senior-pastor' => 'Senior Pastor',
-            'worship-service' => 'Worship Service',
-            'leaders' => 'Church Leaders',
-            'news.index' => 'News List',
-            'board.index' => 'Board List',
-            'gallery.index' => 'Gallery',
-            'events.index' => 'Events',
-            'services.index' => 'Services',
-            'products.index' => 'Products',
-            'sermons.sunday' => 'Sunday Sermons (주일설교)',
-            'sermons.special' => 'Special Sermons (주일 외 설교)',
-        ];
-        
-        if (isset($specialDescriptions[$routeName])) {
-            return $specialDescriptions[$routeName];
-        }
-        
-        // 패턴 기반 설명 생성
-        if (preg_match('/^([^.]+)\.index$/', $routeName, $matches)) {
-            return ucfirst($matches[1]) . ' List';
-        }
-        
-        if (preg_match('/^([^.]+)\.([^.]+)\.index$/', $routeName, $matches)) {
-            return ucfirst($matches[1]) . ' ' . ucfirst($matches[2]);
-        }
-        
-        // 기본 설명: 점과 언더스코어를 공백으로 변환하고 단어 첫글자 대문자화
-        return ucwords(str_replace(['.', '_'], [' ', ' '], $routeName));
     }
 
     /**
@@ -601,14 +470,51 @@ class MenuService
     public function routeExists(string $routeName): bool
     {
         try {
-            // 커스텀 경로인지 확인 (슬래시로 시작하는 경우)
+            // URI 형태 경로인지 확인 (슬래시로 시작하는 경우)
             if (str_starts_with($routeName, '/')) {
-                // 커스텀 경로의 경우 기본 라우트 패턴과 매칭되는지 확인
+                // URI 정리 (앞의 / 제거)
+                $cleanUri = ltrim($routeName, '/');
+                
+                // 게시판 URI 패턴 확인 (/board/{slug})
+                if (preg_match('/^board\/([^\/]+)$/', $cleanUri, $matches)) {
+                    $slug = $matches[1];
+                    // 해당 slug를 가진 게시판이 존재하는지 확인
+                    $boardExists = \SiteManager\Models\Board::where('slug', $slug)->exists();
+                    if ($boardExists) {
+                        return true;
+                    }
+                }
+                
+                // 등록된 모든 GET 라우트와 비교
+                $routes = Route::getRoutes();
+                foreach ($routes->get('GET') ?? [] as $route) {
+                    $routeUri = $route->uri();
+                    
+                    // 정확한 URI 매치
+                    if ($routeUri === $cleanUri) {
+                        return true;
+                    }
+                }
+                
+                // 커스텀 ID 지원 라우트와 매칭 확인 (기존 로직 유지)
                 return $this->isValidCustomPath($routeName);
             }
             
-            // 일반 라우트 이름인 경우
-            return Route::has($routeName);
+            // 일반 라우트 이름인 경우 먼저 체크
+            if (Route::has($routeName)) {
+                return true;
+            }
+            
+            // 라우트 이름이 없는 클로저 라우트의 경우 URI로 직접 체크
+            $routes = Route::getRoutes();
+            foreach ($routes->get('GET') ?? [] as $route) {
+                // 이름이 없는 라우트의 경우 URI와 비교
+                if (!$route->getName() && $route->uri() === $routeName) {
+                    return true;
+                }
+            }
+            
+            return false;
         } catch (\Exception $e) {
             return false;
         }
