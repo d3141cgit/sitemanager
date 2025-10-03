@@ -433,6 +433,11 @@ class MenuService
                 if (str_starts_with($name, 'board.') && $name !== 'board.index') {
                     continue;
                 }
+
+                // CRUD 라우트 제외 (create, store, edit, update, destroy)
+                if (preg_match('/\.(create|store|edit|update|destroy|show|download)$/', $name)) {
+                    continue;
+                }
             }
 
             // 이름이 없는 라우트는 다중 사용 불가능
