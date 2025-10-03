@@ -91,6 +91,15 @@ class Member extends Authenticatable
     }
 
     // 헬퍼 메서드들
+    
+    /**
+     * EdmMember와의 호환성을 위한 ID 반환 메서드
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+    
     public function isAdmin()
     {
         return $this->level >= config('member.admin_level');
