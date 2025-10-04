@@ -91,6 +91,7 @@ class MenuController extends Controller
             'search_content' => 'nullable|string',
             'type' => 'required|in:route,url,text',
             'target' => 'nullable|string|max:255',
+            'custom_route_target' => 'nullable|string|max:255',
             'parent_id' => 'nullable|exists:menus,id',
             'hidden' => 'nullable',
             'images.*.category' => 'nullable|string',
@@ -108,6 +109,11 @@ class MenuController extends Controller
         try {
             // 권한 관련 데이터 분리
             $menuData = $request->only(['title', 'description', 'search_content', 'type', 'target', 'parent_id', 'hidden']);
+            
+            // custom_route_target이 있으면 target을 덮어씀
+            if ($request->filled('custom_route_target')) {
+                $menuData['target'] = $request->input('custom_route_target');
+            }
             
             // hidden 필드를 boolean으로 변환 (checkbox 처리)
             $menuData['hidden'] = $request->has('hidden') && $request->input('hidden') == '1';
@@ -190,6 +196,7 @@ class MenuController extends Controller
             'search_content' => 'nullable|string',
             'type' => 'required|in:route,url,text',
             'target' => 'nullable|string|max:255',
+            'custom_route_target' => 'nullable|string|max:255',
             'parent_id' => 'nullable|exists:menus,id',
             'hidden' => 'nullable',
             'images.*.category' => 'nullable|string',
@@ -213,6 +220,11 @@ class MenuController extends Controller
         try {
             // 권한 관련 데이터 분리
             $menuData = $request->only(['title', 'description', 'search_content', 'type', 'target', 'parent_id', 'hidden']);
+            
+            // custom_route_target이 있으면 target을 덮어씀
+            if ($request->filled('custom_route_target')) {
+                $menuData['target'] = $request->input('custom_route_target');
+            }
             
             // hidden 필드를 boolean으로 변환 (checkbox 처리)
             $menuData['hidden'] = $request->has('hidden') && $request->input('hidden') == '1';

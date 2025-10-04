@@ -72,6 +72,12 @@ class BoardController extends Controller
         if (file_exists($projectLayoutPath)) {
             return 'layouts.app';
         }
+
+        $projectLayoutPath = resource_path('views/layouts/default.blade.php');
+        
+        if (file_exists($projectLayoutPath)) {
+            return 'layouts.default';
+        }
         
         // 기본적으로 패키지 레이아웃 사용
         return 'sitemanager::layouts.app';

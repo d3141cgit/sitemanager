@@ -147,6 +147,17 @@
                         @endif
                     </div>
 
+                    <!-- Custom Route Target (for route type override) -->
+                    <div class="form-group" id="custom-route-target-container" style="display: none;">
+                        <label for="custom_route_target" class="form-label">{{ t('Custom Route Target') }} <small class="text-muted">({{ t('Optional') }})</small></label>
+                        <input type="text" class="form-control" id="custom_route_target" name="custom_route_target" value="{{ old('custom_route_target', isset($menu) ? $menu->custom_route_target : '') }}" placeholder="/custom/path">
+                        <div class="form-text">
+                            {{ t('If the automatic route filtering does not work correctly, you can manually specify the target path here. This will override the selected route above.') }}
+                            <br>
+                            <small class="text-muted">{{ t('Example') }}: /news, /edm/notice, /about/contact</small>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label for="parent_id" class="form-label">{{ t('Parent Menu') }}</label>
                         <select class="form-select @error('parent_id') is-invalid @enderror" id="parent_id" name="parent_id">
@@ -535,6 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const targetContainer = document.getElementById('target-container');
     const routeSelect = document.getElementById('route-select');
     const routeContainer = document.getElementById('route-select-container');
+    const customRouteTargetContainer = document.getElementById('custom-route-target-container');
     const targetHelp = document.getElementById('target-help');
     
     if (!typeSelect) {
@@ -555,6 +567,9 @@ document.addEventListener('DOMContentLoaded', function() {
         switch(selectedType) {
             case 'route':
                 routeContainer.style.display = 'block';
+                if (customRouteTargetContainer) {
+                    customRouteTargetContainer.style.display = 'block';
+                }
                 
                 // Check if a route is already selected and if it supports custom ID
                 const selectedRouteValue = $('#route-select').val();
@@ -570,6 +585,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
             case 'url':
                 routeContainer.style.display = 'none';
+                if (customRouteTargetContainer) {
+                    customRouteTargetContainer.style.display = 'none';
+                }
                 targetContainer.style.display = 'block';
                 if (targetField) {
                     targetField.placeholder = 'https://example.com';
@@ -583,6 +601,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
             case 'text':
                 routeContainer.style.display = 'none';
+                if (customRouteTargetContainer) {
+                    customRouteTargetContainer.style.display = 'none';
+                }
                 targetContainer.style.display = 'block';
                 if (targetField) {
                     targetField.placeholder = '';

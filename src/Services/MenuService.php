@@ -444,13 +444,18 @@ class MenuService
             $isMultiUse = $name ? $this->isMultiUseRoute($name) : false;
             $supportsCustomId = $this->supportsCustomId($route->uri());
 
+            // URI에서 선택적 파라미터 제거 (예: {id?}, {slug?} 등)
+            $cleanUri = preg_replace('/\/\{[^}]+\?\}/', '', $route->uri());
+            // URI에서 필수 파라미터도 제거 (예: {id}, {slug} 등)
+            $cleanUri = preg_replace('/\/\{[^}]+\}/', '', $cleanUri);
+
             // board.index 같은 특수 케이스는 라우트명 유지, 나머지는 URI 사용
-            $targetValue = ($name && in_array($name, ['board.index'])) ? $name : '/' . $route->uri();
+            $targetValue = ($name && in_array($name, ['board.index'])) ? $name : '/' . $cleanUri;
 
             $routeInfo = [
                 'name' => $name ?: $uri, // 이름이 없으면 URI 사용 (표시용)
                 'target_value' => $targetValue, // 실제 target으로 사용할 값
-                'uri' => '/'.$route->uri(),
+                'uri' => '/' . $cleanUri, // 파라미터가 제거된 URI
                 'supports_custom_id' => $supportsCustomId,
                 'is_multi_use' => $isMultiUse,
             ];
@@ -497,6 +502,15 @@ class MenuService
                     
                     // 정확한 URI 매치
                     if ($routeUri === $cleanUri) {
+                        return true;
+                    }
+                    
+                    // 파라미터가 있는 URI와 비교 (파라미터 제거 후 비교)
+                    // 예: news/{id?} -> news, edm/notice/{id?} -> edm/notice
+                    $cleanRouteUri = preg_replace('/\/\{[^}]+\?\}/', '', $routeUri);
+                    $cleanRouteUri = preg_replace('/\/\{[^}]+\}/', '', $cleanRouteUri);
+                    
+                    if ($cleanRouteUri === $cleanUri) {
                         return true;
                     }
                 }
