@@ -667,10 +667,14 @@ class BoardController extends Controller
                 foreach ($existingFileNames as $attachmentId => $originalName) {
                     $attachment = $post->attachments()->find($attachmentId);
                     if ($attachment) {
+                        // 빈 문자열을 null로 변환
+                        $category = $existingFileCategories[$attachmentId] ?? null;
+                        $description = $existingFileDescriptions[$attachmentId] ?? null;
+
                         $attachment->update([
                             'original_name' => $originalName ?: $attachment->original_name,
-                            'description' => $existingFileDescriptions[$attachmentId] ?? $attachment->description,
-                            'category' => $existingFileCategories[$attachmentId] ?? $attachment->category,
+                            'description' => $description,
+                            'category' => $category,
                         ]);
                     }
                 }
