@@ -408,7 +408,12 @@ class BoardController extends Controller
         // Calculate permissions for the form
         $canManage = $board->menu_id ? can('manage', $board) : false;
 
-        return view($this->selectView('form'), compact('board') + [
+        $members = collect();
+        if ($canManage) {
+            $members = $this->getMembers();
+        }
+
+        return view($this->selectView('form'), compact('board', 'members') + [
             'canManage' => $canManage,
             'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
             'layoutPath' => $this->getLayoutPath() // 프로젝트 레이아웃 경로
@@ -593,7 +598,12 @@ class BoardController extends Controller
         // Calculate permissions for the form
         $canManage = $board->menu_id ? can('manage', $board) : false;
 
-        return view($this->selectView('form'), compact('board', 'post') + [
+        $members = collect();
+        if ($canManage) {
+            $members = $this->getMembers();
+        }
+
+        return view($this->selectView('form'), compact('board', 'post', 'members') + [
             'canManage' => $canManage,
             'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
             'layoutPath' => $this->getLayoutPath() // 프로젝트 레이아웃 경로
@@ -1609,5 +1619,16 @@ class BoardController extends Controller
                 'error' => 'Failed to toggle like'
             ], 500);
         }
+    }
+
+    /**
+     * 게시글 작성 폼에서 사용할 멤버 목록을 가져옵니다.
+     * 기본적으로 활성화된 모든 멤버를 반환하며, 프로젝트에서 오버라이드하여 필터링할 수 있습니다.
+     */
+    protected function getMembers()
+    {
+        return \SiteManager\Models\Member::where('active', true)
+            ->orderBy('name')
+            ->get();
     }
 }

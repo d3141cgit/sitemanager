@@ -202,8 +202,57 @@
                                 </div>
                             @endif
 
-                            <!-- Author Name (for guests) -->
-                            @if(!auth()->check())
+                            <!-- Author Selection (for authorized users with manage permission) -->
+                            @if($canManage ?? false)
+                                <div class="form-group">
+                                    <label class="form-label">작성자</label>
+                                    
+                                    @if(isset($members) && $members->count() > 0)
+                                        <!-- 멤버 선택 -->
+                                        <select id="author_member_select" name="member_id" class="form-select mb-2">
+                                            <option value="">직접 입력</option>
+                                            @foreach($members as $member)
+                                                @php
+                                                    $displayName = $member->name;
+                                                    
+                                                    // 그룹명 추가
+                                                    if (!empty($member->groups) && is_array($member->groups)) {
+                                                        $groupNames = implode(', ', $member->groups);
+                                                        $displayName .= ' ' . $groupNames;
+                                                    }
+                                                    
+                                                    // 직책이 있으면 추가
+                                                    if (!empty($member->title)) {
+                                                        $displayName .= ' (' . $member->title . ')';
+                                                    }
+                                                    
+                                                    // author_name에 들어갈 이름 (그룹명 포함)
+                                                    $authorNameValue = $member->name;
+                                                    if (!empty($member->groups) && is_array($member->groups)) {
+                                                        $authorNameValue .= ' ' . implode(', ', $member->groups);
+                                                    }
+                                                @endphp
+                                                <option value="{{ $member->id }}" 
+                                                        data-member-name="{{ $member->name }}"
+                                                        data-author-name="{{ $authorNameValue }}"
+                                                        {{ (old('member_id') ?? ($post->member_id ?? '')) == $member->id ? 'selected' : '' }}>
+                                                    {{ $displayName }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    @endif
+                                    
+                                    <!-- 작성자 이름 입력 -->
+                                    <input type="text" class="form-control @error('author_name') is-invalid @enderror" 
+                                        id="author_name" name="author_name" value="{{ old('author_name', isset($post) ? $post->author_name : '') }}" 
+                                        maxlength="50" placeholder="작성자 이름">
+                                    <div class="form-text">멤버를 선택하거나 직접 입력하세요</div>
+                                    @error('author_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            @elseif(!auth()->check())
+                                <!-- Author Name (for guests) -->
                                 <div class="form-group">
                                     <label for="author_name" class="form-label">Your Name</label>
                                     <input type="text" class="form-control @error('author_name') is-invalid @enderror" 

@@ -15,7 +15,7 @@
 .board-posts-table tr.active { background-color: #f8f9fa; font-weight: 600; border-left: 3px solid var(--bs-red); }
 .board-posts-table tr.active a { color: var(--bs-red); }
 
-.board-posts-table td.title { text-align: left; width: 70%; }
+.board-posts-table td.title { text-align: left; max-width: 70%; min-width: 50%; }
 .board-posts-table td.author { text-align: left; white-space: nowrap; }
 .board-posts-table td.date { text-align: right; white-space: nowrap; }
 

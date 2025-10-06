@@ -394,4 +394,34 @@ document.addEventListener('DOMContentLoaded', function() {
             form.addEventListener('submit', () => hasUnsavedChanges = false);
         }
     }
+
+    // 작성자 멤버 선택 처리
+    const authorMemberSelect = document.getElementById('author_member_select');
+    const authorNameInput = document.getElementById('author_name');
+    
+    if (authorMemberSelect && authorNameInput) {
+        // 원래 이름 저장
+        let originalAuthorName = authorNameInput.value;
+        
+        authorMemberSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            
+            if (selectedOption.value) {
+                // 멤버를 선택한 경우 - 그룹명 포함된 이름 사용
+                const authorName = selectedOption.dataset.authorName || selectedOption.dataset.memberName;
+                authorNameInput.value = authorName;
+                authorNameInput.readOnly = false;
+            } else {
+                // 직접 입력 선택한 경우
+                authorNameInput.value = '';
+                authorNameInput.readOnly = false;
+                authorNameInput.focus();
+            }
+        });
+        
+        // 페이지 로드 시 기존 선택 상태 확인
+        if (authorMemberSelect.value) {
+            authorMemberSelect.dispatchEvent(new Event('change'));
+        }
+    }
 });
