@@ -16,7 +16,7 @@
                 {{ $comment->author_name }}
             </span>
             <span class="comment-date">
-                {{ $comment->created_at->diffForHumans() }}
+                {{ $comment->published_at->diffForHumans() }}
                 @if($comment->is_edited)
                     (edited)
                 @endif
@@ -141,7 +141,7 @@
     {{-- Child Comments --}}
     @if($comment->children && $comment->children->count() > 0 && $level < 3)
         <div class="child-comments">
-            @foreach($comment->children->sortByDesc('created_at') as $child)
+            @foreach($comment->children->sortByDesc('published_at') as $child)
                 @include('sitemanager::board.partials.comment', ['comment' => $child, 'level' => $level + 1])
             @endforeach
         </div>

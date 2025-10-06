@@ -707,6 +707,9 @@ class BoardService
         if (isset($data['author_name'])) {
             $updateData['author_name'] = $data['author_name'];
         }
+        if (isset($data['published_at'])) {
+            $updateData['published_at'] = $data['published_at'];
+        }
         
         $post->update($updateData);
 

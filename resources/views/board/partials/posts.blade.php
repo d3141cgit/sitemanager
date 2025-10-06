@@ -1,6 +1,6 @@
 <div class="table-responsive">
     <table class="table table-hover align-middle board-posts-table sortable-table" 
-           data-current-sort="{{ request('sort', 'created_at') }}" 
+           data-current-sort="{{ request('sort', 'published_at') }}" 
            data-current-order="{{ request('order', 'desc') }}">
         <thead>
             <tr>
@@ -31,7 +31,7 @@
                     <i class="sort-icon bi bi-chevron-expand"></i>
                 </th>
                 @endif
-                <th class="text-end sortable" data-sort="created_at"> 
+                <th class="text-end sortable" data-sort="published_at"> 
                     Date 
                     <i class="sort-icon bi bi-chevron-expand"></i>
                 </th>
@@ -100,7 +100,7 @@
                     @endif
                     
                     <td class="date">
-                        <time class="text-muted small">{{ $post->created_at->format('M j, Y') }}</time>
+                        <time class="text-muted small">{{ $post->published_at->format('M j, Y') }}</time>
                     </td>
                 </tr>
                 @endforeach
@@ -173,7 +173,7 @@
                     @endif
 
                     <td class="date">
-                        <time class="text-muted small">{{ $row->created_at->format('M j, Y') }}</time>
+                        <time class="text-muted small">{{ $row->published_at->format('M j, Y') }}</time>
                     </td>
                 </tr>
             @endforeach

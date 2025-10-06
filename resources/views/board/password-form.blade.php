@@ -16,7 +16,7 @@
             <p class="text-center text-muted">
                 {{ $post->author_name ?: $post->member?->name ?: '익명' }}
                 <span class="mx-2">•</span>
-                <time datetime="{{ $post->created_at->toIso8601String() }}">{{ $post->created_at->format('Y-m-d H:i') }}</time>
+                <time datetime="{{ $post->published_at->toIso8601String() }}">{{ $post->published_at->format('Y-m-d H:i') }}</time>
             </p>
         </div>
 

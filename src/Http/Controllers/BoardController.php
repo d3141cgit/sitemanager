@@ -656,6 +656,7 @@ class BoardController extends Controller
             'removed_files' => 'nullable|string',
             'member_id' => 'nullable|integer|exists:members,id', // 작성자 멤버 선택
             'author_name' => 'nullable|string|max:50', // 작성자 이름
+            'published_at' => 'nullable|date', // 게시일시
         ]);
 
         // categories 배열이 있으면 category 필드로 변환

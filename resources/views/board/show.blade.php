@@ -29,7 +29,7 @@
 <main class="board">
     <div class="content-container show">
         <div class="d-flex align-items-center">
-            <time class="mb-0">{{ $post->created_at->format('M j, Y') }}</time>
+            <time class="mb-0">{{ $post->published_at->format('M j, Y') }}</time>
 
             @if($post->category)
                 <div class="post-categories mb-0 ms-2">
@@ -151,7 +151,7 @@
                                         </span>
                                         <span>
                                             <i class="bi bi-calendar"></i>
-                                            {{ $attachment->created_at->format('M j, Y') }}
+                                            {{ $attachment->published_at->format('M j, Y') }}
                                         </span>
                                         @if($attachment->download_count > 0)
                                             <span>

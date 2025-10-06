@@ -264,6 +264,19 @@
                                 </div>
                             @endif
 
+                            @if (isset($post) && $canManage ?? false)
+                                <!-- Published At (for users with manage permission) -->
+                                <div class="form-group">
+                                    <label for="published_at" class="form-label">Published At</label>
+                                    <input type="datetime-local" class="form-control @error('published_at') is-invalid @enderror" 
+                                        id="published_at" name="published_at" 
+                                        value="{{ old('published_at', isset($post) && $post->published_at ? $post->published_at->format('Y-m-d\TH:i') : '') }}">
+                                    @error('published_at')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            @endif
+
                             <!-- Secret Password Section -->
                             @if($board->getSetting('allow_secret_posts', false))
                                 <div class="form-group">
