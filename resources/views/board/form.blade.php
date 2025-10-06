@@ -5,6 +5,8 @@
 @push('head')
     <meta name="robots" content="noindex,nofollow">
 
+    {!! setResources(['flatpickr']) !!}
+
     {!! resource('sitemanager::js/board/form.js') !!}
 
     @if($board->getSetting('allow_secret_posts', false))
@@ -205,7 +207,7 @@
                             <!-- Author Selection (for authorized users with manage permission) -->
                             @if($canManage ?? false)
                                 <div class="form-group">
-                                    <label class="form-label">작성자</label>
+                                    <label class="form-label">Author</label>
                                     
                                     @if(isset($members) && $members->count() > 0)
                                         <!-- 멤버 선택 -->
@@ -245,8 +247,8 @@
                                     <!-- 작성자 이름 입력 -->
                                     <input type="text" class="form-control @error('author_name') is-invalid @enderror" 
                                         id="author_name" name="author_name" value="{{ old('author_name', isset($post) ? $post->author_name : '') }}" 
-                                        maxlength="50" placeholder="작성자 이름">
-                                    <div class="form-text">멤버를 선택하거나 직접 입력하세요</div>
+                                        maxlength="50" placeholder="Author Name">
+                                    <div class="form-text">Select a member or enter manually</div>
                                     @error('author_name')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -268,9 +270,10 @@
                                 <!-- Published At (for users with manage permission) -->
                                 <div class="form-group">
                                     <label for="published_at" class="form-label">Published At</label>
-                                    <input type="datetime-local" class="form-control @error('published_at') is-invalid @enderror" 
+                                    <input type="text" class="form-control @error('published_at') is-invalid @enderror" 
                                         id="published_at" name="published_at" 
-                                        value="{{ old('published_at', isset($post) && $post->published_at ? $post->published_at->format('Y-m-d\TH:i') : '') }}">
+                                        placeholder="{{ $post->published_at ? $post->published_at->format('Y-m-d H:i') : '' }}"
+                                        data-current-value="{{ $post->published_at ? $post->published_at->format('Y-m-d H:i') : '' }}">
                                     @error('published_at')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

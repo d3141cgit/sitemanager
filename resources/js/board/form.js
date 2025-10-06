@@ -424,4 +424,49 @@ document.addEventListener('DOMContentLoaded', function() {
             authorMemberSelect.dispatchEvent(new Event('change'));
         }
     }
+
+    // Published At flatpickr 초기화
+    const publishedAtInput = document.getElementById('published_at');
+    if (publishedAtInput && typeof flatpickr !== 'undefined') {
+        const currentValue = publishedAtInput.dataset.currentValue;
+        let userChanged = false; // 사용자가 직접 변경했는지 추적
+        
+        const fp = flatpickr(publishedAtInput, {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            time_24hr: true,
+            allowInput: true,
+            locale: {
+                firstDayOfWeek: 0,
+                weekdays: {
+                    shorthand: ['일', '월', '화', '수', '목', '금', '토'],
+                    longhand: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
+                },
+                months: {
+                    shorthand: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+                    longhand: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
+                }
+            },
+            onOpen: function(selectedDates, dateStr, instance) {
+                // 캘린더를 열 때 사용자가 변경하지 않았고 input이 비어있으면
+                if (currentValue && !userChanged && !publishedAtInput.value) {
+                    // 캘린더에 현재 값 표시
+                    instance.setDate(currentValue, false);
+                    // 다시 input을 비움 (setDate가 값을 설정할 수 있으므로)
+                    publishedAtInput.value = '';
+                }
+            },
+            onChange: function(selectedDates, dateStr, instance) {
+                // 사용자가 날짜를 선택하면 플래그 설정
+                userChanged = true;
+            },
+            onClose: function(selectedDates, dateStr, instance) {
+                // 날짜 선택기가 닫힐 때
+                if (!dateStr) {
+                    // 비어있으면 input의 value도 비움 (서버로 전송 안됨)
+                    publishedAtInput.value = '';
+                }
+            }
+        });
+    }
 });
