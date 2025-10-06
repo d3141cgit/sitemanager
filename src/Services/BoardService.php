@@ -662,8 +662,9 @@ class BoardService
         // 로그인 사용자와 익명 사용자 구분 처리
         if (is_logged_in()) {
             $user = current_user();
-            $postData['member_id'] = current_user_id();
-            $postData['author_name'] = $user->name;
+            // 폼에서 member_id와 author_name이 전달되면 우선 사용 (관리자가 다른 사람 이름으로 작성)
+            $postData['member_id'] = $data['member_id'] ?? current_user_id();
+            $postData['author_name'] = $data['author_name'] ?? $user->name;
             $postData['author_email'] = $user->email;
         } else {
             // 익명 사용자
@@ -691,13 +692,23 @@ class BoardService
      */
     public function updatePost(Board $board, $post, array $data): BoardPost
     {
-        $post->update([
+        $updateData = [
             'title' => $data['title'],
             'content' => $data['content'] ?? null,
             'category' => $data['category'] ?? null,
             'tags' => isset($data['tags']) && $data['tags'] ? explode(',', $data['tags']) : null,
             'options' => $this->buildOptionsString($data),
-        ]);
+        ];
+        
+        // member_id와 author_name이 전달되면 업데이트 (관리자 권한)
+        if (isset($data['member_id'])) {
+            $updateData['member_id'] = $data['member_id'];
+        }
+        if (isset($data['author_name'])) {
+            $updateData['author_name'] = $data['author_name'];
+        }
+        
+        $post->update($updateData);
 
         // 슬러그와 excerpt 처리
         // 폼에서 전달된 값이 있으면 사용, 없으면 자동 생성 (제목이 변경된 경우)

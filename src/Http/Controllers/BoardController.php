@@ -441,6 +441,7 @@ class BoardController extends Controller
             'files.*' => 'nullable|file|max:' . ($board->getSetting('max_file_size', 2048)),
             'file_names.*' => 'nullable|string|max:255',
             'file_descriptions.*' => 'nullable|string|max:500',
+            'member_id' => 'nullable|integer|exists:members,id', // 작성자 멤버 선택
             'author_name' => 'nullable|string|max:50',
             'author_email' => 'nullable|email|max:100',
             'g-recaptcha-response' => 'nullable|string',
@@ -630,6 +631,8 @@ class BoardController extends Controller
             'existing_file_names.*' => 'nullable|string|max:255',
             'existing_file_descriptions.*' => 'nullable|string|max:500',
             'removed_files' => 'nullable|string',
+            'member_id' => 'nullable|integer|exists:members,id', // 작성자 멤버 선택
+            'author_name' => 'nullable|string|max:50', // 작성자 이름
         ]);
 
         // categories 배열이 있으면 category 필드로 변환
