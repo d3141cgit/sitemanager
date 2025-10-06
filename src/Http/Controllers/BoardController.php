@@ -155,25 +155,38 @@ class BoardController extends Controller
             $postId = $request->query('id');
             
             if (!$postId) {
-                // page 파라미터가 있으면 해당 페이지의 첫 번째 게시글 조회
+                // page 파라미터가 있으면 해당 페이지의 첫 번째 비밀글이 아닌 게시글 조회
                 if ($request->has('page')) {
                     $posts = $this->boardService->getFilteredPosts($board, $request, false);
                     if ($posts->isNotEmpty()) {
-                        $firstPost = $posts->first();
-                        $postId = $firstPost->id;
+                        // 비밀글이 아닌 첫 번째 글 찾기
+                        $firstPost = $posts->first(function($post) {
+                            return !$post->isSecret() || $post->canAccess(current_user_id());
+                        });
+                        if ($firstPost) {
+                            $postId = $firstPost->id;
+                        }
                     }
                 }
                 
                 // page 파라미터가 없거나 게시글을 못 찾은 경우 최근글 조회
                 if (!$postId) {
-                    // 동일한 정렬 방식으로 첫 번째 게시글 조회
+                    // 동일한 정렬 방식으로 첫 번째 비밀글이 아닌 게시글 조회
                     $tempRequest = clone $request;
                     $tempRequest->merge(['page' => 1]); // 첫 페이지로 설정
                     
                     $posts = $this->boardService->getFilteredPosts($board, $tempRequest, false);
                     if ($posts->isNotEmpty()) {
-                        $firstPost = $posts->first();
-                        $postId = $firstPost->id;
+                        // 비밀글이 아닌 첫 번째 글 찾기
+                        $firstPost = $posts->first(function($post) {
+                            return !$post->isSecret() || $post->canAccess(current_user_id());
+                        });
+                        if ($firstPost) {
+                            $postId = $firstPost->id;
+                        } else {
+                            // 모든 글이 비밀글인 경우에도 show 뷰로 처리
+                            return $this->show($request, $slug, null);
+                        }
                     } else {
                         // 게시글이 없는 경우에도 show 뷰로 처리 (show_in_index에서는 index 뷰 불필요)
                         return $this->show($request, $slug, null);
