@@ -30,7 +30,7 @@ class BoardController extends Controller
     /**
      * 뷰 파일을 선택합니다. 현재 게시판의 스킨을 자동으로 감지하여 적용합니다.
      */
-    private function selectView(string $viewName): string
+    protected function selectView(string $viewName): string
     {
         // 현재 요청에서 게시판 정보 가져오기
         $board = $this->getCurrentBoard();
@@ -64,7 +64,7 @@ class BoardController extends Controller
     /**
      * 프로젝트 레이아웃 경로를 반환합니다.
      */
-    private function getLayoutPath(): string
+    protected function getLayoutPath(): string
     {
         // 프로젝트에 app 레이아웃이 있는지 확인
         $projectLayoutPath = resource_path('views/layouts/app.blade.php');
@@ -86,7 +86,7 @@ class BoardController extends Controller
     /**
      * 현재 요청에서 게시판 정보를 가져옵니다.
      */
-    private function getCurrentBoard(): ?Board
+    protected function getCurrentBoard(): ?Board
     {
         // URL에서 slug 파라미터 확인 (라우트에서 {slug}로 정의됨)
         $boardSlug = request()->route('slug');
@@ -120,7 +120,7 @@ class BoardController extends Controller
     /**
      * 패키지 뷰 파일의 실제 경로를 반환합니다.
      */
-    private function getPackageViewPath(string $viewName): string
+    protected function getPackageViewPath(string $viewName): string
     {
         // 서비스 프로바이더에서 등록된 패키지 뷰 네임스페이스 사용
         try {
@@ -192,7 +192,7 @@ class BoardController extends Controller
     /**
      * 일반 게시글 목록 표시
      */
-    private function showPostList(Request $request, Board $board): View
+    protected function showPostList(Request $request, Board $board): View
     {
         // 서비스를 통해 데이터 조회
         $posts = $this->boardService->getFilteredPosts($board, $request, $board->getSetting('enable_notice', false));
@@ -321,7 +321,7 @@ class BoardController extends Controller
     /**
      * 게시글이 없는 경우의 show 뷰 처리 (show_in_index 전용)
      */
-    private function showEmptyBoard(Request $request, Board $board): View
+    protected function showEmptyBoard(Request $request, Board $board): View
     {
         // SEO 데이터 구성
         $seoData = $this->buildBoardSeoData($board, $request);
@@ -753,7 +753,7 @@ class BoardController extends Controller
      * 에디터에서 업로드된 파일들을 첨부파일로 등록 (주석 처리 - EditorImage 사용)
      */
     /*
-    private function extractAndRegisterEditorFiles(string $content, $post)
+    protected function extractAndRegisterEditorFiles(string $content, $post)
     {
         // 에디터 이미지 경로 패턴 (S3 및 로컬 모두 포함)
         $pattern = '/\/editor\/images\/[^"\s<>]+\.(jpg|jpeg|png|gif|webp|svg|bmp)/i';
@@ -802,7 +802,7 @@ class BoardController extends Controller
     /**
      * 에디터 파일 크기 확인
      */
-    private function getEditorFileSize(string $relativePath): int
+    protected function getEditorFileSize(string $relativePath): int
     {
         try {
             // FileUploadService를 통해 파일 크기 확인
@@ -820,7 +820,7 @@ class BoardController extends Controller
     /**
      * 파일 확장자를 MIME 타입으로 변환
      */
-    private function getMimeTypeFromExtension(?string $extension): ?string
+    protected function getMimeTypeFromExtension(?string $extension): ?string
     {
         if (empty($extension)) {
             return null;
@@ -841,7 +841,7 @@ class BoardController extends Controller
 
         return $mimeTypes[$extension] ?? 'application/octet-stream';
     }
-    private function handleFileUploads(array $files, Board $board, $post, array $fileNames = [], array $fileDescriptions = [], array $fileCategories = []): array
+    protected function handleFileUploads(array $files, Board $board, $post, array $fileNames = [], array $fileDescriptions = [], array $fileCategories = []): array
     {
         $uploadedAttachments = [];
         $allowedTypes = $board->getAllowedFileTypes();
@@ -919,7 +919,7 @@ class BoardController extends Controller
     /**
      * 파일 제거 처리
      */
-    private function removeFiles(array $existingFiles, array $removedFileIds): array
+    protected function removeFiles(array $existingFiles, array $removedFileIds): array
     {
         $filesToDelete = [];
         $remainingFiles = [];
@@ -943,7 +943,7 @@ class BoardController extends Controller
     /**
      * 게시글 파일 삭제
      */
-    private function deletePostFiles($post): void
+    protected function deletePostFiles($post): void
     {
         if (empty($post->files)) {
             return;
@@ -984,7 +984,7 @@ class BoardController extends Controller
     }    /**
      * 조회수 증가 (중복 방지)
      */
-    private function incrementViewCountIfValid($post, Request $request)
+    protected function incrementViewCountIfValid($post, Request $request)
     {
         // 세션 키 생성 (게시글별 고유키)
         $sessionKey = "viewed_post_{$post->getTable()}_{$post->id}";
@@ -1169,7 +1169,7 @@ class BoardController extends Controller
     /**
      * 대안 slug 생성
      */
-    private function generateAlternativeSlug(Board $board, string $baseSlug, ?int $excludePostId = null): string
+    protected function generateAlternativeSlug(Board $board, string $baseSlug, ?int $excludePostId = null): string
     {
         $postModelClass = BoardPost::forBoard($board->slug);
         $counter = 1;
@@ -1237,7 +1237,7 @@ class BoardController extends Controller
     /**
      * 게시판의 SEO 데이터 구성
      */
-    private function buildBoardSeoData($board, $request)
+    protected function buildBoardSeoData($board, $request)
     {
         $siteName = config_get('SITE_NAME');
         
@@ -1358,7 +1358,7 @@ class BoardController extends Controller
     /**
      * 게시글의 SEO 데이터 구성
      */
-    private function buildPostSeoData($board, $post, $attachments)
+    protected function buildPostSeoData($board, $post, $attachments)
     {
         $siteName = config_get('SITE_NAME');
         
@@ -1439,7 +1439,7 @@ class BoardController extends Controller
     /**
      * 첨부파일에서 SEO용 이미지 찾기
      */
-    private function findSeoImageFromAttachments($attachments)
+    protected function findSeoImageFromAttachments($attachments)
     {
         if (!$attachments || $attachments->isEmpty()) {
             return null;
@@ -1495,7 +1495,7 @@ class BoardController extends Controller
     /**
      * 카테고리 관련 데이터를 준비합니다.
      */
-    private function prepareCategoryData(Board $board, Request $request): array
+    protected function prepareCategoryData(Board $board, Request $request): array
     {
         // 카테고리 사용 여부 확인
         $usesCategories = $board->getSetting('use_categories', false) && count($board->getCategoryOptions()) > 0;
@@ -1538,7 +1538,7 @@ class BoardController extends Controller
     /**
      * 검색 관련 데이터를 준비합니다.
      */
-    private function prepareSearchData(Request $request): array
+    protected function prepareSearchData(Request $request): array
     {
         return [
             'currentSearch' => $request->input('search'),
