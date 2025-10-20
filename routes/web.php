@@ -6,17 +6,17 @@ use SiteManager\Http\Controllers\CommentController;
 use SiteManager\Http\Controllers\EditorController;
 use SiteManager\Http\Controllers\EmailVerificationController;
 use SiteManager\Http\Controllers\Auth\LoginController;
-use SiteManager\Http\Controllers\Auth\CustomerLoginController;
+// use SiteManager\Http\Controllers\Auth\CustomerLoginController; // Deprecated: Use LoginController with fallback instead
 
 // 로그인 관련 라우트
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// 고객 로그인 관련 라우트 (EdmMember)
-Route::get('/customer/login', [CustomerLoginController::class, 'showLoginForm'])->name('customer.login');
-Route::post('/customer/login', [CustomerLoginController::class, 'login']);
-Route::post('/customer/logout', [CustomerLoginController::class, 'logout'])->name('customer.logout');
+// 고객 로그인 관련 라우트 (EdmMember) - Deprecated: Use /login with attemptFallbackLogin() instead
+// Route::get('/customer/login', [CustomerLoginController::class, 'showLoginForm'])->name('customer.login');
+// Route::post('/customer/login', [CustomerLoginController::class, 'login']);
+// Route::post('/customer/logout', [CustomerLoginController::class, 'logout'])->name('customer.logout');
 
 // 에디터 이미지 업로드 라우트 (전역)
 Route::middleware(['auth'])->group(function () {

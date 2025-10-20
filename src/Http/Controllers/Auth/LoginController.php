@@ -54,20 +54,19 @@ class LoginController extends Controller
         ]);
 
         try {
+            // 1단계: Member 테이블 검사 (관리자/스태프)
             if ($this->memberService->attemptLogin($request->username, $request->password)) {
-                // Get the intended URL from session or fallback to default
-                $intendedUrl = session('url.intended', '/');
-                
-                // Clear the intended URL from session
-                session()->forget('url.intended');
-                
-                // Validate the intended URL for security
-                if ($this->isValidRedirectUrl($intendedUrl)) {
-                    return redirect($intendedUrl);
-                }
-                
-                return redirect('/');
+                return $this->handleSuccessfulLogin($request, 'admin');
             }
+
+            // 2단계: Fallback 인증 (프로젝트에서 override 가능)
+            if (config('sitemanager.auth.enable_edm_member_auth', false)) {
+                $fallbackResult = $this->attemptFallbackLogin($request);
+                if ($fallbackResult) {
+                    return $fallbackResult;
+                }
+            }
+
         } catch (\Exception $e) {
             return back()->withErrors([
                 'username' => $e->getMessage(),
@@ -77,6 +76,38 @@ class LoginController extends Controller
         return back()->withErrors([
             'username' => 'The username or password is incorrect.',
         ])->withInput($request->only('username'));
+    }
+
+    /**
+     * Fallback 인증 로직 (프로젝트에서 override)
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse|null
+     */
+    protected function attemptFallbackLogin(Request $request)
+    {
+        // 기본적으로는 아무것도 하지 않음
+        // 프로젝트에서 이 메서드를 override하여 EdmMember 등 추가 인증 구현
+        return null;
+    }
+
+    /**
+     * 성공적인 로그인 후 처리
+     * 
+     * @param Request $request
+     * @param string $userType
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    protected function handleSuccessfulLogin(Request $request, string $userType = 'admin')
+    {
+        $intendedUrl = session('url.intended', '/');
+        session()->forget('url.intended');
+        
+        if ($this->isValidRedirectUrl($intendedUrl)) {
+            return redirect($intendedUrl);
+        }
+        
+        return redirect('/');
     }
 
     public function logout()
