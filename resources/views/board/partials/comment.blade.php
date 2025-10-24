@@ -16,7 +16,7 @@
                 {{ $comment->author_name }}
             </span>
             <span class="comment-date">
-                {{ $comment->published_at->diffForHumans() }}
+                {{ $comment->published_at?->diffForHumans() ?? 'Just now' }}
                 @if($comment->is_edited)
                     (edited)
                 @endif
