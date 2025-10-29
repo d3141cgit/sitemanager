@@ -227,15 +227,93 @@ abstract class BoardPost extends Model
 
     /**
      * 요약 생성 (자동)
+     * excerpt가 이미 있으면 반환, 없으면 content로부터 자동 생성
      */
     public function generateExcerpt(int $length = 200): string
     {
+        // excerpt가 이미 있으면 그대로 반환
         if ($this->excerpt) {
             return $this->excerpt;
         }
 
-        $content = strip_tags($this->content);
-        return Str::limit($content, $length);
+        // content가 비어있으면 빈 문자열 반환
+        if (empty($this->content)) {
+            return '';
+        }
+
+        // 새로운 extractExcerpt 메서드 사용
+        return self::extractExcerpt($this->content, $length);
+    }
+
+    /**
+     * HTML 컨텐츠에서 excerpt 추출 (정적 메서드)
+     * 
+     * @param string $content HTML 컨텐츠 또는 일반 텍스트
+     * @param int $length 최대 길이 (기본 200자)
+     * @return string 정리된 excerpt
+     */
+    public static function extractExcerpt(string $content, int $length = 200): string
+    {
+        // HTML 태그 제거
+        $text = strip_tags($content);
+        
+        // HTML 엔티티 디코딩 및 정리
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        
+        // 연속된 공백을 하나로 통합
+        $text = preg_replace('/\s+/', ' ', $text);
+        
+        // 앞뒤 공백 제거
+        $text = trim($text);
+        
+        // 빈 문자열이면 그대로 반환
+        if (empty($text)) {
+            return '';
+        }
+        
+        // 지정된 길이로 자르기
+        $excerpt = mb_substr($text, 0, $length);
+        
+        // 문장이 중간에 끊기지 않도록 마지막 마침표나 공백에서 자르기
+        if (mb_strlen($text) > $length) {
+            // 마지막 마침표 찾기 (최소 100자 이상인 경우만)
+            $lastPeriod = mb_strrpos($excerpt, '.');
+            $lastSpace = mb_strrpos($excerpt, ' ');
+            
+            if ($lastPeriod !== false && $lastPeriod > $length * 0.5) {
+                // 마침표가 있고 중간 이상 위치에 있으면 마침표까지만
+                $excerpt = mb_substr($excerpt, 0, $lastPeriod + 1);
+            } elseif ($lastSpace !== false && $lastSpace > $length * 0.5) {
+                // 공백이 있고 중간 이상 위치에 있으면 공백까지만 + ...
+                $excerpt = mb_substr($excerpt, 0, $lastSpace) . '...';
+            } else {
+                // 적절한 끊을 곳이 없으면 그냥 자르고 ... 추가
+                $excerpt .= '...';
+            }
+        }
+        
+        return $excerpt;
+    }
+
+    /**
+     * 현재 게시글의 excerpt를 content로부터 생성하여 저장
+     * 
+     * @param int $length 최대 길이 (기본 200자)
+     * @return bool 성공 여부
+     */
+    public function updateExcerptFromContent(int $length = 200): bool
+    {
+        if (empty($this->content)) {
+            return false;
+        }
+        
+        $excerpt = self::extractExcerpt($this->content, $length);
+        
+        if (empty($excerpt)) {
+            return false;
+        }
+        
+        return $this->update(['excerpt' => $excerpt]);
     }
 
     /**

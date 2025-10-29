@@ -635,4 +635,44 @@ class SiteManagerBoardController extends Controller
             return back()->with('error', 'Error regenerating tables: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Bulk update excerpts for all posts in the board
+     */
+    public function bulkUpdateExcerpts(Board $board): RedirectResponse
+    {
+        try {
+            // 동적 모델 클래스 가져오기
+            $postClass = \SiteManager\Models\BoardPost::forBoard($board->slug);
+            
+            $posts = $postClass::whereNotNull('content')
+                ->where('content', '!=', '')
+                ->get();
+
+            $updatedCount = 0;
+            $skippedCount = 0;
+
+            foreach ($posts as $post) {
+                // BoardPost 모델의 extractExcerpt 메서드 사용
+                $excerpt = $postClass::extractExcerpt($post->content, 200);
+
+                if (empty($excerpt)) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $post->update(['excerpt' => $excerpt]);
+                $updatedCount++;
+            }
+
+            $message = "Successfully updated excerpts for {$updatedCount} posts.";
+            if ($skippedCount > 0) {
+                $message .= " ({$skippedCount} posts skipped due to empty content)";
+            }
+
+            return back()->with('success', $message);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error updating excerpts: ' . $e->getMessage());
+        }
+    }
 }

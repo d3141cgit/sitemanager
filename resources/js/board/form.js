@@ -172,7 +172,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Generate excerpt from content
     function generateExcerptFromContent() {
         let content = '';
-        let textContent = '';
         
         // Try multiple methods to get content from Summernote editor
         
@@ -204,18 +203,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Extract text content from HTML
-        if (content) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = content;
-            textContent = tempDiv.textContent || tempDiv.innerText || '';
-        }
-        
         // Ensure content is a string
         content = String(content || '');
-        textContent = String(textContent || '');
         
-        if (!textContent || textContent.trim() === '') {
+        if (!content || content.trim() === '') {
             SiteManager.notifications.warning('Please write some content first');
             return;
         }
@@ -225,6 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
             generateExcerptBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
         }
         
+        // 서버로 HTML content를 그대로 전송 (서버에서 extractExcerpt() 메서드로 처리)
         fetch('/board/generate-excerpt', {
             method: 'POST',
             headers: {
@@ -232,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             body: JSON.stringify({ 
-                content: content,
+                content: content,  // HTML을 그대로 전송 (서버에서 처리)
                 length: 200
             })
         })

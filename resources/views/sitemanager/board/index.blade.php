@@ -121,6 +121,14 @@
                     <a href="{{ route('sitemanager.boards.edit', $board) }}" class="btn btn-sm btn-outline-primary" title="{{ t('Edit') }}">
                         <i class="bi bi-pencil"></i>
                     </a>
+                    <form method="POST" action="{{ route('sitemanager.boards.bulk-update-excerpts', $board) }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-info" 
+                                title="{{ t('Bulk Update Excerpts') }}"
+                                onclick="return confirm('{{ t('Update excerpts for all posts in this board?') }}\\n\\n{{ t('This will generate excerpts from post content.') }}')">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </button>
+                    </form>
                     <form method="POST" action="{{ route('sitemanager.boards.toggle-status', $board) }}" class="d-inline">
                         @csrf
                         @method('PATCH')

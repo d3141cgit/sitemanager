@@ -524,7 +524,7 @@ class BoardController extends Controller
                 $validated['email_verification_token'] = $emailToken;
             }
 
-            // 서비스를 통해 게시물 생성
+            // 서비스를 통해 게시물 생성 (excerpt는 BoardService에서 자동 처리됨)
             $post = $this->boardService->createPost($board, $validated);
             
             // 비밀번호 처리
@@ -670,7 +670,7 @@ class BoardController extends Controller
         DB::beginTransaction();
         
         try {
-            // 서비스를 통해 게시물 수정
+            // 서비스를 통해 게시물 수정 (excerpt는 BoardService에서 자동 처리됨)
             $post = $this->boardService->updatePost($board, $post, $validated);
             
             // 비밀번호 처리
@@ -1252,9 +1252,8 @@ class BoardController extends Controller
         $content = $request->input('content');
         $length = $request->input('length', 200);
         
-        // HTML 태그 제거하고 요약 생성
-        $plainText = strip_tags($content);
-        $excerpt = Str::limit($plainText, $length);
+        // BoardPost 모델의 extractExcerpt 메서드 사용
+        $excerpt = \SiteManager\Models\BoardPost::extractExcerpt($content, $length);
 
         return response()->json([
             'excerpt' => $excerpt
