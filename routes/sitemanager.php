@@ -49,6 +49,7 @@ Route::middleware(['auth', 'sitemanager'])->prefix('sitemanager')->name('siteman
     Route::patch('/boards/{board}/toggle-status', [SiteManagerBoardController::class, 'toggleStatus'])->name('boards.toggle-status');
     Route::post('/boards/{board}/regenerate-tables', [SiteManagerBoardController::class, 'regenerateTables'])->name('boards.regenerate-tables');
     Route::post('/boards/{board}/bulk-update-excerpts', [SiteManagerBoardController::class, 'bulkUpdateExcerpts'])->name('boards.bulk-update-excerpts');
+    Route::post('/boards/{board}/bulk-update-slugs', [SiteManagerBoardController::class, 'bulkUpdateSlugs'])->name('boards.bulk-update-slugs');
     Route::resource('boards', SiteManagerBoardController::class);
     
     // 댓글 관리

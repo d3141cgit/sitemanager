@@ -675,4 +675,44 @@ class SiteManagerBoardController extends Controller
             return back()->with('error', 'Error updating excerpts: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Bulk update slugs for all posts in the board
+     */
+    public function bulkUpdateSlugs(Board $board): RedirectResponse
+    {
+        try {
+            // 동적 모델 클래스 가져오기
+            $postClass = \SiteManager\Models\BoardPost::forBoard($board->slug);
+            
+            $posts = $postClass::whereNotNull('title')
+                ->where('title', '!=', '')
+                ->get();
+
+            $updatedCount = 0;
+            $skippedCount = 0;
+
+            foreach ($posts as $post) {
+                // BoardPost 모델의 extractSlug 메서드 사용
+                $slug = $postClass::extractSlug($post->title, $board->slug, $post->id);
+
+                if (empty($slug) || $slug === $post->slug) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $post->update(['slug' => $slug]);
+                $updatedCount++;
+            }
+
+            $message = "Successfully updated slugs for {$updatedCount} posts.";
+            if ($skippedCount > 0) {
+                $message .= " ({$skippedCount} posts skipped)";
+            }
+
+            return back()->with('success', $message);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error updating slugs: ' . $e->getMessage());
+        }
+    }
 }

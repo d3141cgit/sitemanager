@@ -1224,15 +1224,15 @@ class BoardController extends Controller
         $board = Board::where('slug', $boardSlug)->firstOrFail();
         
         $request->validate([
-            'title' => 'required|string|max:500'
+            'title' => 'required|string|max:500',
+            'post_id' => 'nullable|integer'
         ]);
 
-        // 임시 BoardPost 인스턴스 생성하여 slug 생성
-        $postModelClass = BoardPost::forBoard($board->slug);
-        $tempPost = new $postModelClass();
-        $tempPost->title = $request->input('title');
-        
-        $generatedSlug = $tempPost->generateSlug();
+        $title = $request->input('title');
+        $postId = $request->input('post_id');
+
+        // BoardPost 모델의 extractSlug 메서드 사용
+        $generatedSlug = \SiteManager\Models\BoardPost::extractSlug($title, $board->slug, $postId);
 
         return response()->json([
             'slug' => $generatedSlug

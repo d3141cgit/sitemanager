@@ -84,7 +84,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
-            body: JSON.stringify({ title: title })
+            body: JSON.stringify({ 
+                title: title,
+                post_id: postId  // post_id 전송 (수정 시 중복 체크에서 제외)
+            })
         })
         .then(response => response.json())
         .then(data => {

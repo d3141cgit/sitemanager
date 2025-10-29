@@ -121,6 +121,14 @@
                     <a href="{{ route('sitemanager.boards.edit', $board) }}" class="btn btn-sm btn-outline-primary" title="{{ t('Edit') }}">
                         <i class="bi bi-pencil"></i>
                     </a>
+                    <form method="POST" action="{{ route('sitemanager.boards.bulk-update-slugs', $board) }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-secondary" 
+                                title="{{ t('Bulk Update Slugs') }}"
+                                onclick="return confirm('{{ t('Update slugs for all posts in this board?') }}\\n\\n{{ t('This will generate slugs from post titles.') }}')">
+                            <i class="bi bi-link-45deg"></i>
+                        </button>
+                    </form>
                     <form method="POST" action="{{ route('sitemanager.boards.bulk-update-excerpts', $board) }}" class="d-inline">
                         @csrf
                         <button type="submit" class="btn btn-sm btn-outline-info" 

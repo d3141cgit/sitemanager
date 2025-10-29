@@ -296,6 +296,61 @@ abstract class BoardPost extends Model
     }
 
     /**
+     * 제목에서 slug 추출 (정적 메서드)
+     * 
+     * @param string $title 게시글 제목
+     * @param string|null $boardSlug 게시판 slug (중복 체크용)
+     * @param int|null $excludeId 제외할 게시글 ID (수정 시)
+     * @return string 생성된 slug
+     */
+    public static function extractSlug(string $title, ?string $boardSlug = null, ?int $excludeId = null): string
+    {
+        // 한글과 영문을 모두 지원하는 slug 생성
+        $slug = mb_strtolower($title);
+        
+        // 특수문자 제거 (한글, 영문, 숫자, 공백, 하이픈만 허용)
+        $slug = preg_replace('/[^\p{L}\p{N}\s-]/u', '', $slug);
+        
+        // 공백을 하이픈으로 변환
+        $slug = preg_replace('/\s+/', '-', trim($slug));
+        
+        // 연속된 하이픈 제거
+        $slug = preg_replace('/-+/', '-', $slug);
+        
+        // 앞뒤 하이픈 제거
+        $slug = trim($slug, '-');
+        
+        // 빈 문자열이면 시간 기반으로 생성
+        if (empty($slug)) {
+            $slug = 'post-' . time();
+        }
+        
+        // 중복 체크 (boardSlug가 제공된 경우에만)
+        if ($boardSlug) {
+            $postClass = self::forBoard($boardSlug);
+            $originalSlug = $slug;
+            $counter = 1;
+
+            $query = $postClass::where('slug', $slug);
+            if ($excludeId) {
+                $query->where('id', '!=', $excludeId);
+            }
+
+            while ($query->exists()) {
+                $slug = $originalSlug . '-' . $counter;
+                $counter++;
+                
+                $query = $postClass::where('slug', $slug);
+                if ($excludeId) {
+                    $query->where('id', '!=', $excludeId);
+                }
+            }
+        }
+        
+        return $slug;
+    }
+
+    /**
      * 현재 게시글의 excerpt를 content로부터 생성하여 저장
      * 
      * @param int $length 최대 길이 (기본 200자)
@@ -318,41 +373,25 @@ abstract class BoardPost extends Model
 
     /**
      * SEO용 슬러그 생성 (한글 지원)
+     * slug가 이미 있으면 반환, 없으면 title로부터 자동 생성
      */
     public function generateSlug(): string
     {
-        $title = $this->title;
-        
-        // 한글과 영문을 모두 지원하는 slug 생성
-        $slug = mb_strtolower($title);
-        
-        // 특수문자 제거 (한글, 영문, 숫자, 공백, 하이픈만 허용)
-        $slug = preg_replace('/[^\p{L}\p{N}\s-]/u', '', $slug);
-        
-        // 공백을 하이픈으로 변환
-        $slug = preg_replace('/\s+/', '-', trim($slug));
-        
-        // 연속된 하이픈 제거
-        $slug = preg_replace('/-+/', '-', $slug);
-        
-        // 앞뒤 하이픈 제거
-        $slug = trim($slug, '-');
-        
-        // 빈 문자열이면 ID 기반으로 생성
-        if (empty($slug)) {
-            $slug = 'post-' . ($this->id ?: time());
-        }
-        
-        // 중복 체크 및 번호 추가
-        $originalSlug = $slug;
-        $counter = 1;
-
-        while (static::where('slug', $slug)->where('id', '!=', $this->id)->exists()) {
-            $slug = $originalSlug . '-' . $counter;
-            $counter++;
+        // slug가 이미 있으면 그대로 반환
+        if ($this->slug) {
+            return $this->slug;
         }
 
-        return $slug;
+        // title이 비어있으면 ID 기반으로 생성
+        if (empty($this->title)) {
+            return 'post-' . ($this->id ?: time());
+        }
+
+        // 게시판 slug 추출
+        $boardSlug = $this->getBoardSlug();
+        
+        // 새로운 extractSlug 메서드 사용
+        return self::extractSlug($this->title, $boardSlug, $this->id);
     }
 
     /**
