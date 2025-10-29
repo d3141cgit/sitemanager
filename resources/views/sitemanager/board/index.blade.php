@@ -2,6 +2,21 @@
 
 @section('title', t('Board Management'))
 
+@push('styles')
+<style>
+    /* 드롭다운이 테이블 밖으로 나오도록 설정 */
+    .table-responsive {
+        overflow: visible;
+    }
+    
+    /* 테이블 전체는 스크롤 가능하게 유지 */
+    .table-wrapper {
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="content-header">
     <h1>
@@ -121,14 +136,42 @@
                     <a href="{{ route('sitemanager.boards.edit', $board) }}" class="btn btn-sm btn-outline-primary" title="{{ t('Edit') }}">
                         <i class="bi bi-pencil"></i>
                     </a>
-                    <form method="POST" action="{{ route('sitemanager.boards.bulk-update-slugs', $board) }}" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-secondary" 
-                                title="{{ t('Bulk Update Slugs') }}"
-                                onclick="return confirm('{{ t('Update slugs for all posts in this board?') }}\\n\\n{{ t('This will generate slugs from post titles.') }}')">
+                    
+                    <!-- Bulk Update Slugs with dropdown -->
+                    <div class="btn-group d-inline" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                data-bs-toggle="dropdown" aria-expanded="false"
+                                title="{{ t('Bulk Update Slugs') }}">
                             <i class="bi bi-link-45deg"></i>
                         </button>
-                    </form>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <h6 class="dropdown-header">{{ t('Slug Generation Mode') }}</h6>
+                            </li>
+                            <li>
+                                <form method="POST" action="{{ route('sitemanager.boards.bulk-update-slugs', $board) }}" class="px-3 py-2">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item"
+                                            onclick="return confirm('{{ t('Update slugs for all posts?') }}\\n\\n{{ t('Mode: Korean + English') }}')">
+                                        <i class="bi bi-globe"></i> {{ t('All Languages') }}<br>
+                                        <small class="text-muted">{{ t('Keep Korean and English') }}</small>
+                                    </button>
+                                </form>
+                            </li>
+                            <li>
+                                <form method="POST" action="{{ route('sitemanager.boards.bulk-update-slugs', $board) }}" class="px-3 py-2">
+                                    @csrf
+                                    <input type="hidden" name="english_only" value="1">
+                                    <button type="submit" class="dropdown-item"
+                                            onclick="return confirm('{{ t('Update slugs for all posts?') }}\\n\\n{{ t('Mode: English Only') }}\\n{{ t('Korean characters will be removed') }}')">
+                                        <i class="bi bi-alphabet"></i> {{ t('English Only') }}<br>
+                                        <small class="text-muted">{{ t('Remove Korean characters') }}</small>
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                    
                     <form method="POST" action="{{ route('sitemanager.boards.bulk-update-excerpts', $board) }}" class="d-inline">
                         @csrf
                         <button type="submit" class="btn btn-sm btn-outline-info" 

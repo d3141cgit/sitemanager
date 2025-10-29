@@ -5,7 +5,7 @@
 
 ## 메서드
 
-### 1. `BoardPost::extractSlug(string $title, ?string $boardSlug = null, ?int $excludeId = null): string`
+### 1. `BoardPost::extractSlug(string $title, ?string $boardSlug = null, ?int $excludeId = null, bool $englishOnly = false): string`
 
 **정적 메서드** - 어디서든 사용 가능
 
@@ -13,7 +13,9 @@
 
 #### 처리 과정:
 1. 제목을 소문자로 변환
-2. 특수문자 제거 (한글, 영문, 숫자, 공백, 하이픈만 허용)
+2. 특수문자 제거:
+   - **영어 전용 모드** (`$englishOnly = true`): 영문, 숫자, 공백, 하이픈만 허용 (한글 제거)
+   - **기본 모드** (`$englishOnly = false`): 한글, 영문, 숫자, 공백, 하이픈만 허용
 3. 공백을 하이픈으로 변환
 4. 연속된 하이픈을 하나로 통합
 5. 앞뒤 하이픈 제거
@@ -26,20 +28,29 @@
 - `$title` (required): 게시글 제목
 - `$boardSlug` (optional): 게시판 slug (중복 체크용)
 - `$excludeId` (optional): 제외할 게시글 ID (수정 시)
+- `$englishOnly` (optional): 영어만 추출 (기본값: false)
 
 #### 사용 예시:
 ```php
 use SiteManager\Models\BoardPost;
 
-// 1. 단순 slug 생성 (중복 체크 없음)
+// 1. 단순 slug 생성 (중복 체크 없음, 한글+영어)
 $slug = BoardPost::extractSlug('안녕하세요 Hello World');
 // 결과: '안녕하세요-hello-world'
 
-// 2. 중복 체크를 포함한 생성 (새 게시글)
-$slug = BoardPost::extractSlug('제목', 'news');
-// 결과: '제목' 또는 '제목-1' (중복 시)
+// 2. 영어만 추출
+$slug = BoardPost::extractSlug('안녕하세요 Hello World', null, null, true);
+// 결과: 'hello-world'
 
-// 3. 수정 시 (자신 제외)
+// 3. 중복된 제목 처리 (한글+영어)
+$slug = BoardPost::extractSlug('edmKorean Activities [케이팝 춤 배우기 Learn K-pop Dance]', 'news');
+// 결과: 'edmkorean-activities-케이팝-춤-배우기-learn-k-pop-dance'
+
+// 4. 중복된 제목 처리 (영어만)
+$slug = BoardPost::extractSlug('edmKorean Activities [케이팝 춤 배우기 Learn K-pop Dance]', 'news', null, true);
+// 결과: 'edmkorean-activities-learn-k-pop-dance'
+
+// 5. 수정 시 (자신 제외)
 $slug = BoardPost::extractSlug('제목', 'news', 123);
 // 결과: '제목' (자신(ID=123)은 제외하고 체크)
 ```
@@ -107,12 +118,16 @@ public function generateSlugFromTitle(Request $request, string $boardSlug)
 ### 3. 일괄 업데이트 (SiteManagerBoardController)
 
 ```php
-public function bulkUpdateSlugs(Board $board)
+public function bulkUpdateSlugs(Request $request, Board $board)
 {
+    // 영어만 사용할지 여부 확인
+    $englishOnly = $request->boolean('english_only', false);
+    
     $postClass = \SiteManager\Models\BoardPost::forBoard($board->slug);
     
     foreach ($posts as $post) {
-        $slug = $postClass::extractSlug($post->title, $board->slug, $post->id);
+        // 영어 전용 옵션 전달
+        $slug = $postClass::extractSlug($post->title, $board->slug, $post->id, $englishOnly);
         $post->update(['slug' => $slug]);
     }
 }
@@ -120,13 +135,27 @@ public function bulkUpdateSlugs(Board $board)
 
 게시판 관리에서 모든 게시글의 slug를 일괄 업데이트합니다.
 
+#### 일괄 업데이트 모드:
+- **전체 언어 모드**: 한글과 영어 모두 포함 (기본값)
+- **영어 전용 모드**: 한글 제거, 영어만 추출
+
 ## 특징
 
 ### 한글 지원
-한글을 그대로 slug에 포함할 수 있습니다:
+기본 모드에서는 한글을 그대로 slug에 포함할 수 있습니다:
 ```php
 '안녕하세요' → '안녕하세요'
 'Hello 월드' → 'hello-월드'
+```
+
+### 영어 전용 모드
+한글이 중복되는 경우 영어만 추출할 수 있습니다:
+```php
+// 기본 모드
+'케이팝 춤 배우기 Learn K-pop Dance' → '케이팝-춤-배우기-learn-k-pop-dance'
+
+// 영어 전용 모드
+'케이팝 춤 배우기 Learn K-pop Dance' → 'learn-k-pop-dance'
 ```
 
 ### 특수문자 처리
@@ -167,10 +196,31 @@ public function bulkUpdateSlugs(Board $board)
 ## 관리자 기능
 
 ### 게시판 관리 페이지
-각 게시판마다 "Bulk Update Slugs" 버튼 제공:
-- 해당 게시판의 모든 게시글 slug 재생성
-- 제목 기반으로 자동 생성
-- 중복 시 자동으로 번호 추가
+각 게시판마다 "Bulk Update Slugs" 드롭다운 버튼 제공:
+
+#### 옵션 1: All Languages (전체 언어)
+- 한글과 영어 모두 포함
+- 기본 동작 모드
+- 예: `edmkorean-activities-케이팝-춤-배우기-learn-k-pop-dance`
+
+#### 옵션 2: English Only (영어 전용)
+- 한글 문자 제거
+- 영문, 숫자만 추출
+- 중복 내용 방지
+- 예: `edmkorean-activities-learn-k-pop-dance`
+
+### 사용 방법
+1. 게시판 관리 페이지에서 🔗 아이콘 클릭
+2. 드롭다운 메뉴에서 모드 선택:
+   - **🌐 All Languages**: 한글+영어 (중복 허용)
+   - **🔤 English Only**: 영어만 (한글 제거)
+3. 확인 후 일괄 업데이트 실행
+
+### 언제 영어 전용 모드를 사용하나?
+- 제목에 한글과 영어가 중복되는 경우
+  - 예: "케이팝 춤 배우기 Learn K-pop Dance"
+- SEO 최적화를 위해 짧은 slug가 필요한 경우
+- 영문권 사용자를 주요 타겟으로 하는 경우
 
 ## 장점
 

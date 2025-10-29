@@ -301,15 +301,21 @@ abstract class BoardPost extends Model
      * @param string $title 게시글 제목
      * @param string|null $boardSlug 게시판 slug (중복 체크용)
      * @param int|null $excludeId 제외할 게시글 ID (수정 시)
+     * @param bool $englishOnly 영어만 추출 (기본값: false)
      * @return string 생성된 slug
      */
-    public static function extractSlug(string $title, ?string $boardSlug = null, ?int $excludeId = null): string
+    public static function extractSlug(string $title, ?string $boardSlug = null, ?int $excludeId = null, bool $englishOnly = false): string
     {
         // 한글과 영문을 모두 지원하는 slug 생성
         $slug = mb_strtolower($title);
         
-        // 특수문자 제거 (한글, 영문, 숫자, 공백, 하이픈만 허용)
-        $slug = preg_replace('/[^\p{L}\p{N}\s-]/u', '', $slug);
+        if ($englishOnly) {
+            // 영어, 숫자, 공백, 하이픈만 허용 (한글 제거)
+            $slug = preg_replace('/[^a-z0-9\s-]/u', '', $slug);
+        } else {
+            // 특수문자 제거 (한글, 영문, 숫자, 공백, 하이픈만 허용)
+            $slug = preg_replace('/[^\p{L}\p{N}\s-]/u', '', $slug);
+        }
         
         // 공백을 하이픈으로 변환
         $slug = preg_replace('/\s+/', '-', trim($slug));

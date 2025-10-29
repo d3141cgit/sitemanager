@@ -679,9 +679,12 @@ class SiteManagerBoardController extends Controller
     /**
      * Bulk update slugs for all posts in the board
      */
-    public function bulkUpdateSlugs(Board $board): RedirectResponse
+    public function bulkUpdateSlugs(Request $request, Board $board): RedirectResponse
     {
         try {
+            // 영어만 사용할지 여부 확인
+            $englishOnly = $request->boolean('english_only', false);
+            
             // 동적 모델 클래스 가져오기
             $postClass = \SiteManager\Models\BoardPost::forBoard($board->slug);
             
@@ -693,8 +696,8 @@ class SiteManagerBoardController extends Controller
             $skippedCount = 0;
 
             foreach ($posts as $post) {
-                // BoardPost 모델의 extractSlug 메서드 사용
-                $slug = $postClass::extractSlug($post->title, $board->slug, $post->id);
+                // BoardPost 모델의 extractSlug 메서드 사용 (영어 옵션 포함)
+                $slug = $postClass::extractSlug($post->title, $board->slug, $post->id, $englishOnly);
 
                 if (empty($slug) || $slug === $post->slug) {
                     $skippedCount++;
@@ -705,7 +708,8 @@ class SiteManagerBoardController extends Controller
                 $updatedCount++;
             }
 
-            $message = "Successfully updated slugs for {$updatedCount} posts.";
+            $mode = $englishOnly ? ' (English only)' : '';
+            $message = "Successfully updated slugs for {$updatedCount} posts{$mode}.";
             if ($skippedCount > 0) {
                 $message .= " ({$skippedCount} posts skipped)";
             }
