@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class NavigationComposer
 {
@@ -254,8 +255,7 @@ class NavigationComposer
                 [
                     'title' => 'Home',
                     'url' => '/',
-                    'is_current' => false,
-                    'alternatives' => []
+                    'is_current' => false
                 ]
             ];
         }
@@ -270,12 +270,11 @@ class NavigationComposer
             $menu = $menu->parent_id ? $menus->find($menu->parent_id) : null;
         }
         
-        // Home 추가 (alternatives 없음)
+        // Home 추가
         $breadcrumb[] = [
             'title' => 'Home',
             'url' => '/',
-            'is_current' => false,
-            'alternatives' => []
+            'is_current' => false
         ];
         
         // 역순으로 브레드크럼 구성
@@ -285,48 +284,11 @@ class NavigationComposer
             
             $isLast = $index === count($menuChain) - 1;
             
-            // 같은 레벨의 형제 메뉴들을 대안으로 찾기 (같은 section 내에서만)
-            $siblings = collect();
-            if ($menu->parent_id) {
-                // 같은 부모를 가진 형제 메뉴들 (같은 section 내)
-                $siblings = $menus->filter(function($sibling) use ($menu) {
-                    return $sibling && 
-                           $sibling->parent_id == $menu->parent_id && 
-                           $sibling->id != $menu->id &&
-                           $sibling->section == $menu->section && // 같은 section 체크 추가
-                           !empty($sibling->permission) && 
-                           ($sibling->permission & 1) === 1; // 보기 권한 체크
-                });
-            } else {
-                // 최상위 메뉴들 (같은 section 내)
-                $siblings = $menus->filter(function($sibling) use ($menu) {
-                    return $sibling && 
-                           !$sibling->parent_id && 
-                           $sibling->id != $menu->id &&
-                           $sibling->section == $menu->section && // 같은 section 체크 추가
-                           !empty($sibling->permission) && 
-                           ($sibling->permission & 1) === 1; // 보기 권한 체크
-                });
-            }
-            
-            // 디버깅: 형제 메뉴 개수 확인
-            $siblingCount = $siblings->count();
-            
-            $alternatives = [];
-            foreach ($siblings as $sibling) {
-                $alternatives[] = [
-                    'title' => $sibling->title ?? 'Menu',
-                    'url' => $this->getMenuUrl($sibling),
-                    'menu_id' => $sibling->id ?? null
-                ];
-            }
-            
             $breadcrumb[] = [
                 'title' => $menu->title ?? 'Menu',
                 'url' => $isLast ? null : $this->getMenuUrl($menu),
                 'is_current' => $isLast,
-                'menu_id' => $menu->id ?? null,
-                'alternatives' => $alternatives
+                'menu_id' => $menu->id ?? null
             ];
         }
         
@@ -623,11 +585,25 @@ class NavigationComposer
     }
 
     /**
+     * 메뉴 최신 업데이트 시간을 캐시에서 가져옵니다.
+     * 메뉴가 변경될 때만 캐시가 무효화됩니다.
+     */
+    private function getMenuLastUpdateTime(): ?string
+    {
+        return Cache::remember('menu_last_update_time', 300, function () {
+            // 5분 캐시, 메뉴 변경 시 clearMenuCache()에서 무효화
+            return \SiteManager\Models\Menu::max('updated_at');
+        });
+    }
+
+    /**
      * 캐시 무효화 메서드
      */
     public static function clearCache(): void
     {
         static::$composerCache = [];
+        // 메뉴 최신 업데이트 시간 캐시도 함께 무효화
+        Cache::forget('menu_last_update_time');
     }
 
     /**
@@ -637,8 +613,8 @@ class NavigationComposer
     {
         $user = Auth::user();
         
-        // 메뉴 테이블의 최신 업데이트 시간 추가
-        $menuLastUpdate = \SiteManager\Models\Menu::max('updated_at');
+        // 메뉴 테이블의 최신 업데이트 시간 추가 (캐시 사용)
+        $menuLastUpdate = $this->getMenuLastUpdateTime();
         
         // 요청 레벨의 핵심 정보만 사용
         $keyParts = [
