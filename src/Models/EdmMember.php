@@ -28,7 +28,39 @@ class EdmMember extends Authenticatable
     protected $hidden = ['mm_password'];
     
     public $timestamps = false;
+
+    /**
+     * mm_table에 따른 동적 관계 - Staff 정보
+     */
+    public function staffInfo()
+    {
+        return $this->hasOne(EdmMemberStaff::class, 'mm_uid', 'mm_uid');
+    }
     
+    /**
+     * mm_table에 따른 동적 관계 - Client 정보  
+     */
+    public function clientInfo()
+    {
+        return $this->hasOne(EdmMemberClient::class, 'mm_uid', 'mm_uid');
+    }
+
+    /**
+     * 사용자와 연결된 소셜 로그인 프로바이더 정보를 반환합니다.
+     */
+    public function providers()
+    {
+        return $this->hasMany(UserProvider::class, 'user_id', 'mm_uid');
+    }
+
+    /**
+     * 특정 프로바이더의 정보를 반환합니다.
+     */
+    public function getProvider($provider)
+    {
+        return $this->providers()->where('provider', $provider)->first();
+    }
+
     /**
      * Laravel의 기본 Auth 시스템이 password를 업데이트하지 못하도록 방지
      */
@@ -136,22 +168,6 @@ class EdmMember extends Authenticatable
         }
         
         return parent::getAttribute($key);
-    }
-    
-    /**
-     * mm_table에 따른 동적 관계 - Staff 정보
-     */
-    public function staffInfo()
-    {
-        return $this->hasOne(EdmMemberStaff::class, 'mm_uid', 'mm_uid');
-    }
-    
-    /**
-     * mm_table에 따른 동적 관계 - Client 정보  
-     */
-    public function clientInfo()
-    {
-        return $this->hasOne(EdmMemberClient::class, 'mm_uid', 'mm_uid');
     }
     
     /**
