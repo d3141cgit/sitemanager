@@ -5,6 +5,7 @@ namespace SiteManager\Services;
 use SiteManager\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 // use Illuminate\Support\Facades\Log;
 
 /**
@@ -104,13 +105,15 @@ class ConfigService
         'SITE_AUTHOR'       => ['text', 'Site Manager'],
     ];
 
+    protected static $cacheKey = 'sitemanager.config.values';
+
     public static function get($key = '')
     {
         if ($key) {
             if (is_numeric($key)) {
                 return Setting::find($key);
             } else {
-                return Setting::where('key', '=', $key)->value('value');
+                return self::getValue($key);
             }
         } else {
             // 'hidden' 타입은 관리자 페이지에서 숨김 (시스템 내부용 설정)
@@ -197,6 +200,7 @@ class ConfigService
 
         // .env 파일 업데이트
         self::updateEnvFile();
+        self::refreshCache();
     }
 
     public static function update($key, $val, $type = '')
@@ -206,6 +210,7 @@ class ConfigService
         } else {
             Setting::where('key', $key)->update(['value' => $val]);
         }
+        self::refreshCache();
     }
 
     /**
@@ -221,10 +226,12 @@ class ConfigService
      */
     public static function set($key, $value, $type = 'hidden')
     {
-        return Setting::updateOrCreate(
+        $result = Setting::updateOrCreate(
             ['key' => $key],
             ['value' => $value, 'type' => $type]
         );
+        self::refreshCache();
+        return $result;
     }
 
     /**
@@ -232,8 +239,13 @@ class ConfigService
      */
     public static function getValue($key, $default = null)
     {
-        $setting = Setting::where('key', $key)->first();
-        return $setting ? $setting->value : $default;
+        $configs = Cache::rememberForever(self::$cacheKey, function () {
+            return Setting::all()->mapWithKeys(function ($setting) {
+                return [$setting->key => $setting->value];
+            })->toArray();
+        });
+
+        return array_key_exists($key, $configs) ? $configs[$key] : $default;
     }
 
     /**
@@ -259,6 +271,8 @@ class ConfigService
                 ]
             );
         }
+
+        self::refreshCache();
 
         // 사용자가 추가한 설정들 (시스템 설정이 아닌 것들) 삭제
         $systemKeys = array_keys(self::$cfg_system);
@@ -409,5 +423,10 @@ class ConfigService
             // 캐시 클리어 실패 시 로그만 남기고 계속 진행
             // Log::error('Failed to clear config cache: ' . $e->getMessage());
         }
+    }
+
+    protected static function refreshCache(): void
+    {
+        Cache::forget(self::$cacheKey);
     }
 }
