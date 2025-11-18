@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class MenuService
 {
@@ -127,6 +128,11 @@ class MenuService
         
         // 네비게이션 캐시 리셋
         \SiteManager\Http\View\Composers\NavigationComposer::clearCache();
+        
+        // 게시판 메뉴 ID 캐시 무효화 (target이 있는 경우)
+        if (!empty($menu->target)) {
+            Cache::forget("menu_id_by_target_{$menu->target}");
+        }
         
         // 안전한 방식으로 최신 데이터 반환
         try {
@@ -265,6 +271,7 @@ class MenuService
 
         $originalSection = $menu->section;
         $originalParentId = $menu->parent_id;
+        $originalTarget = $menu->target; // 원래 target 저장
         $newParentId = $menuData['parent_id'] ?? null;
 
         // 섹션 자동 결정 (parent가 변경된 경우)
@@ -298,6 +305,17 @@ class MenuService
             
             // 네비게이션 캐시 리셋
             \SiteManager\Http\View\Composers\NavigationComposer::clearCache();
+            
+            // 게시판 메뉴 ID 캐시 무효화
+            // 원래 target과 새로운 target 모두 무효화 (target이 변경될 수 있음)
+            if (!empty($originalTarget)) {
+                Cache::forget("menu_id_by_target_{$originalTarget}");
+            }
+            // 업데이트된 메뉴의 target 확인
+            $updatedMenu = $this->menuRepository->find($id);
+            if ($updatedMenu && !empty($updatedMenu->target) && $updatedMenu->target !== $originalTarget) {
+                Cache::forget("menu_id_by_target_{$updatedMenu->target}");
+            }
         }
         return $result;
     }
@@ -313,6 +331,7 @@ class MenuService
         }
         
         $section = $menu->section;
+        $target = $menu->target; // 삭제 전에 target 저장
         $result = $this->menuRepository->delete($id);
         
         if ($result) {
@@ -326,6 +345,11 @@ class MenuService
             
             // 네비게이션 캐시 리셋
             \SiteManager\Http\View\Composers\NavigationComposer::clearCache();
+            
+            // 게시판 메뉴 ID 캐시 무효화 (target이 있는 경우)
+            if (!empty($target)) {
+                Cache::forget("menu_id_by_target_{$target}");
+            }
         }
         return $result;
     }
