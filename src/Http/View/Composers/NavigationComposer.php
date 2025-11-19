@@ -133,9 +133,18 @@ class NavigationComposer
                 }
             }
 
+            // section_label을 메모리에서 찾기 (쿼리 방지)
+            $sectionLabel = $sectionKey;
+            $rootMenu = $menuCollection->first(function($menu) {
+                return $menu->depth === 0;
+            });
+            if ($rootMenu) {
+                $sectionLabel = $rootMenu->title;
+            }
+            
             $sections[$sectionKey] = [
                 'section' => $sectionKey,
-                'section_label' => $menuCollection->first()->section_label ?? $sectionKey,
+                'section_label' => $sectionLabel,
                 'menus' => $roots,
             ];
         }
