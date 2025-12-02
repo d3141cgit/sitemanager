@@ -40,6 +40,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        'customer' => [
+            'driver' => 'session',
+            'provider' => 'users',  // provider' => 'edm_users',  // EdmMember 일반 회원용
+        ],
     ],
 
     /*
@@ -64,6 +69,12 @@ return [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', SiteManager\Models\Member::class),
         ],
+
+        // EdmMember 일반 회원용 Provider
+        // 'edm_users' => [
+        //     'driver' => 'edm_eloquent',
+        //     'model' => SiteManager\Models\EdmMember::class,
+        // ],
 
         // 'users' => [
         //     'driver' => 'database',
