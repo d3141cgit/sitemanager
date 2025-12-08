@@ -192,6 +192,12 @@ if (!function_exists('processCssFile')) {
         $imageUrl = config('app.asset_url', asset(''));
         $content = preg_replace('#(\.\.\/img\/|\.\.\/\.\.\/img\/)#', $imageUrl . '/img/', $content);
         
+        // source map 주석 제거 (/*# sourceMappingURL=... */ 형태)
+        $content = preg_replace('/\/\*#\s*sourceMappingURL=[^\*]+\*\//', '', $content);
+        
+        // source map 주석 제거 (//# sourceMappingURL=... 형태)
+        $content = preg_replace('/\/\/#\s*sourceMappingURL=.*$/m', '', $content);
+        
         file_put_contents($filePath, $content);
     }
 }
