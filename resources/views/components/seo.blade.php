@@ -3,6 +3,10 @@
 
 @if(isset($seoData))
     @push('head')
+        {{-- Robots meta (noindex) --}}
+        @if(!empty($seoData['noindex']))
+            <meta name="robots" content="noindex,follow">
+        @endif
         {{-- Article-specific meta tags (if article type) --}}
         @if(isset($seoData['og_type']) && $seoData['og_type'] === 'article')
             <meta property="og:type" content="article">
@@ -36,6 +40,26 @@
         <script type="application/ld+json">
         {!! json_encode($seoData['json_ld'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
         </script>
+        @endif
+
+        {{-- 메뉴 및 고급 설정에서 정의한 커스텀 JSON-LD --}}
+        @if(!empty($seoData['custom_json_ld']))
+            @php
+                // custom_json_ld가 문자열인 경우 <script> 태그 제거 (사용자가 실수로 포함한 경우 대비)
+                $customJsonLd = is_string($seoData['custom_json_ld'])
+                    ? $seoData['custom_json_ld']
+                    : json_encode($seoData['custom_json_ld'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                
+                // <script type="application/ld+json"> 태그가 포함되어 있으면 제거
+                if (is_string($customJsonLd)) {
+                    $customJsonLd = preg_replace('/<script[^>]*type=["\']application\/ld\+json["\'][^>]*>/i', '', $customJsonLd);
+                    $customJsonLd = preg_replace('/<\/script>/i', '', $customJsonLd);
+                    $customJsonLd = trim($customJsonLd);
+                }
+            @endphp
+            <script type="application/ld+json">
+            {!! $customJsonLd !!}
+            </script>
         @endif
     @endpush
 @endif

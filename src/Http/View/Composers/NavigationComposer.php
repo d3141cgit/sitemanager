@@ -430,6 +430,12 @@ class NavigationComposer
      */
     private function buildSeoData($currentMenu, $breadcrumb)
     {
+        // 메뉴에 저장된 SEO 메타 설정 (json 컬럼)
+        $menuSeoMeta = null;
+        if ($currentMenu && isset($currentMenu->seo_meta)) {
+            $menuSeoMeta = is_array($currentMenu->seo_meta) ? $currentMenu->seo_meta : null;
+        }
+
         $seoData = [
             'title' => null,
             'description' => null,
@@ -440,6 +446,8 @@ class NavigationComposer
             'og_url' => null,
             'canonical_url' => null,
             'breadcrumb_json_ld' => null,
+            'noindex' => false,
+            'custom_json_ld' => null,
         ];
 
         if ($currentMenu) {
@@ -456,11 +464,19 @@ class NavigationComposer
                 }
             }
             
-            // 제목 구성
+            // 제목 구성 (SITE_NAME이 없으면 제목 끝의 구분자 제거)
             if (!empty($categoryTitles)) {
-                $seoData['title'] = $pageTitle . ' | ' . implode(' - ', $categoryTitles) . ' | ' . $siteName;
+                $titleParts = [$pageTitle, implode(' - ', $categoryTitles)];
+                if (!empty($siteName)) {
+                    $titleParts[] = $siteName;
+                }
+                $seoData['title'] = implode(' | ', $titleParts);
             } else {
-                $seoData['title'] = $pageTitle . ' | ' . $siteName;
+                if (!empty($siteName)) {
+                    $seoData['title'] = $pageTitle . ' | ' . $siteName;
+                } else {
+                    $seoData['title'] = $pageTitle;
+                }
             }
             
             // 설명 설정
@@ -522,11 +538,43 @@ class NavigationComposer
                 $seoData['og_image'] = asset('images/logo.svg');
             }
             
-            // Canonical URL
-            $seoData['canonical_url'] = $this->getMenuUrl($currentMenu);
+            // Canonical URL (메뉴 SEO 메타에 명시된 값이 있으면 우선 사용)
+            $explicitCanonical = $menuSeoMeta['canonical'] ?? null;
+            $seoData['canonical_url'] = $explicitCanonical ?: $this->getMenuUrl($currentMenu);
             
-            // JSON-LD 브레드크럼 구조화 데이터
-            $seoData['breadcrumb_json_ld'] = $this->generateBreadcrumbJsonLd($breadcrumb);
+            // JSON-LD 브레드크럼 구조화 데이터 (메뉴 설정으로 on/off 가능)
+            $useBreadcrumbJsonLd = true;
+            if (isset($menuSeoMeta['schema']) && is_array($menuSeoMeta['schema'])) {
+                $useBreadcrumbJsonLd = $menuSeoMeta['schema']['use_breadcrumb'] ?? true;
+            }
+            $seoData['breadcrumb_json_ld'] = $useBreadcrumbJsonLd
+                ? $this->generateBreadcrumbJsonLd($breadcrumb)
+                : null;
+
+            // 메뉴에 저장된 SEO 메타로 필드 오버라이드
+            if (is_array($menuSeoMeta)) {
+                if (isset($menuSeoMeta['title']) && $menuSeoMeta['title'] !== '') {
+                    $seoData['title'] = $menuSeoMeta['title'];
+                }
+
+                if (array_key_exists('description', $menuSeoMeta) && $menuSeoMeta['description'] !== null && $menuSeoMeta['description'] !== '') {
+                    $seoData['description'] = $menuSeoMeta['description'];
+                    // OG 설명도 동기화
+                    $seoData['og_description'] = $menuSeoMeta['description'];
+                }
+
+                if (!empty($menuSeoMeta['keywords'])) {
+                    $seoData['keywords'] = $menuSeoMeta['keywords'];
+                }
+
+                if (array_key_exists('noindex', $menuSeoMeta)) {
+                    $seoData['noindex'] = (bool) $menuSeoMeta['noindex'];
+                }
+
+                if (!empty($menuSeoMeta['custom_json_ld'])) {
+                    $seoData['custom_json_ld'] = $menuSeoMeta['custom_json_ld'];
+                }
+            }
         } else {
             // 현재 메뉴가 없는 경우 기본값
             $siteName = config_get('SITE_NAME');

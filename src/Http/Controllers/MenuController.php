@@ -74,8 +74,17 @@ class MenuController extends Controller
         
         $availableRoutes = $this->menuService->getAvailableRoutes();
         $menuPermissions = ['basic' => [], 'level' => [], 'group' => [], 'admins' => []];
+        $seoMeta = [
+            'title' => null,
+            'description' => null,
+            'keywords' => null,
+            'canonical' => null,
+            'noindex' => false,
+            'schema' => ['use_breadcrumb' => true],
+            'custom_json_ld' => null,
+        ];
         
-        return view('sitemanager::sitemanager.menus.form', compact('availableRoutes', 'menuPermissions'));
+        return view('sitemanager::sitemanager.menus.form', compact('availableRoutes', 'menuPermissions', 'seoMeta'));
     }
     
     /**
@@ -96,6 +105,13 @@ class MenuController extends Controller
             'hidden' => 'nullable',
             'images.*.category' => 'nullable|string',
             'images.*.file' => 'nullable|image|max:10240', // 10MB
+            'seo_title' => 'nullable|string',
+            'seo_description' => 'nullable|string',
+            'seo_keywords' => 'nullable|string',
+            'seo_canonical' => 'nullable|string',
+            'seo_noindex' => 'nullable|boolean',
+            'seo_use_breadcrumb' => 'nullable|boolean',
+            'seo_custom_json_ld' => 'nullable|string',
         ]);
         
         // Route 타입인 경우 route 존재 여부 확인 (경고만 표시, 저장은 계속 진행)
@@ -117,6 +133,12 @@ class MenuController extends Controller
             
             // hidden 필드를 boolean으로 변환 (checkbox 처리)
             $menuData['hidden'] = $request->has('hidden') && $request->input('hidden') == '1';
+
+            // SEO 메타 데이터 구성
+            $seoMeta = $this->buildSeoMetaFromRequest($request);
+            if (!empty($seoMeta)) {
+                $menuData['seo_meta'] = $seoMeta;
+            }
             
             $permissionData = $request->only(['permission', 'level_permissions', 'group_permissions', 'admin_permissions']);
             $imageData = $request->input('images', []);
@@ -160,6 +182,7 @@ class MenuController extends Controller
         
         $availableRoutes = $this->menuService->getAvailableRoutes($menu->id);
         $menuPermissions = $this->menuService->getMenuPermissions($menu->id);
+        $seoMeta = is_array($menu->seo_meta) ? $menu->seo_meta : [];
         
         // 현재 메뉴의 라우트가 유효한지 확인
         $currentRouteExists = false;
@@ -175,11 +198,12 @@ class MenuController extends Controller
         }
         
         return view('sitemanager::sitemanager.menus.form', compact(
-            'menu', 
-            'availableRoutes', 
-            'menuPermissions', 
+            'menu',
+            'availableRoutes',
+            'menuPermissions',
             'currentRouteExists',
-            'baseRouteName'
+            'baseRouteName',
+            'seoMeta'
         ));
     }
     
@@ -202,6 +226,13 @@ class MenuController extends Controller
             'images.*.category' => 'nullable|string',
             'images.*.file' => 'nullable|image|max:10240', // 10MB
             'images.*.existing_url' => 'nullable|string',
+            'seo_title' => 'nullable|string',
+            'seo_description' => 'nullable|string',
+            'seo_keywords' => 'nullable|string',
+            'seo_canonical' => 'nullable|string',
+            'seo_noindex' => 'nullable|boolean',
+            'seo_use_breadcrumb' => 'nullable|boolean',
+            'seo_custom_json_ld' => 'nullable|string',
         ]);
         
         // 자기 자신을 부모로 설정하는 것 방지
@@ -228,6 +259,14 @@ class MenuController extends Controller
             
             // hidden 필드를 boolean으로 변환 (checkbox 처리)
             $menuData['hidden'] = $request->has('hidden') && $request->input('hidden') == '1';
+
+            // SEO 메타 데이터 구성
+            $seoMeta = $this->buildSeoMetaFromRequest($request);
+            if (!empty($seoMeta)) {
+                $menuData['seo_meta'] = $seoMeta;
+            } else {
+                $menuData['seo_meta'] = null;
+            }
             
             $permissionData = $request->only(['permission', 'level_permissions', 'group_permissions', 'admin_permissions']);
             $imageData = $request->input('images', null);
@@ -296,6 +335,49 @@ class MenuController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Request 데이터에서 seo_meta 배열을 생성합니다.
+     */
+    private function buildSeoMetaFromRequest(Request $request): array
+    {
+        $seoTitle = trim((string) $request->input('seo_title', ''));
+        $seoDescription = trim((string) $request->input('seo_description', ''));
+        $seoKeywords = trim((string) $request->input('seo_keywords', ''));
+        $seoCanonical = trim((string) $request->input('seo_canonical', ''));
+        $seoNoindex = $request->boolean('seo_noindex', false);
+        $seoUseBreadcrumb = $request->has('seo_use_breadcrumb')
+            ? $request->boolean('seo_use_breadcrumb')
+            : true;
+        $seoCustomJsonLd = trim((string) $request->input('seo_custom_json_ld', ''));
+
+        $seoMeta = [
+            'title' => $seoTitle !== '' ? $seoTitle : null,
+            'description' => $seoDescription !== '' ? $seoDescription : null,
+            'keywords' => $seoKeywords !== '' ? $seoKeywords : null,
+            'canonical' => $seoCanonical !== '' ? $seoCanonical : null,
+            'noindex' => $seoNoindex,
+            'schema' => [
+                'use_breadcrumb' => $seoUseBreadcrumb,
+            ],
+            'custom_json_ld' => $seoCustomJsonLd !== '' ? $seoCustomJsonLd : null,
+        ];
+
+        // 전부 비어 있고 noindex=false, use_breadcrumb=true, custom_json_ld=null 이면 빈 배열 반환
+        if (
+            $seoMeta['title'] === null &&
+            $seoMeta['description'] === null &&
+            $seoMeta['keywords'] === null &&
+            $seoMeta['canonical'] === null &&
+            $seoMeta['custom_json_ld'] === null &&
+            $seoMeta['noindex'] === false &&
+            $seoMeta['schema']['use_breadcrumb'] === true
+        ) {
+            return [];
+        }
+
+        return $seoMeta;
     }
 
     /**

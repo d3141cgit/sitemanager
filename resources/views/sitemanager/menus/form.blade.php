@@ -253,7 +253,7 @@
 
                 <!-- Right Column: Permissions -->
                 <div class="col">
-                    @if(isset($menu))
+                @if(isset($menu))
                     <h6 class="mb-3 text-primary">
                         <i class="bi bi-shield-lock me-2"></i>{{ t('Permissions') }}
                     </h6>
@@ -381,13 +381,209 @@
                         </div>
                     </div>
 
-                    @else
+                    {{-- SEO Meta Section --}}
+                    <div class="mt-4">
+                        <h6 class="mb-3 text-primary">
+                            <i class="bi bi-search me-2"></i>{{ t('SEO Meta Settings') }}
+                        </h6>
+
+                        @php
+                            $seoMeta = $seoMeta ?? (isset($menu) && is_array($menu->seo_meta) ? $menu->seo_meta : []);
+                            $seoTitle = old('seo_title', $seoMeta['title'] ?? '');
+                            // 기본 설명은 메뉴 description 을 프리셋으로 사용하되, seo_meta 에 값이 있으면 우선 사용
+                            $seoDescriptionDefault = $seoMeta['description'] ?? (isset($menu) ? $menu->description : '');
+                            $seoDescription = old('seo_description', $seoDescriptionDefault);
+                            $seoKeywords = old('seo_keywords', $seoMeta['keywords'] ?? '');
+                            $seoCanonical = old('seo_canonical', $seoMeta['canonical'] ?? '');
+                            $seoNoindex = old('seo_noindex', $seoMeta['noindex'] ?? false);
+                            $seoUseBreadcrumb = old('seo_use_breadcrumb', $seoMeta['schema']['use_breadcrumb'] ?? true);
+                            $seoCustomJsonLd = old('seo_custom_json_ld', $seoMeta['custom_json_ld'] ?? '');
+                            
+                            // Placeholder용 실제 값 계산
+                            $menuTitleForPlaceholder = old('title', isset($menu) ? $menu->title : '');
+                            $menuDescriptionForPlaceholder = old('description', isset($menu) ? $menu->description : '');
+                            
+                            // Canonical URL placeholder 계산
+                            $canonicalPlaceholder = '';
+                            if (isset($menu) && $menu->id) {
+                                try {
+                                    // NavigationComposer의 getMenuUrl 로직과 유사하게 계산
+                                    if ($menu->type === 'route' && $menu->target) {
+                                        if (str_starts_with($menu->target, '/')) {
+                                            $canonicalPlaceholder = url($menu->target);
+                                        } else {
+                                            try {
+                                                $canonicalPlaceholder = route($menu->target);
+                                            } catch (\Exception $e) {
+                                                $canonicalPlaceholder = url('/');
+                                            }
+                                        }
+                                    } elseif ($menu->type === 'url' && $menu->target) {
+                                        $canonicalPlaceholder = $menu->target;
+                                    }
+                                } catch (\Exception $e) {
+                                    $canonicalPlaceholder = '';
+                                }
+                            } else {
+                                // 새 메뉴인 경우 type과 target 기반으로 예상 URL 표시
+                                $menuType = old('type', '');
+                                $menuTarget = old('target', '');
+                                if ($menuType === 'route' && $menuTarget) {
+                                    if (str_starts_with($menuTarget, '/')) {
+                                        $canonicalPlaceholder = url($menuTarget);
+                                    } else {
+                                        try {
+                                            $canonicalPlaceholder = route($menuTarget);
+                                        } catch (\Exception $e) {
+                                            $canonicalPlaceholder = url('/');
+                                        }
+                                    }
+                                } elseif ($menuType === 'url' && $menuTarget) {
+                                    $canonicalPlaceholder = $menuTarget;
+                                }
+                            }
+                            
+                            // SEO Title placeholder: 메뉴 제목 + 사이트명 형식으로 표시
+                            $seoTitlePlaceholder = '';
+                            if ($menuTitleForPlaceholder) {
+                                $siteName = config_get('SITE_NAME', 'Site');
+                                $seoTitlePlaceholder = $menuTitleForPlaceholder . ' | ' . $siteName;
+                            }
+                        @endphp
+
+                        <div class="form-group mb-3">
+                            <label for="seo_title" class="form-label">{{ t('SEO Title') }}</label>
+                            <input type="text"
+                                   class="form-control @error('seo_title') is-invalid @enderror"
+                                   id="seo_title"
+                                   name="seo_title"
+                                   value="{{ $seoTitle }}"
+                                   placeholder="{{ $seoTitlePlaceholder ?: t('Leave empty to use menu title automatically.') }}">
+                            @error('seo_title')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                {{ t('If empty, the SEO title will be generated from the menu title and site name.') }}
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="seo_description" class="form-label">{{ t('SEO Description') }}</label>
+                            <textarea class="form-control @error('seo_description') is-invalid @enderror"
+                                      id="seo_description"
+                                      name="seo_description"
+                                      rows="3"
+                                      placeholder="{{ $menuDescriptionForPlaceholder ?: t('Leave empty to use the menu description or auto-generated description.') }}">{{ $seoDescription }}</textarea>
+                            @error('seo_description')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                {{ t('This description is primarily used for SEO, but the menu description above may still be used for on-page content.') }}
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="seo_keywords" class="form-label">{{ t('SEO Keywords') }}</label>
+                            <input type="text"
+                                   class="form-control @error('seo_keywords') is-invalid @enderror"
+                                   id="seo_keywords"
+                                   name="seo_keywords"
+                                   value="{{ $seoKeywords }}"
+                                   placeholder="{{ t('Comma-separated keywords. Optional.') }}">
+                            @error('seo_keywords')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                {{ t('Optional. If empty, keywords may be generated automatically from the menu title and breadcrumb.') }}
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="seo_canonical" class="form-label">{{ t('Canonical URL') }}</label>
+                            <input type="text"
+                                   class="form-control @error('seo_canonical') is-invalid @enderror"
+                                   id="seo_canonical"
+                                   name="seo_canonical"
+                                   value="{{ $seoCanonical }}"
+                                   placeholder="{{ $canonicalPlaceholder ?: t('Leave empty to use the menu URL automatically.') }}">
+                            @error('seo_canonical')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                {{ t('If specified, this URL will be used as the canonical URL for this menu instead of the automatically generated one.') }}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input type="hidden" name="seo_noindex" value="0">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           role="switch"
+                                           id="seo_noindex"
+                                           name="seo_noindex"
+                                           value="1"
+                                           {{ $seoNoindex ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="seo_noindex">
+                                        {{ t('Exclude from search results (noindex)') }}
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    {{ t('When enabled, a robots noindex meta tag will be added for this menu page.') }}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input type="hidden" name="seo_use_breadcrumb" value="0">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           role="switch"
+                                           id="seo_use_breadcrumb"
+                                           name="seo_use_breadcrumb"
+                                           value="1"
+                                           {{ $seoUseBreadcrumb ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="seo_use_breadcrumb">
+                                        {{ t('Enable breadcrumb JSON-LD') }}
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    {{ t('When disabled, breadcrumb structured data will not be output for this menu.') }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="seo_custom_json_ld" class="form-label">
+                                {{ t('Custom JSON-LD (Advanced)') }}
+                            </label>
+                            <textarea class="form-control @error('seo_custom_json_ld') is-invalid @enderror"
+                                      id="seo_custom_json_ld"
+                                      name="seo_custom_json_ld"
+                                      rows="12"
+                                      placeholder='{
+  "@@context": "https://schema.org",
+  "@@type": "Article",
+  "headline": "Example Article Title"
+}'>{{ $seoCustomJsonLd }}</textarea>
+                            @error('seo_custom_json_ld')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                <strong>{{ t('Important') }}:</strong> {{ t('Enter ONLY the JSON content (without <script> tags). The system will automatically wrap it in <script type="application/ld+json"> tags when outputting.') }}
+                                <br>
+                                <small class="text-muted">{{ t('Use this for advanced structured data like Article, FAQPage, ItemList, Dataset, etc. Menu-based defaults (title, URL, breadcrumb) will still be applied separately.') }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                @else
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle me-2"></i>
                         {{ t('Permissions can only be set for existing menus. Save the menu first to configure permissions.') }}
                     </div>
-                    @endif
-
+                @endif
 
                     <div class="form-group border-top pt-3 mt-3">
                         <label for="search_content" class="form-label">{{ t('Search Content') }}</label>

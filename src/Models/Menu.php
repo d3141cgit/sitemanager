@@ -23,6 +23,7 @@ class Menu extends Model
         'hidden',
         'permission',
         'images',
+        'seo_meta',
         'search_content',
         '_lft',
         '_rgt',
@@ -34,6 +35,7 @@ class Menu extends Model
         'hidden' => 'boolean',
         'permission' => 'integer',
         'images' => 'array',
+        'seo_meta' => 'array',
     ];
 
     /**
