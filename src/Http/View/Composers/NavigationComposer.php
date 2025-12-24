@@ -706,12 +706,26 @@ class NavigationComposer
                 }
             }
             
-            // 추가 브레드크럼 요소 추가
-            $breadcrumb[] = [
-                'title' => $additionalBreadcrumb['title'] ?? 'Page',
-                'url' => $additionalBreadcrumb['url'] ?? null,
-                'is_current' => true
-            ];
+            // 추가 브레드크럼 요소 추가 (단일 배열 또는 배열의 배열 지원)
+            // 배열의 배열인지 확인: 숫자 키로 시작하고 첫 번째 요소가 배열인 경우
+            if (isset($additionalBreadcrumb[0]) && is_array($additionalBreadcrumb[0]) && !isset($additionalBreadcrumb['title'])) {
+                // 배열의 배열인 경우: 여러 breadcrumb 추가
+                foreach ($additionalBreadcrumb as $index => $crumb) {
+                    $isLast = $index === count($additionalBreadcrumb) - 1;
+                    $breadcrumb[] = [
+                        'title' => $crumb['title'] ?? 'Page',
+                        'url' => $crumb['url'] ?? null,
+                        'is_current' => $isLast
+                    ];
+                }
+            } else {
+                // 단일 배열인 경우: 기존 로직 유지
+                $breadcrumb[] = [
+                    'title' => $additionalBreadcrumb['title'] ?? 'Page',
+                    'url' => $additionalBreadcrumb['url'] ?? null,
+                    'is_current' => true
+                ];
+            }
             
             $viewSpecificData['breadcrumb'] = $breadcrumb;
         }
