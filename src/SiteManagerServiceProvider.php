@@ -263,35 +263,18 @@ class SiteManagerServiceProvider extends ServiceProvider
 
     /**
      * 확장 시스템을 초기화합니다.
+     * Extension은 메뉴 등록만 담당하고, 라우트와 컨트롤러는 Laravel에서 직접 관리합니다.
      */
     private function bootExtensions()
     {
         $manager = $this->app->make(ExtensionManager::class);
 
-        // Config에서 확장 모듈 로드
+        // Config에서 확장 메뉴 로드
         $manager->loadFromConfig();
 
-        // 프로젝트의 Extensions 디렉토리에서 확장 클래스 로드
-        $extensionsPath = app_path('SiteManager/Extensions');
-        if (is_dir($extensionsPath)) {
-            $manager->loadFromDirectory($extensionsPath, 'App\\SiteManager\\Extensions');
-        }
-
-        // Member 모델에 동적 관계 등록
-        $manager->registerMemberRelations();
-
-        // 확장 모듈 라우트 등록
-        Route::middleware('web')->group(function () use ($manager) {
-            $manager->registerRoutes();
-        });
-
-        // 모든 확장 모듈 부트
-        $manager->boot();
-
         // 뷰 컴포저에 확장 메뉴 공유
-        View::composer('sitemanager::sitemanager.*', function ($view) use ($manager) {
+        View::composer('sitemanager::layouts.sitemanager', function ($view) use ($manager) {
             $view->with('extensionMenuItems', $manager->getMenuItems());
-            $view->with('extensionStats', $manager->getDashboardStats());
         });
     }
 }

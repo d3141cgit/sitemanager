@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
 use SiteManager\Services\ExtensionManager;
 use SiteManager\Contracts\ExtensionInterface;
 

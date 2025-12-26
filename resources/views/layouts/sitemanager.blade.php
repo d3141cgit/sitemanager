@@ -36,13 +36,13 @@
                     </a>
                         
                     <ul>
-                        <li>
+                        {{-- <li>
                             <a @class(['active' => request()->routeIs('sitemanager.dashboard')]) 
                                 href="{{ route('sitemanager.dashboard') }}">
                                 <i class="bi bi-speedometer2"></i>
                                 {{ t('Dashboard') }}
                             </a>
-                        </li>
+                        </li> --}}
                         <li>
                             <a @class(['active' => request()->routeIs('sitemanager.members.*')]) 
                                 href="{{ route('sitemanager.members.index') }}">
@@ -99,63 +99,20 @@
                             </ul>
                         </li>
                         
-                        <li class="dropdown">
-                            <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.settings.*') || request()->routeIs('sitemanager.languages.*')])
-                                href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-gear"></i>
-                                {{ t('Settings') }}
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.languages.*')])
-                                        href="{{ route('sitemanager.languages.index') }}">
-                                        <i class="bi bi-translate"></i>
-                                        {{ t('Languages') }}
-                                    </a>
-                                </li>
-                                <li>
-                                    <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.settings.*')])
-                                        href="{{ route('sitemanager.settings') }}">
-                                        <i class="bi bi-gear"></i>
-                                        {{ t('System Settings') }}
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
                         {{-- Extension Menus --}}
                         @if(isset($extensionMenuItems) && count($extensionMenuItems) > 0)
-                            @if(count($extensionMenuItems) === 1)
-                                {{-- Single extension: show as direct menu item --}}
-                                @php $ext = $extensionMenuItems[0]; @endphp
+                            @foreach($extensionMenuItems as $ext)
+                                @php
+                                    $routeBase = Str::beforeLast($ext['route'], '.');
+                                @endphp
                                 <li>
-                                    <a @class(['active' => request()->routeIs($ext['route'] . '*')])
+                                    <a @class(['active' => request()->routeIs($routeBase . '.*')])
                                         href="{{ route($ext['route']) }}">
                                         <i class="{{ $ext['icon'] }}"></i>
                                         {{ t($ext['name']) }}
                                     </a>
                                 </li>
-                            @else
-                                {{-- Multiple extensions: show as dropdown --}}
-                                <li class="dropdown">
-                                    <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.extensions.*')])
-                                        href="#" id="extensionsDropdown" role="button" data-bs-toggle="dropdown">
-                                        <i class="bi bi-puzzle"></i>
-                                        {{ t('Extensions') }}
-                                    </a>
-                                    <ul class="dropdown-menu">
-                                        @foreach($extensionMenuItems as $ext)
-                                            <li>
-                                                <a @class(['dropdown-item', 'active' => request()->routeIs($ext['route'] . '*')])
-                                                    href="{{ route($ext['route']) }}">
-                                                    <i class="{{ $ext['icon'] }}"></i>
-                                                    {{ t($ext['name']) }}
-                                                </a>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </li>
-                            @endif
+                            @endforeach
                         @endif
 
                         <li class="dropdown">
@@ -175,11 +132,26 @@
                                         <i class="bi bi-person"></i>{{ t('Profile') }}
                                     </a>
                                 </li>
+
+                                <li>
+                                    <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.languages.*')])
+                                        href="{{ route('sitemanager.languages.index') }}">
+                                        <i class="bi bi-translate"></i>
+                                        {{ t('Languages') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.settings.*')])
+                                        href="{{ route('sitemanager.settings') }}">
+                                        <i class="bi bi-gear"></i>
+                                        {{ t('System Settings') }}
+                                    </a>
+                                </li>
                                 <li>
                                     <form action="{{ route('logout') }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="dropdown-item">
-                                            <i class="bi bi-box-arrow-right"></i>{{ t('Logout') }}
+                                            <i class="bi bi-box-arrow-right"></i> {{ t('Logout') }}
                                         </button>
                                     </form>
                                 </li>

@@ -16,6 +16,7 @@ Route::middleware(['auth', 'sitemanager'])->prefix('sitemanager')->name('siteman
     Route::get('/robots.txt', [SiteManagerController::class, 'robots'])->name('robots');
     
     // 사이트매니저 대시보드
+    Route::get('/', [SiteManagerController::class, 'dashboard'])->name('home');
     Route::get('/dashboard', [SiteManagerController::class, 'dashboard'])->name('dashboard');
     // Route::get('/statistics', [SiteManagerController::class, 'statistics'])->name('statistics');
     Route::get('/settings', [SiteManagerController::class, 'settings'])->name('settings');
