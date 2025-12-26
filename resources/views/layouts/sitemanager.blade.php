@@ -100,21 +100,21 @@
                         </li>
                         
                         <li class="dropdown">
-                            <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.settings.*') || request()->routeIs('sitemanager.languages.*')]) 
+                            <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.settings.*') || request()->routeIs('sitemanager.languages.*')])
                                 href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-gear"></i>
                                 {{ t('Settings') }}
                             </a>
                             <ul class="dropdown-menu">
                                 <li>
-                                    <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.languages.*')]) 
+                                    <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.languages.*')])
                                         href="{{ route('sitemanager.languages.index') }}">
                                         <i class="bi bi-translate"></i>
                                         {{ t('Languages') }}
                                     </a>
                                 </li>
                                 <li>
-                                    <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.settings.*')]) 
+                                    <a @class(['dropdown-item', 'active' => request()->routeIs('sitemanager.settings.*')])
                                         href="{{ route('sitemanager.settings') }}">
                                         <i class="bi bi-gear"></i>
                                         {{ t('System Settings') }}
@@ -122,6 +122,41 @@
                                 </li>
                             </ul>
                         </li>
+
+                        {{-- Extension Menus --}}
+                        @if(isset($extensionMenuItems) && count($extensionMenuItems) > 0)
+                            @if(count($extensionMenuItems) === 1)
+                                {{-- Single extension: show as direct menu item --}}
+                                @php $ext = $extensionMenuItems[0]; @endphp
+                                <li>
+                                    <a @class(['active' => request()->routeIs($ext['route'] . '*')])
+                                        href="{{ route($ext['route']) }}">
+                                        <i class="{{ $ext['icon'] }}"></i>
+                                        {{ t($ext['name']) }}
+                                    </a>
+                                </li>
+                            @else
+                                {{-- Multiple extensions: show as dropdown --}}
+                                <li class="dropdown">
+                                    <a @class(['nav-link dropdown-toggle', 'active' => request()->routeIs('sitemanager.extensions.*')])
+                                        href="#" id="extensionsDropdown" role="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-puzzle"></i>
+                                        {{ t('Extensions') }}
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        @foreach($extensionMenuItems as $ext)
+                                            <li>
+                                                <a @class(['dropdown-item', 'active' => request()->routeIs($ext['route'] . '*')])
+                                                    href="{{ route($ext['route']) }}">
+                                                    <i class="{{ $ext['icon'] }}"></i>
+                                                    {{ t($ext['name']) }}
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </li>
+                            @endif
+                        @endif
 
                         <li class="dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

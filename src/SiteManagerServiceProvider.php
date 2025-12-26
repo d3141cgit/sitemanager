@@ -18,6 +18,7 @@ use SiteManager\Services\PermissionService;
 use SiteManager\Services\MemberService;
 use SiteManager\Services\FileUploadService;
 use SiteManager\Services\EmailVerificationService;
+use SiteManager\Services\ExtensionManager;
 
 class SiteManagerServiceProvider extends ServiceProvider
 {
@@ -96,6 +97,9 @@ class SiteManagerServiceProvider extends ServiceProvider
         
         // 권한 정의
         $this->defineGates();
+
+        // 확장 시스템 초기화
+        $this->bootExtensions();
     }
 
     public function register()
@@ -107,6 +111,7 @@ class SiteManagerServiceProvider extends ServiceProvider
         $this->app->singleton(MemberService::class);
         $this->app->singleton(FileUploadService::class);
         $this->app->singleton(EmailVerificationService::class);
+        $this->app->singleton(ExtensionManager::class);
         
         // Repository 바인딩
         $this->app->bind(
@@ -234,13 +239,13 @@ class SiteManagerServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Auth::provider('edm_eloquent', function ($app, array $config) {
             return new \SiteManager\Auth\EdmUserProvider($app['hash'], $config['model']);
         });
-        
+
         // EdmMember 전용 모드가 활성화된 경우 (Member 시스템 비활성화)
         if (config('sitemanager.auth.use_only_edm_member')) {
             config(['auth.providers.users.driver' => 'edm_eloquent']);
             config(['auth.providers.users.model' => \SiteManager\Models\EdmMember::class]);
         }
-        
+
         // EdmMember 고객 인증이 활성화된 경우
         if (config('sitemanager.auth.enable_edm_member_auth')) {
             config([
@@ -254,5 +259,39 @@ class SiteManagerServiceProvider extends ServiceProvider
                 ],
             ]);
         }
+    }
+
+    /**
+     * 확장 시스템을 초기화합니다.
+     */
+    private function bootExtensions()
+    {
+        $manager = $this->app->make(ExtensionManager::class);
+
+        // Config에서 확장 모듈 로드
+        $manager->loadFromConfig();
+
+        // 프로젝트의 Extensions 디렉토리에서 확장 클래스 로드
+        $extensionsPath = app_path('SiteManager/Extensions');
+        if (is_dir($extensionsPath)) {
+            $manager->loadFromDirectory($extensionsPath, 'App\\SiteManager\\Extensions');
+        }
+
+        // Member 모델에 동적 관계 등록
+        $manager->registerMemberRelations();
+
+        // 확장 모듈 라우트 등록
+        Route::middleware('web')->group(function () use ($manager) {
+            $manager->registerRoutes();
+        });
+
+        // 모든 확장 모듈 부트
+        $manager->boot();
+
+        // 뷰 컴포저에 확장 메뉴 공유
+        View::composer('sitemanager::sitemanager.*', function ($view) use ($manager) {
+            $view->with('extensionMenuItems', $manager->getMenuItems());
+            $view->with('extensionStats', $manager->getDashboardStats());
+        });
     }
 }
