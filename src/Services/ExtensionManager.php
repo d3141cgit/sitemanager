@@ -27,8 +27,18 @@ class ExtensionManager
         $extensions = config('sitemanager.extensions', []);
 
         foreach ($extensions as $key => $config) {
-            if (is_array($config) && isset($config['name'], $config['route'])) {
-                $this->register($key, $config);
+            if (is_array($config)) {
+                // children이 있는 경우 (dropdown 지원)
+                if (isset($config['children']) && is_array($config['children'])) {
+                    // children이 있으면 name만 필수
+                    if (isset($config['name'])) {
+                        $this->register($key, $config);
+                    }
+                } 
+                // 일반 메뉴 (route 필수)
+                elseif (isset($config['name'], $config['route'])) {
+                    $this->register($key, $config);
+                }
             }
         }
     }
@@ -38,14 +48,38 @@ class ExtensionManager
      */
     public function register(string $key, array $config): void
     {
-        $this->extensions->put($key, [
+        $menuItem = [
             'key' => $key,
             'name' => $config['name'],
             'icon' => $config['icon'] ?? 'bi-puzzle',
-            'route' => $config['route'],
             'position' => $config['position'] ?? 100,
             'enabled' => $config['enabled'] ?? true,
-        ]);
+        ];
+
+        // children이 있으면 dropdown 메뉴
+        if (isset($config['children']) && is_array($config['children']) && count($config['children']) > 0) {
+            $menuItem['children'] = [];
+            foreach ($config['children'] as $childKey => $childConfig) {
+                if (is_array($childConfig) && isset($childConfig['name'], $childConfig['route'])) {
+                    $menuItem['children'][] = [
+                        'key' => is_numeric($childKey) ? $childConfig['route'] : $childKey,
+                        'name' => $childConfig['name'],
+                        'icon' => $childConfig['icon'] ?? 'bi-dot',
+                        'route' => $childConfig['route'],
+                        'enabled' => $childConfig['enabled'] ?? true,
+                    ];
+                }
+            }
+            // children이 모두 disabled면 메뉴도 disabled 처리
+            if (count($menuItem['children']) === 0) {
+                $menuItem['enabled'] = false;
+            }
+        } else {
+            // 일반 메뉴 (route 필수)
+            $menuItem['route'] = $config['route'];
+        }
+
+        $this->extensions->put($key, $menuItem);
     }
 
     /**

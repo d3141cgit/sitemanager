@@ -103,15 +103,58 @@
                         @if(isset($extensionMenuItems) && count($extensionMenuItems) > 0)
                             @foreach($extensionMenuItems as $ext)
                                 @php
-                                    $routeBase = Str::beforeLast($ext['route'], '.');
+                                    // children이 있으면 dropdown 메뉴
+                                    $hasChildren = isset($ext['children']) && is_array($ext['children']) && count($ext['children']) > 0;
+                                    
+                                    if ($hasChildren) {
+                                        // children 중 하나라도 active면 parent도 active
+                                        $isActive = false;
+                                        foreach ($ext['children'] as $child) {
+                                            $childRouteBase = Str::beforeLast($child['route'], '.');
+                                            if (request()->routeIs($childRouteBase . '.*')) {
+                                                $isActive = true;
+                                                break;
+                                            }
+                                        }
+                                        $dropdownId = 'extension-' . $ext['key'] . '-dropdown';
+                                    } else {
+                                        $routeBase = Str::beforeLast($ext['route'], '.');
+                                        $isActive = request()->routeIs($routeBase . '.*');
+                                    }
                                 @endphp
-                                <li>
-                                    <a @class(['active' => request()->routeIs($routeBase . '.*')])
-                                        href="{{ route($ext['route']) }}">
-                                        <i class="{{ $ext['icon'] }}"></i>
-                                        {{ t($ext['name']) }}
-                                    </a>
-                                </li>
+                                
+                                @if($hasChildren)
+                                    <li class="dropdown">
+                                        <a @class(['nav-link dropdown-toggle', 'active' => $isActive])
+                                            href="#" id="{{ $dropdownId }}" role="button" data-bs-toggle="dropdown">
+                                            <i class="{{ $ext['icon'] }}"></i>
+                                            {{ t($ext['name']) }}
+                                        </a>
+                                        <ul class="dropdown-menu" aria-labelledby="{{ $dropdownId }}">
+                                            @foreach($ext['children'] as $child)
+                                                @php
+                                                    $childRouteBase = Str::beforeLast($child['route'], '.');
+                                                    $childActive = request()->routeIs($childRouteBase . '.*');
+                                                @endphp
+                                                <li>
+                                                    <a @class(['dropdown-item', 'active' => $childActive])
+                                                        href="{{ route($child['route']) }}">
+                                                        <i class="{{ $child['icon'] }}"></i>
+                                                        {{ t($child['name']) }}
+                                                    </a>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </li>
+                                @else
+                                    <li>
+                                        <a @class(['active' => $isActive])
+                                            href="{{ route($ext['route']) }}">
+                                            <i class="{{ $ext['icon'] }}"></i>
+                                            {{ t($ext['name']) }}
+                                        </a>
+                                    </li>
+                                @endif
                             @endforeach
                         @endif
 
