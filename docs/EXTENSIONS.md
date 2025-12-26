@@ -459,6 +459,115 @@ $member->registrations()->with('payments')->latest()->get();
 
 ---
 
+## Route Override (Dashboard, Members 등)
+
+SiteManager의 기본 라우트를 프로젝트에서 오버라이드할 수 있습니다. Laravel에서 나중에 정의된 라우트가 이전 것을 덮어씁니다.
+
+### Dashboard Override
+
+```php
+// app/Http/Controllers/SiteManager/DashboardController.php
+
+namespace App\Http\Controllers\SiteManager;
+
+use App\Http\Controllers\Controller;
+use App\Models\Inquiry;
+use App\Models\Registration;
+use App\Models\Payment;
+use SiteManager\Services\MenuService;
+use Illuminate\View\View;
+
+class DashboardController extends Controller
+{
+    public function __construct(
+        protected MenuService $menuService
+    ) {}
+
+    public function index(): View
+    {
+        // 프로젝트별 통계
+        $extensionStats = [
+            'total_inquiries' => Inquiry::count(),
+            'pending_inquiries' => Inquiry::where('status', 'pending')->count(),
+            'total_registrations' => Registration::count(),
+            'total_revenue' => Payment::where('status', 'completed')->sum('amount'),
+            // ...
+        ];
+
+        return view('sitemanager.dashboard', compact('extensionStats'));
+    }
+}
+```
+
+```php
+// routes/web.php
+
+Route::prefix('sitemanager')->middleware(['web', 'auth', 'sitemanager'])->name('sitemanager.')->group(function () {
+    // Dashboard Override
+    Route::get('/', [DashboardController::class, 'index'])->name('home');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});
+```
+
+### Member Show Override
+
+회원 상세 페이지에서 프로젝트별 데이터(문의, 등록, 결제 등)를 표시하려면:
+
+```php
+// app/Http/Controllers/SiteManager/MemberController.php
+
+namespace App\Http\Controllers\SiteManager;
+
+use SiteManager\Http\Controllers\SiteManager\SiteManagerMemberController;
+use SiteManager\Models\Member;
+use App\Models\Inquiry;
+use App\Models\Registration;
+use Illuminate\View\View;
+
+class MemberController extends SiteManagerMemberController
+{
+    public function show(Member $member): View
+    {
+        $member->load('groups');
+
+        $inquiries = Inquiry::where('member_id', $member->id)->latest()->get();
+        $registrations = Registration::where('member_id', $member->id)->latest()->get();
+
+        return view('sitemanager.members.show', compact(
+            'member',
+            'inquiries',
+            'registrations'
+        ));
+    }
+}
+```
+
+```php
+// routes/web.php
+
+Route::prefix('sitemanager')->middleware(['web', 'auth', 'sitemanager'])->name('sitemanager.')->group(function () {
+    // Member Show Override
+    Route::get('/members/{member}', [MemberController::class, 'show'])->name('members.show');
+});
+```
+
+### Override 가능한 라우트
+
+| 라우트 | 설명 |
+|--------|------|
+| `sitemanager.dashboard` | 대시보드 |
+| `sitemanager.members.show` | 회원 상세 |
+| `sitemanager.members.index` | 회원 목록 |
+| 기타 모든 `sitemanager.*` 라우트 | 필요에 따라 오버라이드 가능 |
+
+### 장점
+
+- **Laravel 표준 방식**: 라우트 오버라이드는 Laravel의 기본 동작
+- **부분 오버라이드**: 필요한 라우트만 선택적으로 오버라이드
+- **컨트롤러 상속**: 기존 기능 유지하면서 확장 가능
+
+---
+
 ## 트러블슈팅
 
 ### 메뉴가 표시되지 않음
@@ -513,6 +622,10 @@ $count = $manager->count();
 ---
 
 ## 변경 이력
+
+- **v2.2.0** (2024-12-26): Route Override 패턴 추가
+  - Dashboard, Members 등 기본 라우트 오버라이드 방식 문서화
+  - 컨트롤러 상속을 통한 부분 확장 패턴
 
 - **v2.1.0** (2024-12-26): Member 모델 확장 패턴 추가
   - 모델 상속을 통한 Member 관계 확장 방식 문서화
