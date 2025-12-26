@@ -8,43 +8,13 @@ Extensions 시스템은 SiteManager 패키지를 수정하지 않고도 각 프�
 
 ## Summary
 
-  SiteManager Package Changes
-
-  1. ExtensionManager - Simplified to menu-only registration
-  2. SiteManagerServiceProvider - Removed auto routes, only registers menu via View Composer
-  3. Sidebar layout - Updated to use new simplified extension menu structure
-  4. Documentation - Updated docs/EXTENSIONS.md for the new simple approach
-
-  bridge2korea Project Implementation
-
-  1. Config (config/sitemanager.php):
-    - Simplified extensions to: name, icon, route, position
-  2. Routes (routes/web.php):
-    - Added /sitemanager/inquiries/*
-    - Added /sitemanager/registrations/*
-    - Added /sitemanager/payments/*
-  3. Controllers (app/Http/Controllers/SiteManager/):
-    - InquiryController.php - Standalone Laravel controller
-    - RegistrationController.php - Standalone Laravel controller
-    - PaymentController.php - Standalone Laravel controller
-  4. Views (resources/views/sitemanager/):
-    - inquiries/index.blade.php, show.blade.php
-    - registrations/index.blade.php, show.blade.php, edit.blade.php
-    - payments/index.blade.php, show.blade.php
-
-  Design Philosophy
-
-  - SiteManager: Menu registration + permission checks only
-  - Laravel: Routes, controllers, views, business logic
-  - Simple config: Just name, icon, route, position
-  - URL structure: /sitemanager/inquiries (not /sitemanager/extensions/inquiries)
-
-
 ### 설계 철학
 
-- **SiteManager = 메뉴 + 권한**: SiteManager는 관리자 패널의 메뉴 등록과 권한 체크만 담당
-- **Laravel = 모든 것**: 라우트, 컨트롤러, 뷰, 비즈니스 로직은 Laravel에서 직접 관리
-- **단순한 설정**: 최소한의 설정으로 메뉴 추가 가능
+- **SiteManager**: 메뉴 등록 + 권한 체크만 담당
+- **Laravel**: 라우트, 컨트롤러, 뷰, 비즈니스 로직 모두 직접 관리
+- **단순한 설정**: `name`, `icon`, `route`, `position` 만으로 메뉴 등록
+- **URL 구조**: `/sitemanager/inquiries` (not `/sitemanager/extensions/inquiries`)
+- **Member 확장**: 모델 상속 + `AUTH_MODEL` 환경변수로 관계 추가
 
 ---
 
@@ -386,6 +356,109 @@ SiteManager는 현재 라우트를 기반으로 메뉴 활성화 상태를 자�
 
 ---
 
+## Member 모델 확장
+
+SiteManager의 Member 모델에 프로젝트별 관계나 메서드를 추가하려면 모델 상속 패턴을 사용합니다.
+
+### 1. Member 모델 생성
+
+```php
+<?php
+// app/Models/Member.php
+
+namespace App\Models;
+
+use SiteManager\Models\Member as BaseMember;
+
+/**
+ * Extended Member model
+ *
+ * SiteManager의 Member 모델을 상속받아
+ * 프로젝트별 관계와 기능을 추가합니다.
+ */
+class Member extends BaseMember
+{
+    /**
+     * Get the inquiries for the member.
+     */
+    public function inquiries()
+    {
+        return $this->hasMany(Inquiry::class, 'member_id');
+    }
+
+    /**
+     * Get the registrations for the member.
+     */
+    public function registrations()
+    {
+        return $this->hasMany(Registration::class, 'member_id');
+    }
+
+    /**
+     * Get the payments through registrations.
+     */
+    public function payments()
+    {
+        return $this->hasManyThrough(
+            Payment::class,
+            Registration::class,
+            'member_id',
+            'registration_id'
+        );
+    }
+
+    /**
+     * 커스텀 메서드 추가 가능
+     */
+    public function getTotalPaymentsAttribute()
+    {
+        return $this->payments()->where('status', 'completed')->sum('amount');
+    }
+}
+```
+
+### 2. 환경 변수 설정
+
+`.env` 파일에 `AUTH_MODEL`을 설정합니다:
+
+```env
+AUTH_MODEL=App\Models\Member
+```
+
+### 3. 사용 예시
+
+```php
+// 현재 로그인 사용자의 관계 접근
+$member = auth()->user();
+$member->inquiries;           // 문의 목록
+$member->registrations;       // 등록 목록
+$member->payments;            // 결제 목록
+$member->total_payments;      // 총 결제 금액
+
+// 쿼리 빌더 사용
+$member = Member::find(1);
+$member->inquiries()->where('status', 'pending')->get();
+$member->registrations()->with('payments')->latest()->get();
+```
+
+### 장점
+
+| 장점 | 설명 |
+|------|------|
+| **Laravel 표준 패턴** | 일반적인 모델 상속 방식 |
+| **IDE 지원** | 자동완성, 타입 힌팅 완벽 지원 |
+| **자유로운 확장** | 관계, 메서드, 속성, 스코프 자유롭게 추가 |
+| **테스트 용이** | 모킹/스터빙이 쉬움 |
+| **설정 간단** | `.env`에서 한 줄로 전환 |
+
+### 주의사항
+
+- `AUTH_MODEL` 설정 후 `php artisan config:clear` 실행 필요
+- 기존 SiteManager의 모든 기능(groups, scopes 등)은 그대로 사용 가능
+- 마이그레이션에서 `member_id` 외래키가 올바르게 설정되어 있어야 함
+
+---
+
 ## 트러블슈팅
 
 ### 메뉴가 표시되지 않음
@@ -440,6 +513,10 @@ $count = $manager->count();
 ---
 
 ## 변경 이력
+
+- **v2.1.0** (2024-12-26): Member 모델 확장 패턴 추가
+  - 모델 상속을 통한 Member 관계 확장 방식 문서화
+  - `AUTH_MODEL` 환경 변수를 통한 커스텀 모델 사용
 
 - **v2.0.0** (2024-12-26): 확장 시스템 단순화
   - SiteManager는 메뉴 등록만 담당
