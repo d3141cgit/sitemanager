@@ -35,8 +35,70 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // === Mobile Menu Toggle ===
+    function initMobileMenu() {
+        const hamburgerBtn = document.getElementById('mobile-menu-toggle');
+        const mobileMenuSlide = document.getElementById('mobile-menu-slide');
+        const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+        const body = document.body;
+
+        function openMenu() {
+            hamburgerBtn?.classList.add('active');
+            mobileMenuSlide?.classList.add('active');
+            mobileMenuOverlay?.classList.add('active');
+            body.style.overflow = 'hidden';
+        }
+
+        function closeMenu() {
+            hamburgerBtn?.classList.remove('active');
+            mobileMenuSlide?.classList.remove('active');
+            mobileMenuOverlay?.classList.remove('active');
+            body.style.overflow = '';
+        }
+
+        // Hamburger button click
+        hamburgerBtn?.addEventListener('click', function() {
+            if (mobileMenuSlide?.classList.contains('active')) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
+        });
+
+        // Overlay click
+        mobileMenuOverlay?.addEventListener('click', closeMenu);
+
+        // Close menu when clicking on a link (but not on dropdown toggles)
+        const mobileMenuLinks = mobileMenuSlide?.querySelectorAll('.mobile-menu-list > li > a:not([data-bs-toggle])');
+        mobileMenuLinks?.forEach(function(link) {
+            link.addEventListener('click', function() {
+                // Small delay to allow navigation
+                setTimeout(closeMenu, 100);
+            });
+        });
+
+        // Close menu on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && mobileMenuSlide?.classList.contains('active')) {
+                closeMenu();
+            }
+        });
+
+        // Close menu when window is resized to desktop size
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                if (window.innerWidth >= 992) {
+                    closeMenu();
+                }
+            }, 250);
+        });
+    }
+
     // === 초기화 실행 ===
     initPageLoader();
     initDropdowns();
+    initMobileMenu();
 
 });
