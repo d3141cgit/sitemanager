@@ -139,6 +139,7 @@ class SiteManagerServiceProvider extends ServiceProvider
             \SiteManager\Console\Commands\MigrateImagesToS3::class,
             \SiteManager\Console\Commands\ResourceCommand::class,
             \SiteManager\Console\Commands\RestoreLanguageCommand::class,
+            \SiteManager\Console\Commands\BackupLanguageCommand::class,
         ]);
     }
     
