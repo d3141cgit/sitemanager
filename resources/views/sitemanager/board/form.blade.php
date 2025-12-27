@@ -27,7 +27,7 @@
     <div class="row">
         <div class="col">
             <div class="card default-form">
-                <div class="card-header bg-dark text-white">
+                <div class="card-header">
                     <h4>{{ t('Basic Information') }}</h4>
                 </div>
                 <div class="card-body">
@@ -106,7 +106,7 @@
         
         <div class="col">
             <div class="card default-form">
-                <div class="card-header bg-dark text-white">
+                <div class="card-header">
                     <h4>{{ t('Settings') }}</h4>
                 </div>
                 <div class="card-body">
@@ -250,7 +250,7 @@
                     
                     @if($subSection && str_contains($type, 'boolean'))
                         <div class="card default-form mb-4" id="{{ $key }}_card" style="display: none;">
-                            <div class="card-header bg-dark text-white">
+                            <div class="card-header">
                                 <h4>{{ $subSection['title'] ?? $label . ' Settings' }}</h4>
                             </div>
                             <div class="card-body">

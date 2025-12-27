@@ -13,7 +13,7 @@
                         <i class="bi bi-journals fs-2 text-primary opacity-75"></i>
                     </div>
                     <div class="fw-bold text-dark small">{{ t('Boards') }}</div>
-                    <div class="h5 mb-0 text-primary">{{ number_format($stats['total_boards']) }}</div>
+                    <div class="h4 mb-0 text-primary">{{ number_format($stats['total_boards']) }}</div>
                 </div>
             </div>
         </a>
@@ -25,7 +25,7 @@
                     <i class="bi bi-file-text fs-2 text-success opacity-75"></i>
                 </div>
                 <div class="fw-bold text-dark small">{{ t('Posts') }}</div>
-                <div class="h5 mb-0 text-success">{{ number_format($stats['total_posts']) }}</div>
+                <div class="h4 mb-0 text-success">{{ number_format($stats['total_posts']) }}</div>
             </div>
         </div>
     </div>
@@ -36,7 +36,7 @@
                     <i class="bi bi-chat-dots fs-2 text-info opacity-75"></i>
                 </div>
                 <div class="fw-bold text-dark small">{{ t('Comments') }}</div>
-                <div class="h5 mb-0 text-info">{{ number_format($stats['total_comments']) }}</div>
+                <div class="h4 mb-0 text-info">{{ number_format($stats['total_comments']) }}</div>
             </div>
         </div>
     </div>
@@ -48,7 +48,7 @@
                         <i class="bi bi-paperclip fs-2 text-warning opacity-75"></i>
                     </div>
                     <div class="fw-bold text-dark small">{{ t('Attachments') }}</div>
-                    <div class="h5 mb-0 text-warning">{{ number_format($stats['total_attachments']) }}</div>
+                    <div class="h4 mb-0 text-warning">{{ number_format($stats['total_attachments']) }}</div>
                 </div>
             </div>
         </a>
@@ -61,7 +61,7 @@
                         <i class="bi bi-images fs-2 text-purple opacity-75"></i>
                     </div>
                     <div class="fw-bold text-dark small">{{ t('Images') }}</div>
-                    <div class="h5 mb-0 text-purple">{{ number_format($stats['total_editor_images']) }}</div>
+                    <div class="h4 mb-0 text-purple">{{ number_format($stats['total_editor_images']) }}</div>
                 </div>
             </div>
         </a>
@@ -74,7 +74,7 @@
                         <i class="bi bi-people fs-2 text-secondary opacity-75"></i>
                     </div>
                     <div class="fw-bold text-dark small">{{ t('Members') }}</div>
-                    <div class="h5 mb-0 text-secondary">{{ number_format($stats['total_members']) }}</div>
+                    <div class="h4 mb-0 text-secondary">{{ number_format($stats['total_members']) }}</div>
                 </div>
             </div>
         </a>
@@ -116,10 +116,10 @@
         <div class="card h-100">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="card-title flex-grow-1 mb-0">
+                    <h4>
                         <i class="bi bi-file-text me-1"></i>
                         {{ t('Recent Posts') }}
-                    </h5>
+                    </h4>
                     <a href="{{ route('sitemanager.boards.index') }}" class="text-decoration-none small">
                         {{ t('View All') }}
                     </a>
@@ -172,10 +172,10 @@
         <div class="card h-100">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="card-title flex-grow-1 mb-0">
+                    <h4>
                         <i class="bi bi-chat-dots me-1"></i>
                         {{ t('Recent Comments') }}
-                    </h5>
+                    </h4>
                     <a href="{{ route('sitemanager.comments.index') }}" class="text-decoration-none small">
                         {{ t('View All') }}
                     </a>
@@ -236,15 +236,15 @@
     <div class="col-lg-8 mb-4">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="card-title mb-0">
+                <h4>
                     <i class="bi bi-bar-chart me-1"></i>
                     {{ t('Board Statistics') }}
-                </h5>
+                </h4>
             </div>
             <div class="card-body p-0">
                 @if($board_stats->count() > 0)
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table table-hover table-bordered">
                             <thead>
                                 <tr>
                                     <th>{{ t('Board') }}</th>
@@ -290,10 +290,10 @@
             <!-- 빠른 작업 -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">
+                    <h4>
                         <i class="bi bi-lightning"></i>
                         {{ t('Quick Actions') }}
-                    </h5>
+                    </h4>
                 </div>
                 <div class="card-body p-2">
                     <ul class="card-list mb-0">
@@ -334,10 +334,10 @@
             <!-- 최근 파일 업로드 -->
             <div class="card mt-3 flex-fill">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">
+                    <h4>
                         <i class="bi bi-cloud-upload me-1"></i>
                         {{ t('Recent Files') }}
-                    </h5>
+                    </h4>
                 </div>
                 <div class="card-body p-2">
                     @if($recent_files->count() > 0)
@@ -388,10 +388,10 @@
             <!-- 시스템 정보 -->
             <div class="card mt-3">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">
+                    <h4>
                         <i class="bi bi-info-circle me-2"></i>
                         {{ t('System Information') }}
-                    </h5>
+                    </h4>
                 </div>
                 <div class="card-body p-2">
                     <ul class="card-list sys-info m-0">

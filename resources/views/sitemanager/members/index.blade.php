@@ -57,7 +57,7 @@
 </form>
 
 <div class="table-responsive">
-    <table class="table table-striped table-hover">
+    <table class="table table-striped table-hover table-bordered">
         <thead>
             <tr>
                 <th class="right">{{ t('ID') }}</th>
@@ -68,8 +68,8 @@
                 <th>{{ t('Groups') }}</th>
                 <th>{{ t('Level') }}</th>
                 <th class="text-center">{{ t('Status') }}</th>
-                <th>{{ t('Join Date') }}</th>
-                <th class="text-end">{{ t('Actions') }}</th>
+                <th class="text-center">{{ t('Join Date') }}</th>
+                <th class="text-center">{{ t('Actions') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -129,8 +129,8 @@
                             </span>
                         @endif
                     </td>
-                    <td nowrap class="number">{{ $member->created_at->format('Y-m-d') }}</td>
-                    <td class="text-end actions" nowrap>
+                    <td nowrap class="number text-center">{{ $member->created_at->format('Y-m-d') }}</td>
+                    <td class="text-center actions" nowrap>
                         @if($member->trashed())
                             @if(Auth::user()->isAdmin())
                                 <form method="POST" action="{{ route('sitemanager.members.restore', $member->id) }}" 

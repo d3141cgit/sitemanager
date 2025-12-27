@@ -36,7 +36,7 @@
 </form>
 
 <div class="table-responsive">
-    <table class="table table-striped table-hover">
+    <table class="table table-striped table-hover table-bordered">
         <thead>
             <tr>
                 <th class="right">{{ t('ID') }}</th>

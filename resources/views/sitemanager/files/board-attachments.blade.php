@@ -46,16 +46,16 @@
 </form>
 
 <div class="table-responsive">
-    <table class="table table-striped table-hover">
+    <table class="table table-striped table-hover table-bordered">
         <thead>
             <tr>
                 <th width="80">{{ t('Preview') }}</th>
                 <th>{{ t('Filename') }}</th>
-                <th>{{ t('Board') }}</th>
+                <th class="text-center">{{ t('Board') }}</th>
                 <th>{{ t('Post') }}</th>
-                <th>{{ t('Size') }}</th>
-                <th>{{ t('Upload Date') }}</th>
-                <th class="text-end">{{ t('Actions') }}</th>
+                <th class="text-center">{{ t('Size') }}</th>
+                <th class="text-center">{{ t('Upload Date') }}</th>
+                <th class="text-center">{{ t('Actions') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -98,7 +98,7 @@
                         </div>
                         <small class="text-muted">{{ $attachment->filename }}</small>
                     </td>
-                    <td>
+                    <td class="text-center">
                         @if($attachment->board)
                             <span class="badge bg-info">{{ $attachment->board->name }}</span>
                         @else
@@ -118,9 +118,9 @@
                             <span class="text-muted">{{ t('Unknown Post') }}</span>
                         @endif
                     </td>
-                    <td class="number">{{ $attachment->human_size }}</td>
-                    <td class="number">{{ $attachment->created_at->format('Y-m-d H:i') }}</td>
-                    <td class="text-end actions">
+                    <td class="number text-center">{{ $attachment->human_size }}</td>
+                    <td class="number text-center">{{ $attachment->created_at->format('Y-m-d H:i') }}</td>
+                    <td class="text-center actions">
                         <!-- 파일 다운로드 -->
                         <a href="{{ $attachment->download_url }}" class="btn btn-sm btn-outline-primary" 
                             download="{{ $attachment->original_name }}">

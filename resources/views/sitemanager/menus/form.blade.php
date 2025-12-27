@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="card default-form default-form">
-    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <h4>
             @if(isset($menu))
                 <i class="bi bi-pencil"></i> {{ t('Edit Menu') }}

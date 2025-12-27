@@ -53,16 +53,16 @@
 
 <!-- 이미지 목록 -->
 <div class="table-responsive">
-    <table class="table table-striped table-hover">
+    <table class="table table-striped table-hover table-bordered">
         <thead>
             <tr>
                 <th width="80">{{ t('Preview') }}</th>
                 <th>{{ t('Filename') }}</th>
                 <th>{{ t('Board') }}</th>
-                <th>{{ t('Size') }}</th>
-                <th>{{ t('Used') }}</th>
-                <th>{{ t('Upload Date') }}</th>
-                <th class="text-end">{{ t('Actions') }}</th>
+                <th class="text-center">{{ t('Size') }}</th>
+                <th class="text-center">{{ t('Used') }}</th>
+                <th class="text-center">{{ t('Upload Date') }}</th>
+                <th class="text-center">{{ t('Actions') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -108,21 +108,21 @@
                             <span class="badge bg-secondary">{{ t('No Board') }}</span>
                         @endif
                     </td>
-                    <td nowrap class="number">{{ $image->human_size }}</td>
-                    <td>
-                        <div class="d-flex align-items-center">
+                    <td nowrap class="number text-center">{{ $image->human_size }}</td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-center">
                             <span class="badge {{ $image->is_used ? 'bg-success' : 'bg-warning' }} me-2">
                                 {{ $image->is_used ? t('Used') : t('Unused') }}
                             </span>
-                            <button type="button" class="btn btn-sm btn-outline-info rounded-circle" 
+                            <button type="button" class="btn btn-sm btn-outline-info" 
                                     onclick="checkActualUsage({{ $image->id }}, '{{ addslashes($image->filename) }}', {{ $image->is_used ? 'true' : 'false' }})" 
                                     title="{{ t('Check actual usage status') }}">
                                 <i class="bi bi-search"></i>
                             </button>
                         </div>
                     </td>
-                    <td class="text-nowrap number">{{ $image->created_at->format('Y-m-d H:i') }}</td>
-                    <td class="text-end actions">
+                    <td class="text-nowrap number text-center">{{ $image->created_at->format('Y-m-d H:i') }}</td>
+                    <td class="text-center actions">
                         <!-- 이미지 교체 -->
                         <button type="button" class="btn btn-sm btn-outline-warning" 
                                 onclick="showReplaceModal({{ $image->id }}, '{{ $image->original_name }}')">
