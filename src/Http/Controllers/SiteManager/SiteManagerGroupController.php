@@ -38,6 +38,24 @@ class SiteManagerGroupController extends Controller
             $query->where('active', $request->get('status') === 'active');
         }
 
+        // 정렬 처리
+        $orderby = $request->get('orderby', 'name');
+        $desc = $request->get('desc', '0');
+        
+        // 허용된 정렬 필드 목록
+        $allowedOrderBy = ['id', 'name', 'members_count', 'created_at'];
+        
+        if (in_array($orderby, $allowedOrderBy)) {
+            if ($desc === '1') {
+                $query->orderBy($orderby, 'desc');
+            } else {
+                $query->orderBy($orderby, 'asc');
+            }
+        } else {
+            // 기본 정렬
+            $query->orderBy('name', 'asc');
+        }
+
         $perPage = $request->get('per_page', config('sitemanager.ui.pagination_per_page', 20));
         $perPage = min(max((int)$perPage, 1), 100); // 1-100 범위로 제한
 

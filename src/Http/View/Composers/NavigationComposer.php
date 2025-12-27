@@ -78,14 +78,14 @@ class NavigationComposer
         // SEO 정보 구성 (기존 seoData가 있으면 우선 사용)
         $existingSeoData = $view->getData()['seoData'] ?? null;
         $seoData = $existingSeoData ?: $this->buildSeoData($currentMenu, $breadcrumb);
-        
+
         $composerData = [
             'navigationMenus' => $navigationTree,
             'flatMenus' => $accessibleMenus,
             'currentMenu' => $currentMenu,
             'breadcrumb' => $breadcrumb,
             'menuTabs' => $menuTabs,
-            'seoData' => $seoData
+            'seoData' => $seoData,
         ];
         
         // 캐시에 저장

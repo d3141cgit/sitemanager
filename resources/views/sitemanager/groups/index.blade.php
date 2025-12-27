@@ -20,6 +20,13 @@
 </div>
 
 <form method="GET" action="{{ route('sitemanager.groups.index') }}" class="search-form">
+    @if(request()->has('orderby'))
+        <input type="hidden" name="orderby" value="{{ request('orderby') }}">
+    @endif
+    @if(request()->has('desc'))
+        <input type="hidden" name="desc" value="{{ request('desc') }}">
+    @endif
+    
     <input type="text" name="search" class="form-control" placeholder="{{ t('Search by name or description...') }}" value="{{ request('search') }}">
     
     <select name="status" class="form-select" style="max-width: 120px;"> <option value="">{{ t('All Status') }}</option> <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>{{ t('Active') }}</option> <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>{{ t('Inactive') }}</option> <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>{{ t('Deleted') }}</option> </select>
@@ -28,7 +35,7 @@
         <i class="bi bi-search"></i> {{ t('Search') }}
     </button>
     
-    @if(request()->hasAny(['search', 'status']))
+    @if(request()->hasAny(['search', 'status', 'orderby', 'desc']))
         <a href="{{ route('sitemanager.groups.index') }}" class="btn btn-outline-secondary">
             <i class="bi bi-x-circle"></i> {{ t('Clear') }}
         </a>
@@ -39,12 +46,12 @@
     <table class="table table-striped table-hover table-bordered">
         <thead>
             <tr>
-                <th class="right">{{ t('ID') }}</th>
-                <th>{{ t('Name') }}</th>
+                {!! sortHead(t('ID'), 'id', 'right') !!}
+                {!! sortHead(t('Name'), 'name') !!}
                 <th>{{ t('Description') }}</th>
-                <th class="text-center">{{ t('Members') }}</th>
+                {!! sortHead(t('Members'), 'members_count', 'text-center') !!}
                 <th class="text-center">{{ t('Status') }}</th>
-                <th>{{ t('Created Date') }}</th>
+                {!! sortHead(t('Created Date'), 'created_at') !!}
                 <th class="text-end">{{ t('Actions') }}</th>
             </tr>
         </thead>

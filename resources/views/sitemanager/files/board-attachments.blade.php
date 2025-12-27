@@ -26,7 +26,14 @@
     </h1>
 </div>
 
-<form method="GET" class="search-form">
+<form method="GET" action="{{ route('sitemanager.files.board-attachments') }}" class="search-form">
+    @if(request()->has('orderby'))
+        <input type="hidden" name="orderby" value="{{ request('orderby') }}">
+    @endif
+    @if(request()->has('desc'))
+        <input type="hidden" name="desc" value="{{ request('desc') }}">
+    @endif
+    
     <select name="board_slug" id="board_slug" class="form-select">
         <option value="">{{ t('All Boards') }}</option>
         @foreach($boards as $board)
@@ -50,11 +57,11 @@
         <thead>
             <tr>
                 <th width="80">{{ t('Preview') }}</th>
-                <th>{{ t('Filename') }}</th>
+                {!! sortHead(t('Filename'), 'original_name') !!}
                 <th class="text-center">{{ t('Board') }}</th>
                 <th>{{ t('Post') }}</th>
-                <th class="text-center">{{ t('Size') }}</th>
-                <th class="text-center">{{ t('Upload Date') }}</th>
+                {!! sortHead(t('Size'), 'file_size', 'text-center') !!}
+                {!! sortHead(t('Upload Date'), 'created_at', 'text-center') !!}
                 <th class="text-center">{{ t('Actions') }}</th>
             </tr>
         </thead>

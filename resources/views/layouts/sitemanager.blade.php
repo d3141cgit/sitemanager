@@ -115,65 +115,48 @@
                     </div>
                 </li>
                 
-                {{-- Extension Menus --}}
-                @if(isset($extensionMenuItems) && count($extensionMenuItems) > 0)
-                    @foreach($extensionMenuItems as $ext)
-                        @php
-                            $hasChildren = isset($ext['children']) && is_array($ext['children']) && count($ext['children']) > 0;
-                            
-                            if ($hasChildren) {
-                                $isActive = false;
-                                foreach ($ext['children'] as $child) {
-                                    $childRouteBase = Str::beforeLast($child['route'], '.');
-                                    if (request()->routeIs($childRouteBase . '.*')) {
-                                        $isActive = true;
-                                        break;
-                                    }
-                                }
-                                $sidebarDropdownId = 'sidebar-extension-' . $ext['key'] . '-collapse';
-                            } else {
-                                $routeBase = Str::beforeLast($ext['route'], '.');
-                                $isActive = request()->routeIs($routeBase . '.*');
-                            }
-                        @endphp
-                        
-                        @if($hasChildren)
-                            <li class="sidebar-menu-dropdown">
-                                <a @class(['sidebar-menu-item', 'active' => $isActive])
-                                    href="#" data-bs-toggle="collapse" data-bs-target="#{{ $sidebarDropdownId }}">
-                                    <i class="{{ $ext['icon'] }}"></i>
-                                    <span>{{ t($ext['name']) }}</span>
-                                    <i class="bi bi-chevron-down ms-auto"></i>
-                                </a>
-                                <div class="collapse" id="{{ $sidebarDropdownId }}">
-                                    <ul class="sidebar-submenu">
-                                        @foreach($ext['children'] as $child)
-                                            @php
-                                                $childRouteBase = Str::beforeLast($child['route'], '.');
-                                                $childActive = request()->routeIs($childRouteBase . '.*');
-                                            @endphp
-                                            <li>
-                                                <a @class(['sidebar-submenu-item', 'active' => $childActive])
-                                                    href="{{ route($child['route']) }}">
-                                                    <i class="{{ $child['icon'] }}"></i>
-                                                    <span>{{ t($child['name']) }}</span>
-                                                </a>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            </li>
-                        @else
+                {{-- Extension Menus (config 직접 읽기) --}}
+                @foreach(config('sitemanager.extensions', []) as $extKey => $ext)
+                    @if(($ext['enabled'] ?? true) && isset($ext['name']))
+                        @if(isset($ext['children']) && is_array($ext['children']) && count($ext['children']) > 0)
+                            @php
+                                $activeChildren = collect($ext['children'])->filter(fn($c) => ($c['enabled'] ?? true) && isset($c['route']));
+                                $isParentActive = $activeChildren->contains(fn($c) => request()->routeIs(Str::beforeLast($c['route'], '.') . '.*'));
+                            @endphp
+                            @if($activeChildren->isNotEmpty())
+                                <li class="sidebar-menu-dropdown">
+                                    <a @class(['sidebar-menu-item', 'active' => $isParentActive])
+                                        href="#" data-bs-toggle="collapse" data-bs-target="#ext-{{ $extKey }}">
+                                        <i class="{{ $ext['icon'] ?? 'bi-puzzle' }}"></i>
+                                        <span>{{ t($ext['name']) }}</span>
+                                        <i class="bi bi-chevron-down ms-auto"></i>
+                                    </a>
+                                    <div class="collapse" id="ext-{{ $extKey }}">
+                                        <ul class="sidebar-submenu">
+                                            @foreach($activeChildren as $child)
+                                                <li>
+                                                    <a @class(['sidebar-submenu-item', 'active' => request()->routeIs(Str::beforeLast($child['route'], '.') . '.*')])
+                                                        href="{{ route($child['route']) }}">
+                                                        <i class="{{ $child['icon'] ?? 'bi-dot' }}"></i>
+                                                        <span>{{ t($child['name']) }}</span>
+                                                    </a>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                </li>
+                            @endif
+                        @elseif(isset($ext['route']))
                             <li>
-                                <a @class(['sidebar-menu-item', 'active' => $isActive])
+                                <a @class(['sidebar-menu-item', 'active' => request()->routeIs(Str::beforeLast($ext['route'], '.') . '.*')])
                                     href="{{ route($ext['route']) }}">
-                                    <i class="{{ $ext['icon'] }}"></i>
+                                    <i class="{{ $ext['icon'] ?? 'bi-puzzle' }}"></i>
                                     <span>{{ t($ext['name']) }}</span>
                                 </a>
                             </li>
                         @endif
-                    @endforeach
-                @endif
+                    @endif
+                @endforeach
             </ul>
         </nav>
         

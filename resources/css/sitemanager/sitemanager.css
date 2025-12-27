@@ -395,12 +395,17 @@ body {
 /* Main Content */
 .main-content {
     flex: 1;
-    padding: 1.5rem 2rem;
-    /* min-height: 100vh; */
+    padding: 1.5rem;
+}
+
+@media (min-width: 992px) {
+    .main-content {
+        padding: 1.5rem 2rem;
+    }
 }
 
 /* Responsive: Mobile */
-@media (max-width: 991px) {
+@media (max-width: 991px) {    
     .sidebar {
         transform: translateX(-100%);
     }
@@ -470,9 +475,35 @@ footer {
 .search-form .form-select { width: auto; }
 .search-form .btn { white-space: nowrap; }
 
+/* Bootstrap Card border override */
+.card {
+    border-radius: 0 !important;
+    border: 0 !important;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05) !important;
+}
+
+.card-header {
+    border-radius: 0 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+    background-color: #fff;
+    padding: 1rem;
+}
+.card-header h4 { margin: 0; font-family: var(--font-gothic); font-weight: 600; font-size: 0.9rem; color: var(--bs-gray-600); }
+.card-header h4 i { font-size: 0.8em; color: var(--bs-gray-500); }
+
+.card-footer {
+    border-radius: 0 !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+    background-color: #fff;
+    padding: 1rem;
+}
+
 .table { box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05) !important; }
-.table thead th { color: var(--bs-gray-600); font-weight: 500; font-size: 0.8rem; padding-bottom: 0.25rem; background-color: var(--bs-gray-200); }
-.table td { vertical-align: middle; padding: 0.5rem; }
+.table thead th { color: var(--bs-gray-500); font-weight: 500; font-size: 0.8rem; padding-bottom: 0.25rem; background-color: var(--bs-gray-200); }
+.table thead th.orderby { background-color: var(--bs-gray-300); }
+.table thead th a { color: var(--bs-gray-900); text-decoration: none; }
+.table thead th a:hover { color: var(--red-dark); }
+.table td { vertical-align: middle; padding: 0.5rem; font-size: 0.9rem; }
 .table .number { font-family: var(--font-monospace); font-size: 0.9em; }
 .table .right { text-align: right; }
 .table .badge { display: inline-flex; align-items: center; }
@@ -483,7 +514,20 @@ footer {
 .table .member-level { font-size: 0.8em; }
 .table .member-groups { display: flex; flex-wrap: wrap; }
 .table .member-groups span:not(:first-child)::before { content: ', '; display: inline-block; color: var(--bs-gray-500); }
-.table .actions .btn { border-radius: 2rem; display: inline-flex; align-items: center; justify-content: center; }
+.table .actions .btn i { font-size: 0.9em; opacity: 0.8; }
+
+.card-body .table { box-shadow: none !important; }
+.card-body .table th { border: solid 1px #dee2e6; }
+.card-body .table td { border: solid 1px #dee2e6; }
+.card-body .table td:first-child { border-left: none; }
+.card-body .table td:last-child { border-right: none; }
+.card-body .table th:first-child { border-left: none; }
+.card-body .table th:last-child { border-right: none; }
+.card-body .table th { border-top: none; }
+.card-body .table td { border-top: none; }
+.card-body .table td:first-child { border-left: none; }
+.card-body .table td:last-child { border-right: none; }
+.card-body .table th:first-child { border-left: none; }
 
 /* Member Index Profile Photos */
 .member-profile-photo { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
@@ -705,26 +749,3 @@ footer {
 td.comments .btn { width: 2rem; height: 2rem; border-radius: 50%; padding: 0; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 
 .location-badges { max-height: 100px; overflow-y: auto; }
-
-/* Bootstrap Card border override */
-.card {
-    border-radius: 0 !important;
-    border: 0 !important;
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05) !important;
-}
-
-.card-header {
-    border-radius: 0 !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
-    background-color: #fff;
-    padding: 1rem;
-}
-.card-header h4 { margin: 0; font-family: var(--font-gothic); font-weight: 600; font-size: 0.9rem; color: var(--bs-gray-600); }
-.card-header h4 i { font-size: 0.8em; color: var(--bs-gray-500); }
-
-.card-footer {
-    border-radius: 0 !important;
-    border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
-    background-color: #fff;
-    padding: 1rem;
-}

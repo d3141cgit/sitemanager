@@ -265,3 +265,43 @@ document.addEventListener('DOMContentLoaded', function() {
     initSidebar();
 
 });
+
+/**
+ * 테이블 정렬 함수
+ * @param {string} field 정렬할 필드명
+ */
+function sort(field) {
+    const searchForm = document.querySelector('.search-form');
+    if (!searchForm) {
+        console.warn('Search form not found');
+        return;
+    }
+    
+    // orderby와 desc hidden input 찾기 또는 생성
+    let orderbyInput = searchForm.querySelector('input[name="orderby"]');
+    let descInput = searchForm.querySelector('input[name="desc"]');
+    
+    if (!orderbyInput) {
+        orderbyInput = document.createElement('input');
+        orderbyInput.type = 'hidden';
+        orderbyInput.name = 'orderby';
+        searchForm.appendChild(orderbyInput);
+    }
+    
+    if (!descInput) {
+        descInput = document.createElement('input');
+        descInput.type = 'hidden';
+        descInput.name = 'desc';
+        searchForm.appendChild(descInput);
+    }
+    
+    // 같은 필드면 desc 토글, 다른 필드면 desc=0으로 설정
+    if (orderbyInput.value === field) {
+        descInput.value = descInput.value === '1' ? '0' : '1';
+    } else {
+        descInput.value = '0';
+    }
+    
+    orderbyInput.value = field;
+    searchForm.submit();
+}

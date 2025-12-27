@@ -32,6 +32,13 @@
 
 <!-- Search Form -->
 <form method="GET" action="{{ route('sitemanager.languages.index') }}" class="search-form">
+    @if(request()->has('orderby'))
+        <input type="hidden" name="orderby" value="{{ request('orderby') }}">
+    @endif
+    @if(request()->has('desc'))
+        <input type="hidden" name="desc" value="{{ request('desc') }}">
+    @endif
+    
     <input type="text" name="search" class="form-control" 
             placeholder="{{ t('Search by key, translation, or location...') }}" 
             value="{{ request('search') }}"
@@ -87,11 +94,11 @@
     <table class="table table-hover table-striped table-bordered">
         <thead>
             <tr>
-                <th>{{ t('Key') }} (English)</th>
+                {!! sortHead(t('Key') . ' (English)', 'key') !!}
                 @foreach(array_slice($availableLanguages, 1) as $code => $name)
                     <th>{{ $name }}</th>
                 @endforeach
-                <th>{{ t('Location') }}</th>
+                {!! sortHead(t('Location'), 'location') !!}
                 <th class="text-end">{{ t('Actions') }}</th>
             </tr>
         </thead>

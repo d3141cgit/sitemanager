@@ -18,6 +18,13 @@
 </div>
 
 <form method="GET" action="{{ route('sitemanager.members.index') }}" class="search-form">  
+    @if(request()->has('orderby'))
+        <input type="hidden" name="orderby" value="{{ request('orderby') }}">
+    @endif
+    @if(request()->has('desc'))
+        <input type="hidden" name="desc" value="{{ request('desc') }}">
+    @endif
+    
     <input type="text" name="search" class="form-control" placeholder="{{ t('Search by name, username, or email...') }}" value="{{ request('search') }}">
     
     <select name="level" class="form-select">
@@ -49,7 +56,7 @@
         <i class="bi bi-search me-2"></i>{{ t('Search') }}
     </button>
 
-    @if(request()->hasAny(['search', 'level', 'group_id', 'status']))
+    @if(request()->hasAny(['search', 'level', 'group_id', 'status', 'orderby', 'desc']))
         <a href="{{ route('sitemanager.members.index') }}" class="btn btn-outline-secondary">
             <i class="bi bi-x-circle"></i>
         </a>
@@ -60,15 +67,15 @@
     <table class="table table-striped table-hover table-bordered">
         <thead>
             <tr>
-                <th class="right">{{ t('ID') }}</th>
+                {!! sortHead(t('ID'), 'id', 'right') !!}
                 <th>{{ t('Photo') }}</th>
-                <th>{{ t('Name') }}</th>
-                <th>{{ t('Username') }}</th>
-                <th>{{ t('Email') }}</th>
+                {!! sortHead(t('Name'), 'name') !!}
+                {!! sortHead(t('Username'), 'username') !!}
+                {!! sortHead(t('Email'), 'email') !!}
                 <th>{{ t('Groups') }}</th>
-                <th>{{ t('Level') }}</th>
+                {!! sortHead(t('Level'), 'level') !!}
                 <th class="text-center">{{ t('Status') }}</th>
-                <th class="text-center">{{ t('Join Date') }}</th>
+                {!! sortHead(t('Join Date'), 'created_at', 'text-center') !!}
                 <th class="text-center">{{ t('Actions') }}</th>
             </tr>
         </thead>

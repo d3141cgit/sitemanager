@@ -26,7 +26,14 @@
     </h1>
 </div>
 
-<form method="GET" class="search-form">
+<form method="GET" action="{{ route('sitemanager.files.editor-images') }}" class="search-form">
+    @if(request()->has('orderby'))
+        <input type="hidden" name="orderby" value="{{ request('orderby') }}">
+    @endif
+    @if(request()->has('desc'))
+        <input type="hidden" name="desc" value="{{ request('desc') }}">
+    @endif
+    
     <select name="board_slug" id="board_slug" class="form-select">
         <option value="">{{ t('All Boards') }}</option>
         @foreach($boards as $board)
@@ -57,11 +64,11 @@
         <thead>
             <tr>
                 <th width="80">{{ t('Preview') }}</th>
-                <th>{{ t('Filename') }}</th>
+                {!! sortHead(t('Filename'), 'original_name') !!}
                 <th>{{ t('Board') }}</th>
-                <th class="text-center">{{ t('Size') }}</th>
+                {!! sortHead(t('Size'), 'size', 'text-center') !!}
                 <th class="text-center">{{ t('Used') }}</th>
-                <th class="text-center">{{ t('Upload Date') }}</th>
+                {!! sortHead(t('Upload Date'), 'created_at', 'text-center') !!}
                 <th class="text-center">{{ t('Actions') }}</th>
             </tr>
         </thead>
@@ -114,7 +121,7 @@
                             <span class="badge {{ $image->is_used ? 'bg-success' : 'bg-warning' }} me-2">
                                 {{ $image->is_used ? t('Used') : t('Unused') }}
                             </span>
-                            <button type="button" class="btn btn-sm btn-outline-info" 
+                            <button type="button" class="btn btn-sm btn-default" 
                                     onclick="checkActualUsage({{ $image->id }}, '{{ addslashes($image->filename) }}', {{ $image->is_used ? 'true' : 'false' }})" 
                                     title="{{ t('Check actual usage status') }}">
                                 <i class="bi bi-search"></i>

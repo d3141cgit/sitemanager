@@ -7,8 +7,9 @@ use Illuminate\Support\Collection;
 /**
  * ExtensionManager - Manages admin menu extensions
  *
- * This service only handles menu registration for the SiteManager admin panel.
- * All routes, controllers, and business logic are managed by Laravel.
+ * This service handles extension registration for the SiteManager admin panel.
+ * Menu rendering is done directly in Blade using config('sitemanager.extensions').
+ * This class is used by ExtensionController for extension metadata access.
  */
 class ExtensionManager
 {
@@ -34,7 +35,7 @@ class ExtensionManager
                     if (isset($config['name'])) {
                         $this->register($key, $config);
                     }
-                } 
+                }
                 // 일반 메뉴 (route 필수)
                 elseif (isset($config['name'], $config['route'])) {
                     $this->register($key, $config);
@@ -104,18 +105,6 @@ class ExtensionManager
     public function has(string $key): bool
     {
         return $this->extensions->has($key);
-    }
-
-    /**
-     * Get menu items for sidebar (sorted by position)
-     */
-    public function getMenuItems(): array
-    {
-        return $this->extensions
-            ->filter(fn($ext) => $ext['enabled'] ?? true)
-            ->sortBy('position')
-            ->values()
-            ->all();
     }
 
     /**
