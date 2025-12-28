@@ -204,53 +204,30 @@
         {{-- Quick Actions & System Info --}}
         <div class="card mb-4">
             <div class="card-header">
-                <h4><i class="bi bi-lightning"></i> {{ t('Quick Actions') }}</h4>
+                <h4><i class="bi bi-lightning"></i> {{ t('System Information') }}</h4>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-6">
-                        <div class="details">
-                            <dl>    
-                                <a class="btn btn-sm btn-outline-primary" href="{{ route('sitemanager.boards.create') }}"><i class="bi bi-journal-plus text-primary"></i> {{ t('New Board') }}</a>
-                            </dl>
-                            <dl>
-                                <a class="btn btn-sm btn-outline-success" href="{{ route('sitemanager.members.create') }}"><i class="bi bi-person-plus text-success"></i> {{ t('New Member') }}</a>
-                            </dl>
-                            <dl>
-                                <a class="btn btn-sm btn-outline-info" href="{{ route('sitemanager.menus.create') }}"><i class="bi bi-plus-square text-info"></i> {{ t('New Menu') }}</a>
-                            </dl>
-                            <dl>
-                                <a class="btn btn-sm btn-outline-warning" href="{{ route('sitemanager.languages.index') }}"><i class="bi bi-translate text-warning"></i> {{ t('Translations') }}</a>
-                            </dl>
-                            <dl>
-                                <a class="btn btn-sm btn-outline-secondary" href="{{ route('sitemanager.settings') }}"><i class="bi bi-gear text-secondary"></i> {{ t('Settings') }}</a>
-                            </dl>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="details">
-                            <dl>
-                                <dt>{{ t('Laravel') }}</dt>
-                                <dd>{{ app()->version() }}</dd>
-                            </dl>
-                            <dl>
-                                <dt>{{ t('PHP') }}</dt>
-                                <dd>{{ PHP_VERSION }}</dd>
-                            </dl>
-                            <dl>
-                                <dt>{{ t('Env') }}</dt>
-                                <dd><span class="badge bg-{{ app()->environment() === 'production' ? 'danger' : 'warning' }}">{{ strtoupper(app()->environment()) }}</span></dd>
-                            </dl>
-                            <dl>
-                                <dt>{{ t('Timezone') }}</dt>
-                                <dd>{{ config('app.timezone') }}</dd>
-                            </dl>
-                            <dl>
-                                <dt>{{ t('MySQL') }}</dt>
-                                <dd>{{ \DB::selectOne('SELECT VERSION() as v')->v ?? 'N/A' }}</dd>
-                            </dl>
-                        </div>
-                    </div>
+                <div class="details">
+                    <dl>
+                        <dt>{{ t('Laravel') }}</dt>
+                        <dd>{{ app()->version() }}</dd>
+                    </dl>
+                    <dl>
+                        <dt>{{ t('PHP') }}</dt>
+                        <dd>{{ PHP_VERSION }}</dd>
+                    </dl>
+                    <dl>
+                        <dt>{{ t('Env') }}</dt>
+                        <dd><span class="badge bg-{{ app()->environment() === 'production' ? 'danger' : 'warning' }}">{{ strtoupper(app()->environment()) }}</span></dd>
+                    </dl>
+                    <dl>
+                        <dt>{{ t('Timezone') }}</dt>
+                        <dd>{{ config('app.timezone') }}</dd>
+                    </dl>
+                    <dl>
+                        <dt>{{ t('MySQL') }}</dt>
+                        <dd>{{ \DB::selectOne('SELECT VERSION() as v')->v ?? 'N/A' }}</dd>
+                    </dl>
                 </div>
             </div>
         </div>
