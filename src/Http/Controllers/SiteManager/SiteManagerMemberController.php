@@ -23,7 +23,25 @@ class SiteManagerMemberController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Member::with('groups')->orderBy('name');
+        $query = Member::with('groups');
+        
+        // 정렬 처리
+        $orderby = $request->get('orderby', 'name');
+        $desc = $request->get('desc', '0');
+        
+        // 허용된 정렬 필드 목록
+        $allowedOrderBy = ['id', 'name', 'username', 'email', 'level', 'created_at'];
+        
+        if (in_array($orderby, $allowedOrderBy)) {
+            if ($desc === '1') {
+                $query->orderBy($orderby, 'desc');
+            } else {
+                $query->orderBy($orderby, 'asc');
+            }
+        } else {
+            // 기본 정렬
+            $query->orderBy('name', 'asc');
+        }
 
         // 삭제된 멤버 포함 여부
         if ($request->get('status') === 'deleted') {

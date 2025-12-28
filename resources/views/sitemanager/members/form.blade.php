@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="card default-form default-form-md">
-    <div class="card-header bg-dark text-white">
+    <div class="card-header">
         <h4>
         @if(isset($member))
             <i class="bi bi-pencil"></i> {{ t('Edit Member') }} - {{ $member->name }}

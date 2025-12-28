@@ -77,7 +77,7 @@
 <div class="card">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover table-striped table-bordered mb-0">
                 <thead class="table-light">
                     <tr>
                         <th width="40">

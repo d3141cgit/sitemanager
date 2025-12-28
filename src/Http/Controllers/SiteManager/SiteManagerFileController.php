@@ -27,7 +27,7 @@ class SiteManagerFileController extends Controller
      */
     public function editorImages(Request $request): View
     {
-        $query = EditorImage::orderBy('created_at', 'desc');
+        $query = EditorImage::query();
 
         // 필터링
         if ($request->filled('board_slug')) {
@@ -50,10 +50,28 @@ class SiteManagerFileController extends Controller
             });
         }
 
+        // 정렬 처리
+        $orderby = $request->get('orderby', 'created_at');
+        $desc = $request->get('desc', '1');
+        
+        // 허용된 정렬 필드 목록
+        $allowedOrderBy = ['id', 'original_name', 'filename', 'size', 'created_at'];
+        
+        if (in_array($orderby, $allowedOrderBy)) {
+            if ($desc === '1') {
+                $query->orderBy($orderby, 'desc');
+            } else {
+                $query->orderBy($orderby, 'asc');
+            }
+        } else {
+            // 기본 정렬
+            $query->orderBy('created_at', 'desc');
+        }
+
         $perPage = $request->get('per_page', config('sitemanager.ui.pagination_per_page', 20));
         $perPage = min(max((int)$perPage, 1), 100); // 1-100 범위로 제한
 
-        $images = $query->paginate($perPage);
+        $images = $query->paginate($perPage)->appends($request->query());
         $boards = Board::orderBy('name')->get();
 
         return view('sitemanager::sitemanager.files.editor-images', compact('images', 'boards'));
@@ -64,7 +82,7 @@ class SiteManagerFileController extends Controller
      */
     public function boardAttachments(Request $request): View
     {
-        $query = BoardAttachment::orderBy('created_at', 'desc');
+        $query = BoardAttachment::query();
 
         // 필터링
         if ($request->filled('board_slug')) {
@@ -80,10 +98,28 @@ class SiteManagerFileController extends Controller
             });
         }
 
+        // 정렬 처리
+        $orderby = $request->get('orderby', 'created_at');
+        $desc = $request->get('desc', '1');
+        
+        // 허용된 정렬 필드 목록
+        $allowedOrderBy = ['id', 'original_name', 'filename', 'file_size', 'created_at'];
+        
+        if (in_array($orderby, $allowedOrderBy)) {
+            if ($desc === '1') {
+                $query->orderBy($orderby, 'desc');
+            } else {
+                $query->orderBy($orderby, 'asc');
+            }
+        } else {
+            // 기본 정렬
+            $query->orderBy('created_at', 'desc');
+        }
+
         $perPage = $request->get('per_page', config('sitemanager.ui.pagination_per_page', 20));
         $perPage = min(max((int)$perPage, 1), 100); // 1-100 범위로 제한
 
-        $attachments = $query->paginate($perPage);
+        $attachments = $query->paginate($perPage)->appends($request->query());
         $boards = Board::orderBy('name')->get();
 
         return view('sitemanager::sitemanager.files.board-attachments', compact('attachments', 'boards'));

@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="card default-form default-form-md">
-    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <h4>
             <i class="bi bi-collection"></i>
             {{ isset($group) ? t('Edit Group') : t('Create Group') }}

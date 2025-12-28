@@ -139,6 +139,7 @@ class SiteManagerServiceProvider extends ServiceProvider
             \SiteManager\Console\Commands\MigrateImagesToS3::class,
             \SiteManager\Console\Commands\ResourceCommand::class,
             \SiteManager\Console\Commands\RestoreLanguageCommand::class,
+            \SiteManager\Console\Commands\BackupLanguageCommand::class,
         ]);
     }
     
@@ -264,17 +265,13 @@ class SiteManagerServiceProvider extends ServiceProvider
     /**
      * 확장 시스템을 초기화합니다.
      * Extension은 메뉴 등록만 담당하고, 라우트와 컨트롤러는 Laravel에서 직접 관리합니다.
+     * 메뉴 렌더링은 Blade에서 config를 직접 읽어서 처리합니다.
      */
     private function bootExtensions()
     {
         $manager = $this->app->make(ExtensionManager::class);
 
-        // Config에서 확장 메뉴 로드
+        // Config에서 확장 메뉴 로드 (ExtensionController에서 사용)
         $manager->loadFromConfig();
-
-        // 뷰 컴포저에 확장 메뉴 공유
-        View::composer('sitemanager::layouts.sitemanager', function ($view) use ($manager) {
-            $view->with('extensionMenuItems', $manager->getMenuItems());
-        });
     }
 }

@@ -26,7 +26,14 @@
     </h1>
 </div>
 
-<form method="GET" class="search-form">
+<form method="GET" action="{{ route('sitemanager.files.board-attachments') }}" class="search-form">
+    @if(request()->has('orderby'))
+        <input type="hidden" name="orderby" value="{{ request('orderby') }}">
+    @endif
+    @if(request()->has('desc'))
+        <input type="hidden" name="desc" value="{{ request('desc') }}">
+    @endif
+    
     <select name="board_slug" id="board_slug" class="form-select">
         <option value="">{{ t('All Boards') }}</option>
         @foreach($boards as $board)
@@ -46,16 +53,16 @@
 </form>
 
 <div class="table-responsive">
-    <table class="table table-striped table-hover">
+    <table class="table table-striped table-hover table-bordered">
         <thead>
             <tr>
                 <th width="80">{{ t('Preview') }}</th>
-                <th>{{ t('Filename') }}</th>
-                <th>{{ t('Board') }}</th>
+                {!! sortHead(t('Filename'), 'original_name') !!}
+                <th class="text-center">{{ t('Board') }}</th>
                 <th>{{ t('Post') }}</th>
-                <th>{{ t('Size') }}</th>
-                <th>{{ t('Upload Date') }}</th>
-                <th class="text-end">{{ t('Actions') }}</th>
+                {!! sortHead(t('Size'), 'file_size', 'text-center') !!}
+                {!! sortHead(t('Upload Date'), 'created_at', 'text-center') !!}
+                <th class="text-center">{{ t('Actions') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -98,7 +105,7 @@
                         </div>
                         <small class="text-muted">{{ $attachment->filename }}</small>
                     </td>
-                    <td>
+                    <td class="text-center">
                         @if($attachment->board)
                             <span class="badge bg-info">{{ $attachment->board->name }}</span>
                         @else
@@ -118,9 +125,9 @@
                             <span class="text-muted">{{ t('Unknown Post') }}</span>
                         @endif
                     </td>
-                    <td class="number">{{ $attachment->human_size }}</td>
-                    <td class="number">{{ $attachment->created_at->format('Y-m-d H:i') }}</td>
-                    <td class="text-end actions">
+                    <td class="number text-center">{{ $attachment->human_size }}</td>
+                    <td class="number text-center">{{ $attachment->created_at->format('Y-m-d H:i') }}</td>
+                    <td class="text-center actions">
                         <!-- 파일 다운로드 -->
                         <a href="{{ $attachment->download_url }}" class="btn btn-sm btn-outline-primary" 
                             download="{{ $attachment->original_name }}">

@@ -33,21 +33,30 @@
 </div>
 
 
+<form method="GET" action="{{ route('sitemanager.boards.index') }}" class="search-form" style="display: none;">
+    @if(request()->has('orderby'))
+        <input type="hidden" name="orderby" value="{{ request('orderby') }}">
+    @endif
+    @if(request()->has('desc'))
+        <input type="hidden" name="desc" value="{{ request('desc') }}">
+    @endif
+</form>
+
 <div class="table-responsive">
-    <table class="table table-striped table-hover">
+    <table class="table table-striped table-hover table-bordered">
         <thead>
             <tr>
-                <th class="right">{{ t('ID') }}</th>
-                <th>{{ t('Board Name') }}</th>
-                <th>{{ t('Slug') }}</th>
+                {!! sortHead(t('ID'), 'id', 'right') !!}
+                {!! sortHead(t('Board Name'), 'name') !!}
+                {!! sortHead(t('Slug'), 'slug') !!}
                 <th>{{ t('Skin') }}</th>
                 <th>{{ t('Connected Menu') }}</th>
                 <th class="text-center">{{ t('Posts') }}</th>
                 <th class="text-center">{{ t('Comments') }}</th>
                 <th class="text-center">{{ t('Files') }}</th>
-                <th>{{ t('Status') }}</th>
-                <th>{{ t('Created Date') }}</th>
-                <th class="text-end">{{ t('Actions') }}</th>
+                <th class="text-center">{{ t('Status') }}</th>
+                {!! sortHead(t('Created Date'), 'created_at', 'text-center') !!}
+                <th class="text-center">{{ t('Actions') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -124,15 +133,15 @@
                         {{ $attachmentsCount }}
                     @endif
                 </td>
-                <td>
+                <td class="text-center">
                     @if($board->status === 'active')
                         <span class="badge bg-success">{{ t('Active') }}</span>
                     @else
                         <span class="badge bg-secondary">{{ t('Inactive') }}</span>
                     @endif
                 </td>
-                <td class="number">{{ $board->created_at->format('Y-m-d') }}</td>
-                <td class="text-end actions">
+                <td class="number text-center">{{ $board->created_at->format('Y-m-d') }}</td>
+                <td class="text-center actions">
                     <a href="{{ route('sitemanager.boards.edit', $board) }}" class="btn btn-sm btn-outline-primary" title="{{ t('Edit') }}">
                         <i class="bi bi-pencil"></i>
                     </a>

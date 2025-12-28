@@ -26,7 +26,14 @@
     </h1>
 </div>
 
-<form method="GET" class="search-form">
+<form method="GET" action="{{ route('sitemanager.files.editor-images') }}" class="search-form">
+    @if(request()->has('orderby'))
+        <input type="hidden" name="orderby" value="{{ request('orderby') }}">
+    @endif
+    @if(request()->has('desc'))
+        <input type="hidden" name="desc" value="{{ request('desc') }}">
+    @endif
+    
     <select name="board_slug" id="board_slug" class="form-select">
         <option value="">{{ t('All Boards') }}</option>
         @foreach($boards as $board)
@@ -53,16 +60,16 @@
 
 <!-- 이미지 목록 -->
 <div class="table-responsive">
-    <table class="table table-striped table-hover">
+    <table class="table table-striped table-hover table-bordered">
         <thead>
             <tr>
                 <th width="80">{{ t('Preview') }}</th>
-                <th>{{ t('Filename') }}</th>
+                {!! sortHead(t('Filename'), 'original_name') !!}
                 <th>{{ t('Board') }}</th>
-                <th>{{ t('Size') }}</th>
-                <th>{{ t('Used') }}</th>
-                <th>{{ t('Upload Date') }}</th>
-                <th class="text-end">{{ t('Actions') }}</th>
+                {!! sortHead(t('Size'), 'size', 'text-center') !!}
+                <th class="text-center">{{ t('Used') }}</th>
+                {!! sortHead(t('Upload Date'), 'created_at', 'text-center') !!}
+                <th class="text-center">{{ t('Actions') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -108,21 +115,21 @@
                             <span class="badge bg-secondary">{{ t('No Board') }}</span>
                         @endif
                     </td>
-                    <td nowrap class="number">{{ $image->human_size }}</td>
-                    <td>
-                        <div class="d-flex align-items-center">
+                    <td nowrap class="number text-center">{{ $image->human_size }}</td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-center">
                             <span class="badge {{ $image->is_used ? 'bg-success' : 'bg-warning' }} me-2">
                                 {{ $image->is_used ? t('Used') : t('Unused') }}
                             </span>
-                            <button type="button" class="btn btn-sm btn-outline-info rounded-circle" 
+                            <button type="button" class="btn btn-sm btn-default" 
                                     onclick="checkActualUsage({{ $image->id }}, '{{ addslashes($image->filename) }}', {{ $image->is_used ? 'true' : 'false' }})" 
                                     title="{{ t('Check actual usage status') }}">
                                 <i class="bi bi-search"></i>
                             </button>
                         </div>
                     </td>
-                    <td class="text-nowrap number">{{ $image->created_at->format('Y-m-d H:i') }}</td>
-                    <td class="text-end actions">
+                    <td class="text-nowrap number text-center">{{ $image->created_at->format('Y-m-d H:i') }}</td>
+                    <td class="text-center actions">
                         <!-- 이미지 교체 -->
                         <button type="button" class="btn btn-sm btn-outline-warning" 
                                 onclick="showReplaceModal({{ $image->id }}, '{{ $image->original_name }}')">

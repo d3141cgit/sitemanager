@@ -383,9 +383,27 @@ class SiteManagerBoardController extends Controller
         $perPage = $request->get('per_page', config('sitemanager.ui.pagination_per_page', 20));
         $perPage = min(max((int)$perPage, 1), 100); // 1-100 범위로 제한
 
-        $boards = Board::with('menu')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        $query = Board::with('menu');
+        
+        // 정렬 처리
+        $orderby = $request->get('orderby', 'created_at');
+        $desc = $request->get('desc', '1');
+        
+        // 허용된 정렬 필드 목록
+        $allowedOrderBy = ['id', 'name', 'slug', 'created_at'];
+        
+        if (in_array($orderby, $allowedOrderBy)) {
+            if ($desc === '1') {
+                $query->orderBy($orderby, 'desc');
+            } else {
+                $query->orderBy($orderby, 'asc');
+            }
+        } else {
+            // 기본 정렬
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $boards = $query->paginate($perPage)->appends($request->query());
 
         // 각 게시판의 통계 정보를 미리 계산
         $pendingCommentsCount = $this->boardService->getAllBoardsPendingCommentsCount();

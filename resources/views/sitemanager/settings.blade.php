@@ -35,7 +35,7 @@
 <div class="row">
     <div class="col-8">
         <div class="card default-form">
-            <div class="card-header bg-dark text-white">
+            <div class="card-header">
                 <h4>
                     <i class="bi bi-sliders me-2"></i>{{ t('Configuration') }}
                 </h4>
@@ -136,7 +136,7 @@
 
     <div class="col-4">
         <div class="card default-form">
-            <div class="card-header bg-dark text-white">
+            <div class="card-header">
                 <h4>
                     <i class="bi bi-info-circle me-2"></i>{{ t('Information') }}
                 </h4>
@@ -166,7 +166,7 @@
         </div>
 
         <div class="card default-form mt-4">
-            <div class="card-header bg-dark text-white">
+            <div class="card-header">
                 <h4>
                     <i class="bi bi-tools me-2"></i>{{ t('Other Actions') }}
                 </h4>
