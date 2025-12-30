@@ -77,6 +77,31 @@ return [
         'image_path' => 'images',
     ],
 
+    'upload' => [
+        'max_image_size' => 10240, // KB (10MB) - 이미지 업로드 최대 크기
+        'max_file_size' => 10240,  // KB (10MB) - 일반 파일 업로드 최대 크기
+    ],
+
+    'menu' => [
+        /*
+        |--------------------------------------------------------------------------
+        | Menu Tab Behavior
+        |--------------------------------------------------------------------------
+        |
+        | 섹션별 메뉴 탭 동작을 설정합니다.
+        |
+        | 'siblings' (기본값): 같은 부모의 형제 메뉴들만 탭으로 표시
+        | 'same_depth_in_section': 같은 섹션 내 같은 depth의 모든 메뉴들을 탭으로 표시
+        |
+        | 예: 2 => 'same_depth_in_section' 설정 시,
+        |     Section 2의 모든 depth 2 메뉴들이 탭으로 표시됨
+        |
+        */
+        'tab_behavior' => [
+            // 2 => 'same_depth_in_section',
+        ],
+    ],
+
     'language' => [
         'trace_enabled' => env('SITEMANAGER_LANGUAGE_TRACE', false),
         'available_locales' => ['en', 'ko', 'tw'],

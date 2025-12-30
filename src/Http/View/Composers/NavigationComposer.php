@@ -312,31 +312,43 @@ class NavigationComposer
         if (!$currentMenu) {
             return [];
         }
-        
-        // 현재 메뉴의 부모 찾기
-        $parentMenu = $currentMenu->parent_id ? $menus->find($currentMenu->parent_id) : null;
-        
-        // 형제 메뉴들 찾기
-        if ($parentMenu) {
-            // 부모가 있는 경우: 같은 부모를 가진 메뉴들
-            $siblings = $menus->filter(function($menu) use ($parentMenu) {
-                return $menu && $menu->parent_id === $parentMenu->id;
+
+        // 섹션별 탭 동작 설정 확인
+        $tabBehavior = config('sitemanager.menu.tab_behavior.' . $currentMenu->section, 'siblings');
+
+        // 탭에 포함할 메뉴들 찾기
+        if ($tabBehavior === 'same_depth_in_section') {
+            // 같은 섹션 내 같은 depth의 모든 메뉴들
+            $siblings = $menus->filter(function($menu) use ($currentMenu) {
+                return $menu &&
+                       $menu->section === $currentMenu->section &&
+                       $menu->depth === $currentMenu->depth;
             });
         } else {
-            // 루트 메뉴인 경우: 같은 섹션의 루트 메뉴들
-            $siblings = $menus->filter(function($menu) use ($currentMenu) {
-                return $menu && $menu->section === $currentMenu->section && $menu->parent_id === null;
-            });
+            // 기본 동작: 형제 메뉴들만
+            $parentMenu = $currentMenu->parent_id ? $menus->find($currentMenu->parent_id) : null;
+
+            if ($parentMenu) {
+                // 부모가 있는 경우: 같은 부모를 가진 메뉴들
+                $siblings = $menus->filter(function($menu) use ($parentMenu) {
+                    return $menu && $menu->parent_id === $parentMenu->id;
+                });
+            } else {
+                // 루트 메뉴인 경우: 같은 섹션의 루트 메뉴들
+                $siblings = $menus->filter(function($menu) use ($currentMenu) {
+                    return $menu && $menu->section === $currentMenu->section && $menu->parent_id === null;
+                });
+            }
         }
-        
+
         $tabs = [];
         foreach ($siblings as $menu) {
             if (!$menu) continue; // null 체크
-            
+
             // 사용자 권한 확인
             $userPerm = $this->permissionService->checkMenuPermission($menu);
             if (($userPerm & 1) !== 1) continue; // 읽기 권한 없음
-            
+
             $tabs[] = [
                 'title' => $menu->title ?? 'Menu',
                 'url' => $this->getMenuUrl($menu),
@@ -345,14 +357,14 @@ class NavigationComposer
                 'icon' => $menu->icon ?? null
             ];
         }
-        
+
         // _lft 순서대로 정렬
         usort($tabs, function($a, $b) use ($menus) {
             $menuA = $menus->find($a['menu_id']);
             $menuB = $menus->find($b['menu_id']);
             return ($menuA->_lft ?? 0) <=> ($menuB->_lft ?? 0);
         });
-        
+
         return $tabs;
     }
 

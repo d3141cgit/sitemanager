@@ -671,7 +671,7 @@ class FileUploadService
         // 기본 옵션 설정
         $defaultOptions = [
             'allowed_types' => ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-            'max_size' => 2048, // KB
+            'max_size' => config('sitemanager.upload.max_image_size', 10240), // KB (default 10MB)
         ];
         
         $options = array_merge($defaultOptions, $options);
@@ -686,7 +686,7 @@ class FileUploadService
     {
         return $this->uploadImage($file, 'profile_photos', [
             'allowed_types' => ['jpg', 'jpeg', 'png', 'gif'],
-            'max_size' => 2048
+            'max_size' => config('sitemanager.upload.max_image_size', 10240)
         ]);
     }
 
