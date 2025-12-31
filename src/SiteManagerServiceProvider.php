@@ -140,7 +140,15 @@ class SiteManagerServiceProvider extends ServiceProvider
             \SiteManager\Console\Commands\ResourceCommand::class,
             \SiteManager\Console\Commands\RestoreLanguageCommand::class,
             \SiteManager\Console\Commands\BackupLanguageCommand::class,
+            \SiteManager\Console\Commands\CleanupEditorImages::class,
         ]);
+
+        // 스케줄러 등록
+        $this->app->booted(function () {
+            $schedule = $this->app->make(\Illuminate\Console\Scheduling\Schedule::class);
+            // 매시간 미사용 에디터 이미지 정리 (1시간 이상 된 것)
+            $schedule->command('editor:cleanup-images --hours=1')->hourly();
+        });
     }
     
     /**

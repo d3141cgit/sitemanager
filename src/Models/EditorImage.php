@@ -123,6 +123,9 @@ class EditorImage extends Model
 
     /**
      * 임시 참조 ID 생성 (post 생성 전)
+     *
+     * @deprecated reference_id 컬럼이 unsigned bigint라서 음수 사용 불가.
+     *             대신 reference_id를 NULL로 두고 markAsUsedByContent()로 연결.
      */
     public static function generateTempReferenceId(): int
     {
@@ -131,6 +134,9 @@ class EditorImage extends Model
 
     /**
      * 임시 참조를 실제 참조로 업데이트
+     *
+     * @deprecated reference_id 컬럼이 unsigned bigint라서 음수 임시 ID 방식 사용 불가.
+     *             대신 markAsUsedByContent()를 사용하여 이미지 연결.
      */
     public static function updateTempReference(int $tempId, int $realId): int
     {
@@ -139,10 +145,14 @@ class EditorImage extends Model
     }
 
     /**
-     * 콘텐츠에서 사용된 이미지들을 사용됨으로 표시
+     * 콘텐츠에서 에디터 이미지 파일명들을 추출
      */
-    public static function markAsUsedByContent(?string $content, string $type, string $slug, int $id): int
+    public static function extractFilenamesFromContent(?string $content): array
     {
+        if (empty($content)) {
+            return [];
+        }
+
         // 다양한 에디터 이미지 URL 패턴들
         $patterns = [
             // 로컬 storage 경로
@@ -152,9 +162,9 @@ class EditorImage extends Model
             // S3 legacy 이미지 경로 (레거시 변환용)
             '/https:\/\/[^\/]+\.s3\.[^\/]+\.amazonaws\.com\/editor\/images\/legacy\/([^"\s<>]+)/',
         ];
-        
+
         $allFilenames = [];
-        
+
         foreach ($patterns as $pattern) {
             if (preg_match_all($pattern, $content, $matches)) {
                 if (!empty($matches[1])) {
@@ -163,14 +173,22 @@ class EditorImage extends Model
                 }
             }
         }
-        
+
+        // 중복 제거
+        return array_unique($allFilenames);
+    }
+
+    /**
+     * 콘텐츠에서 사용된 이미지들을 사용됨으로 표시
+     */
+    public static function markAsUsedByContent(?string $content, string $type, string $slug, int $id): int
+    {
+        $allFilenames = static::extractFilenamesFromContent($content);
+
         if (empty($allFilenames)) {
             return 0;
         }
-        
-        // 중복 제거
-        $allFilenames = array_unique($allFilenames);
-        
+
         return static::whereIn('filename', $allFilenames)
             ->update([
                 'reference_type' => $type,
@@ -178,5 +196,25 @@ class EditorImage extends Model
                 'reference_id' => $id,
                 'is_used' => true
             ]);
+    }
+
+    /**
+     * 콘텐츠에서 더 이상 사용되지 않는 이미지들을 미사용으로 표시
+     * (수정 시 이미지를 제거한 경우)
+     */
+    public static function markAsUnusedByContent(?string $content, string $type, string $slug, int $id): int
+    {
+        $usedFilenames = static::extractFilenamesFromContent($content);
+
+        $query = static::where('reference_type', $type)
+            ->where('reference_slug', $slug)
+            ->where('reference_id', $id)
+            ->where('is_used', true);
+
+        if (!empty($usedFilenames)) {
+            $query->whereNotIn('filename', $usedFilenames);
+        }
+
+        return $query->update(['is_used' => false]);
     }
 }

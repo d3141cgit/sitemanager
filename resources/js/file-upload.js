@@ -27,6 +27,7 @@
             };
             
             this.fileData = new Map(); // Store file metadata
+            this.storedFiles = []; // Store files before browse dialog opens (for click to browse)
             this.init();
         }
         
@@ -114,6 +115,10 @@
             const fileInput = document.querySelector(this.options.fileInputSelector);
             console.log('File input found in handleClick:', !!fileInput, fileInput);
             if (fileInput) {
+                // Store existing files before opening file dialog
+                // Browser will replace fileInput.files with only newly selected files
+                this.storedFiles = Array.from(fileInput.files);
+                console.log('Stored existing files:', this.storedFiles.length);
                 console.log('Triggering file input click');
                 fileInput.click();
             }
@@ -142,12 +147,27 @@
             
             const dt = new DataTransfer();
             const existingFiles = new Map(); // 중복 체크를 위한 Map
-            
-            // Add existing files first and track them
+
+            // Add stored files first (these were saved before click-to-browse dialog opened)
+            // This ensures files selected via click-to-browse are ADDED, not replaced
+            if (this.storedFiles && this.storedFiles.length > 0) {
+                this.storedFiles.forEach(file => {
+                    const fileKey = `${file.name}_${file.size}_${file.lastModified || file.size}`;
+                    existingFiles.set(fileKey, file);
+                    dt.items.add(file);
+                });
+                // Clear stored files after use
+                this.storedFiles = [];
+            }
+
+            // Add existing files from input (for drag & drop, these are the current files)
             Array.from(fileInput.files).forEach(file => {
                 const fileKey = `${file.name}_${file.size}_${file.lastModified || file.size}`;
-                existingFiles.set(fileKey, file);
-                dt.items.add(file);
+                // Skip if already added from storedFiles
+                if (!existingFiles.has(fileKey)) {
+                    existingFiles.set(fileKey, file);
+                    dt.items.add(file);
+                }
             });
             
             // Add new files (with validation and duplicate check)

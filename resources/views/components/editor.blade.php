@@ -151,18 +151,7 @@ $(document).ready(function() {
                         image.css('height', 'auto');
                         image.attr('alt', file.name);
                     });
-                    
-                    // 임시 reference_id가 있으면 form에 hidden input으로 추가
-                    if (result.temp_reference_id) {
-                        var form = $('#{{ $name }}_editor').closest('form');
-                        var existingInput = form.find('input[name="temp_reference_id"]');
-                        if (existingInput.length === 0) {
-                            form.append('<input type="hidden" name="temp_reference_id" value="' + result.temp_reference_id + '">');
-                        } else {
-                            existingInput.val(result.temp_reference_id);
-                        }
-                    }
-                    
+
                     // Success notification (optional)
                     if (typeof showNotification === 'function') {
                         showNotification('Image uploaded successfully.', 'success');

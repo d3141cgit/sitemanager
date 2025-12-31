@@ -10,6 +10,7 @@ use SiteManager\Models\EditorImage;
 use SiteManager\Services\BoardService;
 use SiteManager\Services\FileUploadService;
 use SiteManager\Services\SecurityService;
+use SiteManager\Jobs\CleanupUnusedEditorImagesJob;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -549,15 +550,17 @@ class BoardController extends Controller
             // $this->extractAndRegisterEditorFiles($post->content, $post);
             
             // 에디터 이미지를 사용됨으로 표시
+            $usedFilenames = EditorImage::extractFilenamesFromContent($post->content);
             EditorImage::markAsUsedByContent($post->content, 'board', $post->board->slug, $post->id);
-            
-            // 임시 참조 ID가 있다면 실제 ID로 업데이트 (create시)
-            if ($request->has('temp_reference_id')) {
-                $tempId = $request->input('temp_reference_id');
-                if ($tempId < 0) {
-                    EditorImage::updateTempReference($tempId, $post->id);
-                }
-            }
+
+            // 미사용 에디터 이미지 정리 (Queue로 비동기 처리)
+            // 글 작성 중 업로드했지만 최종 콘텐츠에 포함되지 않은 이미지들을 삭제
+            CleanupUnusedEditorImagesJob::dispatch(
+                'board',
+                $slug,
+                null, // 새 글이므로 reference_id가 null인 이미지들 정리
+                $usedFilenames
+            );
 
             // 익명 사용자의 경우 이메일 인증 토큰을 실제 게시글 ID로 업데이트
             if (!is_logged_in() && $emailToken) {
@@ -721,9 +724,21 @@ class BoardController extends Controller
 
             // 에디터에서 업로드된 파일들을 첨부파일로 등록
             // $this->extractAndRegisterEditorFiles($post->content, $post);
-            
+
             // 에디터 이미지를 사용됨으로 표시
+            $usedFilenames = EditorImage::extractFilenamesFromContent($post->content);
             EditorImage::markAsUsedByContent($post->content, 'board', $post->board->slug, $post->id);
+
+            // 콘텐츠에서 제거된 이미지들을 미사용으로 표시
+            EditorImage::markAsUnusedByContent($post->content, 'board', $post->board->slug, $post->id);
+
+            // 미사용 에디터 이미지 정리 (Queue로 비동기 처리)
+            CleanupUnusedEditorImagesJob::dispatch(
+                'board',
+                $slug,
+                $post->id,
+                $usedFilenames
+            );
 
             DB::commit();
 

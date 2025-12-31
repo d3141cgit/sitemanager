@@ -34,11 +34,10 @@ class EditorController extends Controller
             $referenceType = $request->input('reference_type', null);
             $referenceSlug = $request->input('reference_slug', null);
             $referenceId = $request->input('reference_id', null);
-            
-            // create 상황이면 임시 ID 생성
-            if ($referenceType === 'board' && !$referenceId) {
-                $referenceId = EditorImage::generateTempReferenceId();
-            }
+
+            // create 상황 (referenceId가 없음)이면 NULL 사용
+            // 글 저장 시 markAsUsedByContent()가 올바른 reference_id로 업데이트함
+            // Note: reference_id 컬럼이 unsigned bigint라서 음수 사용 불가
             
             // 업로드 폴더 결정 (보드별 구분 지원)
             $uploadFolder = 'editor/images';
@@ -73,8 +72,7 @@ class EditorController extends Controller
             // CKEditor/Summernote 응답 형식
             return response()->json([
                 'url' => $uploadResult['url'],
-                'uploaded' => true,
-                'temp_reference_id' => $referenceId < 0 ? $referenceId : null // 임시 ID인 경우만 반환
+                'uploaded' => true
             ]);
             
         } catch (\Exception $e) {
