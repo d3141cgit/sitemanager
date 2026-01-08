@@ -268,39 +268,64 @@ class NavigationComposer
                 ]
             ];
         }
-        
+
         $breadcrumb = [];
         $menu = $currentMenu;
-        
+
         // 현재 메뉴부터 루트까지 역순으로 수집
         $menuChain = [];
         while ($menu) {
             $menuChain[] = $menu;
             $menu = $menu->parent_id ? $menus->find($menu->parent_id) : null;
         }
-        
+
         // Home 추가
         $breadcrumb[] = [
             'title' => 'Home',
             'url' => '/',
             'is_current' => false
         ];
-        
+
         // 역순으로 브레드크럼 구성
         $menuChain = array_reverse($menuChain);
         foreach ($menuChain as $index => $menu) {
             if (!$menu) continue; // null 체크
-            
+
             $isLast = $index === count($menuChain) - 1;
-            
+
+            // 형제 메뉴들 찾기 (같은 parent_id를 가진 메뉴들)
+            $siblings = $menus->filter(function($sibling) use ($menu) {
+                if (!$sibling) return false;
+
+                // 사용자 권한 확인
+                $userPerm = $this->permissionService->checkMenuPermission($sibling);
+                if (($userPerm & 1) !== 1) return false; // 읽기 권한 없음
+
+                // 같은 부모를 가진 메뉴들
+                return $sibling->parent_id === $menu->parent_id
+                    && $sibling->section === $menu->section
+                    && $sibling->id !== $menu->id; // 현재 메뉴 제외
+            })->sortBy('_lft');
+
+            // alternatives 배열 구성
+            $alternatives = [];
+            foreach ($siblings as $sibling) {
+                $alternatives[] = [
+                    'title' => $sibling->title ?? 'Menu',
+                    'url' => $this->getMenuUrl($sibling),
+                    'menu_id' => $sibling->id ?? null
+                ];
+            }
+
             $breadcrumb[] = [
                 'title' => $menu->title ?? 'Menu',
                 'url' => $isLast ? null : $this->getMenuUrl($menu),
                 'is_current' => $isLast,
-                'menu_id' => $menu->id ?? null
+                'menu_id' => $menu->id ?? null,
+                'alternatives' => $alternatives
             ];
         }
-        
+
         return $breadcrumb;
     }
 
