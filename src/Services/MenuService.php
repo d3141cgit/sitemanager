@@ -508,6 +508,12 @@ class MenuService
             if (str_starts_with($routeName, '/')) {
                 // URI 정리 (앞의 / 제거)
                 $cleanUri = ltrim($routeName, '/');
+
+                // 쿼리 파라미터 분리 (?country=2 등)
+                $queryPos = strpos($cleanUri, '?');
+                if ($queryPos !== false) {
+                    $cleanUri = substr($cleanUri, 0, $queryPos);
+                }
                 
                 // 게시판 URI 패턴 확인 (/board/{slug})
                 if (preg_match('/^board\/([^\/]+)$/', $cleanUri, $matches)) {

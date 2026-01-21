@@ -150,7 +150,35 @@
                     <!-- Custom Route Target (for route type override) -->
                     <div class="form-group" id="custom-route-target-container" style="display: none;">
                         <label for="custom_route_target" class="form-label">{{ t('Custom Route Target') }} <small class="text-muted">({{ t('Optional') }})</small></label>
-                        <input type="text" class="form-control" id="custom_route_target" name="custom_route_target" value="{{ old('custom_route_target', isset($menu) ? $menu->custom_route_target : '') }}" placeholder="/custom/path">
+                        @php
+                            // custom_route_target 값 결정
+                            // 1. old 값이 있으면 old 값 사용
+                            // 2. 메뉴의 custom_route_target이 있으면 사용
+                            // 3. 메뉴의 target이 available routes에 없으면 target 값을 custom path에 표시 (편집 가능하도록)
+                            $customRouteTargetValue = old('custom_route_target');
+                            if ($customRouteTargetValue === null && isset($menu)) {
+                                if ($menu->custom_route_target) {
+                                    $customRouteTargetValue = $menu->custom_route_target;
+                                } elseif ($menu->type === 'route' && $menu->target) {
+                                    // available routes에 target이 있는지 확인
+                                    $targetExistsInRoutes = false;
+                                    if (isset($availableRoutes)) {
+                                        foreach ($availableRoutes as $route) {
+                                            $routeTargetValue = $route['target_value'] ?? $route['name'];
+                                            if ($routeTargetValue === $menu->target || $route['name'] === $menu->target) {
+                                                $targetExistsInRoutes = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    // available routes에 없으면 custom path에 표시
+                                    if (!$targetExistsInRoutes) {
+                                        $customRouteTargetValue = $menu->target;
+                                    }
+                                }
+                            }
+                        @endphp
+                        <input type="text" class="form-control" id="custom_route_target" name="custom_route_target" value="{{ $customRouteTargetValue ?? '' }}" placeholder="/custom/path">
                         <div class="form-text">
                             {{ t('If the automatic route filtering does not work correctly, you can manually specify the target path here. This will override the selected route above.') }}
                             <br>
