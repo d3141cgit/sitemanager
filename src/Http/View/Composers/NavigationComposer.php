@@ -463,6 +463,42 @@ class NavigationComposer
     }
 
     /**
+     * 메뉴의 첫 번째 linkable한 자식 메뉴의 URL을 반환합니다.
+     */
+    private function getFirstLinkableChildUrl($menu, $menus)
+    {
+        if (!$menu) {
+            return null;
+        }
+
+        // 자식 메뉴들 찾기
+        $children = $menus->filter(function($child) use ($menu) {
+            if (!$child) return false;
+
+            // 사용자 권한 확인
+            $userPerm = $this->permissionService->checkMenuPermission($child);
+            if (($userPerm & 1) !== 1) return false;
+
+            return $child->parent_id === $menu->id;
+        })->sortBy('_lft');
+
+        foreach ($children as $child) {
+            $childUrl = $this->getMenuUrl($child);
+            if ($childUrl && $childUrl !== '#') {
+                return $childUrl;
+            }
+
+            // 자식의 자식도 확인 (재귀)
+            $grandchildUrl = $this->getFirstLinkableChildUrl($child, $menus);
+            if ($grandchildUrl && $grandchildUrl !== '#') {
+                return $grandchildUrl;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * 현재 메뉴 정보를 기반으로 SEO 데이터를 구성합니다.
      */
     private function buildSeoData($currentMenu, $breadcrumb)
