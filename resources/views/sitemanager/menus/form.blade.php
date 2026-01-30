@@ -88,17 +88,30 @@
                                             }
                                         }
                                     @endphp
-                                    <option value="{{ $route['target_value'] ?? $route['name'] }}" 
+                                    <option value="{{ $route['target_value'] ?? $route['name'] }}"
                                             data-uri="{{ $route['uri'] }}"
                                             {{ $isSelected ? 'selected' : '' }}>
-                                        {{ $route['name'] }}
+                                        {{ $route['label'] ?? $route['name'] }}
                                     </option>
                                 @endforeach
-                                
+
+                                {{-- 기존 메뉴의 target이 목록에 없는 경우에만 fallback 옵션 추가 --}}
                                 @if(isset($menu) && $menu->target && $menu->type === 'route')
-                                    <option value="{{ $menu->target }}" selected>
-                                        {{ $menu->target }}
-                                    </option>
+                                    @php
+                                        $foundInList = false;
+                                        foreach($availableRoutes as $route) {
+                                            $targetVal = $route['target_value'] ?? $route['name'];
+                                            if ($targetVal === $menu->target || $route['name'] === $menu->target) {
+                                                $foundInList = true;
+                                                break;
+                                            }
+                                        }
+                                    @endphp
+                                    @if(!$foundInList)
+                                        <option value="{{ $menu->target }}" selected>
+                                            {{ $menu->target }} ({{ t('current') }})
+                                        </option>
+                                    @endif
                                 @endif
                             @else
                                 <option value="" disabled>{{ t('No routes available') }}</option>

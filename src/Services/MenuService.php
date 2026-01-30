@@ -411,10 +411,10 @@ class MenuService
     {
         $routes = Route::getRoutes();
         $routeData = [];
-        
+
         // 현재 사용 중인 라우트들 조회 (현재 편집 중인 메뉴 제외)
         $usedRoutes = $this->getUsedRoutes($excludeMenuId);
-        
+
         // RouteCollection에서 GET 메서드 라우트들만 가져오기
         $getRoutes = $routes->get('GET') ?? [];
 
@@ -469,32 +469,44 @@ class MenuService
             $supportsCustomId = $this->supportsCustomId($route->uri());
 
             // URI에서 선택적 파라미터 제거 (예: {id?}, {slug?} 등)
-            $cleanUri = preg_replace('/\/\{[^}]+\?\}/', '', $route->uri());
+            $cleanUri = preg_replace('/\/\{[^}]+\?\}/', '', $uri);
             // URI에서 필수 파라미터도 제거 (예: {id}, {slug} 등)
             $cleanUri = preg_replace('/\/\{[^}]+\}/', '', $cleanUri);
 
+            // 루트 경로 처리: URI가 "/" 또는 빈 문자열인 경우
+            if ($cleanUri === '/' || $cleanUri === '') {
+                $normalizedUri = '/';
+            } else {
+                // 앞에 /가 없으면 추가
+                $normalizedUri = str_starts_with($cleanUri, '/') ? $cleanUri : '/' . $cleanUri;
+            }
+
             // board.index 같은 특수 케이스는 라우트명 유지, 나머지는 URI 사용
-            $targetValue = ($name && in_array($name, ['board.index'])) ? $name : '/' . $cleanUri;
+            $targetValue = ($name && in_array($name, ['board.index'])) ? $name : $normalizedUri;
+
+            // 표시 형식: /uri (route_name)
+            $displayLabel = $normalizedUri;
+            if ($name) {
+                $displayLabel .= ' (' . $name . ')';
+            }
 
             $routeInfo = [
-                'name' => $name ?: $uri, // 이름이 없으면 URI 사용 (표시용)
+                'name' => $name ?: $normalizedUri, // 이름이 없으면 URI 사용
+                'label' => $displayLabel, // 표시용 라벨
                 'target_value' => $targetValue, // 실제 target으로 사용할 값
-                'uri' => '/' . $cleanUri, // 파라미터가 제거된 URI
+                'uri' => $normalizedUri, // 정규화된 URI
                 'supports_custom_id' => $supportsCustomId,
                 'is_multi_use' => $isMultiUse,
             ];
-            
+
             $routeData[] = $routeInfo;
         }
-        
-        // 우선순위와 이름으로 정렬 (우선순위 높은 것 먼저, 같으면 이름순)
+
+        // URI 기준으로 정렬 (루트 "/" 가 먼저 오도록)
         usort($routeData, function($a, $b) {
-            // if ($a['priority'] !== $b['priority']) {
-            //     return $b['priority'] - $a['priority']; // 높은 우선순위 먼저
-            // }
-            return strcmp($a['name'], $b['name']);
+            return strcmp($a['uri'], $b['uri']);
         });
-        
+
         return $routeData;
     }
 
@@ -506,6 +518,17 @@ class MenuService
         try {
             // URI 형태 경로인지 확인 (슬래시로 시작하는 경우)
             if (str_starts_with($routeName, '/')) {
+                // 루트 경로 "/" 특별 처리
+                if ($routeName === '/') {
+                    $routes = Route::getRoutes();
+                    foreach ($routes->get('GET') ?? [] as $route) {
+                        if ($route->uri() === '/') {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
                 // URI 정리 (앞의 / 제거)
                 $cleanUri = ltrim($routeName, '/');
 
@@ -514,7 +537,7 @@ class MenuService
                 if ($queryPos !== false) {
                     $cleanUri = substr($cleanUri, 0, $queryPos);
                 }
-                
+
                 // 게시판 URI 패턴 확인 (/board/{slug})
                 if (preg_match('/^board\/([^\/]+)$/', $cleanUri, $matches)) {
                     $slug = $matches[1];
@@ -524,27 +547,27 @@ class MenuService
                         return true;
                     }
                 }
-                
+
                 // 등록된 모든 GET 라우트와 비교
                 $routes = Route::getRoutes();
                 foreach ($routes->get('GET') ?? [] as $route) {
                     $routeUri = $route->uri();
-                    
+
                     // 정확한 URI 매치
                     if ($routeUri === $cleanUri) {
                         return true;
                     }
-                    
+
                     // 파라미터가 있는 URI와 비교 (파라미터 제거 후 비교)
                     // 예: news/{id?} -> news, edm/notice/{id?} -> edm/notice
                     $cleanRouteUri = preg_replace('/\/\{[^}]+\?\}/', '', $routeUri);
                     $cleanRouteUri = preg_replace('/\/\{[^}]+\}/', '', $cleanRouteUri);
-                    
+
                     if ($cleanRouteUri === $cleanUri) {
                         return true;
                     }
                 }
-                
+
                 // 커스텀 ID 지원 라우트와 매칭 확인 (기존 로직 유지)
                 return $this->isValidCustomPath($routeName);
             }
