@@ -217,6 +217,7 @@ class MenuTreeManager {
         
         div.innerHTML = `
             <div class="menu-content">
+                <span class="drag-handle"><i class="bi bi-grip-vertical"></i></span>
                 <div class="menu-title-wrapper">
                     ${iconHtml}
                     ${thumbnailHtml}
@@ -259,6 +260,7 @@ class MenuTreeManager {
         try {
             // 메인 컨테이너
             const mainSortable = new Sortable(mainContainer, {
+                handle: '.drag-handle',
                 group: {
                     name: 'nested',
                     pull: true,
@@ -293,6 +295,7 @@ class MenuTreeManager {
             
             childContainers.forEach((container) => {
                 const childSortable = new Sortable(container, {
+                    handle: '.drag-handle',
                     group: {
                         name: 'nested',
                         pull: true,
@@ -307,7 +310,7 @@ class MenuTreeManager {
                     onStart: (evt) => {
                         this.isDragging = true;
                         document.body.classList.add('dragging');
-                        
+
                         if (this.isCommandKeyPressed) {
                             document.body.classList.add('command-mode');
                         }
@@ -346,6 +349,7 @@ class MenuTreeManager {
                     
                     // 새 컨테이너에 Sortable 초기화
                     const newSortable = new Sortable(childrenContainer, {
+                        handle: '.drag-handle',
                         group: {
                             name: 'nested',
                             pull: true,
