@@ -790,32 +790,45 @@ class NavigationComposer
                 $additionalBreadcrumb = [$additionalBreadcrumb];
             }
 
-            // 기존 breadcrumb 끝부분과 additionalBreadcrumb 앞부분의 중복 제거
-            // 기존: [Home, 프로그램, 어학연수], 추가: [프로그램, 어학연수] → 중복 감지
-            $existingTitles = array_map(function ($item) {
-                return $item['title'] ?? '';
-            }, $breadcrumb);
-
-            // additionalBreadcrumb의 첫 번째 title이 기존 breadcrumb에 이미 존재하는지 확인
-            $firstAdditionalTitle = $additionalBreadcrumb[0]['title'] ?? '';
+            // 기존 breadcrumb(Home 제외)과 additionalBreadcrumb의 중복 감지
+            // 메뉴 시스템이 이미 URL로 현재 메뉴를 잡아서 breadcrumb을 만든 경우,
+            // 컨트롤러의 additionalBreadcrumb과 겹칠 수 있음
+            $existingWithoutHome = array_slice($breadcrumb, 1); // Home 제외
             $overlapStart = null;
 
-            // 기존 breadcrumb에서 중복 시작점 찾기 (Home 제외)
-            for ($i = 1; $i < count($existingTitles); $i++) {
-                if ($existingTitles[$i] === $firstAdditionalTitle) {
-                    // 이 지점부터 끝까지 additionalBreadcrumb과 일치하는지 확인
-                    $isFullOverlap = true;
-                    for ($j = 0; $j < count($additionalBreadcrumb); $j++) {
-                        $existingIdx = $i + $j;
-                        if ($existingIdx >= count($existingTitles) ||
-                            $existingTitles[$existingIdx] !== ($additionalBreadcrumb[$j]['title'] ?? '')) {
-                            $isFullOverlap = false;
+            // 기존 breadcrumb(Home 제외)의 depth와 additionalBreadcrumb의 depth가 같으면
+            // 메뉴 시스템이 이미 같은 경로를 잡은 것으로 판단
+            if (count($existingWithoutHome) > 0 && count($existingWithoutHome) === count($additionalBreadcrumb)) {
+                // 첫 번째 항목의 title이 일치하는지 확인 (대분류 기준)
+                $existingFirstTitle = $existingWithoutHome[0]['title'] ?? '';
+                $additionalFirstTitle = $additionalBreadcrumb[0]['title'] ?? '';
+                if ($existingFirstTitle === $additionalFirstTitle) {
+                    $overlapStart = 1; // Home 다음부터 중복
+                }
+            }
+
+            // depth가 다르더라도 title 순차 비교로 부분 중복 감지
+            if ($overlapStart === null) {
+                $existingTitles = array_map(function ($item) {
+                    return $item['title'] ?? '';
+                }, $breadcrumb);
+                $firstAdditionalTitle = $additionalBreadcrumb[0]['title'] ?? '';
+
+                for ($i = 1; $i < count($existingTitles); $i++) {
+                    if ($existingTitles[$i] === $firstAdditionalTitle) {
+                        $isFullOverlap = true;
+                        for ($j = 0; $j < count($additionalBreadcrumb); $j++) {
+                            $existingIdx = $i + $j;
+                            if ($existingIdx >= count($existingTitles) ||
+                                $existingTitles[$existingIdx] !== ($additionalBreadcrumb[$j]['title'] ?? '')) {
+                                $isFullOverlap = false;
+                                break;
+                            }
+                        }
+                        if ($isFullOverlap) {
+                            $overlapStart = $i;
                             break;
                         }
-                    }
-                    if ($isFullOverlap) {
-                        $overlapStart = $i;
-                        break;
                     }
                 }
             }
