@@ -785,19 +785,90 @@ class NavigationComposer
             $additionalBreadcrumb = $viewData['additionalBreadcrumb'];
             $breadcrumb = $cachedData['breadcrumb'] ?? [];
 
-            // 기존 브레드크럼의 마지막 요소를 현재가 아닌 것으로 변경
-            if (!empty($breadcrumb)) {
-                $lastIndex = count($breadcrumb) - 1;
-                $breadcrumb[$lastIndex]['is_current'] = false;
-                if (isset($cachedData['currentMenu'])) {
-                    $breadcrumb[$lastIndex]['url'] = $this->getMenuUrl($cachedData['currentMenu']);
+            // 추가 브레드크럼을 정규화 (단일 → 배열의 배열로 통일)
+            if (!isset($additionalBreadcrumb[0]) || !is_array($additionalBreadcrumb[0]) || isset($additionalBreadcrumb['title'])) {
+                $additionalBreadcrumb = [$additionalBreadcrumb];
+            }
+
+            // 기존 breadcrumb 끝부분과 additionalBreadcrumb 앞부분의 중복 제거
+            // 기존: [Home, 프로그램, 어학연수], 추가: [프로그램, 어학연수] → 중복 감지
+            $existingTitles = array_map(function ($item) {
+                return $item['title'] ?? '';
+            }, $breadcrumb);
+
+            // additionalBreadcrumb의 첫 번째 title이 기존 breadcrumb에 이미 존재하는지 확인
+            $firstAdditionalTitle = $additionalBreadcrumb[0]['title'] ?? '';
+            $overlapStart = null;
+
+            // 기존 breadcrumb에서 중복 시작점 찾기 (Home 제외)
+            for ($i = 1; $i < count($existingTitles); $i++) {
+                if ($existingTitles[$i] === $firstAdditionalTitle) {
+                    // 이 지점부터 끝까지 additionalBreadcrumb과 일치하는지 확인
+                    $isFullOverlap = true;
+                    for ($j = 0; $j < count($additionalBreadcrumb); $j++) {
+                        $existingIdx = $i + $j;
+                        if ($existingIdx >= count($existingTitles) ||
+                            $existingTitles[$existingIdx] !== ($additionalBreadcrumb[$j]['title'] ?? '')) {
+                            $isFullOverlap = false;
+                            break;
+                        }
+                    }
+                    if ($isFullOverlap) {
+                        $overlapStart = $i;
+                        break;
+                    }
                 }
             }
 
-            // 추가 브레드크럼 요소 추가 (단일 배열 또는 배열의 배열 지원)
-            // 배열의 배열인지 확인: 숫자 키로 시작하고 첫 번째 요소가 배열인 경우
-            if (isset($additionalBreadcrumb[0]) && is_array($additionalBreadcrumb[0]) && !isset($additionalBreadcrumb['title'])) {
-                // 배열의 배열인 경우: 여러 breadcrumb 추가
+            if ($overlapStart !== null) {
+                // 중복 발견: 기존 breadcrumb의 중복 항목에서 alternatives 등 메타 정보를 보존
+                $overlappedItems = array_values(array_slice($breadcrumb, $overlapStart));
+                $breadcrumb = array_slice($breadcrumb, 0, $overlapStart);
+
+                // 기존 브레드크럼의 마지막 요소를 현재가 아닌 것으로 변경
+                if (!empty($breadcrumb)) {
+                    $lastIndex = count($breadcrumb) - 1;
+                    $breadcrumb[$lastIndex]['is_current'] = false;
+                }
+
+                // additionalBreadcrumb에 기존 항목의 alternatives, menu_id 등을 병합
+                foreach ($additionalBreadcrumb as $index => $crumb) {
+                    $isLast = $index === count($additionalBreadcrumb) - 1;
+                    $merged = [
+                        'title' => $crumb['title'] ?? 'Page',
+                        'url' => $crumb['url'] ?? null,
+                        'is_current' => $isLast,
+                    ];
+
+                    // 대응하는 기존 항목이 있으면 alternatives, menu_id 보존
+                    if (isset($overlappedItems[$index])) {
+                        $orig = $overlappedItems[$index];
+                        if (!empty($orig['alternatives'])) {
+                            $merged['alternatives'] = $orig['alternatives'];
+                        }
+                        if (isset($orig['menu_id'])) {
+                            $merged['menu_id'] = $orig['menu_id'];
+                        }
+                        // additionalBreadcrumb에 url이 없으면 기존 url 유지
+                        if ($merged['url'] === null && !$isLast && isset($orig['url'])) {
+                            $merged['url'] = $orig['url'];
+                        }
+                    }
+
+                    $breadcrumb[] = $merged;
+                }
+            } else {
+                // 중복 없음: 기존 로직대로 append
+                // 기존 브레드크럼의 마지막 요소를 현재가 아닌 것으로 변경
+                if (!empty($breadcrumb)) {
+                    $lastIndex = count($breadcrumb) - 1;
+                    $breadcrumb[$lastIndex]['is_current'] = false;
+                    if (isset($cachedData['currentMenu'])) {
+                        $breadcrumb[$lastIndex]['url'] = $this->getMenuUrl($cachedData['currentMenu']);
+                    }
+                }
+
+                // additionalBreadcrumb 항목 추가
                 foreach ($additionalBreadcrumb as $index => $crumb) {
                     $isLast = $index === count($additionalBreadcrumb) - 1;
                     $breadcrumb[] = [
@@ -806,13 +877,6 @@ class NavigationComposer
                         'is_current' => $isLast
                     ];
                 }
-            } else {
-                // 단일 배열인 경우: 기존 로직 유지
-                $breadcrumb[] = [
-                    'title' => $additionalBreadcrumb['title'] ?? 'Page',
-                    'url' => $additionalBreadcrumb['url'] ?? null,
-                    'is_current' => true
-                ];
             }
 
             $viewSpecificData['breadcrumb'] = $breadcrumb;
