@@ -27,33 +27,33 @@ class NavigationComposer
     {
         // 요청별 캐시 키 생성 (뷰 데이터가 아닌 요청 기반)
         $cacheKey = $this->generateRequestCacheKey();
-        
+
         // 이미 계산된 경우 캐시된 데이터 사용
         if (isset(static::$composerCache[$cacheKey])) {
             $cachedData = static::$composerCache[$cacheKey];
-            
+
             // 뷰별 특수 데이터가 있으면 병합
             $viewSpecificData = $this->getViewSpecificData($view, $cachedData);
             $view->with(array_merge($cachedData, $viewSpecificData));
             return;
         }
-        
+
         $user = Auth::user();
         $accessibleMenus = $this->permissionService->getAccessibleMenus($user);
-        
+
         // 네비게이션 트리 구성
         $navigationTree = $this->buildNavigationTree($accessibleMenus);
-        
+
         // 현재 페이지 관련 메뉴 정보 (첫 번째 뷰의 데이터만 사용)
         $viewData = $view->getData();
-        
+
         // 뷰에서 명시적으로 전달된 currentMenuId나 currentMenu가 있으면 우선 사용
         $currentMenuId = null;
         if (isset($viewData['currentMenuId'])) {
             $currentMenuId = $viewData['currentMenuId'];
         } elseif (isset($viewData['currentMenu'])) {
             $currentMenu = $viewData['currentMenu'];
-            
+
             // Menu 객체인 경우 ID 추출, 숫자인 경우 그대로 사용
             if (is_object($currentMenu) && isset($currentMenu->id)) {
                 $currentMenuId = $currentMenu->id;
@@ -61,7 +61,7 @@ class NavigationComposer
                 $currentMenuId = $currentMenu;
             }
         }
-        
+
         if ($currentMenuId) {
             // 메뉴 ID로 실제 메뉴 객체 찾기
             $foundMenu = $accessibleMenus->find($currentMenuId);
@@ -70,11 +70,11 @@ class NavigationComposer
             // 자동 감지 방식 사용 (라우트명, URL 패턴 매칭)
             $currentMenu = $this->findCurrentMenuByRoute($accessibleMenus);
         }
-        
+
         $breadcrumb = $this->buildBreadcrumb($currentMenu, $accessibleMenus);
-        
+
         $menuTabs = $this->buildMenuTabs($currentMenu, $accessibleMenus);
-        
+
         // SEO 정보 구성 (기존 seoData가 있으면 우선 사용)
         $existingSeoData = $view->getData()['seoData'] ?? null;
         $seoData = $existingSeoData ?: $this->buildSeoData($currentMenu, $breadcrumb);
@@ -87,10 +87,10 @@ class NavigationComposer
             'menuTabs' => $menuTabs,
             'seoData' => $seoData,
         ];
-        
+
         // 캐시에 저장
         static::$composerCache[$cacheKey] = $composerData;
-        
+
         // 뷰별 특수 데이터 병합
         $viewSpecificData = $this->getViewSpecificData($view, $composerData);
         $view->with(array_merge($composerData, $viewSpecificData));
@@ -113,7 +113,8 @@ class NavigationComposer
             // Build map of id => menuData (preserve order from collection)
             foreach ($menuCollection as $menu) {
                 // skip hidden just in case
-                if ($menu->hidden) continue;
+                if ($menu->hidden)
+                    continue;
 
                 $menuData = $menu->toArray();
                 $menuData['user_permission'] = $this->permissionService->checkMenuPermission($menu);
@@ -135,13 +136,13 @@ class NavigationComposer
 
             // section_label을 메모리에서 찾기 (쿼리 방지)
             $sectionLabel = $sectionKey;
-            $rootMenu = $menuCollection->first(function($menu) {
+            $rootMenu = $menuCollection->first(function ($menu) {
                 return $menu->depth === 0;
             });
             if ($rootMenu) {
                 $sectionLabel = $rootMenu->title;
             }
-            
+
             $sections[$sectionKey] = [
                 'section' => $sectionKey,
                 'section_label' => $sectionLabel,
@@ -160,9 +161,9 @@ class NavigationComposer
         $currentRouteName = Route::currentRouteName();
         $currentUrl = Request::url();
         $currentPath = Request::path();
-        
+
         // 1. 커스텀 경로 매칭 (/ 로 시작하는 target)
-        $customPathMatch = $menus->filter(function($menu) use ($currentPath) {
+        $customPathMatch = $menus->filter(function ($menu) use ($currentPath) {
             if ($menu && $menu->type === 'route' && $menu->target && str_starts_with($menu->target, '/')) {
                 $menuPath = ltrim($menu->target, '/');
                 $currentPathClean = ltrim($currentPath, '/');
@@ -170,40 +171,40 @@ class NavigationComposer
             }
             return false;
         })->first();
-        
+
         if ($customPathMatch) {
             return $customPathMatch;
         }
-        
+
         // 2. 정확한 라우트명 매칭
-        $exactMatch = $menus->filter(function($menu) use ($currentRouteName) {
+        $exactMatch = $menus->filter(function ($menu) use ($currentRouteName) {
             return $menu && $menu->type === 'route' && $menu->target === $currentRouteName;
         })->first();
-        
+
         if ($exactMatch) {
             return $exactMatch;
         }
-        
+
         // 3. menuId 파라미터를 사용한 라우트 매칭
         if ($currentRouteName) {
             $menuIdFromRoute = request()->route('menuId');
             if ($menuIdFromRoute) {
-                $menuIdMatch = $menus->filter(function($menu) use ($currentRouteName, $menuIdFromRoute) {
+                $menuIdMatch = $menus->filter(function ($menu) use ($currentRouteName, $menuIdFromRoute) {
                     if ($menu && $menu->type === 'route' && $menu->id == $menuIdFromRoute) {
                         // 라우트명이 target과 일치하거나, target이 커스텀 경로인 경우
                         return $menu->target === $currentRouteName || str_starts_with($menu->target, '/');
                     }
                     return false;
                 })->first();
-                
+
                 if ($menuIdMatch) {
                     return $menuIdMatch;
                 }
             }
         }
-        
+
         // 4. URL 패턴 매칭
-        $urlMatch = $menus->filter(function($menu) use ($currentUrl, $currentPath) {
+        $urlMatch = $menus->filter(function ($menu) use ($currentUrl, $currentPath) {
             if ($menu && $menu->type === 'url' && $menu->target) {
                 $menuUrl = $menu->target;
                 // 정확한 URL 매칭
@@ -217,21 +218,21 @@ class NavigationComposer
             }
             return false;
         })->first();
-        
+
         if ($urlMatch) {
             return $urlMatch;
         }
-        
+
         // 5. 패턴 매칭 (예: /about/* 패턴으로 /about/edm-korean-global-campus 매칭)
-        $patternMatch = $menus->filter(function($menu) use ($currentPath) {
+        $patternMatch = $menus->filter(function ($menu) use ($currentPath) {
             if ($menu && $menu->type === 'url' && $menu->target) {
                 $menuPath = ltrim($menu->target, '/');
                 $currentPathClean = ltrim($currentPath, '/');
-                
+
                 // 상위 경로 매칭
                 $menuParts = explode('/', $menuPath);
                 $currentParts = explode('/', $currentPathClean);
-                
+
                 if (count($menuParts) <= count($currentParts)) {
                     $match = true;
                     for ($i = 0; $i < count($menuParts); $i++) {
@@ -246,11 +247,11 @@ class NavigationComposer
                 }
             }
             return false;
-        })->sortByDesc(function($menu) {
+        })->sortByDesc(function ($menu) {
             // 더 구체적인 경로를 우선순위로
             return $menu ? strlen($menu->target ?? '') : 0;
         })->first();
-        
+
         return $patternMatch;
     }
 
@@ -289,17 +290,20 @@ class NavigationComposer
         // 역순으로 브레드크럼 구성
         $menuChain = array_reverse($menuChain);
         foreach ($menuChain as $index => $menu) {
-            if (!$menu) continue; // null 체크
+            if (!$menu)
+                continue; // null 체크
 
             $isLast = $index === count($menuChain) - 1;
 
             // 형제 메뉴들 찾기 (같은 parent_id를 가진 메뉴들)
-            $siblings = $menus->filter(function($sibling) use ($menu) {
-                if (!$sibling) return false;
+            $siblings = $menus->filter(function ($sibling) use ($menu) {
+                if (!$sibling)
+                    return false;
 
                 // 사용자 권한 확인
                 $userPerm = $this->permissionService->checkMenuPermission($sibling);
-                if (($userPerm & 1) !== 1) return false; // 읽기 권한 없음
+                if (($userPerm & 1) !== 1)
+                    return false; // 읽기 권한 없음
 
                 // 같은 부모를 가진 메뉴들
                 return $sibling->parent_id === $menu->parent_id
@@ -344,10 +348,10 @@ class NavigationComposer
         // 탭에 포함할 메뉴들 찾기
         if ($tabBehavior === 'same_depth_in_section') {
             // 같은 섹션 내 같은 depth의 모든 메뉴들
-            $siblings = $menus->filter(function($menu) use ($currentMenu) {
+            $siblings = $menus->filter(function ($menu) use ($currentMenu) {
                 return $menu &&
-                       $menu->section === $currentMenu->section &&
-                       $menu->depth === $currentMenu->depth;
+                    $menu->section === $currentMenu->section &&
+                    $menu->depth === $currentMenu->depth;
             });
         } else {
             // 기본 동작: 형제 메뉴들만
@@ -355,12 +359,12 @@ class NavigationComposer
 
             if ($parentMenu) {
                 // 부모가 있는 경우: 같은 부모를 가진 메뉴들
-                $siblings = $menus->filter(function($menu) use ($parentMenu) {
+                $siblings = $menus->filter(function ($menu) use ($parentMenu) {
                     return $menu && $menu->parent_id === $parentMenu->id;
                 });
             } else {
                 // 루트 메뉴인 경우: 같은 섹션의 루트 메뉴들
-                $siblings = $menus->filter(function($menu) use ($currentMenu) {
+                $siblings = $menus->filter(function ($menu) use ($currentMenu) {
                     return $menu && $menu->section === $currentMenu->section && $menu->parent_id === null;
                 });
             }
@@ -368,11 +372,13 @@ class NavigationComposer
 
         $tabs = [];
         foreach ($siblings as $menu) {
-            if (!$menu) continue; // null 체크
+            if (!$menu)
+                continue; // null 체크
 
             // 사용자 권한 확인
             $userPerm = $this->permissionService->checkMenuPermission($menu);
-            if (($userPerm & 1) !== 1) continue; // 읽기 권한 없음
+            if (($userPerm & 1) !== 1)
+                continue; // 읽기 권한 없음
 
             $tabs[] = [
                 'title' => $menu->title ?? 'Menu',
@@ -384,7 +390,7 @@ class NavigationComposer
         }
 
         // _lft 순서대로 정렬
-        usort($tabs, function($a, $b) use ($menus) {
+        usort($tabs, function ($a, $b) use ($menus) {
             $menuA = $menus->find($a['menu_id']);
             $menuB = $menus->find($b['menu_id']);
             return ($menuA->_lft ?? 0) <=> ($menuB->_lft ?? 0);
@@ -401,29 +407,29 @@ class NavigationComposer
         if (!$menu) {
             return '/';
         }
-        
+
         switch ($menu->type) {
             case 'route':
                 try {
                     $target = $menu->target;
-                    
+
                     // 커스텀 경로인지 확인 (/ 로 시작하면 커스텀 경로)
                     if (str_starts_with($target, '/')) {
                         // 커스텀 경로는 그대로 반환
                         return $target;
                     }
-                    
+
                     // 라우트명인 경우 기존 로직 사용
                     $routeName = $target;
                     $routeParameters = [];
-                    
+
                     // 메뉴의 route_parameters 속성이 있으면 사용
                     if (!empty($menu->route_parameters)) {
-                        $routeParameters = is_array($menu->route_parameters) 
-                            ? $menu->route_parameters 
+                        $routeParameters = is_array($menu->route_parameters)
+                            ? $menu->route_parameters
                             : json_decode($menu->route_parameters, true) ?? [];
                     }
-                    
+
                     // 커스텀 ID 지원 라우트인지 확인 ({menuId?} 패턴)
                     try {
                         $route = \Illuminate\Support\Facades\Route::getRoutes()->getByName($routeName);
@@ -434,7 +440,7 @@ class NavigationComposer
                     } catch (\Exception $e) {
                         // 라우트가 없어도 계속 진행
                     }
-                    
+
                     // board.index의 경우 연결된 게시판의 slug 파라미터가 필요
                     if ($routeName === 'board.index' && empty($routeParameters['slug'])) {
                         $board = \SiteManager\Models\Board::where('menu_id', $menu->id)->first();
@@ -449,7 +455,7 @@ class NavigationComposer
                             }
                         }
                     }
-                    
+
                     return route($routeName, $routeParameters);
                 } catch (\Exception $e) {
                     Log::warning("Failed to generate route URL for menu {$menu->id}: " . $e->getMessage());
@@ -472,12 +478,14 @@ class NavigationComposer
         }
 
         // 자식 메뉴들 찾기
-        $children = $menus->filter(function($child) use ($menu) {
-            if (!$child) return false;
+        $children = $menus->filter(function ($child) use ($menu) {
+            if (!$child)
+                return false;
 
             // 사용자 권한 확인
             $userPerm = $this->permissionService->checkMenuPermission($child);
-            if (($userPerm & 1) !== 1) return false;
+            if (($userPerm & 1) !== 1)
+                return false;
 
             return $child->parent_id === $menu->id;
         })->sortBy('_lft');
@@ -527,7 +535,7 @@ class NavigationComposer
             // 기본 제목 설정
             $siteName = config_get('SITE_NAME');
             $pageTitle = $currentMenu->title;
-            
+
             // 브레드크럼에서 상위 카테고리 정보 추출
             $categoryTitles = [];
             if ($breadcrumb && count($breadcrumb) > 1) {
@@ -536,7 +544,7 @@ class NavigationComposer
                     $categoryTitles[] = $breadcrumb[$i]['title'];
                 }
             }
-            
+
             // 제목 구성 (SITE_NAME이 없으면 제목 끝의 구분자 제거)
             if (!empty($categoryTitles)) {
                 $titleParts = [$pageTitle, implode(' - ', $categoryTitles)];
@@ -551,30 +559,37 @@ class NavigationComposer
                     $seoData['title'] = $pageTitle;
                 }
             }
-            
+
             // 설명 설정
             $seoData['description'] = $currentMenu->description ?: $this->generateAutoDescription($currentMenu, $breadcrumb);
-            
-            // 키워드 설정 (제목과 카테고리 기반)
-            $keywords = [$pageTitle];
-            $keywords = array_merge($keywords, $categoryTitles);
-            $keywords[] = $siteName;
-            $seoData['keywords'] = implode(', ', array_unique($keywords));
-            
+
+            // 키워드 설정 (최우선: 설정 키워드, 없으면: 제목과 카테고리 기반)
+            $siteKeywords = config_get('SITE_KEYWORDS');
+            if (!empty($siteKeywords)) {
+                $seoData['keywords'] = $siteKeywords;
+            } else {
+                $keywords = [$pageTitle];
+                $keywords = array_merge($keywords, $categoryTitles);
+                if (!empty($siteName)) {
+                    $keywords[] = $siteName;
+                }
+                $seoData['keywords'] = implode(', ', array_unique($keywords));
+            }
+
             // Open Graph 설정
             $seoData['og_title'] = $pageTitle;
             $seoData['og_description'] = $seoData['description'];
             $seoData['og_url'] = request()->url();
-            
+
             // 이미지 설정 (메뉴에 이미지가 있으면 사용)
             $seoData['images'] = []; // 이미지 배열 전체를 저장할 필드 추가
-            
+
             if (!empty($currentMenu->images)) {
                 // images가 이미 배열인지 JSON 문자열인지 확인
-                $images = is_array($currentMenu->images) 
-                    ? $currentMenu->images 
+                $images = is_array($currentMenu->images)
+                    ? $currentMenu->images
                     : json_decode($currentMenu->images, true);
-                
+
                 if (is_array($images) && !empty($images)) {
                     // 전체 이미지 배열을 seoData에 저장 (URL을 asset으로 변환)
                     $seoData['images'] = [];
@@ -587,7 +602,7 @@ class NavigationComposer
                             ];
                         }
                     }
-                    
+
                     // SEO 카테고리 이미지 우선 사용
                     if (isset($images['seo']['url'])) {
                         $seoData['og_image'] = \SiteManager\Services\FileUploadService::url($images['seo']['url']);
@@ -605,16 +620,16 @@ class NavigationComposer
                     }
                 }
             }
-            
+
             // 기본 이미지 없으면 사이트 기본 이미지 사용
             if (!$seoData['og_image']) {
                 $seoData['og_image'] = asset('images/logo.svg');
             }
-            
+
             // Canonical URL (메뉴 SEO 메타에 명시된 값이 있으면 우선 사용)
             $explicitCanonical = $menuSeoMeta['canonical'] ?? null;
             $seoData['canonical_url'] = $explicitCanonical ?: $this->getMenuUrl($currentMenu);
-            
+
             // JSON-LD 브레드크럼 구조화 데이터 (메뉴 설정으로 on/off 가능)
             $useBreadcrumbJsonLd = true;
             if (isset($menuSeoMeta['schema']) && is_array($menuSeoMeta['schema'])) {
@@ -671,15 +686,15 @@ class NavigationComposer
     {
         $siteName = config_get('SITE_NAME');
         $description = "Learn about {$menu->title}";
-        
+
         if ($breadcrumb && count($breadcrumb) > 2) {
             // 상위 카테고리가 있는 경우
             $parentCategory = $breadcrumb[count($breadcrumb) - 2]['title'];
-            $description = "Discover {$menu->title} in our {$parentCategory} section";
+            $description = "{$menu->title} - {$parentCategory}";
         }
-        
-        $description .= " at {$siteName}.";
-        
+
+        $description .= " - {$siteName}.";
+
         return $description;
     }
 
@@ -699,11 +714,11 @@ class NavigationComposer
                 'position' => $index + 1,
                 'name' => $crumb['title']
             ];
-            
+
             if (!$crumb['is_current'] && $crumb['url']) {
                 $item['item'] = url($crumb['url']);
             }
-            
+
             $itemListElement[] = $item;
         }
 
@@ -742,10 +757,10 @@ class NavigationComposer
     private function generateRequestCacheKey(): string
     {
         $user = Auth::user();
-        
+
         // 메뉴 테이블의 최신 업데이트 시간 추가 (캐시 사용)
         $menuLastUpdate = $this->getMenuLastUpdateTime();
-        
+
         // 요청 레벨의 핵심 정보만 사용
         $keyParts = [
             'user_id' => $user ? $user->id : 'guest',
@@ -753,7 +768,7 @@ class NavigationComposer
             'url_path' => parse_url(Request::url(), PHP_URL_PATH), // 도메인 제외, 경로만
             'menu_update' => $menuLastUpdate ? strtotime($menuLastUpdate) : 0, // 메뉴 변경 감지
         ];
-        
+
         return 'nav_composer_req_' . md5(serialize($keyParts));
     }
 
@@ -764,12 +779,12 @@ class NavigationComposer
     {
         $viewData = $view->getData();
         $viewSpecificData = [];
-        
+
         // 뷰에서 전달된 추가 브레드크럼 처리
         if (isset($viewData['additionalBreadcrumb'])) {
             $additionalBreadcrumb = $viewData['additionalBreadcrumb'];
             $breadcrumb = $cachedData['breadcrumb'] ?? [];
-            
+
             // 기존 브레드크럼의 마지막 요소를 현재가 아닌 것으로 변경
             if (!empty($breadcrumb)) {
                 $lastIndex = count($breadcrumb) - 1;
@@ -778,7 +793,7 @@ class NavigationComposer
                     $breadcrumb[$lastIndex]['url'] = $this->getMenuUrl($cachedData['currentMenu']);
                 }
             }
-            
+
             // 추가 브레드크럼 요소 추가 (단일 배열 또는 배열의 배열 지원)
             // 배열의 배열인지 확인: 숫자 키로 시작하고 첫 번째 요소가 배열인 경우
             if (isset($additionalBreadcrumb[0]) && is_array($additionalBreadcrumb[0]) && !isset($additionalBreadcrumb['title'])) {
@@ -799,16 +814,16 @@ class NavigationComposer
                     'is_current' => true
                 ];
             }
-            
+
             $viewSpecificData['breadcrumb'] = $breadcrumb;
         }
-        
+
         // 뷰에서 명시적으로 currentMenuId가 전달된 경우
         if (isset($viewData['currentMenuId']) && $viewData['currentMenuId'] !== ($cachedData['currentMenu']->id ?? null)) {
             // 다른 메뉴가 지정된 경우 캐시를 사용하지 않고 재계산 필요
             // 이 경우는 별도 처리가 필요하지만, 일반적으로 드물어야 함
         }
-        
+
         return $viewSpecificData;
     }
 
