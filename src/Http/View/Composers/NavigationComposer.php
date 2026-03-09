@@ -21,6 +21,20 @@ class NavigationComposer
     }
 
     /**
+     * 캐시에서 현재 메뉴를 반환합니다.
+     * ContentItem 등 외부 헬퍼에서 NavigationComposer가 이미 결정한 메뉴를 사용할 수 있도록 합니다.
+     *
+     * @return \SiteManager\Models\Menu|null
+     */
+    public static function getCurrentMenu()
+    {
+        foreach (static::$composerCache as $data) {
+            return $data['currentMenu'] ?? null;
+        }
+        return null;
+    }
+
+    /**
      * Bind data to the view.
      */
     public function compose(View $view): void
@@ -163,6 +177,7 @@ class NavigationComposer
         $currentPath = Request::path();
 
         // 1. 커스텀 경로 매칭 (/ 로 시작하는 target)
+        // 같은 target을 가진 메뉴가 여러 개일 경우, 가장 깊은(구체적인) 메뉴를 우선 선택
         $customPathMatch = $menus->filter(function ($menu) use ($currentPath) {
             if ($menu && $menu->type === 'route' && $menu->target && str_starts_with($menu->target, '/')) {
                 $menuPath = ltrim($menu->target, '/');
@@ -170,16 +185,17 @@ class NavigationComposer
                 return $menuPath === $currentPathClean;
             }
             return false;
-        })->first();
+        })->sortByDesc('depth')->first();
 
         if ($customPathMatch) {
             return $customPathMatch;
         }
 
         // 2. 정확한 라우트명 매칭
+        // 같은 라우트명을 가진 메뉴가 여러 개일 경우, 가장 깊은(구체적인) 메뉴를 우선 선택
         $exactMatch = $menus->filter(function ($menu) use ($currentRouteName) {
             return $menu && $menu->type === 'route' && $menu->target === $currentRouteName;
-        })->first();
+        })->sortByDesc('depth')->first();
 
         if ($exactMatch) {
             return $exactMatch;
@@ -204,6 +220,7 @@ class NavigationComposer
         }
 
         // 4. URL 패턴 매칭
+        // 같은 target을 가진 메뉴가 여러 개일 경우, 가장 깊은(구체적인) 메뉴를 우선 선택
         $urlMatch = $menus->filter(function ($menu) use ($currentUrl, $currentPath) {
             if ($menu && $menu->type === 'url' && $menu->target) {
                 $menuUrl = $menu->target;
@@ -217,7 +234,7 @@ class NavigationComposer
                 }
             }
             return false;
-        })->first();
+        })->sortByDesc('depth')->first();
 
         if ($urlMatch) {
             return $urlMatch;
