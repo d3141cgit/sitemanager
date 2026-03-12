@@ -639,9 +639,9 @@ class NavigationComposer
             }
 
             // 기본 이미지 없으면 사이트 기본 이미지 사용
-            if (!$seoData['og_image']) {
-                $seoData['og_image'] = asset('images/logo.svg');
-            }
+            // if (!$seoData['og_image']) {
+            //     $seoData['og_image'] = asset('images/logo.svg');
+            // }
 
             // Canonical URL (메뉴 SEO 메타에 명시된 값이 있으면 우선 사용)
             $explicitCanonical = $menuSeoMeta['canonical'] ?? null;
