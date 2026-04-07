@@ -201,6 +201,11 @@ class FileUploadService
      */
     public function getFileUrl(string $path): string
     {
+        // 이미 완전한 URL이면 그대로 반환
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
         if ($this->useS3) {
             // For S3, construct URL properly
             $region = config('filesystems.disks.s3.region');
