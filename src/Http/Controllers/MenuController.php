@@ -218,7 +218,7 @@ class MenuController extends Controller
             'title' => 'required|string|max:100',
             'description' => 'nullable|string',
             'search_content' => 'nullable|string',
-            'type' => 'required|in:route,url,text',
+            'type' => 'required|in:route,url,text' . ($menu->isValidType() ? '' : ',' . $menu->type),
             'target' => 'nullable|string|max:255',
             'custom_route_target' => 'nullable|string|max:255',
             'parent_id' => 'nullable|exists:menus,id',
@@ -234,7 +234,7 @@ class MenuController extends Controller
             'seo_use_breadcrumb' => 'nullable|boolean',
             'seo_custom_json_ld' => 'nullable|string',
         ]);
-        
+
         // 자기 자신을 부모로 설정하는 것 방지
         if ($request->parent_id == $menu->id) {
             return back()->with('error', '자기 자신을 부모 메뉴로 설정할 수 없습니다.')->withInput();

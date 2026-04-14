@@ -50,6 +50,30 @@
                         </div>
                     </div>
                     
+                    @php
+                        $isExternalType = isset($menu) && !array_key_exists($menu->type, \SiteManager\Models\Menu::getAvailableTypes());
+                    @endphp
+
+                    @if($isExternalType)
+                        {{-- 외부에서 설정된 비표준 타입 (예: program) — read-only --}}
+                        <div class="form-group">
+                            <label class="form-label">{{ t('Menu Type') }}</label>
+                            <input type="hidden" name="type" value="{{ $menu->type }}">
+                            <div>
+                                <span class="badge bg-info text-dark">{{ ucfirst($menu->type) }}</span>
+                                <small class="text-muted ms-2">{{ t('Managed externally. Cannot be changed here.') }}</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="target" class="form-label">{{ t('Target') }}</label>
+                            <input type="text" class="form-control @error('target') is-invalid @enderror" id="target" name="target" value="{{ old('target', $menu->target) }}" placeholder="/custom/path">
+                            @error('target')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">{{ t('The URL path for this menu. e.g.') }} /language-abroad/usa/guide</div>
+                        </div>
+                    @else
                     <div class="form-group">
                         <label for="type" class="form-label">{{ t('Menu Type') }} *</label>
                         <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
@@ -198,6 +222,7 @@
                             <small class="text-muted">{{ t('Example') }}: /news, /edm/notice, /about/contact</small>
                         </div>
                     </div>
+                    @endif {{-- end !$isExternalType --}}
 
                     <div class="form-group">
                         <label for="parent_id" class="form-label">{{ t('Parent Menu') }}</label>

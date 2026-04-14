@@ -479,6 +479,7 @@ class NavigationComposer
                     return '#';
                 }
             case 'url':
+            case 'program':
                 return $menu->target ?? '#';
             default:
                 return '#';
