@@ -133,8 +133,9 @@ if (!function_exists('get_menu_url')) {
                 }
                 
             case 'url':
+            case 'program':
                 return $menu['target'];
-                
+
             default:
                 return '#';
         }
