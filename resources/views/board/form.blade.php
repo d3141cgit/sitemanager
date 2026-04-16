@@ -304,16 +304,16 @@
                                                 <input type="password" class="form-control @error('secret_password') is-invalid @enderror" 
                                                     id="secret_password" name="secret_password" 
                                                     placeholder="New password (leave empty to keep current password)"
-                                                    minlength="4" maxlength="20">
+                                                    minlength="4" maxlength="20" autocomplete="new-password">
                                                 <div class="form-text">Enter a new password to change the existing one.</div>
                                             </div>
                                         @else
                                             <label for="secret_password" class="form-label">Password</label>
                                             <input type="password" class="form-control @error('secret_password') is-invalid @enderror" 
                                                 id="secret_password" name="secret_password" 
-                                                value="{{ old('secret_password') }}"
+                                                value=""
                                                 placeholder="Enter password (4-20 characters)"
-                                                minlength="4" maxlength="20">
+                                                minlength="4" maxlength="20" autocomplete="new-password">
                                             <div class="form-text">
                                                 <i class="bi bi-info-circle"></i> 
                                                 Setting a password will make this post visible only to users who know the password.
