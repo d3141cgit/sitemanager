@@ -577,14 +577,17 @@ class SecurityService
             'recaptcha' => true,
             'email_domain' => true,
             'spam_content' => true,
+            'rate_limit' => false, // opt-in: rate limit 적용 여부
+            'rate_limit_type' => 'form', // rate limit 키 분리용 (cache key suffix)
+            'strict_signature' => false, // opt-in: form_timestamp HMAC 서명 필수
             'min_time' => 3, // 최소 폼 작성 시간 (초)
             'form_type' => 'general', // 폼 타입 (로깅용)
             'text_fields' => ['name', 'email', 'message'], // 스팸 검사할 필드들
         ];
-        
+
         $options = array_merge($defaultOptions, $options);
         $errors = [];
-        
+
         // 1. Honeypot 검증
         if ($options['honeypot']) {
             $honeypotResult = $this->validateHoneypotFields($data, $ip, $options['form_type']);
@@ -592,15 +595,21 @@ class SecurityService
                 $errors[] = $honeypotResult;
             }
         }
-        
-        // 2. 폼 제출 시간 검증
+
+        // 2. 폼 제출 시간 검증 (HMAC 서명 검증 포함)
         if ($options['timing']) {
-            $timingResult = $this->validateFormTiming($data, $ip, $options['min_time'], $options['form_type']);
+            $timingResult = $this->validateFormTiming(
+                $data,
+                $ip,
+                $options['min_time'],
+                $options['form_type'],
+                $options['strict_signature']
+            );
             if (!$timingResult['valid']) {
                 $errors[] = $timingResult;
             }
         }
-        
+
         // 3. reCAPTCHA 검증
         if ($options['recaptcha']) {
             $recaptchaResult = $this->validateRecaptchaToken($data, $ip, $options['form_type']);
@@ -608,7 +617,7 @@ class SecurityService
                 $errors[] = $recaptchaResult;
             }
         }
-        
+
         // 4. 이메일 도메인 차단 검증
         if ($options['email_domain'] && !empty($data['email'])) {
             $emailResult = $this->validateEmailDomainBlocking($data['email'], $ip, $options['form_type']);
@@ -616,12 +625,23 @@ class SecurityService
                 $errors[] = $emailResult;
             }
         }
-        
+
         // 5. 스팸 내용 검증
         if ($options['spam_content']) {
             $spamResult = $this->validateSpamContent($data, $options['text_fields'], $ip, $options['form_type']);
             if (!$spamResult['valid']) {
                 $errors[] = $spamResult;
+            }
+        }
+
+        // 6. Rate Limiting (IP 기반, 옵션 활성화 시에만)
+        if ($options['rate_limit']) {
+            if (!$this->checkRateLimit($ip, $options['rate_limit_type'])) {
+                $errors[] = [
+                    'valid' => false,
+                    'type' => 'rate_limit',
+                    'message' => 'Too many submissions from your IP. Please try again later.',
+                ];
             }
         }
         
@@ -666,13 +686,51 @@ class SecurityService
     
     /**
      * 폼 제출 시간 검증
+     *
+     * HMAC 서명(form_timestamp_sig) 처리:
+     * - 서명이 있고 유효하면 통과 (위변조 아님)
+     * - 서명이 있지만 유효하지 않으면 거부 (위변조 시도)
+     * - 서명이 없을 때:
+     *   - $strictSignature = true → 거부 (서명 필수 모드)
+     *   - $strictSignature = false → 통과 후 시간 검증만 수행 (legacy 호환)
      */
-    public function validateFormTiming(array $data, string $ip, int $minTime = 3, string $formType = 'general'): array
+    public function validateFormTiming(array $data, string $ip, int $minTime = 3, string $formType = 'general', bool $strictSignature = false): array
     {
         if (empty($data['form_timestamp'])) {
             return ['valid' => true]; // 타임스탬프가 없으면 통과
         }
-        
+
+        // HMAC 서명 검증
+        $timestamp = (string) $data['form_timestamp'];
+        $providedSig = $data['form_timestamp_sig'] ?? '';
+        $expectedSig = hash_hmac('sha256', $timestamp, config('app.key'));
+
+        if (!empty($providedSig)) {
+            if (!hash_equals($expectedSig, $providedSig)) {
+                Log::warning('SiteManager Security: Form timestamp signature invalid (tampered)', [
+                    'ip' => $ip,
+                    'form_type' => $formType,
+                    'timestamp' => now(),
+                ]);
+                return [
+                    'valid' => false,
+                    'type' => 'tampered',
+                    'message' => 'Form security check failed. Please refresh and try again.',
+                ];
+            }
+        } elseif ($strictSignature) {
+            Log::warning('SiteManager Security: Form timestamp signature missing (strict mode)', [
+                'ip' => $ip,
+                'form_type' => $formType,
+                'timestamp' => now(),
+            ]);
+            return [
+                'valid' => false,
+                'type' => 'tampered',
+                'message' => 'Form security check failed. Please refresh and try again.',
+            ];
+        }
+
         $timeDiff = time() - (int)$data['form_timestamp'];
         
         if ($timeDiff < $minTime) {
@@ -824,6 +882,7 @@ class SecurityService
             'user_behavior' => 'nullable|string',
             'recaptcha_token' => 'nullable|string',
             'form_timestamp' => 'nullable|numeric',
+            'form_timestamp_sig' => 'nullable|string',
             // Honeypot 필드들 (비어있어야 함)
             'website' => 'nullable|string',
             'url' => 'nullable|string',

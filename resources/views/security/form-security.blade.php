@@ -65,7 +65,12 @@ $honeypot = $honeypot ?? true;
     <input type="hidden" name="{{ $tokenField }}" id="{{ $tokenField }}_{{ $formId ?? 'default' }}">
 @endif
 <input type="hidden" name="form_token" value="{{ csrf_token() }}">
-<input type="hidden" name="form_timestamp" value="{{ time() }}">
+@php
+    $formTimestamp = time();
+    $formTimestampSig = hash_hmac('sha256', (string) $formTimestamp, config('app.key'));
+@endphp
+<input type="hidden" name="form_timestamp" value="{{ $formTimestamp }}">
+<input type="hidden" name="form_timestamp_sig" value="{{ $formTimestampSig }}">
 
 {{-- 에러 표시 영역 --}}
 <div class="security-error" id="security-error-{{ $formId ?? 'default' }}" style="display: none;">
