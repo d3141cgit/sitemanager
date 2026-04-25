@@ -204,25 +204,27 @@ class SiteManagerSecurity {
         }
         
         form.setAttribute('data-security-setup', 'true');
-        
-        form.addEventListener('submit', async (event) => {
+
+        // named handler 로 잡아서 제거 가능하게. arrow function 의 arguments.callee 는
+        // strict mode (Safari 등) 에서 에러 발생.
+        const submitHandler = async (event) => {
             if (!autoSubmit) return; // 자동 제출 비활성화시 검증만 수행
-            
+
             event.preventDefault();
-            
+
             try {
                 // 1. Honeypot 검증
                 if (validateHoneypot && !this.validateHoneypot(form)) {
                     this.showError(form, '잘못된 접근입니다.');
                     return;
                 }
-                
+
                 // 2. 제출 시간 검증
                 if (validateTiming && !this.validateSubmissionTime(form)) {
                     this.showError(form, '폼 제출 시간이 유효하지 않습니다.');
                     return;
                 }
-                
+
                 // 3. reCAPTCHA 토큰 생성
                 let token = null;
                 if (this.config.recaptcha?.enabled) {
@@ -232,22 +234,24 @@ class SiteManagerSecurity {
                         return;
                     }
                 }
-                
+
                 // 4. 보안 데이터 추가
                 this.addSecurityData(form, { token, tokenField });
-                
+
                 // 5. 폼 제출
                 console.log('SiteManager Security: Form validation passed');
-                
-                // 이벤트 리스너 제거 후 제출
-                form.removeEventListener('submit', arguments.callee);
+
+                // 이벤트 리스너 제거 후 제출 (재진입 방지)
+                form.removeEventListener('submit', submitHandler);
                 form.submit();
-                
+
             } catch (error) {
                 console.error('SiteManager Security: Form validation error', error);
                 this.showError(form);
             }
-        });
+        };
+
+        form.addEventListener('submit', submitHandler);
     }
     
     /**
