@@ -620,9 +620,9 @@ footer {
 }
 
 /* Select2 Custom Styles - Bootstrap 5 Form Control Match */
-.select2-container {
-    width: 100% !important;
-}
+/* .select2-container {
+    width: 100%;
+} */
 
 /* Default styling (standard Bootstrap) */
 .select2-container--bootstrap-5 .select2-selection--single,
