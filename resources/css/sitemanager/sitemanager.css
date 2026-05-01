@@ -77,6 +77,8 @@
     --r-lg: 8px;
 }
 
+.table-hover>tbody>tr:hover>* { background-color: rgba(151, 255, 76, 0.2); }
+
 ::-moz-selection { background: var(--blue-light); }
 ::selection      { background: var(--blue-light); }
 
