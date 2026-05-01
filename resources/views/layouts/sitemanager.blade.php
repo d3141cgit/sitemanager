@@ -17,6 +17,7 @@
     {!! resource('sitemanager::css/pagination.css') !!}
     {!! resource('sitemanager::js/sitemanager/sitemanager.js') !!}
     {!! resource('sitemanager::js/notifications.js') !!}
+    {!! resource('css/sitemanager.css') !!}
     
     @stack('styles')
     @yield('head')
@@ -117,43 +118,49 @@
                 
                 {{-- Extension Menus (config 직접 읽기) --}}
                 @foreach(config('sitemanager.extensions', []) as $extKey => $ext)
-                    @if(($ext['enabled'] ?? true) && isset($ext['name']))
-                        @if(isset($ext['children']) && is_array($ext['children']) && count($ext['children']) > 0)
-                            @php
-                                $activeChildren = collect($ext['children'])->filter(fn($c) => ($c['enabled'] ?? true) && isset($c['route']));
-                                $isParentActive = $activeChildren->contains(fn($c) => request()->routeIs(Str::beforeLast($c['route'], '.') . '.*'));
-                            @endphp
-                            @if($activeChildren->isNotEmpty())
-                                <li class="sidebar-menu-dropdown">
-                                    <a @class(['sidebar-menu-item', 'active' => $isParentActive])
-                                        href="#" data-bs-toggle="collapse" data-bs-target="#ext-{{ $extKey }}">
+                    @if(($ext['enabled'] ?? true))
+                        @if(($ext['type'] ?? null) === 'divider')
+                            <li class="sidebar-divider" aria-hidden="true"></li>
+                        @elseif(($ext['type'] ?? null) === 'header')
+                            <li class="sidebar-section-header">{{ t($ext['name'] ?? '') }}</li>
+                        @elseif(isset($ext['name']))
+                            @if(isset($ext['children']) && is_array($ext['children']) && count($ext['children']) > 0)
+                                @php
+                                    $activeChildren = collect($ext['children'])->filter(fn($c) => ($c['enabled'] ?? true) && isset($c['route']));
+                                    $isParentActive = $activeChildren->contains(fn($c) => request()->routeIs(sitemanager_route_pattern($c['route'])));
+                                @endphp
+                                @if($activeChildren->isNotEmpty())
+                                    <li class="sidebar-menu-dropdown">
+                                        <a @class(['sidebar-menu-item', 'active' => $isParentActive])
+                                            href="#" data-bs-toggle="collapse" data-bs-target="#ext-{{ $extKey }}">
+                                            <i class="{{ $ext['icon'] ?? 'bi-puzzle' }}"></i>
+                                            <span>{{ t($ext['name']) }}</span>
+                                            <i class="bi bi-chevron-down ms-auto"></i>
+                                        </a>
+                                        <div class="collapse" id="ext-{{ $extKey }}">
+                                            <ul class="sidebar-submenu">
+                                                @foreach($activeChildren as $child)
+                                                    <li>
+                                                        <a @class(['sidebar-submenu-item', 'active' => request()->routeIs(sitemanager_route_pattern($child['route']))])
+                                                            href="{{ route($child['route']) }}">
+                                                            <i class="{{ $child['icon'] ?? 'bi-dot' }}"></i>
+                                                            <span>{{ t($child['name']) }}</span>
+                                                        </a>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    </li>
+                                @endif
+                            @elseif(isset($ext['route']))
+                                <li>
+                                    <a @class(['sidebar-menu-item', 'active' => request()->routeIs(sitemanager_route_pattern($ext['route']))])
+                                        href="{{ route($ext['route']) }}">
                                         <i class="{{ $ext['icon'] ?? 'bi-puzzle' }}"></i>
                                         <span>{{ t($ext['name']) }}</span>
-                                        <i class="bi bi-chevron-down ms-auto"></i>
                                     </a>
-                                    <div class="collapse" id="ext-{{ $extKey }}">
-                                        <ul class="sidebar-submenu">
-                                            @foreach($activeChildren as $child)
-                                                <li>
-                                                    <a @class(['sidebar-submenu-item', 'active' => request()->routeIs(Str::beforeLast($child['route'], '.') . '.*')])
-                                                        href="{{ route($child['route']) }}">
-                                                        <i class="{{ $child['icon'] ?? 'bi-dot' }}"></i>
-                                                        <span>{{ t($child['name']) }}</span>
-                                                    </a>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
                                 </li>
                             @endif
-                        @elseif(isset($ext['route']))
-                            <li>
-                                <a @class(['sidebar-menu-item', 'active' => request()->routeIs(Str::beforeLast($ext['route'], '.') . '.*')])
-                                    href="{{ route($ext['route']) }}">
-                                    <i class="{{ $ext['icon'] ?? 'bi-puzzle' }}"></i>
-                                    <span>{{ t($ext['name']) }}</span>
-                                </a>
-                            </li>
                         @endif
                     @endif
                 @endforeach
@@ -161,51 +168,50 @@
         </nav>
         
         <div class="sidebar-footer">
-            <ul class="sidebar-menu">
-                <li>
-                    <a class="sidebar-menu-item" href="{{ route('sitemanager.members.edit', auth()->user()->id) }}">
-                        <i class="bi bi-person"></i>
-                        <span>{{ auth()->user()->name }}</span>
-                    </a>
-                </li>
-                <li>
-                    <a @class(['sidebar-menu-item', 'active' => request()->routeIs('sitemanager.languages.*')])
-                        href="{{ route('sitemanager.languages.index') }}">
-                        <i class="bi bi-translate"></i>
-                        <span>{{ t('Languages') }}</span>
-                    </a>
-                </li>
-                <li>
-                    <a @class(['sidebar-menu-item', 'active' => request()->routeIs('sitemanager.settings.*')])
-                        href="{{ route('sitemanager.settings') }}">
-                        <i class="bi bi-gear"></i>
-                        <span>{{ t('System Settings') }}</span>
-                    </a>
-                </li>
+            <div class="sidebar-footer-actions" role="group">
+                <a class="sidebar-icon-btn"
+                    href="{{ route('sitemanager.members.edit', auth()->user()->id) }}"
+                    title="{{ auth()->user()->name }}"
+                    aria-label="{{ auth()->user()->name }}">
+                    <i class="bi bi-person"></i>
+                </a>
+                <a @class(['sidebar-icon-btn', 'active' => request()->routeIs('sitemanager.languages.*')])
+                    href="{{ route('sitemanager.languages.index') }}"
+                    title="{{ t('Languages') }}"
+                    aria-label="{{ t('Languages') }}">
+                    <i class="bi bi-translate"></i>
+                </a>
+                <a @class(['sidebar-icon-btn', 'active' => request()->routeIs('sitemanager.settings.*')])
+                    href="{{ route('sitemanager.settings') }}"
+                    title="{{ t('System Settings') }}"
+                    aria-label="{{ t('System Settings') }}">
+                    <i class="bi bi-gear"></i>
+                </a>
                 @if(auth()->check() && auth()->user()->level === 255 && config('sitemanager.language.trace_enabled', false))
-                    <li>
-                        <button type="button" class="sidebar-menu-item sidebar-trace-btn" id="clear-current-page-btn" onclick="clearCurrentPageLocations()" title="{{ t('Clear current page language location information') }}">
-                            <i class="bi bi-translate"></i>
-                            <span>{{ t('Clear Location') }}</span>
-                        </button>
-                    </li>
+                    <button type="button" class="sidebar-icon-btn sidebar-trace-btn"
+                        id="clear-current-page-btn"
+                        onclick="clearCurrentPageLocations()"
+                        title="{{ t('Clear current page language location information') }}"
+                        aria-label="{{ t('Clear Location') }}">
+                        <i class="bi bi-eraser"></i>
+                    </button>
                 @endif
-                <li>
-                    <a class="sidebar-menu-item" href="/">
-                        <i class="bi bi-house-door"></i>
-                        <span>{{ t('Home') }}</span>
-                    </a>
-                </li>
-                <li>
-                    <form action="{{ route('logout') }}" method="POST" class="d-inline">
-                        @csrf
-                        <button type="submit" class="sidebar-menu-item sidebar-logout">
-                            <i class="bi bi-box-arrow-right"></i>
-                            <span>{{ t('Logout') }}</span>
-                        </button>
-                    </form>
-                </li>
-            </ul>
+                <a class="sidebar-icon-btn"
+                    href="/"
+                    title="{{ t('Home') }}"
+                    aria-label="{{ t('Home') }}">
+                    <i class="bi bi-house-door"></i>
+                </a>
+                <form action="{{ route('logout') }}" method="POST" class="sidebar-icon-form">
+                    @csrf
+                    <button type="submit"
+                        class="sidebar-icon-btn sidebar-logout"
+                        title="{{ t('Logout') }}"
+                        aria-label="{{ t('Logout') }}">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
         </div>
     </aside>
     

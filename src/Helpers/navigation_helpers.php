@@ -16,8 +16,31 @@ if (!function_exists('is_active_route')) {
             }
             return false;
         }
-        
+
         return request()->routeIs($route, $parameters);
+    }
+}
+
+if (!function_exists('sitemanager_route_pattern')) {
+    /**
+     * 라우트 이름으로부터 active 매칭용 wildcard 패턴 생성
+     *
+     * resource 라우트는 `*.index` / `*.show` 등 표준 액션을 가지므로 wildcard로 묶고,
+     * 그 외(예: sitemanager.gio.dashboard) 단일 라우트는 정확히 일치하도록 한다.
+     * Why: `Str::beforeLast(..., '.')` 만 쓰면 `sitemanager.gio.dashboard` 같은 단일 라우트가
+     *      `sitemanager.gio.*` 로 평가되어 형제 메뉴까지 active로 잡혀버림.
+     */
+    function sitemanager_route_pattern(string $routeName): string
+    {
+        $crudActions = ['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'];
+
+        foreach ($crudActions as $action) {
+            if (str_ends_with($routeName, '.' . $action)) {
+                return \Illuminate\Support\Str::beforeLast($routeName, '.') . '.*';
+            }
+        }
+
+        return $routeName;
     }
 }
 

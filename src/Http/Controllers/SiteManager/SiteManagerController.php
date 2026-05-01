@@ -56,12 +56,17 @@ class SiteManagerController extends Controller
         // 존재하지 않는 route를 사용하는 메뉴들 확인
         $invalidRouteMenus = $this->menuService->findMenusWithInvalidRoutes();
 
-        return view('sitemanager::sitemanager.dashboard', compact(
-            'stats', 
-            'recent_posts', 
-            'recent_comments', 
-            'board_stats', 
-            'recent_files', 
+        $view = config(
+            'sitemanager.customizations.views.sitemanager_dashboard',
+            'sitemanager::sitemanager.dashboard'
+        );
+
+        return view($view, compact(
+            'stats',
+            'recent_posts',
+            'recent_comments',
+            'board_stats',
+            'recent_files',
             'invalidRouteMenus'
         ));
     }
