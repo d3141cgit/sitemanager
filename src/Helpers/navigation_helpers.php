@@ -44,6 +44,39 @@ if (!function_exists('sitemanager_route_pattern')) {
     }
 }
 
+if (!function_exists('sitemanager_menu_is_active')) {
+    /**
+     * 메뉴 항목의 active 여부를 판정.
+     *
+     * extension config 의 한 항목 (e.g. ['route' => 'sitemanager.gio.sections.index',
+     * 'active_routes' => ['sitemanager.gio.sections.*', 'sitemanager.gio.groups.*', ...]])
+     * 을 받아서 현재 요청이 그 중 어떤 패턴이든 매칭되면 true.
+     *
+     * 활용처:
+     *  - Section 메뉴가 group/question 편집 페이지에서도 active 되도록
+     *  - 한 메뉴 아래에 여러 라우트 그룹이 묶여있는 경우 일괄 active 표시
+     */
+    function sitemanager_menu_is_active(array $entry): bool
+    {
+        // active_routes 가 명시되어 있으면 그 패턴들로 OR 매칭
+        if (!empty($entry['active_routes']) && is_array($entry['active_routes'])) {
+            foreach ($entry['active_routes'] as $pattern) {
+                if (request()->routeIs($pattern)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // fallback: route 자체로 패턴 추론
+        if (!empty($entry['route'])) {
+            return request()->routeIs(sitemanager_route_pattern($entry['route']));
+        }
+
+        return false;
+    }
+}
+
 if (!function_exists('is_active_url')) {
     /**
      * 현재 URL이 지정된 URL과 일치하는지 확인

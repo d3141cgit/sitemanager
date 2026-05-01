@@ -127,7 +127,7 @@
                             @if(isset($ext['children']) && is_array($ext['children']) && count($ext['children']) > 0)
                                 @php
                                     $activeChildren = collect($ext['children'])->filter(fn($c) => ($c['enabled'] ?? true) && isset($c['route']));
-                                    $isParentActive = $activeChildren->contains(fn($c) => request()->routeIs(sitemanager_route_pattern($c['route'])));
+                                    $isParentActive = $activeChildren->contains(fn($c) => sitemanager_menu_is_active($c));
                                 @endphp
                                 @if($activeChildren->isNotEmpty())
                                     <li class="sidebar-menu-dropdown">
@@ -141,7 +141,7 @@
                                             <ul class="sidebar-submenu">
                                                 @foreach($activeChildren as $child)
                                                     <li>
-                                                        <a @class(['sidebar-submenu-item', 'active' => request()->routeIs(sitemanager_route_pattern($child['route']))])
+                                                        <a @class(['sidebar-submenu-item', 'active' => sitemanager_menu_is_active($child)])
                                                             href="{{ route($child['route']) }}">
                                                             <i class="{{ $child['icon'] ?? 'bi-dot' }}"></i>
                                                             <span>{{ t($child['name']) }}</span>
@@ -154,7 +154,7 @@
                                 @endif
                             @elseif(isset($ext['route']))
                                 <li>
-                                    <a @class(['sidebar-menu-item', 'active' => request()->routeIs(sitemanager_route_pattern($ext['route']))])
+                                    <a @class(['sidebar-menu-item', 'active' => sitemanager_menu_is_active($ext)])
                                         href="{{ route($ext['route']) }}">
                                         <i class="{{ $ext['icon'] ?? 'bi-puzzle' }}"></i>
                                         <span>{{ t($ext['name']) }}</span>
