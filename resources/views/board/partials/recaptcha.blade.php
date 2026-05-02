@@ -103,8 +103,9 @@ $formSelector = $formSelector ?? 'form[data-recaptcha="true"]';
                  * Honeypot 검증
                  */
                 validateHoneypot(form) {
-                    // 'phone_number' 제외 — Chrome 자동완성이 실제 phone 필드와 함께 채워 정상 사용자 차단 이슈.
-                    const honeypotFields = ['website', 'url', 'homepage', 'company_phone'];
+                    // URL/phone 계열 (website/url/homepage/phone_number) 제외 — 비밀번호 매니저/autofill 이
+                    // 정상 사용자 폼에 자동 입력하여 차단되던 이슈. company_phone 만 남김.
+                    const honeypotFields = ['company_phone'];
                     
                     for (const fieldName of honeypotFields) {
                         const field = form.querySelector(`input[name="${fieldName}"]`);

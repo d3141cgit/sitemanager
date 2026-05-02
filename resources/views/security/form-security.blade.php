@@ -55,8 +55,10 @@ $honeypotFields = config('sitemanager.security.honeypot.fields', ['website', 'ur
 </script>
 
 @if($honeypot)
-    {{-- Honeypot 필드들 (봇 차단용) — config 기반 동적 렌더링 --}}
-    <div style="position: absolute; left: -9999px; opacity: 0;" aria-hidden="true">
+    {{-- Honeypot 필드들 (봇 차단용) — config 기반 동적 렌더링.
+         display:none 은 Chrome autofill / 비밀번호 매니저가 hidden 필드를 채우는 것을 줄여줌
+         (position:-9999px / opacity:0 만으로는 autofill 이 동작함). --}}
+    <div style="display: none !important;" aria-hidden="true">
         @foreach($honeypotFields as $hpField)
             <input type="text" name="{{ $hpField }}" tabindex="-1" autocomplete="off">
         @endforeach

@@ -1930,8 +1930,10 @@ function initializeAntiSpamValidation() {
 
 // 허니팟 필드 검증
 function validateHoneypotFields(form) {
-    // 'phone_number' 제외 — Chrome 자동완성이 실제 phone 필드와 함께 채워 정상 사용자 차단.
-    const honeypotFields = ['website', 'url', 'homepage', 'email_confirm', 'company', 'address'];
+    // URL/phone/주소/회사명 계열 (website/url/homepage/phone_number/address/company)
+    // 은 비밀번호 매니저/Chrome autofill 표적이라 정상 사용자가 차단되던 이슈가 있어 제외.
+    // 'email_confirm' 만 남김 (실제 폼 필드와 충돌 가능성 낮음).
+    const honeypotFields = ['email_confirm'];
     
     for (let field of honeypotFields) {
         const input = form.querySelector(`input[name="${field}"]`);
