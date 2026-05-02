@@ -1930,7 +1930,8 @@ function initializeAntiSpamValidation() {
 
 // 허니팟 필드 검증
 function validateHoneypotFields(form) {
-    const honeypotFields = ['website', 'url', 'homepage', 'phone_number', 'email_confirm', 'company', 'address'];
+    // 'phone_number' 제외 — Chrome 자동완성이 실제 phone 필드와 함께 채워 정상 사용자 차단.
+    const honeypotFields = ['website', 'url', 'homepage', 'email_confirm', 'company', 'address'];
     
     for (let field of honeypotFields) {
         const input = form.querySelector(`input[name="${field}"]`);

@@ -5,8 +5,9 @@
     <input type="text" name="website" tabindex="-1" autocomplete="off" placeholder="Website">
     <input type="url" name="url" tabindex="-1" autocomplete="off" placeholder="URL">
     <input type="text" name="homepage" tabindex="-1" autocomplete="off" placeholder="Homepage">
-    <input type="tel" name="phone_number" tabindex="-1" autocomplete="off" placeholder="Phone">
-    
+    {{-- 'phone_number' 는 의도적으로 제외 — Chrome 자동완성이 실제 phone 필드와 함께 채워서
+         정상 사용자가 honeypot 으로 차단되던 이슈가 있었음. --}}
+
     {{-- 추가 트랩 필드들 --}}
     <input type="email" name="email_confirm" tabindex="-1" autocomplete="off" placeholder="Confirm Email">
     <input type="text" name="company" tabindex="-1" autocomplete="off" placeholder="Company">
@@ -42,7 +43,6 @@ $formToken = app(\SiteManager\Services\EmailVerificationService::class)->generat
 input[name="website"],
 input[name="url"],
 input[name="homepage"],
-input[name="phone_number"],
 input[name="email_confirm"],
 input[name="company"],
 input[name="address"],

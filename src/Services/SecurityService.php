@@ -379,7 +379,8 @@ class SecurityService
      */
     public function verifyHoneypot(array $formData): bool
     {
-        $honeypotFields = ['website', 'url', 'homepage', 'phone_number'];
+        // 'phone_number' 는 제외 — 자동완성이 실제 phone 필드와 함께 채워서 정상 사용자 차단.
+        $honeypotFields = config('sitemanager.security.honeypot.fields', ['website', 'url', 'homepage', 'company_phone']);
         
         foreach ($honeypotFields as $field) {
             if (!empty($formData[$field])) {
@@ -659,7 +660,7 @@ class SecurityService
     public function validateHoneypotFields(array $data, string $ip, string $formType = 'general'): array
     {
         $honeypotFields = config('sitemanager.security.honeypot.fields', [
-            'website', 'url', 'homepage', 'phone_number', 'company_phone'
+            'website', 'url', 'homepage', 'company_phone'
         ]);
         
         foreach ($honeypotFields as $field) {

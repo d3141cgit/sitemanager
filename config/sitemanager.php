@@ -124,7 +124,9 @@ return [
         ],
         'honeypot' => [
             'enabled' => env('SITEMANAGER_HONEYPOT_ENABLED', true),
-            'fields' => ['website', 'url', 'homepage', 'phone_number', 'company_phone'],
+            // 'phone_number' 는 의도적으로 제외 — Chrome/패스워드 매니저가 실제 phone 필드와
+            // 함께 자동완성하여 정상 사용자가 차단되는 사례가 있어 기본값에서 빼둠.
+            'fields' => ['website', 'url', 'homepage', 'company_phone'],
         ],
         'behavior_tracking' => [
             'enabled' => env('SITEMANAGER_BEHAVIOR_TRACKING_ENABLED', true),

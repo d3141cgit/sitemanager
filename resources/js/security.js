@@ -102,8 +102,10 @@ class SiteManagerSecurity {
      * Honeypot 검증
      */
     validateHoneypot(form) {
-        const honeypotFields = this.config.honeypot?.fields || 
-                               ['website', 'url', 'homepage', 'phone_number', 'company_phone'];
+        // 'phone_number' 는 fallback 에서 제외 — Chrome 자동완성이 실제 phone 필드와
+        // 함께 채워 정상 사용자가 차단되던 이슈 때문. config 에서 명시적으로 추가하면 사용 가능.
+        const honeypotFields = this.config.honeypot?.fields ||
+                               ['website', 'url', 'homepage', 'company_phone'];
         
         for (const fieldName of honeypotFields) {
             const field = form.querySelector(`input[name="${fieldName}"]`);
