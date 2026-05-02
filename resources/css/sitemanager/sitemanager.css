@@ -14,11 +14,11 @@
 @charset "utf-8";
 
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
-@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Noto+Serif+KR:wght@200;300;400;500;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Noto+Serif+KR:wght@200;300;400;500;600;700;900&family=Instrument+Serif:ital@0;1&display=swap');
 
 :root {
     --font-gothic:      'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-    --font-serif:       'Noto Serif KR', serif;
+    --font-serif:       "Instrument Serif", 'Noto Serif KR', serif;
     --font-monospace:   'Inconsolata', ui-monospace, monospace;
 
     --red-dark:     #cb000e;
@@ -670,7 +670,7 @@ footer {
 .table thead th a { color: var(--fg-strong); text-decoration: none; }
 .table thead th a:hover { color: var(--primary); }
 
-.table td { vertical-align: middle; padding: 0.5rem; font-size: 0.9rem; }
+.table td, .table th { vertical-align: middle; padding: 0.5rem; font-size: 0.9rem; }
 .table .number { font-family: var(--font-monospace); font-size: 0.9em; }
 .table .right { text-align: right; }
 .table .badge { display: inline-flex; align-items: center; }
@@ -695,7 +695,10 @@ footer {
 .card-body .table td:first-child { border-left: none; }
 .card-body .table td:last-child { border-right: none; }
 .card-body .table th:first-child { border-left: none; }
-
+.card-body.p-0 .table tr:last-child td,
+.card-body.p-0 .table tbody tr:last-child th { border-bottom: none; }
+.card-body.p-0 .table tr:last-child :first-child { border-bottom-left-radius: var(--r-md); }
+.card-body.p-0 .table tr:last-child :last-child  { border-bottom-right-radius: var(--r-md); }
 /* Member Index Profile Photos */
 .member-profile-photo { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
 .member-profile-photo:hover { transform: scale(5); transition: transform 0.3s ease-in-out; }

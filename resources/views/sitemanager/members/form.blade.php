@@ -3,15 +3,23 @@
 @section('title', isset($member) ? t('Edit Member') . ' - ' . $member->name : t('Add New Member'))
 
 @section('content')
-<div class="card default-form default-form-md">
-    <div class="card-header">
-        <h4>
+<div class="content-header">
+    <h1>
         @if(isset($member))
             <i class="bi bi-pencil"></i> {{ t('Edit Member') }} - {{ $member->name }}
         @else
             <i class="bi bi-person-plus"></i> {{ t('Add New Member') }}
         @endif
-        </h4>
+    </h1>
+
+    <a href="{{ route('sitemanager.members.index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> {{ t('Back to List') }}
+    </a>
+</div>
+
+<div class="card default-form" style="max-width: 720px">
+    <div class="card-header">
+        <h4>{{ t('Basic Information') }}</h4>
     </div>
 
     <form method="POST" action="{{ isset($member) ? route('sitemanager.members.update', $member) : route('sitemanager.members.store') }}" enctype="multipart/form-data">
@@ -215,13 +223,12 @@
                 @if(isset($member))
                     {{ t('Update Member') }}
                 @else
-                    {{ t('Create Member') }}
+                    {{ t('Add Member') }}
                 @endif
             </button>
             <a href="{{ route('sitemanager.members.index') }}" class="btn btn-secondary ms-2">{{ t('Cancel') }}</a>
         </div>
     </form>
-
 </div>
 
 <!-- Photo Modal -->
