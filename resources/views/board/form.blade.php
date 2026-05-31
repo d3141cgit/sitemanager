@@ -28,7 +28,7 @@
             <div class="row">
                 <!-- Main Content -->
                 <div class="col-lg-8 mb-4 mb-lg-0">
-                    <div class="card">
+                    <div class="card default-form">
                         <div class="card-header">
                             <h5 class="card-title mb-0">Post Content</h5>
                         </div>
@@ -136,9 +136,9 @@
                 <!-- Sidebar -->
                 <div class="col-lg-4">
                     <!-- Post Settings -->
-                    <div class="card">
+                    <div class="card default-form mb-3">
                         <div class="card-header">
-                            <h5 class="card-title mb-0">Post Settings</h6>
+                            <h5 class="card-title mb-0">Post Settings</h5>
                         </div>
                         <div class="card-body">
                             <!-- Category -->
@@ -328,21 +328,92 @@
                             @endif
 
                             <!-- Special Options (for users with manage permission) -->
-                            @if($canManage ?? false)
+                            @if(($canManage ?? false) && !empty($postOptionFields))
                                 <div class="form-group">
                                     <label class="form-label">Options</label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="option_is_notice" 
-                                            name="options[is_notice]" value="1" 
-                                            {{ old('options.is_notice', isset($post) && $post->hasOption('is_notice') ? '1' : '') ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="option_is_notice">
-                                            Mark as Notice
-                                        </label>
+                                    <input type="hidden" name="options_present" value="1">
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach($postOptionFields as $optionKey => $optionConfig)
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="option_{{ $optionKey }}"
+                                                    name="options[{{ $optionKey }}]"
+                                                    value="1"
+                                                    @checked(old("options.{$optionKey}", $postOptions[$optionKey] ?? false))>
+                                                <label class="form-check-label" for="option_{{ $optionKey }}">
+                                                    {{ $optionConfig['label'] ?? \Illuminate\Support\Str::headline($optionKey) }}
+                                                </label>
+                                                @if(!empty($optionConfig['help']))
+                                                    <div class="form-text">{{ $optionConfig['help'] }}</div>
+                                                @endif
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
                             @endif
                         </div>
                     </div>
+
+                    @if(!empty($postFields))
+                        <div class="card default-form">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Post Metadata</h5>
+                            </div>
+                            <div class="card-body">
+                                @foreach($postFields as $key => $field)
+                                    @php
+                                        $type = data_get($field, 'type', 'text');
+                                        $label = data_get($field, 'label', \Illuminate\Support\Str::headline($key));
+                                        $help = data_get($field, 'help');
+                                        $placeholder = data_get($field, 'placeholder');
+                                        $value = old("meta.{$key}", $postMeta[$key] ?? data_get($field, 'default', ''));
+                                        $options = data_get($field, 'options', []);
+                                    @endphp
+                                    <div class="form-group">
+                                        <label for="meta_{{ $key }}" class="form-label">{{ $label }}</label>
+
+                                        @if($type === 'textarea')
+                                            <textarea id="meta_{{ $key }}"
+                                                name="meta[{{ $key }}]"
+                                                rows="{{ data_get($field, 'rows', 3) }}"
+                                                class="form-control @error("meta.{$key}") is-invalid @enderror"
+                                                placeholder="{{ $placeholder }}">{{ $value }}</textarea>
+                                        @elseif($type === 'select')
+                                            <select id="meta_{{ $key }}"
+                                                name="meta[{{ $key }}]"
+                                                class="form-select @error("meta.{$key}") is-invalid @enderror">
+                                                <option value="">Select</option>
+                                                @foreach($options as $optionValue => $optionLabel)
+                                                    <option value="{{ $optionValue }}" @selected((string) $value === (string) $optionValue)>{{ $optionLabel }}</option>
+                                                @endforeach
+                                            </select>
+                                        @elseif($type === 'boolean')
+                                            <div class="form-check">
+                                                <input class="form-check-input @error("meta.{$key}") is-invalid @enderror"
+                                                    type="checkbox"
+                                                    id="meta_{{ $key }}"
+                                                    name="meta[{{ $key }}]"
+                                                    value="1"
+                                                    @checked((bool) $value)>
+                                            </div>
+                                        @else
+                                            <input type="{{ in_array($type, ['url', 'number', 'date', 'datetime-local'], true) ? $type : 'text' }}"
+                                                id="meta_{{ $key }}"
+                                                name="meta[{{ $key }}]"
+                                                class="form-control @error("meta.{$key}") is-invalid @enderror"
+                                                value="{{ $value }}"
+                                                placeholder="{{ $placeholder }}">
+                                        @endif
+
+                                        @if($help)
+                                            <div class="form-text">{!! $help !!}</div>
+                                        @endif
+                                        @error("meta.{$key}")<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 

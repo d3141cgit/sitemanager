@@ -247,6 +247,16 @@ class SiteManagerBoardController extends Controller
             'posts_per_page' => 'nullable|integer|min:5|max:100',
             'categories' => 'nullable|string',
             'settings' => 'nullable|array',
+            'post_fields' => 'nullable|array',
+            'post_fields.*.key' => 'nullable|string|max:80|regex:/^[a-zA-Z0-9_]+$/',
+            'post_fields.*.label' => 'nullable|string|max:120',
+            'post_fields.*.type' => 'nullable|string|in:text,textarea,select,boolean,url,number,date,datetime-local',
+            'post_fields.*.rules' => 'nullable|string|max:255',
+            'post_fields.*.placeholder' => 'nullable|string|max:255',
+            'post_fields.*.help' => 'nullable|string|max:500',
+            'post_fields.*.default' => 'nullable|string|max:255',
+            'post_fields.*.options' => 'nullable|string|max:2000',
+            'post_fields.*.rows' => 'nullable|integer|min:1|max:20',
             'custom_settings' => 'nullable|array',
             'custom_settings.*.key' => 'nullable|string|max:50',
             'custom_settings.*.value' => 'nullable|string|max:500',
@@ -376,6 +386,70 @@ class SiteManagerBoardController extends Controller
     }
 
     /**
+     * 게시글 추가 필드 정의 처리
+     */
+    private function processPostFields(array $rows = []): ?array
+    {
+        $fields = [];
+
+        foreach ($rows as $row) {
+            $key = trim((string) ($row['key'] ?? ''));
+            if ($key === '') {
+                continue;
+            }
+
+            $label = trim((string) ($row['label'] ?? ''));
+            $rules = trim((string) ($row['rules'] ?? ''));
+
+            $field = [
+                'label' => $label !== '' ? $label : $key,
+                'type' => $row['type'] ?? 'text',
+                'rules' => $rules !== '' ? $rules : 'nullable|string|max:1000',
+            ];
+
+            foreach (['placeholder', 'help', 'default'] as $optional) {
+                if (isset($row[$optional]) && trim((string) $row[$optional]) !== '') {
+                    $field[$optional] = trim((string) $row[$optional]);
+                }
+            }
+
+            if (($field['type'] ?? null) === 'textarea' && ! empty($row['rows'])) {
+                $field['rows'] = (int) $row['rows'];
+            }
+
+            if (($field['type'] ?? null) === 'select') {
+                $options = $this->parsePostFieldOptions((string) ($row['options'] ?? ''));
+                if (! empty($options)) {
+                    $field['options'] = $options;
+                }
+            }
+
+            $fields[$key] = $field;
+        }
+
+        return empty($fields) ? null : $fields;
+    }
+
+    /**
+     * select 옵션 문자열 처리. 각 줄: value=Label 또는 value
+     */
+    private function parsePostFieldOptions(string $options): array
+    {
+        return collect(preg_split('/\r\n|\r|\n/', $options) ?: [])
+            ->map(fn ($line) => trim($line))
+            ->filter()
+            ->mapWithKeys(function ($line) {
+                if (str_contains($line, '=')) {
+                    [$value, $label] = array_map('trim', explode('=', $line, 2));
+                    return [$value => $label];
+                }
+
+                return [$line => $line];
+            })
+            ->all();
+    }
+
+    /**
      * 게시판 목록
      */
     public function index(Request $request): View
@@ -450,6 +524,7 @@ class SiteManagerBoardController extends Controller
         $settings = $this->processCustomSettings($validated['custom_settings'] ?? [], $settings);
         
         $validated['settings'] = $settings;
+        $validated['post_fields'] = $this->processPostFields($validated['post_fields'] ?? []);
 
         // categories 문자열을 배열로 변환
         if (!empty($validated['categories'])) {
@@ -531,6 +606,7 @@ class SiteManagerBoardController extends Controller
         $settings = $this->processCustomSettings($validated['custom_settings'] ?? [], $settings);
         
         $validated['settings'] = $settings;
+        $validated['post_fields'] = $this->processPostFields($validated['post_fields'] ?? []);
 
         // categories 문자열을 배열로 변환
         if (!empty($validated['categories'])) {

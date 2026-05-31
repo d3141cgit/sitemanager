@@ -5,6 +5,7 @@ use SiteManager\Http\Controllers\SiteManager\SiteManagerController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerMemberController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerGroupController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerBoardController;
+use SiteManager\Http\Controllers\SiteManager\SiteManagerBoardPostController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerCommentController;
 use SiteManager\Http\Controllers\SiteManager\SiteManagerFileController;
 use SiteManager\Http\Controllers\MenuController;
@@ -51,6 +52,8 @@ Route::middleware(['auth', 'sitemanager'])->prefix('sitemanager')->name('siteman
     Route::post('/boards/{board}/regenerate-tables', [SiteManagerBoardController::class, 'regenerateTables'])->name('boards.regenerate-tables');
     Route::post('/boards/{board}/bulk-update-excerpts', [SiteManagerBoardController::class, 'bulkUpdateExcerpts'])->name('boards.bulk-update-excerpts');
     Route::post('/boards/{board}/bulk-update-slugs', [SiteManagerBoardController::class, 'bulkUpdateSlugs'])->name('boards.bulk-update-slugs');
+    Route::resource('boards.posts', SiteManagerBoardPostController::class)
+        ->except(['show']);
     Route::resource('boards', SiteManagerBoardController::class);
     
     // 댓글 관리

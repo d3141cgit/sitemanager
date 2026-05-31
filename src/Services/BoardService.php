@@ -50,6 +50,7 @@ class BoardService
                 'posts_per_page' => $data['posts_per_page'] ?? 15,
                 'categories' => $data['categories'] ?? [],
                 'settings' => $data['settings'] ?? [],
+                'post_fields' => $data['post_fields'] ?? null,
             ]);
         });
     }
@@ -82,6 +83,7 @@ class BoardService
                 $table->enum('status', ['draft', 'published', 'private'])->default('published')->comment('게시 상태');
                 $table->string('secret_password', 255)->nullable()->comment('비밀글 비밀번호');
                 $table->string('options', 500)->nullable()->comment('게시글 옵션 (is_notice|show_image|no_indent 등, | 구분자)');
+                $table->json('meta')->nullable()->comment('게시글 추가 메타데이터');
                 $table->unsignedInteger('view_count')->default(0)->comment('조회수');
                 $table->unsignedInteger('comment_count')->default(0)->comment('댓글 수');
                 $table->unsignedInteger('file_count')->default(0)->comment('첨부파일 수');
@@ -656,6 +658,7 @@ class BoardService
             'tags' => isset($data['tags']) && $data['tags'] ? explode(',', $data['tags']) : null,
             'status' => 'published',
             'options' => $this->buildOptionsString($data),
+            'meta' => $this->buildMetaArray($board, $data),
             'published_at' => now(),
         ];
 
@@ -698,6 +701,7 @@ class BoardService
             'category' => $data['category'] ?? null,
             'tags' => isset($data['tags']) && $data['tags'] ? explode(',', $data['tags']) : null,
             'options' => $this->buildOptionsString($data),
+            'meta' => $this->buildMetaArray($board, $data),
         ];
         
         // member_id와 author_name이 전달되면 업데이트 (관리자 권한)
@@ -747,6 +751,39 @@ class BoardService
         }));
         
         return empty($activeOptions) ? null : implode('|', $activeOptions);
+    }
+
+    /**
+     * 게시글 메타데이터 생성
+     */
+    private function buildMetaArray(Board $board, array $data): ?array
+    {
+        if (!Schema::hasColumn($board->posts_table, 'meta')) {
+            return null;
+        }
+
+        if (empty($data['meta']) || !is_array($data['meta'])) {
+            return null;
+        }
+
+        $fields = $board->getPostFieldDefinitions();
+        $keys = !empty($fields) ? array_keys($fields) : array_keys($data['meta']);
+        $meta = [];
+
+        foreach ($keys as $key) {
+            $key = (string) $key;
+            $value = $data['meta'][$key] ?? null;
+
+            if (is_string($value)) {
+                $value = trim($value);
+            }
+
+            if (filled($value)) {
+                $meta[$key] = $value;
+            }
+        }
+
+        return empty($meta) ? null : $meta;
     }
 
     /**

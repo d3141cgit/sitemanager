@@ -79,6 +79,12 @@ class BoardController extends Controller
         if (file_exists($projectLayoutPath)) {
             return 'layouts.default';
         }
+
+        $projectLayoutPath = resource_path('views/layouts/gio.blade.php');
+
+        if (file_exists($projectLayoutPath)) {
+            return 'layouts.gio';
+        }
         
         // 기본적으로 패키지 레이아웃 사용
         return 'sitemanager::layouts.app';
@@ -420,14 +426,14 @@ class BoardController extends Controller
         }
 
         // Calculate permissions for the form
-        $canManage = $board->menu_id ? can('manage', $board) : false;
+        $canManage = $this->canManageBoard($board);
 
         $members = collect();
         if ($canManage) {
             $members = $this->getMembers();
         }
 
-        return view($this->selectView('form'), compact('board', 'members') + [
+        return view($this->selectView('form'), compact('board', 'members') + $this->postFormData($board) + [
             'canManage' => $canManage,
             'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
             'layoutPath' => $this->getLayoutPath() // 프로젝트 레이아웃 경로
@@ -446,7 +452,7 @@ class BoardController extends Controller
             abort(403, 'You do not have permission to write a post.');
         }
 
-        $validated = $request->validate([
+        $validated = $request->validate($this->postValidationRules($board, [
             'title' => 'required|string|max:200',
             'content' => 'nullable|string',
             'slug' => 'nullable|string|max:200',
@@ -466,7 +472,7 @@ class BoardController extends Controller
             'g-recaptcha-response' => 'nullable|string',
             'form_token' => 'nullable|string',
             'user_behavior' => 'nullable|string',
-        ]);
+        ]));
 
         // 익명 사용자인 경우 추가 검증
         if (!is_logged_in()) {
@@ -612,14 +618,14 @@ class BoardController extends Controller
         }
 
         // Calculate permissions for the form
-        $canManage = $board->menu_id ? can('manage', $board) : false;
+        $canManage = $this->canManageBoard($board);
 
         $members = collect();
         if ($canManage) {
             $members = $this->getMembers();
         }
 
-        return view($this->selectView('form'), compact('board', 'post', 'members') + [
+        return view($this->selectView('form'), compact('board', 'post', 'members') + $this->postFormData($board, $post) + [
             'canManage' => $canManage,
             'currentMenuId' => $board->menu_id, // NavigationComposer에서 사용할 현재 메뉴 ID
             'layoutPath' => $this->getLayoutPath() // 프로젝트 레이아웃 경로
@@ -639,7 +645,7 @@ class BoardController extends Controller
             abort(403, 'You do not have permission to edit this post.');
         }
 
-        $validated = $request->validate([
+        $validated = $request->validate($this->postValidationRules($board, [
             'title' => 'required|string|max:200',
             'content' => 'nullable|string',
             'slug' => 'nullable|string|max:200',
@@ -660,7 +666,7 @@ class BoardController extends Controller
             'member_id' => 'nullable|integer|exists:members,id', // 작성자 멤버 선택
             'author_name' => 'nullable|string|max:50', // 작성자 이름
             'published_at' => 'nullable|date', // 게시일시
-        ]);
+        ]));
 
         // categories 배열이 있으면 category 필드로 변환
         if (!empty($validated['categories'])) {
@@ -752,6 +758,79 @@ class BoardController extends Controller
                 ->withInput()
                 ->with('error', 'An error occurred while updating the post: ' . $e->getMessage());
         }
+    }
+
+    private function postFormData(Board $board, $post = null): array
+    {
+        return [
+            'postFields' => $board->getPostFieldDefinitions(),
+            'postOptionFields' => $board->getPostOptionDefinitions(),
+            'postOptions' => $post ? $this->decodePostOptions($post->options) : [],
+            'postMeta' => $post ? $this->decodePostMeta($post) : [],
+        ];
+    }
+
+    private function canManageBoard(Board $board): bool
+    {
+        $user = current_user();
+
+        if ($user && method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            return true;
+        }
+
+        return $board->menu_id ? can('manage', $board) : false;
+    }
+
+    private function postValidationRules(Board $board, array $rules): array
+    {
+        $rules['meta'] = 'nullable|array';
+        $rules['options_present'] = 'nullable|boolean';
+
+        foreach ($board->getPostFieldDefinitions() as $key => $field) {
+            if (! is_string($key) && ! is_int($key)) {
+                continue;
+            }
+
+            $rules['meta.' . $key] = data_get($field, 'rules', 'nullable|string|max:1000');
+        }
+
+        return $rules;
+    }
+
+    private function decodePostOptions(?string $options): array
+    {
+        if (blank($options)) {
+            return [];
+        }
+
+        $decoded = json_decode((string) $options, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
+
+        return collect(explode('|', (string) $options))
+            ->filter()
+            ->mapWithKeys(fn ($key) => [$key => true])
+            ->all();
+    }
+
+    private function decodePostMeta($post): array
+    {
+        $meta = $post->meta ?? null;
+
+        if (is_array($meta)) {
+            return $meta;
+        }
+
+        if (is_string($meta) && filled($meta)) {
+            $decoded = json_decode($meta, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return [];
     }
 
     /**

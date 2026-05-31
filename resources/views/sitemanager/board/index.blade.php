@@ -142,12 +142,15 @@
                 </td>
                 <td class="number text-center">{{ $board->created_at->format('Y-m-d') }}</td>
                 <td class="text-center actions">
+                    <a href="{{ route('sitemanager.boards.posts.index', $board) }}" class="btn btn-sm btn-outline-success" title="{{ t('Manage Posts') }}">
+                        <i class="bi bi-journal-text"></i>
+                    </a>
                     <a href="{{ route('sitemanager.boards.edit', $board) }}" class="btn btn-sm btn-outline-primary" title="{{ t('Edit') }}">
                         <i class="bi bi-pencil"></i>
                     </a>
                     
                     <!-- Bulk Update Slugs with dropdown -->
-                    <div class="btn-group d-inline" role="group">
+                    <div class="btn-group" role="group">
                         <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
                                 data-bs-toggle="dropdown" aria-expanded="false"
                                 title="{{ t('Bulk Update Slugs') }}">
@@ -229,4 +232,3 @@
 @endif
 
 @endsection
-

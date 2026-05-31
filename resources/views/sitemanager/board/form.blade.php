@@ -98,13 +98,104 @@
                         <div class="form-text">{{ t('Choose the theme/skin for this board\'s appearance.') }}</div>
                         @error('skin')
                             <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+	                        @enderror
+		                </div>
+		            </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="col">
+
+	            {{-- Dynamic Sub Section Area from systemSettings --}}
+            @if(isset($systemSettings))
+                @foreach($systemSettings as $key => $config)
+                    @php
+                        $type = $config[0];
+                        $label = $config[1];
+                        $options = $config[3] ?? [];
+                        $subSection = $options['sub_section'] ?? null;
+                    @endphp
+
+                    @if($subSection && str_contains($type, 'boolean'))
+                        <div class="card default-form mt-3" id="{{ $key }}_card" style="display: none;">
+                            <div class="card-header">
+                                <h4>{{ $subSection['title'] ?? $label . ' Settings' }}</h4>
+                            </div>
+                            <div class="card-body">
+                                @if(isset($subSection['settings']))
+                                    @foreach($subSection['settings'] as $fieldKey => $fieldConfig)
+                                        @php
+                                            $fieldType = $fieldConfig[0];
+                                            $fieldLabel = $fieldConfig[1];
+                                            $fieldDescription = $fieldConfig[2] ?? '';
+                                            $fieldOptions = $fieldConfig[3] ?? [];
+
+                                            // Get current value based on field type
+                                            if ($fieldKey === 'categories') {
+                                                $fieldValue = old($fieldKey, isset($board) && $board->categories ? implode("\n", $board->categories) : '');
+                                            } else {
+                                                $fieldValue = old("settings.{$fieldKey}", isset($board) ? $board->getSetting($fieldKey, $fieldOptions['default'] ?? '') : ($fieldOptions['default'] ?? ''));
+                                            }
+                                        @endphp
+
+                                        <div class="form-group">
+                                            @if($fieldType === 'special')
+                                                {{-- Special handling for categories field --}}
+                                                <label for="{{ $fieldKey }}" class="form-label">
+                                                    {{ $fieldLabel }}
+                                                    <small class="text-muted">({{ $fieldKey }})</small>
+                                                </label>
+                                                @if($fieldOptions['type'] === 'textarea')
+                                                    <textarea class="form-control" id="{{ $fieldKey }}"
+                                                                name="{{ $fieldKey }}"
+                                                                rows="{{ $fieldOptions['rows'] ?? 3 }}"
+                                                                @if($fieldOptions['placeholder'] ?? null) placeholder="{{ $fieldOptions['placeholder'] }}" @endif>{{ $fieldValue }}</textarea>
+                                                @endif
+                                            @elseif(str_contains($fieldType, 'boolean'))
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="{{ $fieldKey }}" name="{{ $fieldKey }}"
+                                                            value="1" {{ old($fieldKey, $fieldValue) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="{{ $fieldKey }}">
+                                                        {{ $fieldLabel }}
+                                                        <small class="text-muted">({{ $fieldKey }})</small>
+                                                    </label>
+                                                </div>
+                                            @else
+                                                <label for="{{ $fieldKey }}" class="form-label">
+                                                    {{ $fieldLabel }}
+                                                    <small class="text-muted">({{ $fieldKey }})</small>
+                                                </label>
+                                                @if($fieldOptions['type'] === 'textarea')
+                                                    <textarea class="form-control" id="{{ $fieldKey }}"
+                                                                name="settings[{{ $fieldKey }}]"
+                                                                rows="{{ $fieldOptions['rows'] ?? 3 }}"
+                                                                @if($fieldOptions['placeholder'] ?? null) placeholder="{{ $fieldOptions['placeholder'] }}" @endif>{{ $fieldValue }}</textarea>
+                                                @elseif($fieldOptions['type'] === 'number')
+                                                    <input type="number" class="form-control" id="{{ $fieldKey }}"
+                                                            name="settings[{{ $fieldKey }}]"
+                                                            value="{{ $fieldValue }}"
+                                                            @if($fieldOptions['min'] ?? null) min="{{ $fieldOptions['min'] }}" @endif
+                                                            @if($fieldOptions['max'] ?? null) max="{{ $fieldOptions['max'] }}" @endif
+                                                            @if($fieldOptions['placeholder'] ?? null) placeholder="{{ $fieldOptions['placeholder'] }}" @endif>
+                                                @else
+                                                    <input type="text" class="form-control" id="{{ $fieldKey }}"
+                                                            name="settings[{{ $fieldKey }}]"
+                                                            value="{{ $fieldValue }}"
+                                                            @if($fieldOptions['placeholder'] ?? null) placeholder="{{ $fieldOptions['placeholder'] }}" @endif>
+                                                @endif
+                                            @endif
+
+                                            @if($fieldDescription)
+                                                <div class="form-text">{{ $fieldDescription }}</div>
+                                            @endif
+                                        </div>
+	                @endforeach
+	                                @endif
+	                            </div>
+                            </div>
+	                    @endif
+	                @endforeach
+	            @endif
+		        </div>
+
+	        <div class="col">
             <div class="card default-form">
                 <div class="card-header">
                     <h4>{{ t('Settings') }}</h4>
@@ -169,9 +260,9 @@
                         @endforeach
                     @endif
                 </div>
-                <div class="card-footer">
+                <div class="card-body custom-settings-panel">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6>{{ t('Custom Settings') }}</h6>
+                        <h6 class="mb-0">{{ t('Custom Settings') }}</h6>
                         <button type="button" class="btn btn-sm btn-outline-primary" id="add-custom-setting">
                             <i class="bi bi-plus"></i> {{ t('Add Setting') }}
                         </button>
@@ -238,96 +329,125 @@
         </div>
 
         <div class="col">
-            {{-- Dynamic Sub Section Area from systemSettings --}}
-            @if(isset($systemSettings))
-                @foreach($systemSettings as $key => $config)
-                    @php
-                        $type = $config[0];
-                        $label = $config[1];
-                        $options = $config[3] ?? [];
-                        $subSection = $options['sub_section'] ?? null;
-                    @endphp
-                    
-                    @if($subSection && str_contains($type, 'boolean'))
-                        <div class="card default-form mb-4" id="{{ $key }}_card" style="display: none;">
-                            <div class="card-header">
-                                <h4>{{ $subSection['title'] ?? $label . ' Settings' }}</h4>
-                            </div>
-                            <div class="card-body">
-                                @if(isset($subSection['settings']))
-                                    @foreach($subSection['settings'] as $fieldKey => $fieldConfig)
-                                        @php
-                                            $fieldType = $fieldConfig[0];
-                                            $fieldLabel = $fieldConfig[1];
-                                            $fieldDescription = $fieldConfig[2] ?? '';
-                                            $fieldOptions = $fieldConfig[3] ?? [];
-                                            
-                                            // Get current value based on field type
-                                            if ($fieldKey === 'categories') {
-                                                $fieldValue = old($fieldKey, isset($board) && $board->categories ? implode("\n", $board->categories) : '');
-                                            } else {
-                                                $fieldValue = old("settings.{$fieldKey}", isset($board) ? $board->getSetting($fieldKey, $fieldOptions['default'] ?? '') : ($fieldOptions['default'] ?? ''));
-                                            }
-                                        @endphp
-                                        
-                                        <div class="form-group">
-                                            @if($fieldType === 'special')
-                                                {{-- Special handling for categories field --}}
-                                                <label for="{{ $fieldKey }}" class="form-label">
-                                                    {{ $fieldLabel }} 
-                                                    <small class="text-muted">({{ $fieldKey }})</small>
-                                                </label>
-                                                @if($fieldOptions['type'] === 'textarea')
-                                                    <textarea class="form-control" id="{{ $fieldKey }}" 
-                                                                name="{{ $fieldKey }}" 
-                                                                rows="{{ $fieldOptions['rows'] ?? 3 }}"
-                                                                @if($fieldOptions['placeholder'] ?? null) placeholder="{{ $fieldOptions['placeholder'] }}" @endif>{{ $fieldValue }}</textarea>
-                                                @endif
-                                            @elseif(str_contains($fieldType, 'boolean'))
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="{{ $fieldKey }}" name="{{ $fieldKey }}" 
-                                                            value="1" {{ old($fieldKey, $fieldValue) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="{{ $fieldKey }}">
-                                                        {{ $fieldLabel }} 
-                                                        <small class="text-muted">({{ $fieldKey }})</small>
-                                                    </label>
-                                                </div>
-                                            @else
-                                                <label for="{{ $fieldKey }}" class="form-label">
-                                                    {{ $fieldLabel }} 
-                                                    <small class="text-muted">({{ $fieldKey }})</small>
-                                                </label>
-                                                @if($fieldOptions['type'] === 'textarea')
-                                                    <textarea class="form-control" id="{{ $fieldKey }}" 
-                                                                name="settings[{{ $fieldKey }}]" 
-                                                                rows="{{ $fieldOptions['rows'] ?? 3 }}"
-                                                                @if($fieldOptions['placeholder'] ?? null) placeholder="{{ $fieldOptions['placeholder'] }}" @endif>{{ $fieldValue }}</textarea>
-                                                @elseif($fieldOptions['type'] === 'number')
-                                                    <input type="number" class="form-control" id="{{ $fieldKey }}" 
-                                                            name="settings[{{ $fieldKey }}]" 
-                                                            value="{{ $fieldValue }}"
-                                                            @if($fieldOptions['min'] ?? null) min="{{ $fieldOptions['min'] }}" @endif
-                                                            @if($fieldOptions['max'] ?? null) max="{{ $fieldOptions['max'] }}" @endif
-                                                            @if($fieldOptions['placeholder'] ?? null) placeholder="{{ $fieldOptions['placeholder'] }}" @endif>
-                                                @else
-                                                    <input type="text" class="form-control" id="{{ $fieldKey }}" 
-                                                            name="settings[{{ $fieldKey }}]" 
-                                                            value="{{ $fieldValue }}"
-                                                            @if($fieldOptions['placeholder'] ?? null) placeholder="{{ $fieldOptions['placeholder'] }}" @endif>
-                                                @endif
-                                            @endif
-                                            
-                                            @if($fieldDescription)
-                                                <div class="form-text">{{ $fieldDescription }}</div>
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                @endif
-                            </div>
+            @php
+                $postFieldRows = old('post_fields');
+                if ($postFieldRows === null) {
+                    $postFieldRows = [];
+                    if (isset($board) && is_array($board->post_fields)) {
+                        foreach ($board->post_fields as $fieldKey => $field) {
+                            $postFieldRows[] = [
+                                'key' => $fieldKey,
+                                'label' => $field['label'] ?? '',
+                                'type' => $field['type'] ?? 'text',
+                                'rules' => $field['rules'] ?? '',
+                                'placeholder' => $field['placeholder'] ?? '',
+                                'help' => $field['help'] ?? '',
+                                'default' => $field['default'] ?? '',
+                                'rows' => $field['rows'] ?? '',
+                                'options' => isset($field['options']) && is_array($field['options'])
+                                    ? collect($field['options'])->map(fn ($label, $value) => $value . '=' . $label)->implode("\n")
+                                    : '',
+                            ];
+                        }
+                    }
+                }
+            @endphp
+
+            <div class="card default-form mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h4 class="mb-0">{{ t('Post Fields') }}</h4>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="add-post-field">
+                            <i class="bi bi-plus"></i> {{ t('Add Field') }}
+                        </button>
+                    </div>
+                </div>
+	                <div class="card-body">
+	                    <div id="post-fields-container">
+	                        @foreach($postFieldRows as $fieldIndex => $field)
+                                @php
+                                    $fieldKeyLabel = $field['key'] ?? '';
+                                    $fieldTitle = $field['label'] ?: ($fieldKeyLabel ?: t('New Field'));
+                                    $fieldType = $field['type'] ?? 'text';
+                                @endphp
+	                            <details class="post-field-item post-field-card mb-2" @if($loop->first) open @endif>
+                                    <summary class="post-field-summary">
+                                        <span class="post-field-heading">
+                                            <strong class="post-field-title">{{ $fieldTitle }}</strong>
+                                            <small class="post-field-meta">
+                                                <span class="post-field-key-text">{{ $fieldKeyLabel ?: 'field_key' }}</span>
+                                                <span>·</span>
+                                                <span class="post-field-type-text">{{ $fieldType }}</span>
+                                            </small>
+                                        </span>
+                                        <span class="post-field-actions">
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-post-field" title="{{ t('Remove') }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </span>
+                                    </summary>
+	                                <div class="post-field-body">
+                                        <div class="row g-2">
+	                                    <div class="col-5">
+	                                        <label class="form-label small">{{ t('Key') }}</label>
+	                                        <input type="text" class="form-control form-control-sm post-field-key" name="post_fields[{{ $fieldIndex }}][key]" value="{{ $field['key'] ?? '' }}" placeholder="youtube_id">
+	                                    </div>
+	                                    <div class="col-7">
+	                                        <label class="form-label small">{{ t('Label') }}</label>
+	                                        <input type="text" class="form-control form-control-sm post-field-label" name="post_fields[{{ $fieldIndex }}][label]" value="{{ $field['label'] ?? '' }}" placeholder="YouTube ID">
+	                                    </div>
+	                                    <div class="col-5">
+	                                        <label class="form-label small">{{ t('Type') }}</label>
+                                        <select class="form-select form-select-sm post-field-type" name="post_fields[{{ $fieldIndex }}][type]">
+                                            @foreach(['text', 'textarea', 'select', 'boolean', 'url', 'number', 'date', 'datetime-local'] as $typeOption)
+                                                <option value="{{ $typeOption }}" @selected(($field['type'] ?? 'text') === $typeOption)>{{ $typeOption }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-7">
+                                        <label class="form-label small">{{ t('Rules') }}</label>
+                                        <input type="text" class="form-control form-control-sm" name="post_fields[{{ $fieldIndex }}][rules]" value="{{ $field['rules'] ?? '' }}" placeholder="nullable|string|max:255">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">{{ t('Placeholder') }}</label>
+                                        <input type="text" class="form-control form-control-sm" name="post_fields[{{ $fieldIndex }}][placeholder]" value="{{ $field['placeholder'] ?? '' }}">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">{{ t('Default') }}</label>
+                                        <input type="text" class="form-control form-control-sm" name="post_fields[{{ $fieldIndex }}][default]" value="{{ $field['default'] ?? '' }}">
+                                    </div>
+                                    <div class="col-12 post-field-options">
+                                        <label class="form-label small">{{ t('Select Options') }}</label>
+                                        <textarea class="form-control form-control-sm" name="post_fields[{{ $fieldIndex }}][options]" rows="3" placeholder="article=Article&#10;youtube=YouTube">{{ $field['options'] ?? '' }}</textarea>
+                                    </div>
+                                    <div class="col-4 post-field-rows">
+                                        <label class="form-label small">{{ t('Rows') }}</label>
+                                        <input type="number" class="form-control form-control-sm" name="post_fields[{{ $fieldIndex }}][rows]" value="{{ $field['rows'] ?? '' }}" min="1" max="20">
+                                    </div>
+                                    <div class="col-12">
+	                                        <label class="form-label small">{{ t('Help') }}</label>
+	                                        <input type="text" class="form-control form-control-sm" name="post_fields[{{ $fieldIndex }}][help]" value="{{ $field['help'] ?? '' }}">
+	                                    </div>
+	                                </div>
+                                    </div>
+	                            </details>
+	                        @endforeach
+	                    </div>
+                        <div class="post-fields-empty text-center py-4 {{ count($postFieldRows) ? 'd-none' : '' }}">
+                            <div class="text-muted small">{{ t('No custom post fields yet.') }}</div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2 add-post-field-empty">
+                                <i class="bi bi-plus"></i> {{ t('Add Field') }}
+                            </button>
                         </div>
-                    @endif
-                @endforeach
-            @endif
+	                    <div class="form-text">
+                        <small>{{ t('These fields appear on the admin post form and are stored in each post meta column.') }}</small>
+                    </div>
+                    @error('post_fields')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
         </div>
     </div>
     
@@ -586,6 +706,155 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.closest('.custom-setting-item').remove();
         });
     });
+
+	    // Post Fields functionality
+	    const addPostFieldBtn = document.getElementById('add-post-field');
+	    const postFieldsContainer = document.getElementById('post-fields-container');
+        const postFieldsEmpty = document.querySelector('.post-fields-empty');
+	    let postFieldIndex = postFieldsContainer ? postFieldsContainer.children.length : 0;
+
+        function updatePostFieldsEmpty() {
+            if (!postFieldsEmpty || !postFieldsContainer) return;
+
+            postFieldsEmpty.classList.toggle('d-none', postFieldsContainer.querySelectorAll('.post-field-item').length > 0);
+        }
+
+	    function refreshPostFieldVisibility(item) {
+	        const type = item.querySelector('.post-field-type')?.value || 'text';
+	        const options = item.querySelector('.post-field-options');
+	        const rows = item.querySelector('.post-field-rows');
+
+        if (options) {
+            options.style.display = type === 'select' ? 'block' : 'none';
+        }
+	        if (rows) {
+	            rows.style.display = type === 'textarea' ? 'block' : 'none';
+	        }
+	    }
+
+        function updatePostFieldSummary(item) {
+            const key = item.querySelector('.post-field-key')?.value?.trim() || 'field_key';
+            const label = item.querySelector('.post-field-label')?.value?.trim() || key || '{{ t('New Field') }}';
+            const type = item.querySelector('.post-field-type')?.value || 'text';
+
+            const title = item.querySelector('.post-field-title');
+            const keyText = item.querySelector('.post-field-key-text');
+            const typeText = item.querySelector('.post-field-type-text');
+
+            if (title) title.textContent = label;
+            if (keyText) keyText.textContent = key;
+            if (typeText) typeText.textContent = type;
+        }
+
+	    function bindPostFieldItem(item) {
+	        item.querySelector('.remove-post-field')?.addEventListener('click', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+	            item.remove();
+                updatePostFieldsEmpty();
+	        });
+
+	        item.querySelector('.post-field-type')?.addEventListener('change', function() {
+	            refreshPostFieldVisibility(item);
+                updatePostFieldSummary(item);
+	        });
+
+            item.querySelector('.post-field-key')?.addEventListener('input', function() {
+                updatePostFieldSummary(item);
+            });
+
+            item.querySelector('.post-field-label')?.addEventListener('input', function() {
+                updatePostFieldSummary(item);
+            });
+
+	        refreshPostFieldVisibility(item);
+            updatePostFieldSummary(item);
+	    }
+
+    function addPostField() {
+        if (!postFieldsContainer) return;
+
+	        const fieldHtml = `
+	            <details class="post-field-item post-field-card mb-2" open>
+                    <summary class="post-field-summary">
+                        <span class="post-field-heading">
+                            <strong class="post-field-title">{{ t('New Field') }}</strong>
+                            <small class="post-field-meta">
+                                <span class="post-field-key-text">field_key</span>
+                                <span>·</span>
+                                <span class="post-field-type-text">text</span>
+                            </small>
+                        </span>
+                        <span class="post-field-actions">
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-post-field" title="{{ t('Remove') }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </span>
+                    </summary>
+	                <div class="post-field-body">
+                        <div class="row g-2">
+	                    <div class="col-5">
+	                        <label class="form-label small">{{ t('Key') }}</label>
+	                        <input type="text" class="form-control form-control-sm post-field-key" name="post_fields[${postFieldIndex}][key]" placeholder="youtube_id">
+	                    </div>
+	                    <div class="col-7">
+	                        <label class="form-label small">{{ t('Label') }}</label>
+	                        <input type="text" class="form-control form-control-sm post-field-label" name="post_fields[${postFieldIndex}][label]" placeholder="YouTube ID">
+	                    </div>
+	                    <div class="col-5">
+                        <label class="form-label small">{{ t('Type') }}</label>
+                        <select class="form-select form-select-sm post-field-type" name="post_fields[${postFieldIndex}][type]">
+                            <option value="text">text</option>
+                            <option value="textarea">textarea</option>
+                            <option value="select">select</option>
+                            <option value="boolean">boolean</option>
+                            <option value="url">url</option>
+                            <option value="number">number</option>
+                            <option value="date">date</option>
+                            <option value="datetime-local">datetime-local</option>
+                        </select>
+                    </div>
+                    <div class="col-7">
+                        <label class="form-label small">{{ t('Rules') }}</label>
+                        <input type="text" class="form-control form-control-sm" name="post_fields[${postFieldIndex}][rules]" placeholder="nullable|string|max:255">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small">{{ t('Placeholder') }}</label>
+                        <input type="text" class="form-control form-control-sm" name="post_fields[${postFieldIndex}][placeholder]">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small">{{ t('Default') }}</label>
+                        <input type="text" class="form-control form-control-sm" name="post_fields[${postFieldIndex}][default]">
+                    </div>
+                    <div class="col-12 post-field-options">
+                        <label class="form-label small">{{ t('Select Options') }}</label>
+                        <textarea class="form-control form-control-sm" name="post_fields[${postFieldIndex}][options]" rows="3" placeholder="article=Article&#10;youtube=YouTube"></textarea>
+                    </div>
+                    <div class="col-4 post-field-rows">
+                        <label class="form-label small">{{ t('Rows') }}</label>
+                        <input type="number" class="form-control form-control-sm" name="post_fields[${postFieldIndex}][rows]" min="1" max="20">
+                    </div>
+                    <div class="col-12">
+	                        <label class="form-label small">{{ t('Help') }}</label>
+	                        <input type="text" class="form-control form-control-sm" name="post_fields[${postFieldIndex}][help]">
+	                    </div>
+	                </div>
+                    </div>
+	            </details>
+	        `;
+
+	        postFieldsContainer.insertAdjacentHTML('beforeend', fieldHtml);
+	        const item = postFieldsContainer.lastElementChild;
+	        bindPostFieldItem(item);
+            updatePostFieldsEmpty();
+            item.querySelector('.post-field-key')?.focus();
+	        postFieldIndex++;
+	    }
+
+	    addPostFieldBtn?.addEventListener('click', addPostField);
+        document.querySelector('.add-post-field-empty')?.addEventListener('click', addPostField);
+	    document.querySelectorAll('.post-field-item').forEach(bindPostFieldItem);
+        updatePostFieldsEmpty();
 });
 </script>
 @endpush
@@ -676,6 +945,70 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .custom-setting-item .form-control {
     background-color: #fff;
+}
+
+.custom-settings-panel {
+    border-top: 1px solid var(--line-soft);
+    background-color: var(--bg-tinted);
+}
+
+.custom-settings-panel #custom-settings-container {
+    width: 100%;
+}
+
+.post-field-card {
+    border: 1px solid var(--line-soft);
+    background-color: #fff;
+}
+
+.post-field-summary {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    list-style: none;
+    padding: 10px 12px;
+}
+
+.post-field-summary::-webkit-details-marker {
+    display: none;
+}
+
+.post-field-heading {
+    min-width: 0;
+}
+
+.post-field-title,
+.post-field-meta {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.post-field-title {
+    font-size: .92rem;
+    font-weight: 650;
+}
+
+.post-field-meta {
+    color: var(--fg-muted);
+    font-size: .76rem;
+}
+
+.post-field-actions {
+    flex: 0 0 auto;
+}
+
+.post-field-body {
+    border-top: 1px solid var(--line-soft);
+    padding: 12px;
+}
+
+.post-fields-empty {
+    border: 1px dashed var(--line-soft);
+    background-color: var(--bg-tinted);
 }
 </style>
 @endpush

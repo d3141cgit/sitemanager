@@ -28,6 +28,7 @@ abstract class BoardPost extends Model
         'status',
         'secret_password',
         'options',
+        'meta',
         'view_count',
         'comment_count',
         'file_count',
@@ -41,6 +42,7 @@ abstract class BoardPost extends Model
 
     protected $casts = [
         'tags' => 'array',
+        'meta' => 'array',
         'view_count' => 'integer',
         'comment_count' => 'integer',
         'file_count' => 'integer',

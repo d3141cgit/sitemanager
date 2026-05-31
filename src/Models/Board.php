@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  */
@@ -22,12 +23,14 @@ class Board extends Model
         'posts_per_page',
         'categories',
         'settings',
+        'post_fields',
         'status',
     ];
 
     protected $casts = [
         'categories' => 'array',
         'settings' => 'array',
+        'post_fields' => 'array',
         'posts_per_page' => 'integer',
     ];
 
@@ -123,6 +126,65 @@ class Board extends Model
         $settings = $this->settings ?? [];
         data_set($settings, $key, $value);
         $this->update(['settings' => $settings]);
+    }
+
+    /**
+     * 게시글 추가 필드 정의 반환
+     */
+    public function getPostFieldDefinitions(): array
+    {
+        return is_array($this->post_fields) ? $this->post_fields : [];
+    }
+
+    /**
+     * 게시글 옵션 flag 정의 반환
+     */
+    public function getPostOptionDefinitions(): array
+    {
+        $options = [
+            'is_notice' => [
+                'label' => 'Mark as Notice',
+                'help' => 'Display this post as a notice when notice listing is enabled.',
+            ],
+        ];
+
+        $customOptions = $this->getSetting('post_options', []);
+
+        if (is_string($customOptions)) {
+            $decoded = json_decode($customOptions, true);
+            $customOptions = json_last_error() === JSON_ERROR_NONE
+                ? $decoded
+                : collect(preg_split('/\r\n|\r|\n|,/', $customOptions) ?: [])
+                    ->map(fn ($option) => trim($option))
+                    ->filter()
+                    ->mapWithKeys(fn ($option) => [$option => ['label' => Str::headline($option)]])
+                    ->all();
+        }
+
+        if (is_array($customOptions)) {
+            foreach ($customOptions as $key => $definition) {
+                if (is_int($key)) {
+                    $key = (string) $definition;
+                    $definition = [];
+                }
+
+                if (! is_string($key) || $key === '' || $key === 'is_notice') {
+                    continue;
+                }
+
+                $options[$key] = is_array($definition)
+                    ? [
+                        'label' => $definition['label'] ?? Str::headline($key),
+                        'help' => $definition['help'] ?? null,
+                    ]
+                    : [
+                        'label' => (string) $definition,
+                        'help' => null,
+                    ];
+            }
+        }
+
+        return $options;
     }
 
     /**
