@@ -487,6 +487,25 @@ body {
     background-color: var(--line);
 }
 
+/* Sub-group header inside a dropdown submenu (functional grouping label) */
+.sidebar-submenu-header {
+    list-style: none;
+    padding: 0.55rem 1.5rem 0.2rem 3.5rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bs-gray-500);
+}
+
+/* Divider line inside a dropdown submenu */
+.sidebar-submenu-divider {
+    list-style: none;
+    height: 1px;
+    margin: 0.35rem 1.5rem 0.35rem 3.5rem;
+    background-color: var(--line-soft, #e9ecef);
+}
+
 /* When parent dropdown is active and the first submenu item is also active,
    they share the same background. Add a subtle separator so they don't blend. */
 .sidebar-submenu {

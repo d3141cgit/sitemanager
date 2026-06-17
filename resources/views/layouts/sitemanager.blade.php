@@ -126,10 +126,12 @@
                         @elseif(isset($ext['name']))
                             @if(isset($ext['children']) && is_array($ext['children']) && count($ext['children']) > 0)
                                 @php
-                                    $activeChildren = collect($ext['children'])->filter(fn($c) => ($c['enabled'] ?? true) && isset($c['route']));
-                                    $isParentActive = $activeChildren->contains(fn($c) => sitemanager_menu_is_active($c));
+                                    // 라우트 자식만으로 표시 여부·부모 active 판정. header/divider 는 그룹 구분용(라우트 없음).
+                                    $routeChildren = collect($ext['children'])->filter(fn($c) => ($c['enabled'] ?? true) && isset($c['route']));
+                                    $visibleChildren = collect($ext['children'])->filter(fn($c) => ($c['enabled'] ?? true) && (isset($c['route']) || in_array($c['type'] ?? null, ['header', 'divider'], true)));
+                                    $isParentActive = $routeChildren->contains(fn($c) => sitemanager_menu_is_active($c));
                                 @endphp
-                                @if($activeChildren->isNotEmpty())
+                                @if($routeChildren->isNotEmpty())
                                     <li class="sidebar-menu-dropdown">
                                         <a @class(['sidebar-menu-item', 'active' => $isParentActive])
                                             href="#" data-bs-toggle="collapse" data-bs-target="#ext-{{ $extKey }}">
@@ -139,14 +141,20 @@
                                         </a>
                                         <div class="collapse" id="ext-{{ $extKey }}">
                                             <ul class="sidebar-submenu">
-                                                @foreach($activeChildren as $child)
-                                                    <li>
-                                                        <a @class(['sidebar-submenu-item', 'active' => sitemanager_menu_is_active($child)])
-                                                            href="{{ route($child['route']) }}">
-                                                            <i class="{{ $child['icon'] ?? 'bi-dot' }}"></i>
-                                                            <span>{{ t($child['name']) }}</span>
-                                                        </a>
-                                                    </li>
+                                                @foreach($visibleChildren as $child)
+                                                    @if(($child['type'] ?? null) === 'divider')
+                                                        <li class="sidebar-submenu-divider" aria-hidden="true"></li>
+                                                    @elseif(($child['type'] ?? null) === 'header')
+                                                        <li class="sidebar-submenu-header">{{ t($child['name'] ?? '') }}</li>
+                                                    @else
+                                                        <li>
+                                                            <a @class(['sidebar-submenu-item', 'active' => sitemanager_menu_is_active($child)])
+                                                                href="{{ route($child['route']) }}">
+                                                                <i class="{{ $child['icon'] ?? 'bi-dot' }}"></i>
+                                                                <span>{{ t($child['name']) }}</span>
+                                                            </a>
+                                                        </li>
+                                                    @endif
                                                 @endforeach
                                             </ul>
                                         </div>
