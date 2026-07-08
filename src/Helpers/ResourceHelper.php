@@ -244,47 +244,61 @@ if (!function_exists('setResources')) {
         static $loadedResources = [];
         $resources = '';
 
+        // CDN 자산: 버전 고정 + SRI(integrity) 해시로 공급망 변조·CDN 장애 노출을 줄인다.
+        //  형식: 'url' 만 있으면 SRI 없음(문자열), ['url'=>..,'sri'=>..] 이면 integrity+crossorigin 부여.
+        //  SRI 를 갱신할 때는 해당 URL 을 받아 `openssl dgst -sha384 -binary | openssl base64 -A` 로 재계산.
         $cdnResources = [
             'sweetalert' => [
-                    'css' => ['https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css'],
-                    'js' => ['https://cdn.jsdelivr.net/npm/sweetalert2@11']
+                    'css' => [['url' => 'https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css', 'sri' => 'sha384-dCW5imOdApH6OwpFau8cZNKjqVbJYnCA5q+8YsMYP3XwXKsV6Jfz1u6MZLnXaBsS']],
+                    'js' => [['url' => 'https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js', 'sri' => 'sha384-nLoOnA/BDh8A/jxqtckg4DumuCGOBYUnNJLZdQz/zfYNp3wcjGSoWTAzgko06G/2']]
                 ],
             'jquery' => [
                     'js' => [
-                        'https://code.jquery.com/jquery-3.7.1.min.js',
-                        'https://code.jquery.com/ui/1.14.0/jquery-ui.min.js'
+                        ['url' => 'https://code.jquery.com/jquery-3.7.1.min.js', 'sri' => 'sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs'],
+                        ['url' => 'https://code.jquery.com/ui/1.14.0/jquery-ui.min.js', 'sri' => 'sha384-8EM386r8XMMzwGPUxfGNr6c1wIOYnPQBJ6VFxzKCZeklpQarHoZGB40kdNDA3gYr']
                     ],
-                    'css' => ['//code.jquery.com/ui/1.14.0/themes/ui-darkness/jquery-ui.css']
+                    'css' => [['url' => 'https://code.jquery.com/ui/1.14.0/themes/ui-darkness/jquery-ui.css', 'sri' => 'sha384-/0boWEfbR17vbRSzc07RRhUA9hK8orV94N/Fv2CoCaXcUlOrqLq2UX/21TgM+OrM']]
                 ],
             'bootstrap' => [
-                'js' => ['https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js'],
+                'js' => [['url' => 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js', 'sri' => 'sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q']],
                 'css' => [
-                    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css',
-                    'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css'
+                    ['url' => 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css', 'sri' => 'sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr'],
+                    ['url' => 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css', 'sri' => 'sha384-CK2SzKma4jA5H/MXDUU7i1TqZlCFaD4T01vtyDFvPlD97JQyS+IsSh1nI2EFbpyk']
                 ]
             ],
             'fontawesome' => [
+                // use.fontawesome.com 은 CORS/버전 특성상 SRI 미부여 (kit 갱신 대비).
                 'css' => ['https://use.fontawesome.com/releases/v5.15.4/css/all.css']
             ],
             'animate' => [
-                'css' => ['https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css']
+                'css' => [['url' => 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css', 'sri' => 'sha384-Gu3KVV2H9d+yA4QDpVB7VcOyhJlAVrcXd0thEjr4KznfaFPLe0xQJyonVxONa4ZC']]
             ],
             'select2' => [
-                'js' => ['https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js'],
+                'js' => [['url' => 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', 'sri' => 'sha384-d3UHjPdzJkZuk5H3qKYMLRyWLAQBJbby2yr2Q58hXXtAGF8RSNO9jpLDlKKPv5v3']],
                 'css' => [
-                    'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css',
-                    'https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css'
+                    ['url' => 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css', 'sri' => 'sha384-OXVF05DQEe311p6ohU11NwlnX08FzMCsyoXzGOaL+83dKAb3qS17yZJxESl8YrJQ'],
+                    ['url' => 'https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css', 'sri' => 'sha384-IrMr0LFnIMa9H6HhC5VVqVuWNEIwspnRLKQc0SUyPj4Cy4s02DiWDZEoJOo5WNK6']
                 ]
             ],
             'flatpickr' => [
-                'js' => ['https://cdn.jsdelivr.net/npm/flatpickr'],
-                'css' => ['https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css']
+                'js' => [['url' => 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js', 'sri' => 'sha384-5JqMv4L/Xa0hfvtF06qboNdhvuYXUku9ZrhZh3bSk8VXF0A/RuSLHpLsSV9Zqhl6']],
+                'css' => [['url' => 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css', 'sri' => 'sha384-RkASv+6KfBMW9eknReJIJ6b3UnjKOKC5bOUaNgIY778NFbQ8MtWq9Lr/khUgqtTt']]
             ],
             'swiper' => [
+                // swiper@12 는 major 태그(미고정)라 SRI 미부여 — 고정 시 함께 SRI 부여 권장.
                 'js' => ['https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js'],
                 'css' => ['https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css']
             ],
         ];
+
+        // CDN 항목 정규화: 문자열이면 [url, sri=null], 배열이면 [url, sri].
+        $cdnItem = function ($item): array {
+            if (is_array($item)) {
+                return [$item['url'] ?? '', $item['sri'] ?? null];
+            }
+
+            return [(string) $item, null];
+        };
 
         foreach ($assets as $asset) {
             if (in_array($asset, $loadedResources) || !isset($cdnResources[$asset])) {
@@ -292,13 +306,17 @@ if (!function_exists('setResources')) {
             }
 
             $config = $cdnResources[$asset];
-            
-            foreach ($config['css'] ?? [] as $url) {
-                $resources .= "<link rel=\"stylesheet\" href=\"{$url}\" />\n";
+
+            foreach ($config['css'] ?? [] as $item) {
+                [$url, $sri] = $cdnItem($item);
+                $attrs = $sri ? " integrity=\"{$sri}\" crossorigin=\"anonymous\"" : '';
+                $resources .= "<link rel=\"stylesheet\" href=\"{$url}\"{$attrs} />\n";
             }
-            
-            foreach ($config['js'] ?? [] as $url) {
-                $resources .= "<script src=\"{$url}\"></script>\n";
+
+            foreach ($config['js'] ?? [] as $item) {
+                [$url, $sri] = $cdnItem($item);
+                $attrs = $sri ? " integrity=\"{$sri}\" crossorigin=\"anonymous\"" : '';
+                $resources .= "<script src=\"{$url}\"{$attrs}></script>\n";
             }
 
             $loadedResources[] = $asset;
