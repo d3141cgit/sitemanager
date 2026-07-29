@@ -533,10 +533,14 @@ class SecurityService
         }
         
         // 이메일 인증 완료 및 비밀번호 설정
+        //
+        // status 는 'published' 다 — 게시글 enum 은 draft|published|private|pending 이고
+        // 'approved' 는 댓글 쪽 값이다. 이전에는 'approved' 를 써서 비회원 글 인증이
+        // "Data truncated for column 'status'" 로 실패했다.
         $post->update([
             'email_verified_at' => now(),
             'email_verification_token' => $hashedPassword, // 비밀번호를 토큰 필드에 저장
-            'status' => 'approved'
+            'status' => 'published'
         ]);
     }
     
@@ -553,12 +557,18 @@ class SecurityService
             throw new \Exception('이메일이 일치하지 않습니다.');
         }
         
-        // 이메일 인증 완료 및 비밀번호 설정
+        // 이메일 인증 완료 및 비밀번호 설정 ('approved' 는 댓글 enum 의 유효값)
         $comment->update([
             'email_verified_at' => now(),
             'email_verification_token' => $hashedPassword, // 비밀번호를 토큰 필드에 저장
             'status' => 'approved'
         ]);
+
+        // 승인으로 댓글 수가 늘었으므로 게시글의 비정규화 카운트를 맞춘다.
+        $board = Board::where('slug', $tokenData['board_slug'])->first();
+        if ($board) {
+            app(BoardService::class)->syncPostCommentCount($board, $comment->post_id);
+        }
     }
     
     /**

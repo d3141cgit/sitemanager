@@ -297,6 +297,9 @@ class CommentController extends Controller
             // 댓글 HTML 렌더링 (로그인 사용자만)
             $commentHtml = view($this->selectView('comment'), compact('comment', 'board', 'post') + ['level' => 0])->render();
             
+            // 비정규화 카운트 갱신 (목록 화면의 '댓글 있음' 표시용)
+            $this->boardService->syncPostCommentCount($board, $postId);
+
             // 전체 댓글 수 조회 (새로 추가된 댓글 포함)
             $totalCommentCount = $this->boardService->getPostCommentCount($board, $postId);
 
@@ -517,6 +520,9 @@ class CommentController extends Controller
             $comment = $commentModelClass::findOrFail($commentId);
             
             $comment->update(['status' => 'approved']);
+
+            // 승인으로 카운트가 늘었으므로 동기화
+            $this->boardService->syncPostCommentCount($board, $postId);
             
             return response()->json([
                 'success' => true,

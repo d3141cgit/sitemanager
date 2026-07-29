@@ -734,13 +734,34 @@ abstract class BoardPost extends Model
             return true;
         }
 
-        // 관리자는 항상 접근 가능 (선택사항)
-        // if ($userId && User::find($userId)?->isAdmin()) {
-        //     return true;
-        // }
+        // 관리자는 항상 접근 가능.
+        // 비밀글 문의 게시판에서 운영자가 원문을 열지 못하면 답변 자체가 불가능하다.
+        if ($userId && $this->resolveAccessor($userId)?->isAdmin()) {
+            return true;
+        }
 
         // 세션에서 비밀번호 확인 여부 체크
         return $this->isPasswordVerified();
+    }
+
+    /**
+     * canAccess() 의 관리자 판정용 사용자 조회.
+     *
+     * canAccess() 는 목록 화면에서 행마다 호출되므로 매번 Member 를 조회하면 N+1 이 된다.
+     * 대개 넘어오는 id 는 현재 로그인 사용자이므로 그 경우 이미 해석된 인스턴스를 재사용하고,
+     * 다른 id 가 들어온 예외적인 경우에만 조회한다.
+     *
+     * 프로젝트가 멤버 모델을 교체할 수 있어(UserProvider 계열) isAdmin() 유무를 확인한다.
+     */
+    protected function resolveAccessor(int $userId): ?object
+    {
+        $user = current_user_id() === $userId ? current_user() : Member::find($userId);
+
+        if (! $user || ! method_exists($user, 'isAdmin')) {
+            return null;
+        }
+
+        return $user;
     }
 
     /**

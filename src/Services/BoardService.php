@@ -80,7 +80,9 @@ class BoardService
                 $table->string('slug', 200)->nullable()->comment('URL 슬러그 (SEO용)');
                 $table->string('category', 100)->nullable()->comment('카테고리');
                 $table->json('tags')->nullable()->comment('태그 목록');
-                $table->enum('status', ['draft', 'published', 'private'])->default('published')->comment('게시 상태');
+                // 'pending' — 비회원 글이 이메일 인증을 마칠 때까지 머무는 상태.
+                // createPost() 가 비회원 글에 이 값을 쓰므로 enum 에 반드시 포함돼야 한다.
+                $table->enum('status', ['draft', 'published', 'private', 'pending'])->default('published')->comment('게시 상태');
                 $table->string('secret_password', 255)->nullable()->comment('비밀글 비밀번호');
                 $table->string('options', 500)->nullable()->comment('게시글 옵션 (is_notice|show_image|no_indent 등, | 구분자)');
                 $table->json('meta')->nullable()->comment('게시글 추가 메타데이터');
@@ -116,6 +118,11 @@ class BoardService
                 $table->timestamp('email_verified_at')->nullable()->comment('이메일 인증 완료 시간');
                 $table->text('content')->comment('댓글 내용');
                 $table->enum('status', ['approved', 'pending', 'rejected', 'deleted'])->default('approved')->comment('승인 상태');
+                // 아래 3개는 BoardComment 모델이 $fillable/$casts 로 선언하고 있으나
+                // 테이블에는 빠져 있어 대입 시 Unknown column 이 나던 컬럼들이다.
+                $table->string('ip_address', 45)->nullable()->comment('작성자 IP (스팸 추적용)');
+                $table->string('user_agent', 500)->nullable()->comment('작성자 User-Agent (스팸 추적용)');
+                $table->json('meta')->nullable()->comment('댓글 추가 메타데이터');
                 $table->unsignedInteger('file_count')->default(0)->comment('첨부파일 수');
                 $table->timestamps();
                 $table->softDeletes();
@@ -444,6 +451,31 @@ class BoardService
     /**
      * 게시물의 전체 댓글 수 조회 (모든 레벨 포함)
      */
+    /**
+     * 게시글의 comment_count 컬럼을 실제 승인 댓글 수로 맞춘다.
+     *
+     * 이 컬럼은 목록 화면에서 "댓글 있음" 표시에 쓰이는 비정규화 값인데, 그동안 댓글
+     * 생성·승인·삭제 어디에서도 갱신하지 않아 항상 0 이었다. 댓글이 바뀌는 지점마다
+     * 이 메서드를 호출한다.
+     *
+     * getPostCommentCount() 와 다르다 — 그쪽은 "보는 사람 기준"(자기 미승인 댓글 포함)의
+     * 표시용 수치라 저장 값으로 쓸 수 없다. 여기서는 승인된 댓글만 센다.
+     */
+    public function syncPostCommentCount(Board $board, $postId): int
+    {
+        $postModelClass = BoardPost::forBoard($board->slug);
+        $commentModelClass = BoardComment::forBoard($board->slug);
+
+        // 동적 모델에 SoftDeletes 가 걸려 있어 삭제된 댓글은 자동 제외된다.
+        $count = $commentModelClass::where('post_id', $postId)
+            ->where('status', 'approved')
+            ->count();
+
+        $postModelClass::whereKey($postId)->update(['comment_count' => $count]);
+
+        return $count;
+    }
+
     public function getPostCommentCount(Board $board, $postId): int
     {
         if (!$board->getSetting('allow_comments', true)) {
@@ -897,12 +929,15 @@ class BoardService
                 $comment->delete();
             }
 
+            // 삭제/상태변경 후 비정규화 카운트를 맞춘다.
+            $commentCount = $this->syncPostCommentCount($board, $postId);
+
             DB::commit();
 
             return [
                 'success' => true,
                 'message' => '댓글이 삭제되었습니다.',
-                'comment_count' => $post->fresh()->comment_count,
+                'comment_count' => $commentCount,
                 'deleted_completely' => !$hasReplies,
             ];
         } catch (\Exception $e) {
@@ -1039,12 +1074,15 @@ class BoardService
                 $comment->delete();
             }
 
+            // 삭제/상태변경 후 비정규화 카운트를 맞춘다.
+            $commentCount = $this->syncPostCommentCount($board, $postId);
+
             DB::commit();
 
             return [
                 'success' => true,
                 'message' => '댓글이 삭제되었습니다.',
-                'comment_count' => $post->fresh()->comment_count,
+                'comment_count' => $commentCount,
                 'deleted_completely' => !$hasReplies,
             ];
         } catch (\Exception $e) {

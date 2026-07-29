@@ -2,7 +2,7 @@
 
 namespace SiteManager\Http\Controllers;
 
-use SiteManager\Services\EmailVerificationService;
+use SiteManager\Services\SecurityService;
 use SiteManager\Models\BoardPost;
 use SiteManager\Models\BoardComment;
 use Illuminate\Http\Request;
@@ -15,7 +15,7 @@ use Illuminate\View\View;
 class EmailVerificationController extends Controller
 {
     public function __construct(
-        private EmailVerificationService $emailVerificationService
+        private SecurityService $security
     ) {}
 
     /**
@@ -57,7 +57,7 @@ class EmailVerificationController extends Controller
      */
     public function editVerify(Request $request, string $token): View|RedirectResponse
     {
-        $tokenData = $this->emailVerificationService->verifyEditToken($token);
+        $tokenData = $this->security->verifyEditToken($token);
         $layoutPath = $this->getProjectLayoutPath();
         
         if (!$tokenData) {
@@ -101,7 +101,7 @@ class EmailVerificationController extends Controller
         ]);
         
         try {
-            $this->emailVerificationService->sendVerificationEmail(
+            $this->security->sendVerificationEmail(
                 $validated['email'],
                 $validated['type'],
                 $validated['id'],
@@ -142,7 +142,7 @@ class EmailVerificationController extends Controller
         
         // 캡챠 검증
         if ($request->has('g-recaptcha-response')) {
-            if (!$this->emailVerificationService->verifyCaptcha(
+            if (!$this->security->verifyCaptcha(
                 $validated['g-recaptcha-response'],
                 $request->ip()
             )) {
@@ -154,7 +154,7 @@ class EmailVerificationController extends Controller
         }
         
         // 이메일 도메인 블랙리스트 검사
-        if ($this->emailVerificationService->isBlockedEmailDomain($validated['email'])) {
+        if ($this->security->isBlockedEmailDomain($validated['email'])) {
             return response()->json([
                 'success' => false,
                 'message' => '사용할 수 없는 이메일 도메인입니다.'
@@ -162,7 +162,7 @@ class EmailVerificationController extends Controller
         }
         
         try {
-            $this->emailVerificationService->sendEditVerificationEmail(
+            $this->security->sendEditVerificationEmail(
                 $validated['email'],
                 $validated['type'],
                 $validated['id'],
@@ -205,7 +205,7 @@ class EmailVerificationController extends Controller
             ]);
         }
         
-        $tokenData = $this->emailVerificationService->verifyEditToken($validated['token']);
+        $tokenData = $this->security->verifyEditToken($validated['token']);
         
         if (!$tokenData) {
             return response()->json([
@@ -276,7 +276,7 @@ class EmailVerificationController extends Controller
         
         try {
             // 이메일 인증과 비밀번호 설정을 함께 처리
-            $result = $this->emailVerificationService->verifyEmailAndSetPassword(
+            $result = $this->security->verifyEmailAndSetPassword(
                 $validated['token'],
                 $validated['password']
             );

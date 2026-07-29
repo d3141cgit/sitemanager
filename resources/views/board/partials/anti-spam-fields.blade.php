@@ -25,7 +25,7 @@
 
 {{-- 폼 토큰 (제출 시간 검증용) --}}
 @php
-$formToken = app(\SiteManager\Services\EmailVerificationService::class)->generateFormToken();
+$formToken = app(\SiteManager\Services\SecurityService::class)->generateFormToken();
 @endphp
 <input type="hidden" name="form_token" value="{{ $formToken }}">
 
