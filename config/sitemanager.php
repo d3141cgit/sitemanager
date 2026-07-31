@@ -172,6 +172,10 @@ return [
             'sitemanager_board' => null, // 커스텀 컨트롤러로 오버라이드 가능
             'board' => null,
             'member' => null,
+            // 대시보드를 프로젝트 도메인 데이터로 재구성할 때 지정한다.
+            // 지정하면 SiteManagerController::dashboard() 대신 해당 클래스의
+            // index() 가 호출되며, 기본 게시판 통계 집계는 실행되지 않는다.
+            'sitemanager_dashboard' => null,
         ],
         'views' => [
             'sitemanager_dashboard' => 'sitemanager::sitemanager.dashboard',

@@ -26,6 +26,15 @@ class SiteManagerController extends Controller
      */
     public function dashboard()
     {
+        // 프로젝트가 자체 대시보드 컨트롤러를 지정한 경우 위임한다.
+        // Why: view 만 교체하면(customizations.views) 데이터는 여전히 아래 기본 집계를
+        //      쓰게 되고, 게시판 전수 스캔 비용도 그대로 낸다. 컨트롤러째 넘겨야
+        //      프로젝트 도메인 데이터로 대시보드를 다시 구성할 수 있다.
+        $customController = config('sitemanager.customizations.controllers.sitemanager_dashboard');
+        if ($customController) {
+            return app()->call([app($customController), 'index']);
+        }
+
         // 기본 통계
         $stats = [
             'total_boards' => \SiteManager\Models\Board::count(),
