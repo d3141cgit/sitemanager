@@ -124,8 +124,15 @@
                 </li>
                 
                 {{-- Extension Menus (config 직접 읽기) --}}
+                @php
+                    // 메뉴 항목의 'level' 은 그 화면에 필요한 최소 회원 레벨.
+                    // Why: 컨트롤러에서만 막으면 권한 없는 관리자에게도 메뉴가 보이고, 눌러야 403 을 만난다.
+                    //      보이지 않아야 할 기능은 애초에 목록에서 빠지는 게 맞다.
+                    $smUserLevel = (int) (auth()->user()->level ?? 0);
+                    $smMenuAllowed = fn($item) => ($item['enabled'] ?? true) && (int) ($item['level'] ?? 0) <= $smUserLevel;
+                @endphp
                 @foreach(config('sitemanager.extensions', []) as $extKey => $ext)
-                    @if(($ext['enabled'] ?? true))
+                    @if($smMenuAllowed($ext))
                         @if(($ext['type'] ?? null) === 'divider')
                             <li class="sidebar-divider" aria-hidden="true"></li>
                         @elseif(($ext['type'] ?? null) === 'header')
@@ -134,8 +141,8 @@
                             @if(isset($ext['children']) && is_array($ext['children']) && count($ext['children']) > 0)
                                 @php
                                     // 라우트 자식만으로 표시 여부·부모 active 판정. header/divider 는 그룹 구분용(라우트 없음).
-                                    $routeChildren = collect($ext['children'])->filter(fn($c) => ($c['enabled'] ?? true) && isset($c['route']));
-                                    $visibleChildren = collect($ext['children'])->filter(fn($c) => ($c['enabled'] ?? true) && (isset($c['route']) || in_array($c['type'] ?? null, ['header', 'divider'], true)));
+                                    $routeChildren = collect($ext['children'])->filter(fn($c) => $smMenuAllowed($c) && isset($c['route']));
+                                    $visibleChildren = collect($ext['children'])->filter(fn($c) => $smMenuAllowed($c) && (isset($c['route']) || in_array($c['type'] ?? null, ['header', 'divider'], true)));
                                     $isParentActive = $routeChildren->contains(fn($c) => sitemanager_menu_is_active($c));
                                 @endphp
                                 @if($routeChildren->isNotEmpty())
