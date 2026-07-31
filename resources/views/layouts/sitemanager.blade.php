@@ -92,14 +92,21 @@
                     <div class="collapse" id="sidebar-boards-collapse">
                         <ul class="sidebar-submenu">
                             <li>
-                                <a @class(['sidebar-submenu-item', 'active' => request()->routeIs('sitemanager.boards.*') || request()->routeIs('sitemanager.comments.*')]) 
+                                <a @class(['sidebar-submenu-item', 'active' => request()->routeIs('sitemanager.boards.*')])
                                     href="{{ route('sitemanager.boards.index') }}">
                                     <i class="bi bi-journal-text"></i>
                                     <span>{{ t('Boards') }}</span>
                                 </a>
                             </li>
                             <li>
-                                <a @class(['sidebar-submenu-item', 'active' => request()->routeIs('sitemanager.files.editor-images')]) 
+                                <a @class(['sidebar-submenu-item', 'active' => request()->routeIs('sitemanager.comments.*')])
+                                    href="{{ route('sitemanager.comments.index') }}">
+                                    <i class="bi bi-chat-left-text"></i>
+                                    <span>{{ t('Comments') }}</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a @class(['sidebar-submenu-item', 'active' => request()->routeIs('sitemanager.files.editor-images')])
                                     href="{{ route('sitemanager.files.editor-images') }}">
                                     <i class="bi bi-image"></i>
                                     <span>{{ t('Editor Images') }}</span>

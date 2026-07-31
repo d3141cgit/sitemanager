@@ -60,6 +60,7 @@ Route::middleware(['auth', 'sitemanager'])->prefix('sitemanager')->name('siteman
     Route::prefix('comments')->name('comments.')->group(function () {
         Route::get('/', [SiteManagerCommentController::class, 'index'])->name('index');
         Route::post('/approve', [SiteManagerCommentController::class, 'approve'])->name('approve');
+        Route::post('/update', [SiteManagerCommentController::class, 'update'])->name('update');
         Route::post('/delete', [SiteManagerCommentController::class, 'delete'])->name('delete');
         Route::post('/restore', [SiteManagerCommentController::class, 'restore'])->name('restore');
         Route::post('/force-delete', [SiteManagerCommentController::class, 'forceDelete'])->name('force-delete');

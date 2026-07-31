@@ -14,6 +14,9 @@
     </h1>
 
     <div class="d-flex gap-1">
+        <a href="{{ route('sitemanager.comments.index', ['board_id' => $board->id]) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-chat-left-text"></i> {{ t('Comments') }}
+        </a>
         <a href="{{ route('board.index', $board->slug) }}" target="_blank" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-box-arrow-up-right"></i> Front
         </a>
@@ -106,7 +109,10 @@
                     <td class="text-center small text-muted">
                         <span title="Views"><i class="bi bi-eye"></i> {{ number_format($post->view_count ?? 0) }}</span>
                         <span class="mx-1">·</span>
-                        <span title="Comments"><i class="bi bi-chat"></i> {{ number_format($post->comment_count ?? 0) }}</span>
+                        <a href="{{ route('sitemanager.comments.index', ['board_id' => $board->id, 'post_id' => $post->id]) }}"
+                           title="{{ t('Manage comments') }}" class="text-decoration-none">
+                            <i class="bi bi-chat"></i> {{ number_format($post->comment_count ?? 0) }}
+                        </a>
                     </td>
                     <td class="number text-center">{{ $post->published_at?->format('Y-m-d') ?: '-' }}</td>
                     <td class="text-center actions">

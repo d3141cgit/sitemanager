@@ -16,10 +16,14 @@
 </div>
 
 <form method="GET" action="{{ route('sitemanager.comments.index') }}" class="search-form" id="filterForm">
-    <select name="board_id" id="board_id" class="form-select" style="min-width:180px;max-width:300px;" onchange="document.getElementById('filterForm').submit();">
+    {{-- 게시글별 댓글 보기 범위 유지 (상태 라디오 전환 시에도) --}}
+    <input type="hidden" name="post_id" id="post_id_input" value="{{ $postId ?? '' }}">
+
+    <select name="board_id" id="board_id" class="form-select" style="min-width:180px;max-width:300px;"
+            onchange="document.getElementById('post_id_input').value='';document.getElementById('filterForm').submit();">
         <option value="">{{ t('Select Board') }}</option>
         @foreach($boards as $board)
-            <option value="{{ $board->id }}" 
+            <option value="{{ $board->id }}"
                 {{ $selectedBoardId == $board->id ? 'selected' : '' }}>
                 {{ $board->name }}
             </option>
@@ -55,6 +59,17 @@
 
     <button type="submit" class="d-none"></button>
 </form>
+
+@if($selectedPost ?? null)
+    <div class="alert alert-info d-flex align-items-center gap-2 py-2">
+        <i class="bi bi-funnel-fill"></i>
+        <span>{{ t('Showing comments for post') }}: <strong>{{ Str::limit($selectedPost->title, 60) }}</strong></span>
+        <a href="{{ route('sitemanager.comments.index', ['board_id' => $selectedBoardId, 'status' => $status]) }}"
+           class="btn btn-sm btn-outline-secondary ms-auto">
+            <i class="bi bi-x-circle"></i> {{ t('Show all comments') }}
+        </a>
+    </div>
+@endif
 
 @if($selectedBoardId && $pendingComments->count() > 0)
     <div class="mb-3">    
@@ -142,11 +157,24 @@
                     </td>
 
                     <td>
-                        <div class="comment-content {{ $comment->parent_id ? 'ms-2' : '' }}">
+                        <div class="comment-content {{ $comment->parent_id ? 'ms-2' : '' }}" id="comment-view-{{ $comment->id }}">
                             @if($comment->parent_id)
                                 <span class="text-muted me-2">↳</span>
                             @endif
-                            {!! Str::limit(strip_tags($comment->content), 100) !!}
+                            {!! nl2br(e(Str::limit(strip_tags($comment->content), 200))) !!}
+                        </div>
+
+                        {{-- 인라인 편집 (내용 수정) --}}
+                        <div class="comment-edit mt-2 d-none" id="comment-edit-{{ $comment->id }}">
+                            <textarea class="form-control form-control-sm mb-2" rows="4" id="comment-edit-text-{{ $comment->id }}">{{ $comment->content }}</textarea>
+                            <button type="button" class="btn btn-sm btn-primary"
+                                    onclick="updateComment({{ $comment->id }}, '{{ $selectedBoard->slug }}')">
+                                <i class="bi bi-check-lg"></i> {{ t('Save') }}
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    onclick="toggleCommentEdit({{ $comment->id }})">
+                                {{ t('Cancel') }}
+                            </button>
                         </div>
                         
                         {{-- 이메일 인증 상태 추가 정보 --}}
@@ -194,6 +222,13 @@
                     </td>
 
                     <td class="text-end actions">
+                        {{-- 내용 수정 (삭제된 댓글 제외) --}}
+                        @if($status !== 'deleted')
+                            <button type="button" class="btn btn-outline-primary btn-sm"
+                                    onclick="toggleCommentEdit({{ $comment->id }})">
+                                <i class="bi bi-pencil"></i> {{ t('Edit') }}
+                            </button>
+                        @endif
                         {{-- 상태에 따른 버튼 표시 --}}
                         @if($status === 'deleted')
                             {{-- Restore 버튼 --}}
@@ -291,8 +326,49 @@ const commentTranslations = {
     delete: @json(t('delete')),
     restore: @json(t('restore')),
     permanentlyDelete: @json(t('permanently delete')),
-    confirmBulkAction: @json(t('Are you sure you want to {action} {count} selected comment(s)?'))
+    confirmBulkAction: @json(t('Are you sure you want to {action} {count} selected comment(s)?')),
+    emptyContent: @json(t('Comment content cannot be empty.'))
 };
+
+// 인라인 편집 토글
+function toggleCommentEdit(commentId) {
+    document.getElementById('comment-view-' + commentId)?.classList.toggle('d-none');
+    document.getElementById('comment-edit-' + commentId)?.classList.toggle('d-none');
+}
+
+// 댓글 내용 수정
+function updateComment(commentId, boardSlug) {
+    const content = document.getElementById('comment-edit-text-' + commentId).value.trim();
+    if (!content) {
+        alert(commentTranslations.emptyContent);
+        return;
+    }
+
+    fetch('{{ route("sitemanager.comments.update") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            comment_id: commentId,
+            board_slug: boardSlug,
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || commentTranslations.anErrorOccurred);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(commentTranslations.networkError);
+    });
+}
 
 // 전체 체크박스 토글
 document.getElementById('checkAll')?.addEventListener('change', function() {

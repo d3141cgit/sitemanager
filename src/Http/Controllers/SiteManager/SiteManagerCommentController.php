@@ -28,31 +28,49 @@ class SiteManagerCommentController extends Controller
         $boards = Board::orderBy('name')->get();
         $selectedBoardId = $request->get('board_id');
         $status = $request->get('status', 'approved');
-        
+        $postId = $request->get('post_id');
+
         $pendingComments = collect();
         $selectedBoard = null;
+        $selectedPost = null;
         $statusCounts = ['pending' => 0, 'approved' => 0, 'deleted' => 0];
-        
+
         if ($selectedBoardId) {
             $selectedBoard = Board::findOrFail($selectedBoardId);
-            
+
             // 해당 게시판의 댓글 모델 클래스 가져오기
             $commentModelClass = BoardComment::forBoard($selectedBoard->slug);
-            
-            // 상태별 개수 계산
-            $statusCounts['pending'] = $commentModelClass::where('status', 'pending')->count();
-            $statusCounts['approved'] = $commentModelClass::where('status', 'approved')->count();
-            $statusCounts['deleted'] = $commentModelClass::onlyTrashed()->count();
-            
+
+            // 특정 게시글의 댓글만 볼 때(게시글별 댓글 보기)는 그 글로 범위를 좁힌다.
+            $scopePost = function ($query) use ($postId) {
+                if ($postId) {
+                    $query->where('post_id', $postId);
+                }
+                return $query;
+            };
+
+            // 상태별 개수 계산 (post_id 범위 반영)
+            $statusCounts['pending'] = $scopePost($commentModelClass::where('status', 'pending'))->count();
+            $statusCounts['approved'] = $scopePost($commentModelClass::where('status', 'approved'))->count();
+            $statusCounts['deleted'] = $scopePost($commentModelClass::onlyTrashed())->count();
+
+            // 선택된 게시글 정보(헤더 표시용)
+            if ($postId) {
+                $postModelClass = \SiteManager\Models\BoardPost::forBoard($selectedBoard->slug);
+                $selectedPost = $postModelClass::find($postId);
+            }
+
             // 상태별 댓글 조회 - 계층적 정렬
             $query = $commentModelClass::with(['member', 'post', 'parent', 'children']);
-            
+
             // 삭제된 댓글을 보려면 withTrashed() 사용
             if ($status === 'deleted') {
                 $query = $query->onlyTrashed();
             } else {
                 $query = $query->where('status', $status);
             }
+
+            $scopePost($query);
             
             // 계층적 정렬: 부모 댓글의 created_at 기준으로 정렬하되, 자식은 부모 바로 아래 배치
             $allComments = $query->orderByRaw('
@@ -91,10 +109,12 @@ class SiteManagerCommentController extends Controller
         }
         
         return view('sitemanager::sitemanager.board.comments', compact(
-            'boards', 
-            'pendingComments', 
-            'selectedBoard', 
+            'boards',
+            'pendingComments',
+            'selectedBoard',
             'selectedBoardId',
+            'selectedPost',
+            'postId',
             'status',
             'statusCounts'
         ));
@@ -126,6 +146,40 @@ class SiteManagerCommentController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to approve comment.'
+            ], 500);
+        }
+    }
+
+    /**
+     * 댓글 내용 수정
+     */
+    public function update(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'board_slug' => 'required|string',
+                'comment_id' => 'required|integer',
+                'content' => 'required|string|max:20000',
+            ]);
+
+            $board = Board::where('slug', $validated['board_slug'])->firstOrFail();
+            $commentModelClass = BoardComment::forBoard($board->slug);
+            $comment = $commentModelClass::withTrashed()->findOrFail($validated['comment_id']);
+
+            $comment->content = $validated['content'];
+            $comment->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Comment updated successfully.',
+                'content' => $comment->content,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Comment update failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update comment.'
             ], 500);
         }
     }
