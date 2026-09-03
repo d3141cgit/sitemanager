@@ -114,11 +114,17 @@ class MemberService
         if (!$member->active) {
             throw new \Exception('비활성화된 계정입니다. 관리자에게 문의하세요.');
         }
-        
+
         Auth::login($member);
+
+        // 세션 고정(session fixation) 방지 + 이전 사용자의 세션 데이터 상속 차단.
+        // 재생성 없이 로그인하면 같은 브라우저에서 앞서 쓰던 사용자의 세션 키
+        // (예: 비밀번호 재설정 대상 이메일)가 다음 사용자에게 그대로 남는다 (GIO QA 260824).
+        session()->regenerate();
+
         return true;
     }
-    
+
     /**
      * 로그아웃 처리
      */
@@ -126,8 +132,12 @@ class MemberService
     {
         // 비밀글 세션 정리
         $this->clearSecretPostSessions();
-        
+
         Auth::logout();
+
+        // 로그아웃 후 세션 무효화 — 남은 세션 데이터가 다음 로그인 사용자에게 넘어가지 않게.
+        session()->invalidate();
+        session()->regenerateToken();
     }
     
     /**

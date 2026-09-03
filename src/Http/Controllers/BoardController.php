@@ -216,6 +216,15 @@ class BoardController extends Controller
     {
         // 서비스를 통해 데이터 조회
         $posts = $this->boardService->getFilteredPosts($board, $request, $board->getSetting('enable_notice', false));
+
+        // 범위를 벗어난 페이지 번호는 404 — 빈 목록 200 응답은 SEO 상 빈 페이지를
+        // 무한 생성한다 (GIO QA 260728 p92).
+        if ($posts instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator
+            && $posts->currentPage() > 1
+            && $posts->currentPage() > max(1, $posts->lastPage())) {
+            abort(404);
+        }
+
         $notices = $board->getSetting('enable_notice', false) ? $this->boardService->getNotices($board) : collect();
 
         // 각 게시글의 like 상태 확인

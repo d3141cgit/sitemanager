@@ -36,9 +36,14 @@ class LoginController extends Controller
         if ($request->has('redirect')) {
             session(['url.intended' => $request->get('redirect')]);
         } elseif (!$request->session()->has('url.intended')) {
-            // Only store referer if no intended URL is already set
+            // Only store referer if no intended URL is already set.
+            // 비밀번호 재설정 계열 화면(/password*)은 로그인 후 돌아갈 곳이 아니다 —
+            // referer 로 잡히면 로그인 직후 재설정 관문으로 튕긴다 (GIO QA 260824).
             $referer = $request->header('referer');
-            if ($referer && !str_contains($referer, '/login') && !str_contains($referer, '/logout')) {
+            if ($referer
+                && !str_contains($referer, '/login')
+                && !str_contains($referer, '/logout')
+                && !str_contains($referer, '/password')) {
                 session(['url.intended' => $referer]);
             }
         }
