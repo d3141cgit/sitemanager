@@ -16,7 +16,8 @@
                 {{ $comment->author_name }}
             </span>
             <span class="comment-date">
-                {{ $comment->published_at?->diffForHumans() ?? 'Just now' }}
+                {{-- board_comments_* 에는 published_at 이 없어 항상 'Just now' 가 나오던 결함. created_at 을 쓴다. --}}
+                {{ $comment->created_at?->diffForHumans() ?? 'Just now' }}
                 @if($comment->is_edited)
                     (edited)
                 @endif
@@ -141,7 +142,8 @@
     {{-- Child Comments --}}
     @if($comment->children && $comment->children->count() > 0 && $level < 3)
         <div class="child-comments">
-            @foreach($comment->children->sortByDesc('published_at') as $child)
+            {{-- 존재하지 않는 published_at 으로 정렬하던 것을 created_at 으로. BoardService 가 자식 댓글을 오래된 순으로 싣는 의도에 맞춘다. --}}
+            @foreach($comment->children->sortBy('created_at') as $child)
                 @include('sitemanager::board.partials.comment', ['comment' => $child, 'level' => $level + 1])
             @endforeach
         </div>

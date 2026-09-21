@@ -95,9 +95,38 @@ class InstallCommand extends Command
             '--tag' => 'sitemanager-config',
             '--force' => $this->option('force')
         ]);
-        
+
         $this->line('   ✅ Configuration files published');
+
+        $this->ensureAuthConfigHasPackageGuards();
         $this->newLine();
+    }
+
+    /**
+     * Laravel 스켈레톤이 만든 config/auth.php 가 이미 있으면 --force 없는 vendor:publish 가 건너뛴다.
+     * 그러면 패키지가 정의하는 customer guard 가 빠져 레이아웃 렌더 시
+     * "Auth guard [customer] is not defined" 500 이 난다. 필요할 때만 백업 후 패키지 파일로 교체한다.
+     */
+    protected function ensureAuthConfigHasPackageGuards(): void
+    {
+        $hostAuth = config_path('auth.php');
+        $packageAuth = __DIR__ . '/../../../config/auth.php';
+
+        if (! File::exists($packageAuth)) {
+            return;
+        }
+
+        if (File::exists($hostAuth) && str_contains(File::get($hostAuth), "'customer'")) {
+            return;
+        }
+
+        if (File::exists($hostAuth)) {
+            File::copy($hostAuth, config_path('auth.php.backup'));
+            $this->line('   ℹ️  Existing config/auth.php lacked the customer guard — backed up to auth.php.backup');
+        }
+
+        File::copy($packageAuth, $hostAuth);
+        $this->line('   ✅ config/auth.php replaced with SiteManager version (web + customer guards)');
     }
 
     /**

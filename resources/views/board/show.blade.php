@@ -151,7 +151,8 @@
                                         </span>
                                         <span>
                                             <i class="bi bi-calendar"></i>
-                                            {{ $attachment->published_at->format('M j, Y') }}
+                                            {{-- board_attachments 에는 published_at 이 없다. created_at 을 쓴다. --}}
+                                            {{ $attachment->created_at?->format('M j, Y') }}
                                         </span>
                                         @if($attachment->download_count > 0)
                                             <span>
