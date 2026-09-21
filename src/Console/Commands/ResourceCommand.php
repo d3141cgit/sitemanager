@@ -294,7 +294,16 @@ class ResourceCommand extends Command
             }
 
             $content = File::get($configPath);
-            
+
+            // config 가 env() 로 값을 받게 돼 있으면 설정 파일 대신 .env 를 갱신한다.
+            // 배포 서버에서 config/app.php 를 고치면 git 이 더러워져 다음 pull 이 막힌다.
+            if (preg_match("/'resource_version'\s*=>\s*env\(\s*'([A-Z_]+)'/", $content, $m)) {
+                $this->updateEnvResourceVersion($m[1], $version);
+                $this->call('config:clear');
+
+                return;
+            }
+
             // resource_version 설정이 이미 있는지 확인
             if (preg_match("/'resource_version'\s*=>/", $content)) {
                 // 기존 설정 업데이트
@@ -320,6 +329,31 @@ class ResourceCommand extends Command
         } catch (\Exception $e) {
             $this->error("Failed to update resource version: " . $e->getMessage());
         }
+    }
+
+    /**
+     * .env 의 자산 버전 키를 갱신한다. 없으면 끝에 추가한다.
+     */
+    protected function updateEnvResourceVersion(string $key, ?string $version): void
+    {
+        $envPath = base_path('.env');
+
+        if (!File::exists($envPath)) {
+            $this->warn("  .env not found — set {$key}={$version} manually.");
+            return;
+        }
+
+        $env = File::get($envPath);
+        $line = $key . '=' . ($version ?? '');
+
+        if (preg_match("/^{$key}=.*$/m", $env)) {
+            $env = preg_replace("/^{$key}=.*$/m", $line, $env);
+        } else {
+            $env = rtrim($env, "\n") . "\n" . $line . "\n";
+        }
+
+        File::put($envPath, $env);
+        $this->line("  Updated {$key} in .env");
     }
 
     /**

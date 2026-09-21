@@ -19,3 +19,16 @@
 ## 향후 작업
 - 커밋·푸시. 서버 배포는 composer 경유라 GitHub 반영이 선행돼야 함.
 - 다른 사용 사이트(edmkorean, bridge2korea, gio 등)에서 첨부/댓글 화면 회귀 확인 권장.
+
+---
+
+## 추가 (같은 날, 서버 배포 중 발견)
+
+### resource build 가 config/app.php 를 덮어써 배포 서버 git 이 더러워짐
+`ResourceCommand::updateResourceVersion()` 이 빌드할 때마다 `config/app.php` 의 `resource_version` 을
+하드코딩 값으로 고쳐 썼다. 배포 서버에서는 이 파일이 git 추적 대상이라 매 빌드마다 워킹트리가 더러워지고
+다음 `git pull` 이 막힌다.
+
+**조치**: config 값이 `env('RESOURCE_VERSION')` 형태면 설정 파일 대신 `.env` 의 해당 키를 갱신하도록 분기.
+하드코딩 방식으로 쓰던 기존 사이트는 종전대로 동작한다(하위 호환).
+`updateEnvResourceVersion()` 추가.
