@@ -182,3 +182,12 @@
 
 /* ---------- 정렬 표 (sortable-table.css) ---------- */
 [data-bs-theme="dark"] .sortable-table th.sortable:hover { background-color: rgba(255, 255, 255, 0.05); }
+
+/* ---------- 게시판 편집 (board/form) ---------- */
+[data-bs-theme="dark"] .post-field-card,
+[data-bs-theme="dark"] .custom-setting-item .form-control { background-color: var(--bg-surface); }
+[data-bs-theme="dark"] .post-field-card { border-color: var(--line-strong); }
+[data-bs-theme="dark"] .post-field-title { color: var(--fg-strong); }
+[data-bs-theme="dark"] .sub-section { background-color: var(--bg-tinted); border-left-color: var(--line-strong) !important; }
+[data-bs-theme="dark"] .sub-section:hover { background-color: rgba(13, 110, 253, 0.10); }
+[data-bs-theme="dark"] #slug-feedback code { background-color: var(--bg-tinted); border-color: var(--line-strong); color: #6ea8fe; }
