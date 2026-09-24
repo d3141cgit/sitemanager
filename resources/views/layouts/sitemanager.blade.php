@@ -11,10 +11,38 @@
     <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 
     <title>@yield('title', 'SiteManager Panel') - Site Manager</title>
-    
+
+    {{-- 다크 테마 (config sitemanager.admin_theme, 기본 꺼짐). 꺼져 있으면 아무것도 출력하지 않는다.
+         CSS 보다 먼저 실행해 밝게 번쩍이지 않게 한다. data-bs-theme 은 Bootstrap 5.3 컴포넌트용,
+         data-theme 은 사이트 CSS(예: GIO tokens)와 맞추기 위함이다. --}}
+    @php
+        $smTheme = (array) config('sitemanager.admin_theme', []);
+        $smDarkMode = (bool) ($smTheme['dark_mode'] ?? false);
+    @endphp
+    @if($smDarkMode)
+    <script>
+        window.SM_THEME = { key: @json($smTheme['storage_key'] ?? 'sitemanager-theme'), fallback: @json($smTheme['default'] ?? 'light') };
+        (function () {
+            var c = window.SM_THEME, t = null;
+            try { t = localStorage.getItem(c.key); } catch (e) {}
+            if (t !== 'dark' && t !== 'light') {
+                t = c.fallback === 'system'
+                    ? (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                    : (c.fallback === 'dark' ? 'dark' : 'light');
+            }
+            document.documentElement.setAttribute('data-bs-theme', t);
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+    @endif
+
     {!! setResources(['jquery', 'bootstrap', 'sweetalert']) !!}
     {!! resource('sitemanager::css/sitemanager/sitemanager.css') !!}
     {!! resource('sitemanager::css/pagination.css') !!}
+    @if($smDarkMode)
+        {{-- 사이트 css/sitemanager.css 보다 앞 — 사이트가 필요하면 덮어쓸 수 있게 --}}
+        {!! resource('sitemanager::css/sitemanager/sitemanager-dark.css') !!}
+    @endif
     {!! resource('sitemanager::js/sitemanager/sitemanager.js') !!}
     {!! resource('sitemanager::js/notifications.js') !!}
     {!! resource('css/sitemanager.css') !!}
@@ -218,6 +246,13 @@
                         <i class="bi bi-eraser"></i>
                     </button>
                 @endif
+                @if($smDarkMode)
+                    <button type="button" class="sidebar-icon-btn sm-theme-toggle" id="sm-theme-toggle"
+                        title="{{ t('Dark mode') }}" aria-label="{{ t('Dark mode') }}" aria-pressed="false">
+                        <i class="bi bi-moon-stars sm-theme-toggle__dark" aria-hidden="true"></i>
+                        <i class="bi bi-sun sm-theme-toggle__light" aria-hidden="true"></i>
+                    </button>
+                @endif
                 <a class="sidebar-icon-btn"
                     href="/"
                     title="{{ t('Home') }}"
@@ -414,6 +449,25 @@
             `;
             document.head.appendChild(style);
         }
+    </script>
+    @endif
+
+    @if($smDarkMode)
+    <script>
+        (function () {
+            var btn = document.getElementById('sm-theme-toggle');
+            if (!btn) return;
+            var root = document.documentElement;
+            var sync = function () { btn.setAttribute('aria-pressed', root.getAttribute('data-bs-theme') === 'dark' ? 'true' : 'false'); };
+            sync();
+            btn.addEventListener('click', function () {
+                var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+                root.setAttribute('data-bs-theme', next);
+                root.setAttribute('data-theme', next);
+                try { localStorage.setItem(window.SM_THEME.key, next); } catch (e) {}
+                sync();
+            });
+        })();
     </script>
     @endif
 

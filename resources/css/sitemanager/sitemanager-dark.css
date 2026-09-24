@@ -1,0 +1,184 @@
+/**
+ * sitemanager-dark.css
+ * 관리자 패널 다크 테마 보정 — config('sitemanager.admin_theme.dark_mode') 가 켜진 사이트에서만 로드된다.
+ *
+ * 카드·표·폼·모달 등 Bootstrap 5.3 컴포넌트는 <html data-bs-theme="dark"> 만으로 어두워진다.
+ * 여기서는 sitemanager.css · tree.css · pagination.css · file-upload.css 가 흰색·검정을
+ * 고정값으로 박아 둔 부분과, Bootstrap 이 다크에서도 밝게 두는 유틸리티(bg-light 등)만 맞춘다.
+ *
+ * 모든 규칙을 [data-bs-theme="dark"] 아래에 둔다 → 라이트에서는 이 파일이 로드돼도 아무 영향이 없다.
+ * text-dark 는 건드리지 않는다 — 패키지 화면에서 노란(bg-warning) 배지 위 글자로 쓰인다.
+ */
+
+/* ---------- 역할 토큰 재정의 (sitemanager.css :root) ---------- */
+[data-bs-theme="dark"] {
+    --bg-app:        #16181c;
+    --bg-surface:    #1e2126;
+    --bg-tinted:     #24282e;
+    --bg-row-hover:  #24282e;
+
+    --fg-strong:     #f4f4f5;
+    --fg-default:    #d4d4d8;
+    --fg-muted:      #a1a1aa;
+    --fg-faint:      #71717a;
+    --fg-label:      #a1a1aa;
+
+    --line:          rgba(255, 255, 255, 0.10);
+    --line-strong:   rgba(255, 255, 255, 0.16);
+    --line-soft:     rgba(255, 255, 255, 0.06);
+
+    --state-green-bg: rgba(21, 128, 61, 0.20);
+    --state-blue-bg:  rgba(29, 78, 216, 0.22);
+    --state-amber-bg: rgba(180, 83, 9, 0.22);
+    --state-green:    #4ade80;
+    --state-blue:     #93c5fd;
+    --state-amber:    #fbbf24;
+
+    --blue-light:    rgba(96, 165, 250, 0.35); /* ::selection */
+
+    --bs-body-bg:    var(--bg-app);
+    color-scheme: dark;
+}
+
+[data-bs-theme="dark"] body { background-color: var(--bg-app); color: var(--fg-default); }
+[data-bs-theme="dark"] .card { --bs-card-bg: var(--bg-surface); }
+[data-bs-theme="dark"] .table { --bs-table-bg: transparent; }
+
+/* ---------- 링크 — 라이트용 #000 고정 ---------- */
+[data-bs-theme="dark"] a:link,
+[data-bs-theme="dark"] a:visited { color: var(--fg-strong); }
+[data-bs-theme="dark"] a:hover { color: var(--red-light); }
+[data-bs-theme="dark"] a.btn-outline-dark { color: var(--fg-default) !important; }
+[data-bs-theme="dark"] .btn-default,
+[data-bs-theme="dark"] .btn-outline-default { color: var(--fg-default); background-color: var(--bg-tinted); border-color: var(--line-strong); }
+[data-bs-theme="dark"] .btn-default:hover,
+[data-bs-theme="dark"] .btn-outline-default:hover { color: var(--fg-strong); background-color: #2c3037; border-color: var(--line-strong); }
+
+/* ---------- 사이드바 ---------- */
+[data-bs-theme="dark"] .sidebar { background-color: var(--bg-surface); }
+[data-bs-theme="dark"] .sidebar-logo img,
+[data-bs-theme="dark"] footer .footer-logo { filter: invert(1); } /* 로고가 거의 검정 단색(#231f20) */
+/* sitemanager.css 의 `.sidebar-menu a.sidebar-menu-item:link` 와 같은 구체성으로 맞춰야 이긴다 */
+[data-bs-theme="dark"] .sidebar-menu-item,
+[data-bs-theme="dark"] .sidebar-menu a.sidebar-menu-item:link,
+[data-bs-theme="dark"] .sidebar-menu a.sidebar-menu-item:visited { color: var(--fg-default); }
+[data-bs-theme="dark"] .sidebar-menu a.sidebar-menu-item:hover,
+[data-bs-theme="dark"] .sidebar-menu a.sidebar-menu-item.active { color: var(--fg-strong); }
+[data-bs-theme="dark"] .sidebar-menu a.sidebar-submenu-item:link,
+[data-bs-theme="dark"] .sidebar-menu a.sidebar-submenu-item:visited { color: var(--fg-muted); }
+[data-bs-theme="dark"] .sidebar-menu a.sidebar-submenu-item:hover,
+[data-bs-theme="dark"] .sidebar-menu a.sidebar-submenu-item.active { color: var(--fg-strong); }
+[data-bs-theme="dark"] .sidebar-menu-item:hover,
+[data-bs-theme="dark"] .sidebar-submenu-item:hover { background-color: var(--bg-tinted); color: var(--fg-strong); }
+[data-bs-theme="dark"] .sidebar-menu-item.active,
+[data-bs-theme="dark"] .sidebar-submenu-item.active { background-color: #2c3037; color: var(--fg-strong); }
+[data-bs-theme="dark"] .sidebar-submenu { background-color: var(--bg-app); }
+[data-bs-theme="dark"] .sidebar-submenu-item { color: var(--fg-muted); }
+[data-bs-theme="dark"] .sidebar::-webkit-scrollbar-track { background: var(--bg-surface); }
+[data-bs-theme="dark"] .sidebar::-webkit-scrollbar-thumb { background: #3a3f47; }
+[data-bs-theme="dark"] .sidebar::-webkit-scrollbar-thumb:hover { background: #4a5059; }
+
+/* 테마 전환 버튼 — 지금 모드가 아니라 "누르면 갈 모드" 를 보여 준다 */
+.sm-theme-toggle .sm-theme-toggle__light { display: none; }
+[data-bs-theme="dark"] .sm-theme-toggle .sm-theme-toggle__dark { display: none; }
+[data-bs-theme="dark"] .sm-theme-toggle .sm-theme-toggle__light { display: inline; }
+
+/* ---------- 공용 목록·카드 ---------- */
+[data-bs-theme="dark"] .card-body .table th,
+[data-bs-theme="dark"] .card-body .table td { border-color: var(--line-strong); }
+[data-bs-theme="dark"] .table-hover > tbody > tr:hover > * { background-color: rgba(151, 255, 76, 0.08); }
+[data-bs-theme="dark"] .table .member-status button { background-color: var(--bg-surface); }
+[data-bs-theme="dark"] .stat-card { background: var(--bg-surface); border-color: var(--line-strong); }
+[data-bs-theme="dark"] .stat-card:hover:not(.no-hover) { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
+
+[data-bs-theme="dark"] .member-profile-placeholder,
+[data-bs-theme="dark"] .new-photo-preview { background-color: var(--bg-tinted); border-color: var(--line-strong); }
+[data-bs-theme="dark"] .profile-photo-preview { border-color: var(--line-strong); }
+
+[data-bs-theme="dark"] .default-form .form-control,
+[data-bs-theme="dark"] .default-form .form-select { background-color: var(--bg-tinted); border-color: var(--bg-tinted); color: var(--fg-strong); }
+
+/* Bootstrap 이 다크에서도 밝게 두는 고정 유틸리티 — 패키지 화면에서 카드 헤더·배지 배경으로 쓰인다 */
+[data-bs-theme="dark"] .bg-light { background-color: var(--bg-tinted) !important; }
+[data-bs-theme="dark"] .bg-white { background-color: var(--bg-surface) !important; }
+/* bg-light 를 어둡게 바꿨으니, 그 위에 짝지어 쓰던 text-dark 도 밝혀야 한다 (bg-warning 위 text-dark 는 그대로) */
+[data-bs-theme="dark"] .bg-light.text-dark,
+[data-bs-theme="dark"] .bg-white.text-dark { color: var(--fg-strong) !important; }
+[data-bs-theme="dark"] .table-light {
+    --bs-table-bg: var(--bg-tinted);
+    --bs-table-color: var(--fg-strong);
+    --bs-table-border-color: var(--line-strong);
+    --bs-table-striped-bg: #2a2e35;
+    --bs-table-hover-bg: #2c3037;
+}
+/* 표 강조 행·셀(table-danger 등) — Bootstrap 5.3 은 다크에서도 밝은 고정색(#f8d7da 등)을 쓴다.
+   다크 대응하는 *-bg-subtle / *-text-emphasis 변수로 바꾼다. */
+[data-bs-theme="dark"] .table-primary { --bs-table-bg: var(--bs-primary-bg-subtle); --bs-table-color: var(--bs-primary-text-emphasis); --bs-table-border-color: var(--bs-primary-border-subtle); --bs-table-striped-bg: var(--bs-primary-bg-subtle); --bs-table-hover-bg: var(--bs-primary-border-subtle); --bs-table-active-bg: var(--bs-primary-border-subtle); }
+[data-bs-theme="dark"] .table-secondary { --bs-table-bg: var(--bs-secondary-bg-subtle); --bs-table-color: var(--bs-secondary-text-emphasis); --bs-table-border-color: var(--bs-secondary-border-subtle); --bs-table-striped-bg: var(--bs-secondary-bg-subtle); --bs-table-hover-bg: var(--bs-secondary-border-subtle); --bs-table-active-bg: var(--bs-secondary-border-subtle); }
+[data-bs-theme="dark"] .table-success { --bs-table-bg: var(--bs-success-bg-subtle); --bs-table-color: var(--bs-success-text-emphasis); --bs-table-border-color: var(--bs-success-border-subtle); --bs-table-striped-bg: var(--bs-success-bg-subtle); --bs-table-hover-bg: var(--bs-success-border-subtle); --bs-table-active-bg: var(--bs-success-border-subtle); }
+[data-bs-theme="dark"] .table-danger { --bs-table-bg: var(--bs-danger-bg-subtle); --bs-table-color: var(--bs-danger-text-emphasis); --bs-table-border-color: var(--bs-danger-border-subtle); --bs-table-striped-bg: var(--bs-danger-bg-subtle); --bs-table-hover-bg: var(--bs-danger-border-subtle); --bs-table-active-bg: var(--bs-danger-border-subtle); }
+[data-bs-theme="dark"] .table-warning { --bs-table-bg: var(--bs-warning-bg-subtle); --bs-table-color: var(--bs-warning-text-emphasis); --bs-table-border-color: var(--bs-warning-border-subtle); --bs-table-striped-bg: var(--bs-warning-bg-subtle); --bs-table-hover-bg: var(--bs-warning-border-subtle); --bs-table-active-bg: var(--bs-warning-border-subtle); }
+[data-bs-theme="dark"] .table-info { --bs-table-bg: var(--bs-info-bg-subtle); --bs-table-color: var(--bs-info-text-emphasis); --bs-table-border-color: var(--bs-info-border-subtle); --bs-table-striped-bg: var(--bs-info-bg-subtle); --bs-table-hover-bg: var(--bs-info-border-subtle); --bs-table-active-bg: var(--bs-info-border-subtle); }
+[data-bs-theme="dark"] .btn-light { --bs-btn-bg: var(--bg-tinted); --bs-btn-border-color: var(--line-strong); --bs-btn-color: var(--fg-default); --bs-btn-hover-bg: #2c3037; --bs-btn-hover-color: var(--fg-strong); }
+[data-bs-theme="dark"] a.btn-light { color: var(--fg-default) !important; }
+
+/* ---------- 메뉴 관리 (sitemanager.css · tree.css) ---------- */
+[data-bs-theme="dark"] .menu-section-card { box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); }
+[data-bs-theme="dark"] .menu-item-card,
+[data-bs-theme="dark"] .menu-item { background: var(--bg-surface); border-color: var(--line-strong); }
+[data-bs-theme="dark"] .menu-item-card:hover,
+[data-bs-theme="dark"] .menu-item-card.section-root-item { background-color: var(--bg-tinted); }
+[data-bs-theme="dark"] .menu-item.sortable-ghost { background: var(--bg-tinted); }
+[data-bs-theme="dark"] .menu-item.sortable-chosen,
+[data-bs-theme="dark"] .menu-item.sortable-drag { background: rgba(33, 150, 243, 0.18); }
+[data-bs-theme="dark"] .sortable-tree > .menu-item > .menu-content { border-bottom-color: var(--line-strong); background-color: var(--bg-tinted); }
+[data-bs-theme="dark"] .menu-title,
+[data-bs-theme="dark"] .menu-title-link { color: var(--fg-strong); }
+[data-bs-theme="dark"] .drag-handle { color: var(--fg-faint); }
+[data-bs-theme="dark"] .drag-handle:hover { color: var(--fg-default); }
+[data-bs-theme="dark"] .menu-thumbnail,
+[data-bs-theme="dark"] .legend-sample { border-color: var(--line-strong); }
+[data-bs-theme="dark"] .menu-section-content::-webkit-scrollbar-track { background: var(--bg-surface); }
+[data-bs-theme="dark"] .menu-section-content::-webkit-scrollbar-thumb { background: #3a3f47; }
+
+/* ---------- select2 (라이트용 !important 고정) ---------- */
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection--multiple,
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection--single {
+    background-color: var(--bg-tinted) !important;
+    border-color: var(--line-strong) !important;
+    color: var(--fg-strong) !important;
+}
+[data-bs-theme="dark"] .default-form .select2-container--bootstrap-5 .select2-selection--multiple,
+[data-bs-theme="dark"] .default-form .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered,
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { color: var(--fg-strong) !important; }
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+    background-color: #2c3037 !important;
+    border-color: var(--line-strong) !important;
+    color: var(--fg-default) !important;
+}
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove { color: var(--fg-muted) !important; }
+[data-bs-theme="dark"] .select2-dropdown { background-color: var(--bg-surface) !important; border-color: var(--line-strong) !important; color: var(--fg-default); }
+[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-results__option[aria-selected="true"] { background-color: #2c3037 !important; color: var(--fg-strong) !important; }
+[data-bs-theme="dark"] .select2-search__field { background-color: var(--bg-tinted) !important; color: var(--fg-strong) !important; }
+
+/* ---------- 페이지네이션 (pagination.css) ---------- */
+[data-bs-theme="dark"] .page-link { color: var(--fg-muted); background-color: transparent; }
+[data-bs-theme="dark"] .page-link:hover { background-color: var(--bg-tinted); }
+[data-bs-theme="dark"] .page-item.disabled .page-link,
+[data-bs-theme="dark"] .page-item.disabled .page-link:hover { color: var(--fg-faint); }
+[data-bs-theme="dark"] .sitemanager-pagination.simple .page-info .page-link { background-color: var(--bg-tinted); color: var(--fg-default); }
+
+/* ---------- 파일 업로드 (file-upload.css) ---------- */
+[data-bs-theme="dark"] .file-drop-zone,
+[data-bs-theme="dark"] .existing-attachments,
+[data-bs-theme="dark"] .file-preview { background: var(--bg-tinted); border-color: var(--line-strong); }
+[data-bs-theme="dark"] .file-drop-zone:hover { background: #2c3037; }
+[data-bs-theme="dark"] .file-drop-zone.dragover { background: rgba(13, 202, 240, 0.15) !important; }
+[data-bs-theme="dark"] .file-item,
+[data-bs-theme="dark"] .existing-attachment { background: var(--bg-surface); border-color: var(--line-strong); }
+[data-bs-theme="dark"] .file-info,
+[data-bs-theme="dark"] .upload-guidelines { color: var(--fg-muted); }
+[data-bs-theme="dark"] .upload-guidelines strong { color: var(--fg-default); }
+
+/* ---------- 정렬 표 (sortable-table.css) ---------- */
+[data-bs-theme="dark"] .sortable-table th.sortable:hover { background-color: rgba(255, 255, 255, 0.05); }

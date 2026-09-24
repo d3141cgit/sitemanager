@@ -33,6 +33,23 @@ return [
         'pagination_per_page' => 20,
         'board_posts_per_page' => 20,
     ],
+
+    /*
+    | 관리자 패널 다크 테마 — 기본 꺼짐(opt-in).
+    |
+    | 사이트별 확장 관리자 화면·css/sitemanager.css 가 흰색을 고정값으로 쓰고 있을 수 있어,
+    | 다크를 고려한 사이트만 켠다. 꺼져 있으면 레이아웃 HTML 이 전혀 바뀌지 않는다.
+    |
+    | 최상위 키로 둔 이유: mergeConfigFrom 은 최상위만 합친다. 설정을 퍼블리시한 사이트는
+    | 'ui' 를 이미 갖고 있어, 그 안에 넣으면 이 기본값이 전달되지 않는다.
+    */
+    'admin_theme' => [
+        'dark_mode' => env('SITEMANAGER_DARK_MODE', false),
+        // localStorage 키. 사이트 프론트의 테마 토글과 연동하려면 그 키를 쓴다 (예: GIO 'gio-theme').
+        'storage_key' => env('SITEMANAGER_THEME_KEY', 'sitemanager-theme'),
+        // 저장값이 없을 때: light | dark | system(OS 설정)
+        'default' => env('SITEMANAGER_THEME_DEFAULT', 'light'),
+    ],
     
     'permissions' => [
         'admin_level' => 200,

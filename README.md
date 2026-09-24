@@ -244,6 +244,29 @@ DB_PASSWORD=your_password
 - `config/menu.php` - 메뉴 관련 설정
 - `config/permissions.php` - 권한 관련 설정
 
+### 관리자 다크 테마
+
+관리자 패널에 다크 테마를 켤 수 있다. **기본은 꺼짐**이다 — 사이트별 확장 관리자 화면이나
+`resources/css/sitemanager.css` 가 흰색을 고정값으로 쓰고 있으면 다크에서 깨지므로, 다크를
+고려한 사이트만 켠다. 꺼져 있으면 레이아웃 HTML 이 전혀 바뀌지 않는다.
+
+```env
+SITEMANAGER_DARK_MODE=true
+SITEMANAGER_THEME_KEY=sitemanager-theme   # localStorage 키
+SITEMANAGER_THEME_DEFAULT=light           # 저장값이 없을 때: light | dark | system
+```
+
+설정을 퍼블리시했다면 `config/sitemanager.php` 에 최상위 키 `admin_theme` 으로 둔다
+(`mergeConfigFrom` 은 최상위 키만 합치므로 `ui` 안에 넣으면 적용되지 않는다).
+
+- 켜면 사이드바 하단에 테마 전환 버튼이 생기고, `<html>` 에 `data-bs-theme`·`data-theme` 이 붙는다.
+- Bootstrap 5.3 컴포넌트는 그것만으로 어두워진다. 패키지 화면의 고정 색은
+  `css/sitemanager/sitemanager-dark.css` 가 맞춘다(중성 차콜 톤).
+- **사이트 프론트의 테마 토글과 연동**하려면 `SITEMANAGER_THEME_KEY` 를 그 사이트가 쓰는
+  localStorage 키로 맞춘다(예: GIO `gio-theme`). 관리자에서 바꾸면 프론트도 함께 바뀐다.
+- 사이트 확장 화면의 보정은 사이트의 `resources/css/sitemanager.css` 에서
+  `[data-bs-theme="dark"] …` 로 덮는다. 이 파일은 패키지 다크 CSS 뒤에 로드된다.
+
 ## 🎭 게시판 스킨 시스템
 
 게시판별로 다른 스킨을 적용할 수 있습니다:
