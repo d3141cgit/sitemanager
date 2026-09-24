@@ -1,0 +1,3 @@
+# composer 배포 zip(dist)에서 제외 — 저장소에는 남는다.
+# .claude/works 의 한글 파일명이 일부 서버의 unzip 에서 추출 실패를 일으켰다(260923 GIO Mac 워커).
+/.claude export-ignore
