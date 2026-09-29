@@ -707,7 +707,23 @@ class SecurityService
     public function validateFormTiming(array $data, string $ip, int $minTime = 3, string $formType = 'general', bool $strictSignature = false): array
     {
         if (empty($data['form_timestamp'])) {
-            return ['valid' => true]; // 타임스탬프가 없으면 통과
+            // 서명 필수 모드에서는 시각 필드가 **없는 것**도 거부한다 — 폼을 렌더링하지 않고
+            // 바로 POST 하는 봇이 필드를 빼기만 하면 검사를 통째로 건너뛰던 구멍이다(260929).
+            if ($strictSignature) {
+                Log::warning('SiteManager Security: Form timestamp missing (strict mode)', [
+                    'ip' => $ip,
+                    'form_type' => $formType,
+                    'timestamp' => now(),
+                ]);
+
+                return [
+                    'valid' => false,
+                    'type' => 'tampered',
+                    'message' => 'Form security check failed. Please refresh and try again.',
+                ];
+            }
+
+            return ['valid' => true]; // legacy 호환: 타임스탬프가 없으면 통과
         }
 
         // HMAC 서명 검증

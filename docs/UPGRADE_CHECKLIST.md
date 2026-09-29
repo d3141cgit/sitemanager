@@ -108,6 +108,12 @@
 
 ## 5. 버전별 주의사항
 
+### (a66d08c 다음 커밋, 2026-09-29) — 서명 필수 모드에서 시각 필드 누락 거부
+
+| 변경 | 사이트 영향 | 할 일 |
+|---|---|---|
+| `validateFormTiming(..., strictSignature: true)`가 `form_timestamp` **누락**도 거부. 이전엔 필드를 빼기만 하면 통과 | `strict_signature => true`로 부르는 폼만 해당. 기본값(false)인 폼은 그대로 | `grep -rn "strict_signature\|strictSignature" app` — 쓰는 폼은 `form-security` 조각(또는 같은 필드)을 렌더링하는지 확인. 빠져 있으면 정상 제출이 막힌다 |
+
 ### a66d08c (2026-09-29) — 보안 검사기 수정
 
 | 변경 | 사이트 영향 | 할 일 |
