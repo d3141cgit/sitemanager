@@ -207,7 +207,7 @@ class SecurityService
     /**
      * 캡챠 검증 (reCAPTCHA v2/v3 지원)
      */
-    public function verifyCaptcha(string $captchaResponse, string $userIp = null, string $action = null): bool
+    public function verifyCaptcha(string $captchaResponse, ?string $userIp = null, ?string $action = null): bool
     {
         // 캡챠가 비활성화된 경우 통과
         if (!config('sitemanager.security.recaptcha.enabled', false)) {
@@ -761,8 +761,8 @@ class SecurityService
             ];
         }
         
-        // 너무 오래된 폼 (30분 초과)
-        $maxTime = config('sitemanager.security.behavior_tracking.max_form_time', 1800);
+        // 너무 오래된 폼 (config max_form_time, 기본 120분)
+        $maxTime = config('sitemanager.security.behavior_tracking.max_form_time', 7200);
         if ($timeDiff > $maxTime) {
             Log::warning('SiteManager Security: Form expired', [
                 'time_diff' => $timeDiff,
@@ -813,7 +813,9 @@ class SecurityService
      */
     public function validateEmailDomainBlocking(string $email, string $ip, string $formType = 'general'): array
     {
-        $blockedDomains = config('sitemanager.blocked_email_domains', []);
+        // 목록은 security. 아래에 있다 — 예전엔 없는 최상위 키를 읽어 **항상 통과**했다(260929).
+        // isBlockedEmailDomain() 과 같은 키를 쓴다.
+        $blockedDomains = config('sitemanager.security.blocked_email_domains', []);
         
         if (empty($blockedDomains)) {
             return ['valid' => true];

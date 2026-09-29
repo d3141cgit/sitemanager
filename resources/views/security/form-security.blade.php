@@ -12,7 +12,7 @@ $honeypot = $honeypot ?? true;
 // 허니팟 필드는 config 에서 읽음 — 폼의 실제 필드명 (phone 등) 과 충돌하지 않도록.
 // Chrome 자동완성이 'phone_number' 같은 hidden 필드도 채워서 정상 사용자가 차단되는 사례
 // 때문에 기본값에서 phone_number 를 제외함.
-$honeypotFields = config('sitemanager.security.honeypot.fields', ['website', 'url', 'homepage', 'company_phone']);
+$honeypotFields = config('sitemanager.security.honeypot.fields', ['company_phone']);
 @endphp
 
 @if($enabled && $siteKey)

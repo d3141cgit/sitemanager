@@ -149,7 +149,9 @@ return [
         'behavior_tracking' => [
             'enabled' => env('SITEMANAGER_BEHAVIOR_TRACKING_ENABLED', true),
             'min_interaction_time' => 3, // 최소 상호작용 시간 (초)
-            'max_form_time' => 1800, // 최대 폼 시간 (초, 30분)
+            // 최대 폼 시간(초). 30분이던 시절 폼을 열어 두고 돌아온 정상 사용자가 "Form has expired" 로
+            // 막혔다. 세션 수명(기본 120분)과 맞춘다 — 그보다 오래면 어차피 CSRF 419 다.
+            'max_form_time' => 7200,
         ],
         'blocked_email_domains' => [
             '10minutemail.com',
