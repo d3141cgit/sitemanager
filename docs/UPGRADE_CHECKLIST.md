@@ -1,6 +1,6 @@
 # SiteManager 패키지 갱신 체크리스트
 
-> 이 패키지를 쓰는 사이트에 새 버전을 반영할 때 따르는 절차와 점검 항목이다. 사이트별로 **별도 세션**에서 진행한다.
+> 이 패키지를 쓰는 사이트에 새 버전을 반영할 때 따르는 절차와 점검 항목이다. 서버 반영은 `scripts/deploy-sites.sh`(§1-1)로 한다.
 > 작성 2026-09-29 (a66d08c 기준) · 버전별 주의사항은 §5에 추가해 나간다.
 
 ---
@@ -13,18 +13,20 @@
 - 로컬에서 이상이 보이면 "패키지 갱신 때문"일 수 있다. 사이트 작업 중 원인 모를 변화가 생기면 먼저 여기를 의심한다.
 - 서버 반영은 사이트마다 lock을 갱신해 배포해야 일어난다. **lock을 갱신하지 않은 사이트는 서버에서 옛 버전 그대로다.**
 
-| 사이트 | 경로 | 로컬 vendor | 서버 lock (260929) | a66d08c까지 |
+| 사이트 | 로컬 경로 | 서버 (접속) | 서버 설치 (260929) | 서버 반영 방식 |
 |---|---|---|---|---|
-| GIO | `gio/gio` | 심링크 | **a66d08c (반영 완료)** | — |
-| edmuhak | `edmuhak.com/edmuhak` | 심링크 | 957e430 | 56커밋 · 마이그레이션 2 |
-| edmkorean | `edmkorean.com/edmkorean` | 심링크 | 957e430 | 56커밋 · 마이그레이션 2 |
-| edmedu | `edmedu.com/edmedu` | **composer 설치** | 8cc6cea | 15커밋 · 마이그레이션 2 |
-| bridge2korea | `bridge2korea.com` | 심링크 | 8fa701b | 16커밋 · 마이그레이션 2 |
-| TOEFL | `tts-toefl/toefl` | 심링크 | 298ced9 | 14커밋 · 마이그레이션 2 |
-| 한우리교회 | `hanurichurch.org/www` | 심링크 | 0aad451 | **72커밋 · 마이그레이션 3** |
-| d3141c 데모 | `d3141c.ddns.net/sitemanager` | 심링크 | 68c9568 | 4커밋 |
+| GIO | `gio/gio` | gio-stg `/srv/www/www.globalieltsonline.com` | 5565cf8 | **로컬** lock 갱신 → 커밋 → `deploy/deploy.sh` |
+| edmuhak | `edmuhak.com/edmuhak` | edm 경유 → 54.116.29.188 `/home/www.edmuhak.com` | 5565cf8 | **로컬** lock 갱신 → 커밋·push → 서버 `git pull` + `composer install` |
+| edmedu | `edmedu.com/edmedu` | edm 경유 → edmkorean-aws `/home/www.edmedu.com` | 5565cf8 | 서버 `composer update` (lock gitignore) |
+| bridge2korea | `bridge2korea.com` | `b2k` `/home/admin/bridge2korea` | 5565cf8 | 서버 `composer update` |
+| 한우리교회 | `hanurichurch.org/www` | `hanuri-aws` `/home/ubuntu/www` | 5565cf8 | 서버 `composer update` → `~/cmd/post-deploy.sh` |
+| d3141c 데모 | `d3141c.ddns.net/sitemanager` | `server` `~/www/d3141c.ddns.net/sitemanager` | 5565cf8 | 서버 `composer update` |
 
-> 표의 lock 값은 작성 시점이다. 시작할 때 `grep -A6 '"name": "d3141cgit/sitemanager"' composer.lock | grep reference`로 다시 확인한다.
+- **대상 아님**: edmkorean(2026-06-29 b0e5b6c 에서 sitemanager 의존성 제거), TOEFL(서비스 종료).
+- EDM 프로젝트(gio·edmuhak·edmedu)는 **edm 서버를 경유**한다(pem 이 edm 에 있다). 개인 프로젝트(b2k·hanuri·d3141c)는 `~/.ssh/config` 별칭으로 바로 붙는다.
+- 한우리교회 소스 배포는 별개다: `ssh server` → `~/www/hanurichurch/cmd/deploy.sh`(rsync, vendor 제외). 이 rsync 는 `composer.lock` 을 LAN 소스의 것으로 덮으므로 서버 lock 과 vendor 가 어긋날 수 있다 — 서버에서 `composer install` 을 돌리기 전에 확인한다.
+
+> 서버 설치 값은 260929 반영 후 기준이다. `scripts/deploy-sites.sh status` 로 서버별 설치 커밋과 대기 마이그레이션을 다시 본다.
 
 ---
 
@@ -44,9 +46,30 @@
 4. **설정 병합 확인** — §3-2. 사이트 `config/sitemanager.php`는 패키지 기본값을 **통째로 덮는다**(최상위 키 단위로만 병합된다).
 5. **뷰 오버라이드 확인** — §3-3.
 6. **로컬 점검** — §4 체크리스트.
-7. 커밋(lock + 필요 시 설정) → 사이트 배포 방식대로 서버에 `composer install` → 캐시 정리(`php artisan optimize:clear`) → 서버 점검(§4 중 핵심).
+7. 설정 변경이 있으면 커밋·배포 → 서버 반영(§1-1) → 서버 점검(§4 중 핵심).
 
-**하지 않는 것**: 서버에서 `composer update` (lock이 서버마다 달라진다). 여러 사이트를 한 세션에서 몰아서 갱신 (문제가 생기면 원인 사이트를 가르기 어렵다).
+**하지 않는 것**: GIO 서버에서 `composer update` (원격 lock 이 더러워져 다음 `git pull --ff-only` 가 거부된다).
+여러 사이트를 몰아서 반영할 때는 사이트 하나씩 반영·점검하고 다음으로 넘어간다 (문제가 생기면 원인 사이트를 가르기 쉽게).
+
+### 1-1. 서버 반영 스크립트
+
+```bash
+cd ~/www/sitemanager
+scripts/deploy-sites.sh status                 # 서버별 설치 커밋·대기 마이그레이션 (읽기 전용)
+scripts/deploy-sites.sh update edmuhak         # 한 사이트 반영 (확인 프롬프트)
+scripts/deploy-sites.sh update all --dry-run   # 원격 명령만 확인
+scripts/deploy-sites.sh update b2k --migrate   # 패키지 마이그레이션까지 실행
+```
+
+- 실행 전 sitemanager 에 push 안 된 커밋이 있으면 멈춘다(서버는 GitHub main 을 받는다).
+- 서버: `composer update d3141cgit/sitemanager` → 대기 마이그레이션 표시(`--migrate` 면 실행) → `optimize:clear`(한우리는 `post-deploy.sh`).
+  storage 가 www-data 소유인 서버는 artisan 을 `sudo -u www-data` 로 돌린다.
+- GIO·edmuhak: 로컬 `composer update --no-install` → sitemanager 외 패키지가 바뀌면 멈춤 → lock 커밋 → push.
+  GIO 는 `deploy/deploy.sh --push -t both -o pull,composer,clear[,migrate]`, edmuhak 은 서버 `git pull --ff-only` + `composer install`.
+  서버 `git pull` 은 그 사이 다른 사람이 main 에 올린 커밋도 함께 배포한다 — push 전에 스크립트가 보여 주는 커밋 목록을 본다.
+- Composer 2.9 는 lock 에 보안 권고가 걸린 패키지가 있으면 sitemanager 만 갱신해도 resolve 를 거부한다. 스크립트는 로컬 갱신에서만 임시 COMPOSER_HOME 으로 `audit.block-insecure` 를 끈다(composer.json 불변).
+- 캐시 정리 뒤 `bootstrap/cache` 소유자로 manifest 를 다시 만들고 홈 응답을 확인한다. 웹서버가 이 디렉토리를 못 쓰는 서버에서 manifest 가 지워진 채 남으면 전 페이지 500 이다(260929 edmedu 2분 장애).
+- **마이그레이션을 빠뜨리지 않는다.** 새 코드가 새 컬럼을 바로 쓴다(예: 5월 이후 `boards.post_fields`, 댓글 `ip_address`·`meta`). `status` 에 Pending 이 남으면 게시판 저장·댓글 작성이 SQL 오류로 실패할 수 있다. `repair_board_dynamic_table_columns` 는 실행 전 DB 백업.
 
 ---
 
@@ -129,21 +152,21 @@
 |---|---|---|---|---|
 | edmuhak | `website, url, homepage, phone_number` ⚠️ | (설정 없음 → 기본) | 없음 (게시판만) | 허니팟 → `['company_phone']`. **GIO에서 정상 고객 차단을 일으킨 목록과 같다** |
 | edmedu | `website, url, homepage, phone_number, company_phone` ⚠️ | 1800 | 없음 (게시판만) | 허니팟 → `['company_phone']`, max_form_time → 7200 |
-| edmkorean | (설정에 없음 → 기본) | (기본) | **있음** — Contact·Agent·Oneday 컨트롤러, reCAPTCHA **켜짐** | 문의·에이전트 등록·원데이 예약 폼 실제 제출 점검. `AgentController`는 `validateEmailDomainBlocking()`을 직접 부른다 → 일회용 도메인 차단이 새로 동작 |
+| ~~edmkorean~~ | — | — | — | **대상 아님** — 2026-06-29 sitemanager 제거 |
 | bridge2korea | `company_phone` | 1800 | **있음** — InquiryController, summer apply, reCAPTCHA **켜짐** | max_form_time → 7200, 문의·신청 폼 제출 점검 |
-| TOEFL | `company_phone` | 1800 | 뷰 오버라이드 (`guest-author-form`, `security/form-security`) | max_form_time → 7200. 오버라이드한 `form-security`에 패키지 수정이 안 들어감 — 허니팟 대체값 확인 |
+| ~~TOEFL~~ | — | — | — | **대상 아님** — 서비스 종료 |
 | 한우리교회 | (설정 파일 없음 → 기본) | (기본) | 없음 | 72커밋 차이 — 게시판·메뉴 전반과 마이그레이션 3개 점검 |
 | d3141c 데모 | `company_phone` | 1800 | 게시판 뷰 1개 | max_form_time → 7200 |
 
-**reCAPTCHA v3를 켠 사이트(edmkorean, bridge2korea) 참고**: 점수 0.5 기준이라 VPN·사생활 보호 브라우저 사용자가 조용히 막힐 수 있다.
+**reCAPTCHA v3를 켠 사이트(bridge2korea) 참고**: 점수 0.5 기준이라 VPN·사생활 보호 브라우저 사용자가 조용히 막힐 수 있다.
 GIO에서 "보안 장치를 켜면 실제 고객이 막힌다"는 문제의 원인 중 하나로 본 항목이다. 문의 누락 신고가 있으면 이 로그(`SiteManager Security:`)부터 본다.
 
 ---
 
-## 6. 사이트별 세션 시작 문구 (복사해서 쓰기)
+## 6. 작업 시작 문구 (복사해서 쓰기)
 
 ```
-~/www/sitemanager/docs/UPGRADE_CHECKLIST.md 를 읽고 <사이트명>(<경로>)에 SiteManager 최신(main)을 반영해줘.
-§1 절차대로 lock 만 갱신하고, §3 점검과 §5 해당 버전 주의사항(사이트별 현황 표의 조치)을 적용한 뒤
-§4 체크리스트를 로컬에서 확인해. 서버 배포는 내가 확인한 뒤에.
+~/www/sitemanager/docs/UPGRADE_CHECKLIST.md 를 읽고 <사이트명 또는 all>에 SiteManager 최신(main)을 반영해줘.
+로컬 DB 를 ~/install/www/<사이트>/get-data.sh 로 최신화하고, §3 점검과 §5 해당 버전 주의사항을 적용한 뒤
+§4 체크리스트를 로컬에서 확인해. 서버 반영(scripts/deploy-sites.sh update)은 내가 확인한 뒤에.
 ```
