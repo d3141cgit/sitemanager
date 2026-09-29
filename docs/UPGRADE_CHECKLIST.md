@@ -79,7 +79,7 @@ scripts/deploy-sites.sh update b2k --migrate   # 패키지 마이그레이션까
 |---|---|---|
 | gio | 8.5.4 | 8.5.0 |
 | edmuhak·edmedu | 8.3.6 (EDM — 인프라 변경 안 함) | 8.3.6 |
-| 한우리 | 8.3.6 (Ubuntu 26.04 로 업그레이드 중) | 8.3.6 |
+| 한우리 | 8.5.4 (Ubuntu 26.04, 260929 전환) | 8.5.4 |
 | bridge2korea | 8.5.11 (Debian 12 + sury, 260929 전환) | 8.5.11 |
 | d3141c | 8.5.4 | 8.5.4 |
 
@@ -91,6 +91,13 @@ scripts/deploy-sites.sh update b2k --migrate   # 패키지 마이그레이션까
   문법 검사가 못 잡는 8.3+/8.4+ 전용 함수(`json_validate`, `array_find`, `mb_trim` 등)는 쓰지 않는다.
 - 방향: 개인 서버(b2k·hanuri·d3141c)는 최신 PHP·OS 를 따라간다. EDM 서버(gio·edmuhak·edmedu)는 여러 개발자가 쓰므로 인프라를 바꾸지 않는다.
   최저 운영 버전이 올라가면 패키지 `require.php` 와 lint 기준도 올린다.
+- **Ubuntu 26.04 로 올릴 때** (260929 hanuri-aws 에서 겪음):
+  - 릴리스 업그레이드 전: MySQL 계정에 `mysql_native_password` 가 있으면 업그레이더가 조용히 abort 한다(screen 에 `utmp slot not found` 만 보임).
+    `select user,host,plugin from mysql.user` 로 확인하고 `ALTER USER ... IDENTIFIED WITH caching_sha2_password BY '<같은 비밀번호>'`.
+  - apache2 유닛이 샌드박스(`ProtectHome=read-only`, `MemoryDenyWriteExecute=yes`)로 바뀐다. 사이트가 /home 아래면
+    `/etc/systemd/system/apache2.service.d/site-writable.conf` 에 `ReadWritePaths=<site>/storage <site>/bootstrap/cache`,
+    그리고 `/etc/php/8.5/apache2/conf.d/99-site.ini` 에 `pcre.jit=0`. 없으면 전 페이지 500 또는 간헐 500("A facade root has not been set" 으로 가려진다).
+  - PHP 8.3 → 8.5 가 같이 오므로 `composer check-platform-reqs --lock` 으로 상한이 걸린 패키지(예: nette/schema 1.3.2)를 찾아 올린다.
 - b2k(Debian): `packages.sury.org/php` 저장소. sury 의 `php-*` 메타 패키지가 기본값(8.4)을 끌고 와 8.4 도 설치돼 있다(phpmyadmin 의존).
   웹은 `a2enmod php8.5`, CLI 는 update-alternatives 최고 버전(8.5). composer 는 `/usr/local/bin/composer`(Debian 2.5.5 대신). 롤백: `a2dismod php8.5 && a2enmod php8.2`.
 
