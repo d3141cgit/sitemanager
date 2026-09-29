@@ -16,11 +16,17 @@
 #   edmuhak  로컬 lock 갱신 → 커밋·push → edm 경유 54.116.29.188:/home/www.edmuhak.com 에서
 #            git pull --ff-only + composer install (lock 을 git 으로 관리 — 서버 update 로 lock 과
 #            vendor 가 어긋났던 문제를 260929 에 정리)
-#   edmedu   edm 경유 → edmkorean-aws:/home/www.edmedu.com    서버에서 composer update (lock 은 gitignore)
+#   edmedu   edmuhak 과 같은 lock 방식 → edm 경유 edmkorean-aws:/home/www.edmedu.com (260929 부터 lock 추적)
 #   b2k      ssh b2k        → /home/admin/bridge2korea          서버에서 composer update
 #   hanuri   ssh hanuri-aws → /home/ubuntu/www                  서버에서 composer update → post-deploy.sh
 #            (소스 배포는 별도: ssh server 후 ~/www/hanurichurch/cmd/deploy.sh — vendor 는 rsync 제외)
 #   d3141c   ssh server     → ~/www/d3141c.ddns.net/sitemanager 서버에서 composer update
+#
+# PHP 버전: 각 사이트 composer.json 의 config.platform.php 를 운영 서버 PHP 에 맞춰 둔다(로컬 최신 PHP 로
+# lock 을 만들어도 서버에서 돈다). 서버 PHP 를 올리면 platform 도 올린다. 반영 전 점검:
+#   lock 방식   서버에서 받을 lock 을 check-platform-reqs --lock 으로 실제 PHP·확장과 대조, 안 맞으면 pull 전 중단
+#   update 방식 platform.php 가 서버 PHP 보다 높으면 중단 (서버에 없는 PHP 용 패키지를 고르게 된다)
+#
 #   edmkorean 은 2026-06-29(b0e5b6c) 에 sitemanager 의존성을 제거했다. TOEFL 은 서비스 종료. 둘 다 대상 아님.
 #
 # 절차·점검 항목은 docs/UPGRADE_CHECKLIST.md 를 따른다. 이 스크립트는 §1-7(서버 반영)만 대신한다.
@@ -34,6 +40,7 @@ ALL_SITES="gio edmuhak edmedu b2k hanuri d3141c"
 
 GIO_DIR="${GIO_DIR:-$HOME/www/gio/gio}"
 EDMUHAK_DIR="${EDMUHAK_DIR:-$HOME/www/edmuhak.com/edmuhak}"
+EDMEDU_DIR="${EDMEDU_DIR:-$HOME/www/edmedu.com/edmedu}"
 
 # edm 경유 접속 (pem 은 edm 서버에 있다)
 EDMUHAK_SSH='ssh edm ssh -o BatchMode=yes -p 63322 -i ~/.ssh/edmuhak-aws.pem ubuntu@54.116.29.188'
@@ -48,7 +55,7 @@ site_conf() {
     case "$1" in
         gio)     SSH="ssh gio-stg";   DIR="/srv/www/www.globalieltsonline.com"; LOCAL="$GIO_DIR" ;;
         edmuhak) SSH="$EDMUHAK_SSH";  DIR="/home/www.edmuhak.com"; LOCAL="$EDMUHAK_DIR" ;;
-        edmedu)  SSH="$EDMEDU_SSH";   DIR="/home/www.edmedu.com" ;;
+        edmedu)  SSH="$EDMEDU_SSH";   DIR="/home/www.edmedu.com"; LOCAL="$EDMEDU_DIR" ;;
         b2k)     SSH="ssh b2k";       DIR="/home/admin/bridge2korea" ;;
         hanuri)  SSH="ssh hanuri-aws"; DIR="/home/ubuntu/www"; POST="/home/ubuntu/cmd/post-deploy.sh" ;;
         d3141c)  SSH="ssh server";    DIR="/home/miles/www/d3141c.ddns.net/sitemanager" ;;
@@ -75,20 +82,46 @@ installed() { composer show "$PKG" 2>/dev/null | awk '/^source .*\[git\]/{print 
 pending()   { $ART migrate:status 2>/dev/null | grep -i pending | sed 's/^ */    /'; }
 
 BEFORE="$(installed)"
+PHPV="$(php -r 'echo PHP_VERSION;')"
+PLATFORM="$(php -r '$j=json_decode(file_get_contents("composer.json"),true); echo $j["config"]["platform"]["php"] ?? "";')"
 
 if [ "$MODE" = "status" ]; then
-    echo "  설치: ${BEFORE:-없음}   lock 변경: $(git status -s composer.lock 2>/dev/null | cut -c1-2 | tr -d ' ' || true)"
+    echo "  설치: ${BEFORE:-없음}   lock 변경: $(git status -s composer.lock 2>/dev/null | cut -c1-2 | tr -d ' ' || true)   PHP $PHPV / platform ${PLATFORM:-없음}"
+    # 패치 차이(8.3.6 vs 8.3.7)는 apt 보안 업데이트마다 생기므로 무시하고, 마이너가 다를 때만 알린다
+    [ -n "$PLATFORM" ] && [ "${PLATFORM%.*}" != "${PHPV%.*}" ] && echo "  [주의] platform.php($PLATFORM) 와 서버 PHP($PHPV) 의 마이너 버전이 다르다 — 서버를 올렸으면 platform 도 올린다"
     P="$(pending)"; [ -n "$P" ] && { echo "  대기 마이그레이션:"; echo "$P"; }
     exit 0
 fi
 
 if [ "$MODE" = "install" ]; then
     # lock 은 git 으로 내려온다. 서버에서 lock 을 만들지 않는다.
+    # 받기 전에 새 lock 을 이 서버의 실제 PHP·확장과 대조한다 — 안 맞으면 pull 하지 않고 멈춘다.
+    git fetch -q origin || { echo "[ERROR] git fetch 실패"; exit 1; }
+    UP="$(git rev-parse --abbrev-ref '@{u}')"
+    TMP="$(mktemp -d)"
+    git show "$UP:composer.json" > "$TMP/composer.json" && git show "$UP:composer.lock" > "$TMP/composer.lock" \
+        || { rm -rf "$TMP"; echo "[ERROR] $UP 에 composer.json/lock 이 없다"; exit 1; }
+    # 점검은 lock 만 본다. VCS 저장소(github) 초기화로 원격 접속이 일어나지 않게 repositories 를 뺀다.
+    php -r '$f=$argv[1]; $j=json_decode(file_get_contents($f),true); unset($j["repositories"]); file_put_contents($f, json_encode($j));' "$TMP/composer.json"
+    if ! REQ="$(cd "$TMP" && composer check-platform-reqs --lock --no-interaction --no-ansi 2>&1)"; then
+        rm -rf "$TMP"
+        echo "[ERROR] 새 lock 이 서버 PHP $PHPV 와 맞지 않는다 — pull 하지 않음"
+        echo "$REQ" | grep -iE 'failed|missing' | head -10
+        exit 1
+    fi
+    rm -rf "$TMP"
+    echo "[0/3] 플랫폼 점검 통과 (PHP $PHPV)"
     echo "[1/3] git pull --ff-only + composer install  (현재 $BEFORE)"
     git pull --ff-only -q || { echo "[ERROR] git pull 실패 — 서버 작업 트리를 확인"; exit 1; }
     git log -1 --format='      HEAD %h %s'
     CMD="install"
 else
+    # 서버가 스스로 resolve 한다. platform.php 가 서버 PHP 보다 높으면 서버에서 못 도는 패키지를 고른다.
+    if [ -n "$PLATFORM" ] && [ "$(printf '%s\n%s\n' "$PLATFORM" "$PHPV" | sort -V | tail -1)" != "$PHPV" ]; then
+        echo "[ERROR] composer.json platform.php($PLATFORM) 가 서버 PHP($PHPV) 보다 높다 — 중단"
+        exit 1
+    fi
+    echo "[0/3] 플랫폼 점검 통과 (PHP $PHPV, platform ${PLATFORM:-없음})"
     echo "[1/3] composer update $PKG  (현재 $BEFORE)"
     CMD="update $PKG"
 fi
@@ -231,7 +264,7 @@ MAIN_REF="$(git -C "$PKG_DIR" rev-parse --short origin/main 2>/dev/null)"
 
 if [ "$CMD" = "update" ]; then
     # 서버는 GitHub main 을 받는다. 로컬에만 있는 커밋이 있으면 반영되지 않으므로 먼저 확인.
-    git -C "$PKG_DIR" fetch -q origin main
+    git -C "$PKG_DIR" fetch -q origin main || { echo "[ERROR] sitemanager fetch 실패" >&2; exit 1; }
     MAIN_REF="$(git -C "$PKG_DIR" rev-parse --short origin/main)"
     ahead="$(git -C "$PKG_DIR" rev-list --count origin/main..HEAD)"
     if [ "$ahead" != "0" ]; then

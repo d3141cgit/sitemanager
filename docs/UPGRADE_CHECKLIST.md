@@ -73,6 +73,23 @@ scripts/deploy-sites.sh update b2k --migrate   # 패키지 마이그레이션까
 
 ---
 
+### 1-2. PHP 버전
+
+| 사이트 | 운영 PHP (260929) | `config.platform.php` |
+|---|---|---|
+| gio | 8.5.4 | 8.5.0 |
+| edmuhak·edmedu·한우리 | 8.3.6 | 8.3.6 |
+| bridge2korea | 8.2.33 | 8.2.33 |
+| d3141c | 8.5.4 | 8.5.4 |
+
+- **각 사이트 `composer.json` 의 `config.platform.php` = 운영 서버 PHP.** 로컬(최신 PHP)에서 lock 을 만들어도 서버에서 돈다.
+  이게 없던 b2k 는 로컬 lock 에 PHP 8.4+ 전용 symfony v8 이 들어가 서버에서 쓸 수 없었다.
+- 서버 PHP 를 올리면 **같은 날** platform 도 올리고 `composer update --lock` 후 커밋한다. `status` 가 마이너 차이를 [주의]로 알린다.
+- 반영 스크립트가 서버 PHP 와 대조한다: lock 방식은 pull 전에 `check-platform-reqs --lock`, update 방식은 platform 이 서버보다 높으면 중단.
+- 패키지는 `php: ^8.2`(가장 낮은 운영 서버 기준). 패키지 코드를 고치면 `scripts/lint-php.sh` 로 최저 버전 문법 검사를 한다(Docker 필요).
+  문법 검사가 못 잡는 8.3+/8.4+ 전용 함수(`json_validate`, `array_find`, `mb_trim` 등)는 쓰지 않는다.
+- 방향: 운영 PHP 는 최신을 따라간다(아래 순서). 최저 버전이 올라가면 패키지 `require.php` 와 lint 기준도 올린다.
+
 ## 2. 롤백
 
 - lock을 이전 커밋으로 되돌려 배포: `git checkout <이전커밋> -- composer.lock` → 서버 `composer install`.
