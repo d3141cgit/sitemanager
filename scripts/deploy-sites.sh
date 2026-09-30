@@ -76,7 +76,14 @@ cd "$DIR" || { echo "[ERROR] 디렉토리 없음: $DIR"; exit 1; }
 # storage 소유자가 접속 계정과 다르면(www-data) 그 계정으로 artisan 을 돌린다.
 # 캐시 파일을 접속 계정 소유로 만들면 웹서버가 못 지워 500 이 난다.
 OWNER="$(stat -c %U storage/framework/cache 2>/dev/null || whoami)"
-if [ "$OWNER" != "$(whoami)" ]; then ART="sudo -u $OWNER php artisan"; else ART="php artisan"; fi
+# sudo 가 비밀번호를 요구하는 서버(d3141c)는 접속 계정으로 돌린다 — 그 계정이 소유 그룹이고
+# 캐시 폴더가 그룹 쓰기(2775)면 그대로 된다 (260930 d3141c 에서 optimize:clear 가 sudo 로 실패).
+if [ "$OWNER" != "$(whoami)" ] && sudo -n -u "$OWNER" true 2>/dev/null; then
+    ART="sudo -u $OWNER php artisan"
+else
+    ART="php artisan"
+    [ "$OWNER" != "$(whoami)" ] && echo "      [참고] sudo 불가 — $(whoami) 로 artisan 실행 (그룹 쓰기 권한 사용)"
+fi
 
 installed() { composer show "$PKG" 2>/dev/null | awk '/^source .*\[git\]/{print substr($NF,1,7)}'; }
 pending()   { $ART migrate:status 2>/dev/null | grep -i pending | sed 's/^ */    /'; }

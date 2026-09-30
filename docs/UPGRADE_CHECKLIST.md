@@ -13,20 +13,20 @@
 - 로컬에서 이상이 보이면 "패키지 갱신 때문"일 수 있다. 사이트 작업 중 원인 모를 변화가 생기면 먼저 여기를 의심한다.
 - 서버 반영은 사이트마다 lock을 갱신해 배포해야 일어난다. **lock을 갱신하지 않은 사이트는 서버에서 옛 버전 그대로다.**
 
-| 사이트 | 로컬 경로 | 서버 (접속) | 서버 설치 (260929) | 서버 반영 방식 |
+| 사이트 | 로컬 경로 | 서버 (접속) | 서버 설치 (260930) | 서버 반영 방식 |
 |---|---|---|---|---|
-| GIO | `gio/gio` | gio-stg `/srv/www/www.globalieltsonline.com` | 5565cf8 | **로컬** lock 갱신 → 커밋 → `deploy/deploy.sh` |
-| edmuhak | `edmuhak.com/edmuhak` | edm 경유 → 54.116.29.188 `/home/www.edmuhak.com` | 5565cf8 | **로컬** lock 갱신 → 커밋·push → 서버 `git pull` + `composer install` |
-| edmedu | `edmedu.com/edmedu` | edm 경유 → edmkorean-aws `/home/www.edmedu.com` | 5565cf8 | 서버 `composer update` (lock gitignore) |
-| bridge2korea | `bridge2korea.com` | `b2k` `/home/admin/bridge2korea` | 5565cf8 | 서버 `composer update` |
-| 한우리교회 | `hanurichurch.org/www` | `hanuri-aws` `/home/ubuntu/www` | 5565cf8 | 서버 `composer update` → `~/cmd/post-deploy.sh` |
-| d3141c 데모 | `d3141c.ddns.net/sitemanager` | `server` `~/www/d3141c.ddns.net/sitemanager` | 5565cf8 | 서버 `composer update` |
+| GIO | `gio/gio` | gio-stg `/srv/www/www.globalieltsonline.com` | 4898242 | **로컬** lock 갱신 → 커밋 → `deploy/deploy.sh` |
+| edmuhak | `edmuhak.com/edmuhak` | edm 경유 → 54.116.29.188 `/home/www.edmuhak.com` | 0a08dc6 (보류) | **로컬** lock 갱신 → 커밋·push → 서버 `git pull` + `composer install` |
+| edmedu | `edmedu.com/edmedu` | edm 경유 → edmkorean-aws `/home/www.edmedu.com` | 4898242 | 서버 `composer update` (lock gitignore) |
+| bridge2korea | `bridge2korea.com` | `b2k` `/home/admin/bridge2korea` | 4898242 | 서버 `composer update` |
+| 한우리교회 | `hanurichurch.org/www` | `hanuri-aws` `/home/ubuntu/www` | 4898242 | 서버 `composer update` → `~/cmd/post-deploy.sh` |
+| d3141c 데모 | `d3141c.ddns.net/sitemanager` | `server` `~/www/d3141c.ddns.net/sitemanager` | 4898242 | 서버 `composer update` |
 
 - **대상 아님**: edmkorean(2026-06-29 b0e5b6c 에서 sitemanager 의존성 제거), TOEFL(서비스 종료).
 - EDM 프로젝트(gio·edmuhak·edmedu)는 **edm 서버를 경유**한다(pem 이 edm 에 있다). 개인 프로젝트(b2k·hanuri·d3141c)는 `~/.ssh/config` 별칭으로 바로 붙는다.
 - 한우리교회 소스 배포는 별개다: `ssh server` → `~/www/hanurichurch/cmd/deploy.sh`(rsync, vendor 제외). 이 rsync 는 `composer.lock` 을 LAN 소스의 것으로 덮으므로 서버 lock 과 vendor 가 어긋날 수 있다 — 서버에서 `composer install` 을 돌리기 전에 확인한다.
 
-> 서버 설치 값은 260929 반영 후 기준이다. `scripts/deploy-sites.sh status` 로 서버별 설치 커밋과 대기 마이그레이션을 다시 본다.
+> 서버 설치 값은 260930 반영 후 기준이다(edmuhak 은 0a08dc6 — 다른 개발자 미배포 커밋 때문에 보류). `scripts/deploy-sites.sh status` 로 서버별 설치 커밋과 대기 마이그레이션을 다시 본다.
 
 ---
 
