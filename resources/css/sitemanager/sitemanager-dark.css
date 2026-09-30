@@ -88,8 +88,9 @@
 [data-bs-theme="dark"] .card-body .table td { border-color: var(--line-strong); }
 [data-bs-theme="dark"] .table-hover > tbody > tr:hover > * { background-color: rgba(151, 255, 76, 0.08); }
 [data-bs-theme="dark"] .table .member-status button { background-color: var(--bg-surface); }
-/* 정렬 중인 열 머리 — 라이트용 --n-100(#ececee) 고정이라 다크에서 흰 칸으로 튄다 */
-[data-bs-theme="dark"] .table thead th.orderby { background-color: #2c3037; color: var(--fg-strong); }
+/* 정렬 중인 열 머리 — 라이트용 --n-100(#ececee) 고정이라 다크에서 흰 칸으로 튄다.
+   다른 머리(--bg-tinted #24282e)와 확실히 갈리도록 검정으로 둔다 (#2c3037 은 묻혀서 안 보였다). */
+[data-bs-theme="dark"] .table thead th.orderby { background-color: #000; color: var(--fg-strong); }
 [data-bs-theme="dark"] .stat-card { background: var(--bg-surface); border-color: var(--line-strong); }
 [data-bs-theme="dark"] .stat-card:hover:not(.no-hover) { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
 
