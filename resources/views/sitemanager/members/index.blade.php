@@ -52,6 +52,28 @@
         <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>{{ t('Deleted') }}</option>
     </select>
 
+    {{-- 정렬 — 표 머리글 클릭과 같은 orderby/desc 파라미터를 쓴다(선택 상자 자체는 name 이 없다). --}}
+    @php
+        $sortOptions = [
+            'created_at:desc' => t('Newest first'),
+            'created_at:asc' => t('Oldest first'),
+            'name:asc' => t('Name (A–Z)'),
+            'name:desc' => t('Name (Z–A)'),
+            'level:desc' => t('Level (high → low)'),
+            'updated_at:desc' => t('Recently updated'),
+            'id:desc' => t('ID (high → low)'),
+        ];
+        $currentSort = $currentSort ?? 'name:asc';
+    @endphp
+    <select class="form-select js-member-sort" aria-label="{{ t('Sort') }}">
+        @unless(array_key_exists($currentSort, $sortOptions))
+            <option value="{{ $currentSort }}" selected>{{ t('Sort') }}: {{ $currentSort }}</option>
+        @endunless
+        @foreach($sortOptions as $value => $label)
+            <option value="{{ $value }}" {{ $currentSort === $value ? 'selected' : '' }}>{{ $label }}</option>
+        @endforeach
+    </select>
+
     <button type="submit" class="btn btn-outline-secondary">
         <i class="bi bi-search me-2"></i>{{ t('Search') }}
     </button>
@@ -195,6 +217,28 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // 정렬 선택 — 머리글 정렬과 같은 hidden orderby/desc 로 넘긴다.
+    const sortSelect = document.querySelector('.js-member-sort');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function () {
+            const form = this.closest('form');
+            const [field, dir] = this.value.split(':');
+            const put = (name, value) => {
+                let input = form.querySelector('input[name="' + name + '"]');
+                if (!input) {
+                    input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = name;
+                    form.appendChild(input);
+                }
+                input.value = value;
+            };
+            put('orderby', field);
+            put('desc', dir === 'desc' ? '1' : '0');
+            form.submit();
+        });
+    }
+
     // 회원 삭제 폼 처리
     document.querySelectorAll('.delete-member-form').forEach(function(form) {
         form.addEventListener('submit', function(e) {

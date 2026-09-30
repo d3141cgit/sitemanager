@@ -32,6 +32,10 @@ return [
         'sitemanager_prefix' => 'sitemanager',
         'pagination_per_page' => 20,
         'board_posts_per_page' => 20,
+        // 관리자 회원 목록의 기본 정렬 (orderby 파라미터가 없을 때).
+        // id | name | username | email | level | created_at | updated_at — 최근 가입순이면 created_at + desc true
+        'member_list_orderby' => 'name',
+        'member_list_desc' => false,
     ],
 
     /*

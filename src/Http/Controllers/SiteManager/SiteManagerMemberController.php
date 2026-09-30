@@ -25,22 +25,25 @@ class SiteManagerMemberController extends Controller
     {
         $query = Member::with('groups');
         
-        // 정렬 처리
-        $orderby = $request->get('orderby', 'name');
-        $desc = $request->get('desc', '0');
-        
-        // 허용된 정렬 필드 목록
-        $allowedOrderBy = ['id', 'name', 'username', 'email', 'level', 'created_at'];
-        
-        if (in_array($orderby, $allowedOrderBy)) {
-            if ($desc === '1') {
-                $query->orderBy($orderby, 'desc');
-            } else {
-                $query->orderBy($orderby, 'asc');
-            }
-        } else {
-            // 기본 정렬
-            $query->orderBy('name', 'asc');
+        // 정렬 처리 — 기본값은 사이트 설정(ui.member_list_orderby / member_list_desc).
+        // 설정이 없으면 종전과 같은 이름 오름차순이라 기존 사이트 동작은 바뀌지 않는다(opt-in).
+        $allowedOrderBy = ['id', 'name', 'username', 'email', 'level', 'created_at', 'updated_at'];
+        $defaultOrderby = config('sitemanager.ui.member_list_orderby', 'name');
+        if (! in_array($defaultOrderby, $allowedOrderBy, true)) {
+            $defaultOrderby = 'name';
+        }
+        $defaultDesc = config('sitemanager.ui.member_list_desc', false) ? '1' : '0';
+
+        $orderby = $request->get('orderby', $defaultOrderby);
+        $desc = (string) $request->get('desc', $request->has('orderby') ? '0' : $defaultDesc);
+        if (! in_array($orderby, $allowedOrderBy, true)) {
+            [$orderby, $desc] = [$defaultOrderby, $defaultDesc];
+        }
+
+        $query->orderBy($orderby, $desc === '1' ? 'desc' : 'asc');
+        // 같은 값(같은 날 가입·같은 레벨)끼리 순서가 페이지마다 흔들리지 않게 id 로 한 번 더 정렬한다.
+        if ($orderby !== 'id') {
+            $query->orderBy('id', $desc === '1' ? 'desc' : 'asc');
         }
 
         // 삭제된 멤버 포함 여부
@@ -92,7 +95,10 @@ class SiteManagerMemberController extends Controller
         $groups = Group::orderBy('name')->get();
         $levels = config('member.levels');
 
-        return view('sitemanager::sitemanager.members.index', compact('members', 'groups', 'levels'));
+        // 정렬 선택 상자가 "지금 적용된 정렬" 을 보여 주도록 넘긴다 (파라미터가 없을 때는 기본값).
+        $currentSort = $orderby.':'.($desc === '1' ? 'desc' : 'asc');
+
+        return view('sitemanager::sitemanager.members.index', compact('members', 'groups', 'levels', 'currentSort'));
     }
 
     /**
