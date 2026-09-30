@@ -93,6 +93,17 @@
 [data-bs-theme="dark"] .table thead th.orderby { background-color: #000; color: var(--fg-strong); }
 [data-bs-theme="dark"] .stat-card { background: var(--bg-surface); border-color: var(--line-strong); }
 [data-bs-theme="dark"] .stat-card:hover:not(.no-hover) { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
+/* 통계 글자 — 라이트용 --bs-gray-900·600·500 고정이라 다크에서 검정 글자가 배경에 묻힌다.
+   text-success 등 유틸리티(!important)는 그대로 이긴다. */
+[data-bs-theme="dark"] .stat-value { color: var(--fg-strong); }
+[data-bs-theme="dark"] .stat-label { color: var(--fg-muted); }
+[data-bs-theme="dark"] .stat-sub { color: var(--fg-faint); }
+/* 상세 목록(.details dl/dt/dd) — 값이 --bs-gray-900 고정이라 다크에서 보이지 않았다 */
+[data-bs-theme="dark"] .details dl { border-bottom-color: var(--line); }
+[data-bs-theme="dark"] .details dt { color: var(--fg-muted); }
+[data-bs-theme="dark"] .details dd,
+[data-bs-theme="dark"] .details dl:hover dt,
+[data-bs-theme="dark"] .details dl:hover dd { color: var(--fg-strong); }
 
 [data-bs-theme="dark"] .member-profile-placeholder,
 [data-bs-theme="dark"] .new-photo-preview { background-color: var(--bg-tinted); border-color: var(--line-strong); }
