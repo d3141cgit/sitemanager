@@ -169,7 +169,12 @@ fi
 # 쓸 수 없는 서버(edmedu: ubuntu 775)에서는 다음 요청이 manifest 를 못 만들어 전 페이지 500 이 난다
 # (260929 edmedu 약 2분 장애). 디렉토리 소유자 계정으로 바로 다시 만든다.
 BOWNER="$(stat -c %U bootstrap/cache)"
-if [ "$BOWNER" != "$(whoami)" ]; then BART="sudo -u $BOWNER php artisan"; else BART="php artisan"; fi
+if [ "$BOWNER" != "$(whoami)" ] && sudo -n -u "$BOWNER" true 2>/dev/null; then
+    BART="sudo -u $BOWNER php artisan"
+else
+    BART="php artisan"
+    [ "$BOWNER" != "$(whoami)" ] && echo "      [참고] manifest도 $(whoami) 로 재생성 (sudo 불가)"
+fi
 $BART package:discover --no-ansi >/dev/null && $BART about --only=environment >/dev/null 2>&1
 [ -f bootstrap/cache/packages.php ] && [ -f bootstrap/cache/services.php ] \
     || { echo "[ERROR] bootstrap/cache manifest 재생성 실패 — 사이트가 500 일 수 있다"; exit 1; }
