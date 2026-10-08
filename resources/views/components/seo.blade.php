@@ -9,7 +9,6 @@
         @endif
         {{-- Article-specific meta tags (if article type) --}}
         @if(isset($seoData['og_type']) && $seoData['og_type'] === 'article')
-            <meta property="og:type" content="article">
             @if(!empty($seoData['article_author']))
             <meta property="article:author" content="{{ $seoData['article_author'] }}">
             @endif

@@ -103,6 +103,7 @@ class ConfigService
         'SITE_DESCRIPTION'  => ['text', 'Site Manager - 웹사이트 관리 시스템'],
         'SITE_KEYWORDS'     => ['text', '사이트 관리, 웹사이트, 관리자, CMS'],
         'SITE_AUTHOR'       => ['text', 'Site Manager'],
+        'SITE_OG_IMAGE'     => ['text', ''],
     ];
 
     protected static $cacheKey = 'sitemanager.config.values';

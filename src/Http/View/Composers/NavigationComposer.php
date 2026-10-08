@@ -91,7 +91,11 @@ class NavigationComposer
 
         // SEO 정보 구성 (기존 seoData가 있으면 우선 사용)
         $existingSeoData = $view->getData()['seoData'] ?? null;
-        $seoData = $existingSeoData ?: $this->buildSeoData($currentMenu, $breadcrumb);
+        $seoData = $this->buildSeoData($currentMenu, $breadcrumb);
+        if (is_array($existingSeoData)) {
+            // 컨트롤러가 일부 SEO 값만 전달해도 canonical·breadcrumb 같은 메뉴 기본값을 보존한다.
+            $seoData = array_replace($seoData, $existingSeoData);
+        }
 
         $composerData = [
             'navigationMenus' => $navigationTree,
@@ -646,7 +650,9 @@ class NavigationComposer
 
             // Canonical URL (메뉴 SEO 메타에 명시된 값이 있으면 우선 사용)
             $explicitCanonical = $menuSeoMeta['canonical'] ?? null;
-            $seoData['canonical_url'] = $explicitCanonical ?: $this->getMenuUrl($currentMenu);
+            $seoData['canonical_url'] = $this->absoluteCanonicalUrl(
+                $explicitCanonical ?: $this->getMenuUrl($currentMenu)
+            );
 
             // JSON-LD 브레드크럼 구조화 데이터 (메뉴 설정으로 on/off 가능)
             $useBreadcrumbJsonLd = true;
@@ -690,11 +696,42 @@ class NavigationComposer
             $seoData['og_title'] = $siteName;
             $seoData['og_description'] = $seoData['description'];
             $seoData['og_url'] = request()->url();
-            $seoData['og_image'] = asset('images/logo.svg');
+            $seoData['og_image'] = $this->defaultSeoImage();
             $seoData['canonical_url'] = request()->url();
         }
 
         return $seoData;
+    }
+
+    /** Canonical은 문서 위치와 무관하게 해석되는 절대 URL만 출력한다. */
+    private function absoluteCanonicalUrl(?string $canonical): ?string
+    {
+        $canonical = trim((string) $canonical);
+
+        if ($canonical === '' || $canonical === '#') {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $canonical)) {
+            return $canonical;
+        }
+
+        return url('/'.ltrim($canonical, '/'));
+    }
+
+    /** 사이트가 전용 1200x630 이미지를 제공하면 로고보다 그것을 우선한다. */
+    private function defaultSeoImage(): string
+    {
+        $configured = trim((string) config_get('SITE_OG_IMAGE'));
+        if ($configured !== '') {
+            return preg_match('#^https?://#i', $configured)
+                ? $configured
+                : asset(ltrim($configured, '/'));
+        }
+
+        return file_exists(public_path('images/og-image.png'))
+            ? asset('images/og-image.png')
+            : asset('images/logo.svg');
     }
 
     /**

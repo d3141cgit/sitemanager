@@ -9,7 +9,6 @@
     {{-- SEO Meta Tags - @yield has priority over auto-generated seoData --}}
     <title>@yield('title', $seoData['title'] ?? config_get('SITE_NAME'))</title>
     <meta name="description" content="@yield('meta_description', $seoData['description'] ?? config_get('SITE_DESCRIPTION'))">
-    <meta name="keywords" content="@yield('meta_keywords', $seoData['keywords'] ?? config_get('SITE_KEYWORDS'))">
     <meta name="author" content="{{ config_get('SITE_AUTHOR') }}">
     
     {{-- Canonical URL --}}
@@ -21,7 +20,7 @@
     <meta property="og:title" content="@yield('og_title', $seoData['og_title'] ?? $seoData['title'] ?? config_get('SITE_NAME'))">
     <meta property="og:description" content="@yield('og_description', $seoData['og_description'] ?? $seoData['description'] ?? config_get('SITE_DESCRIPTION'))">
     <meta property="og:url" content="{{ $seoData['og_url'] ?? request()->url() }}">
-    <meta property="og:image" content="{{ $seoData['og_image'] ?? asset('images/logo.svg') }}">
+    <meta property="og:image" content="{{ $seoData['og_image'] ?? (file_exists(public_path('images/og-image.png')) ? asset('images/og-image.png') : asset('images/logo.svg')) }}">
     <meta property="og:type" content="{{ $seoData['og_type'] ?? 'website' }}">
     <meta property="og:site_name" content="{{ config_get('SITE_NAME') }}">
     <meta property="og:locale" content="{{ app()->getLocale() }}">
@@ -30,7 +29,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="@yield('og_title', $seoData['og_title'] ?? $seoData['title'] ?? config_get('SITE_NAME'))">
     <meta name="twitter:description" content="@yield('og_description', $seoData['og_description'] ?? $seoData['description'] ?? config_get('SITE_DESCRIPTION'))">
-    <meta name="twitter:image" content="{{ $seoData['og_image'] ?? asset('images/logo.svg') }}">
+    <meta name="twitter:image" content="{{ $seoData['og_image'] ?? (file_exists(public_path('images/og-image.png')) ? asset('images/og-image.png') : asset('images/logo.svg')) }}">
     
     {{-- 공통 SEO 컴포넌트 (컨트롤러에서 생성된 seoData 사용) --}}
     @include('sitemanager::components.seo')

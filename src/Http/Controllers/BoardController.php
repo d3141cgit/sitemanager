@@ -270,7 +270,7 @@ class BoardController extends Controller
         
         // 서비스를 통해 데이터 조회
         $post = $this->boardService->getPost($board, $id);
-        
+
         // 비밀글 접근 권한 확인
         if ($post->isSecret() && !$post->canAccess(current_user_id())) {
             // 비밀번호 입력 폼 표시 (스킨 적용)
@@ -282,6 +282,12 @@ class BoardController extends Controller
                     'url' => null
                 ]
             ]));
+        }
+
+        // 숫자 ID와 slug가 동시에 200이면 같은 글이 두 URL로 크롤링되므로
+        // 접근 가능한 공개 URL은 사람이 읽는 slug URL로 영구 통일한다.
+        if (ctype_digit((string) $id) && filled($post->slug)) {
+            return redirect()->route('board.show', [$board->slug, $post->slug], 301);
         }
         
         // 댓글 조회 (readComments 권한이 있는 경우에만)
@@ -1446,7 +1452,7 @@ class BoardController extends Controller
         
         // 기본 이미지
         if (!$seoImage) {
-            $seoImage = asset('images/logo.svg');
+            $seoImage = $this->defaultSeoImage();
         }
         
         // JSON-LD 구조화 데이터 생성 (게시판 목록용)
@@ -1516,8 +1522,13 @@ class BoardController extends Controller
         
         // 기본 이미지가 없으면 사이트 기본 이미지 사용
         if (!$seoImage) {
-            $seoImage = asset('images/logo.svg');
+            $seoImage = $this->defaultSeoImage();
         }
+
+        $siteAuthor = trim((string) config_get('SITE_AUTHOR')) ?: $siteName;
+        $postAuthor = trim((string) $post->author);
+        $anonymous = $postAuthor === '' || strcasecmp($postAuthor, 'Anonymous') === 0;
+        $authorName = $anonymous ? $siteAuthor : $postAuthor;
         
         // JSON-LD 구조화 데이터 생성
         $jsonLdData = [
@@ -1527,18 +1538,18 @@ class BoardController extends Controller
             'description' => $description,
             'image' => $seoImage,
             'author' => [
-                '@type' => 'Person',
-                'name' => $post->author
+                '@type' => $anonymous ? 'Organization' : 'Person',
+                'name' => $authorName
             ],
             'publisher' => [
                 '@type' => 'Organization',
                 'name' => $siteName,
                 'logo' => [
                     '@type' => 'ImageObject',
-                    'url' => asset('images/logo.svg')
+                    'url' => $this->defaultSeoImage()
                 ]
             ],
-            'datePublished' => $post->created_at->toISOString(),
+            'datePublished' => ($post->published_at ?? $post->created_at)->toISOString(),
             'dateModified' => $post->updated_at->toISOString(),
             'mainEntityOfPage' => [
                 '@type' => 'WebPage',
@@ -1556,13 +1567,28 @@ class BoardController extends Controller
             'og_url' => $postUrl,
             'canonical_url' => $postUrl,
             'og_type' => 'article',
-            'article_author' => $post->author,
-            'article_published_time' => $post->created_at->toISOString(),
+            'article_author' => $authorName,
+            'article_published_time' => ($post->published_at ?? $post->created_at)->toISOString(),
             'article_modified_time' => $post->updated_at->toISOString(),
             'article_section' => $board->name,
             'article_tag' => $post->category,
             'json_ld' => $jsonLdData,
         ];
+    }
+
+    /** 게시판도 사이트 공통 OG 이미지 규칙을 따른다. */
+    private function defaultSeoImage(): string
+    {
+        $configured = trim((string) config_get('SITE_OG_IMAGE'));
+        if ($configured !== '') {
+            return preg_match('#^https?://#i', $configured)
+                ? $configured
+                : asset(ltrim($configured, '/'));
+        }
+
+        return file_exists(public_path('images/og-image.png'))
+            ? asset('images/og-image.png')
+            : asset('images/logo.svg');
     }
 
     /**
